@@ -1,0 +1,35 @@
+## .NET
+bin/
+obj/
+artifacts/
+TestResults/
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Build output
+*.nupkg
+*.snupkg
+*.app/
+*.dmg
+*.pkg
+
+## Avalonia
+*.axaml.g.cs
+
+## JetBrains Rider
+.idea/
+*.sln.iml
+
+## Visual Studio Code
+.vscode/
+
+## macOS
+.DS_Store
+._*
+
+## Logs
+*.log
+*.log.jsonl
