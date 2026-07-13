@@ -1,0 +1,5 @@
+[*.cs]
+# xUnit1030 forbids ConfigureAwait in test methods (it can bypass parallelization limits),
+# which directly conflicts with the solution-wide CA2007 rule. Test code has no synchronization
+# context to protect, so ConfigureAwait is meaningless here; defer to xUnit's guidance.
+dotnet_diagnostic.CA2007.severity = none

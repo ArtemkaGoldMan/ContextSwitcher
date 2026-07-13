@@ -30,17 +30,19 @@ Non-negotiable product qualities:
 | Target OS            | macOS on Apple Silicon, `osx-arm64`                                       |
 | UI                   | Avalonia UI with Metal/Skia rendering                                     |
 | App Model            | Menu bar app with dropdown dashboard and optional settings windows        |
-| Menu Bar Integration | `H.NotifyIcon.Avalonia`                                                   |
-| Global Hotkeys       | `SharpHotkeys`                                                            |
-| Charts               | `LiveCharts2.Avalonia`                                                    |
+| Menu Bar Integration | Avalonia's built-in `TrayIcon` (native `NSStatusBar` on macOS)           |
+| Global Hotkeys       | `SharpHook` (cross-platform global hook via libuiohook; requires macOS Input Monitoring permission) |
+| Charts               | `LiveChartsCore.SkiaSharpView.Avalonia` (LiveCharts2's Avalonia renderer) |
 | DI                   | `Microsoft.Extensions.DependencyInjection`                                |
 | Persistence          | Local JSON under `~/.config/ContextSwitcher/`                             |
-| Scripts              | `osascript`, `open`, `defaults`, `shortcuts`, `docker`, app-specific CLIs |
+| Scripts              | `osascript`, `open`, `shortcuts`, `docker`, app-specific CLIs             |
 | License              | MIT                                                                       |
 | Release Packaging    | GitHub Actions on macOS runner, `.app` bundle, `.dmg` release asset       |
-| Signing              | Unsigned by default; document quarantine removal                          |
+| Signing              | No paid Apple Developer ID; sign with a free, self-generated code-signing certificate for a stable identity (see §15.2). Document quarantine removal. |
 
 Do not introduce a database, web server, telemetry platform, Electron shell, cloud synchronization, or paid licensing gate unless explicitly approved in a later specification.
+
+`H.NotifyIcon.Avalonia` is a WPF/Windows-oriented package and is not used; Avalonia's built-in `TrayIcon` already covers the menu bar icon cross-platform, including macOS's `NSStatusBar`. Likewise, Win32-hotkey packages (`RegisterHotKey`-style libraries) do not work on macOS; `SharpHook` is used instead because it wraps `libuiohook` and supports Windows, macOS, and Linux (X11) from one API.
 
 ## 3. Repository Layout
 
@@ -96,6 +98,10 @@ ContextSwitcher/
         IContextSwitchService.cs
         IHotkeyService.cs
         IAnalyticsService.cs
+        IAutomationStepExecutor.cs
+      ProcessExecution/
+        ProcessResult.cs
+        ProcessStartOptions.cs
       Analytics/
         ContextSession.cs
         ContextSessionLog.cs
@@ -129,7 +135,6 @@ ContextSwitcher/
       Logging/
         LogEntry.cs
         LogLevel.cs
-        LocalJsonLogger.cs
       Security/
         CommandAllowlist.cs
         CommandTemplate.cs
@@ -147,7 +152,11 @@ ContextSwitcher/
         JsonFileStore.cs
         ConfigPaths.cs
       Hotkeys/
-        SharpHotkeyService.cs
+        SharpHookHotkeyService.cs
+      Logging/
+        LocalJsonLogger.cs
+      Time/
+        SystemClock.cs
       MacOS/
         FocusModeController.cs
         MacThemeController.cs
@@ -155,8 +164,8 @@ ContextSwitcher/
         MenuBarAppHost.cs
       ProcessExecution/
         ProcessRunner.cs
-        ProcessResult.cs
-        ProcessStartOptions.cs
+      Automation/
+        AutomationStepExecutor.cs
     ContextSwitcher.Tests/
       ContextSwitcher.Tests.csproj
       Configuration/
@@ -198,6 +207,7 @@ Core rules:
 - All side effects happen through abstractions.
 - All models must be serializable with `System.Text.Json`.
 - All switch operations return structured results, not bare booleans.
+- Data records referenced by a Core abstraction's method signature (e.g. `ProcessResult`, `ProcessStartOptions` used by `IProcessRunner`) must themselves live in Core, even though they describe an Infrastructure-level concern — Core cannot reference Infrastructure, so the interface and everything in its signature has to compile standalone. Infrastructure implements the interface using Core's types; it does not own them.
 
 ### 4.2 Infrastructure
 
@@ -210,6 +220,7 @@ Infrastructure rules:
 - Script templates must be centralized and testable.
 - Never concatenate untrusted user input directly into shell commands.
 - Prefer passing process arguments as arrays over shell strings.
+- `AutomationStepExecutor` implements `IAutomationStepExecutor` (Core abstraction) and is the single place that maps an `AutomationStepType` + its `Arguments` to real `IProcessRunner`/`IScriptRunner` calls (AppleScript templates, `open`, `docker`, etc.). This is the seam that lets `ContextSwitchService` in Core orchestrate a switch without referencing Infrastructure or knowing anything OS-specific — it only depends on `IAutomationStepExecutor`.
 
 ### 4.3 App
 
@@ -241,7 +252,7 @@ services.AddSingleton<ILogger, LocalJsonLogger>();
 services.AddSingleton<ConfigurationValidator>();
 services.AddSingleton<IAnalyticsService, AnalyticsService>();
 services.AddSingleton<IContextSwitchService, ContextSwitchService>();
-services.AddSingleton<IHotkeyService, SharpHotkeyService>();
+services.AddSingleton<IHotkeyService, SharpHookHotkeyService>();
 
 services.AddSingleton<BrowserLauncher>();
 services.AddSingleton<MacThemeController>();
@@ -388,7 +399,7 @@ Schema versioned configuration:
             "notes": ["Check incident queue before opening IDE."],
             "switchPolicy": {
                 "continueOnNonCriticalFailure": true,
-                "criticalSteps": ["LaunchRequiredApps", "ManageBrowserContext"]
+                "criticalSteps": ["LaunchApplications", "ManageBrowserContext"]
             }
         },
         {
@@ -450,6 +461,7 @@ Validation rules:
 - `contexts[].id` must be unique, lowercase, URL-safe, and stable.
 - `activeContextId` must match an existing context.
 - `hotkeys[].contextId` must match an existing context.
+- `switchPolicy.criticalSteps[]` entries must match an `AutomationStepType` member name exactly (e.g. `LaunchApplications`, `ManageBrowserContext`); criticality is resolved per step *category*, not per individual app or resource.
 - `accentColor` must be a valid 6-digit hex color.
 - `browser_management.mode` allowed values: `urls`, `groups`, `profiles`, `none`.
 - `browser_management.browser` allowed values: `Default`, `Chrome`, `Brave`, `Safari`.
@@ -665,6 +677,19 @@ Process runner rules:
 - Kill process tree on timeout when possible.
 - Return structured results; never throw for non-zero exit codes.
 - Throw only for programmer errors such as missing executable path in internal code.
+
+### 7.6 Automation Step Executor
+
+```csharp
+public interface IAutomationStepExecutor
+{
+    Task<AutomationResult> ExecuteAsync(
+        AutomationStep step,
+        CancellationToken cancellationToken);
+}
+```
+
+This is the boundary `ContextSwitchService` calls once per step in the built `AutomationPlan`. Core depends only on this interface; `ContextSwitcher.Infrastructure.Automation.AutomationStepExecutor` (§4.2) provides the real implementation from Phase 3 onward. Each `AutomationStep.Arguments` entry must carry everything the executor needs (app names, container names, URLs, etc.) so the executor never has to reach back into configuration itself.
 
 ## 8. Context Switching Pipeline
 
@@ -1103,6 +1128,7 @@ Dashboard contents:
 - Rapid notes for active context.
 - Work-life balance chart.
 - Settings button.
+- Support the developer button (footer, opens the donation link; a plain link-out, never a gate on any feature).
 - Quit button behind a secondary menu or footer action.
 
 Settings window contents:
@@ -1113,7 +1139,7 @@ Settings window contents:
 - Hotkey editor.
 - Automation permissions status.
 - Analytics retention toggle.
-- Theme/icon donation cosmetic section.
+- Support the developer / cosmetic unlocks section.
 
 ### 11.2 Visual Design
 
@@ -1252,6 +1278,7 @@ Privacy guarantees:
 - No background network calls except user-configured URLs and optional donation/license validation if implemented.
 - No collection of browser history, active windows, keystrokes, clipboard, screenshots, or file contents.
 - Analytics track only selected context and time interval.
+- `SharpHook`'s global hook technically receives every system-wide key event (that is how macOS `CGEventTap`-based hooks work; there is no way to subscribe to only specific combinations). `SharpHookHotkeyService` must compare each event against configured accelerators in memory and discard it immediately after matching or not matching. Never log, buffer, persist, or transmit raw key event data.
 
 Command safety:
 
@@ -1265,6 +1292,7 @@ Command safety:
 Permissions:
 
 - The app may require macOS Automation permission for System Events, Music, Spotify, and app control.
+- The app requires macOS **Input Monitoring** permission for `SharpHook` to create its `CGEventTap`-based global hook; granting Accessibility also satisfies this, but Input Monitoring is the specific entry users will see under System Settings → Privacy & Security. Hotkeys silently do nothing without it, so this must be checked explicitly at startup (`CGPreflightListenEventAccess` equivalent) and after hotkey registration failures.
 - Document Security & Privacy prompts clearly.
 - Detect common permission failures and show remediation.
 
@@ -1361,8 +1389,9 @@ Acceptance criteria:
 
 Deliverables:
 
-- `SharpHotkeyService`.
+- `SharpHookHotkeyService`, wrapping a `SharpHook` global hook (`SimpleGlobalHook` or `EventLoopGlobalHook`) to translate configured `accelerator` strings into key/modifier combinations.
 - Hotkey registration and conflict reporting.
+- Startup check for macOS Input Monitoring permission (`SharpHook` requires it to create a global hook); surface a clear remediation message in the dashboard/log if it is missing rather than failing silently.
 - CLI command router.
 - `switch`, `status`, `list-contexts`, `validate-config`.
 - JSON output mode.
@@ -1371,6 +1400,7 @@ Acceptance criteria:
 
 - Hotkey switches context from another app.
 - CLI switches context from Terminal.
+- App detects missing Input Monitoring permission and reports it instead of the hook silently doing nothing.
 - Shortcuts can call CLI entrypoint.
 
 ### Phase 6: Dashboard V1
@@ -1492,8 +1522,9 @@ dotnet publish src/ContextSwitcher.App/ContextSwitcher.App.csproj \
 ```
 
 6. Build `.app` bundle.
-7. Create `.dmg`.
-8. Upload release asset.
+7. Codesign the `.app` bundle with the project's self-signed code-signing identity (see below).
+8. Create `.dmg`.
+9. Upload release asset.
 
 DMG naming:
 
@@ -1512,6 +1543,12 @@ README must include a prominent unsigned-app section:
 1. Drag `ContextSwitcher.app` to `/Applications`.
 2. Run `xattr -cr /Applications/ContextSwitcher.app`.
 3. Open the app from Finder or Spotlight.
+
+#### Why a self-signed certificate, even without a paid Developer ID
+
+Apple Silicon requires every executable to carry at least an ad-hoc signature to launch at all, and `dotnet publish` applies one automatically. The problem: macOS's permission system (TCC) keys Automation, Input Monitoring, and Accessibility grants to the app's code signature. An ad-hoc signature's identity hash changes on every rebuild, so a plain `dotnet publish` output would force every user to re-grant every permission (needed for AppleScript automation and, from Phase 5 onward, global hotkeys) after every single app update — an unacceptable experience for a project this dependent on automation permissions.
+
+The fix costs nothing: generate a self-signed code-signing certificate once (Keychain Access → Certificate Assistant → "Code Signing Certificate", or `security create-certificate`), export it, and store it as a GitHub Actions secret (base64-encoded `.p12` + password). In `release.yml`, import it into a temporary CI keychain and run `codesign --force --deep --sign "<self-signed identity>" ContextSwitcher.app` before packaging. This keeps the signing identity — and therefore the user's granted permissions — stable across releases, without paying for or requiring an Apple Developer Program membership. It does not satisfy Gatekeeper/notarization, so the `xattr -cr` quarantine-removal step is still required on first launch.
 
 ## 16. Testing Strategy
 
@@ -1641,7 +1678,8 @@ README must contain:
 
 Business model:
 
-- MIT open source.
+- MIT open source. The full app and every feature are always free, built from source or downloaded as a prebuilt `.dmg` from public GitHub Releases.
+- The "Support the developer" button (see §11.1) is a plain link-out to a donation page. It never gates a build, feature, or download behind payment — that would contradict the MIT/open-source distribution model above.
 - Optional "Buy me a beer" donation via Polar.sh.
 - Polar acts as Merchant of Record.
 - Donation can generate a cosmetic license key.

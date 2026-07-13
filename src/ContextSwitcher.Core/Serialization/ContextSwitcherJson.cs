@@ -11,14 +11,19 @@ public static class ContextSwitcherJson
     /// <summary>
     /// Gets the shared serializer options for ContextSwitcher JSON documents.
     /// </summary>
-    public static JsonSerializerOptions Options { get; } = CreateOptions();
+    public static JsonSerializerOptions Options { get; } = CreateOptions(writeIndented: true);
 
-    private static JsonSerializerOptions CreateOptions()
+    /// <summary>
+    /// Gets serializer options for single-line JSON, used for append-only <c>.jsonl</c> files.
+    /// </summary>
+    public static JsonSerializerOptions CompactOptions { get; } = CreateOptions(writeIndented: false);
+
+    private static JsonSerializerOptions CreateOptions(bool writeIndented)
     {
         JsonSerializerOptions options = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true,
+            WriteIndented = writeIndented,
             ReadCommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true
         };
