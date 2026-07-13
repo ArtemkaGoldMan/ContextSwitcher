@@ -1,34 +1,41 @@
 using System.Text;
+using System.Text.Json;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Automation;
+using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
+using ContextSwitcher.Core.Serialization;
 using ContextSwitcher.Infrastructure.AppleScript;
+using ContextSwitcher.Infrastructure.Browser;
 
 namespace ContextSwitcher.Infrastructure.Automation;
 
 /// <summary>
 /// Maps an <see cref="AutomationStepType"/> and its <see cref="AutomationStep.Arguments"/> to real
 /// <see cref="IProcessRunner"/>/<see cref="IScriptRunner"/> calls. Step types not implemented yet
-/// (browser context, Docker, Focus, media - later phases) are reported as <c>Skipped</c> rather
-/// than throwing, so the pipeline stays inspectable end to end even before every phase lands.
+/// (Docker, Focus, media - later phases) are reported as <c>Skipped</c> rather than throwing, so
+/// the pipeline stays inspectable end to end even before every phase lands.
 /// </summary>
 public sealed class AutomationStepExecutor : IAutomationStepExecutor
 {
     private readonly IProcessRunner processRunner;
     private readonly IScriptRunner scriptRunner;
+    private readonly BrowserLauncher browserLauncher;
     private readonly IClock clock;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AutomationStepExecutor"/> class.
     /// </summary>
-    public AutomationStepExecutor(IProcessRunner processRunner, IScriptRunner scriptRunner, IClock clock)
+    public AutomationStepExecutor(IProcessRunner processRunner, IScriptRunner scriptRunner, BrowserLauncher browserLauncher, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(processRunner);
         ArgumentNullException.ThrowIfNull(scriptRunner);
+        ArgumentNullException.ThrowIfNull(browserLauncher);
         ArgumentNullException.ThrowIfNull(clock);
 
         this.processRunner = processRunner;
         this.scriptRunner = scriptRunner;
+        this.browserLauncher = browserLauncher;
         this.clock = clock;
     }
 
@@ -43,6 +50,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
             AutomationStepType.LaunchApplications => this.LaunchApplicationsAsync(step, cancellationToken),
             AutomationStepType.SetTheme => this.SetThemeAsync(step, cancellationToken),
             AutomationStepType.SetWallpaper => this.SetWallpaperAsync(step, cancellationToken),
+            AutomationStepType.ManageBrowserContext => this.ManageBrowserContextAsync(step, cancellationToken),
             _ => NotImplemented(step)
         };
     }
@@ -166,6 +174,34 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         string message = result.ExitCode == 0 ? "Wallpaper updated." : "Could not set wallpaper.";
         return new AutomationResult(
             step.Id, step.Type, status, message, result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
+    }
+
+    private async Task<AutomationResult> ManageBrowserContextAsync(AutomationStep step, CancellationToken cancellationToken)
+    {
+        DateTimeOffset startedAt = this.clock.UtcNow;
+
+        BrowserManagementMode mode = Enum.Parse<BrowserManagementMode>(step.Arguments.GetValueOrDefault("mode", nameof(BrowserManagementMode.None)));
+        BrowserKind browser = Enum.Parse<BrowserKind>(step.Arguments.GetValueOrDefault("browser", nameof(BrowserKind.Default)));
+        string[] urls = SplitArgument(step.Arguments, "urls");
+        string[] tabGroups = SplitArgument(step.Arguments, "tabGroups");
+        bool avoidDuplicateTabs = step.Arguments.GetValueOrDefault("avoidDuplicateTabs") == "True";
+        IReadOnlyList<BrowserProfileConfig> profiles = DeserializeProfiles(step.Arguments.GetValueOrDefault("profilesJson", "[]"));
+
+        BrowserContextRequest request = new(mode, browser, urls, tabGroups, avoidDuplicateTabs, profiles, step.Timeout);
+        BrowserLaunchOutcome outcome = await this.browserLauncher.ManageBrowserContextAsync(request, cancellationToken).ConfigureAwait(false);
+
+        DateTimeOffset completedAt = this.clock.UtcNow;
+        if (outcome.Warnings.Count == 0)
+        {
+            return Succeeded(step, "Browser context managed.", startedAt, completedAt);
+        }
+
+        return Degraded(step, string.Join(' ', outcome.Warnings), standardError: string.Empty, startedAt, completedAt);
+    }
+
+    private static IReadOnlyList<BrowserProfileConfig> DeserializeProfiles(string profilesJson)
+    {
+        return JsonSerializer.Deserialize<IReadOnlyList<BrowserProfileConfig>>(profilesJson, ContextSwitcherJson.CompactOptions) ?? [];
     }
 
     private static Task<AutomationResult> NotImplemented(AutomationStep step)
