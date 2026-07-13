@@ -31,7 +31,7 @@ Non-negotiable product qualities:
 | UI                   | Avalonia UI with Metal/Skia rendering                                     |
 | App Model            | Menu bar app with dropdown dashboard and optional settings windows        |
 | Menu Bar Integration | Avalonia's built-in `TrayIcon` (native `NSStatusBar` on macOS)           |
-| Global Hotkeys       | `SharpHook` (cross-platform global hook via libuiohook; requires macOS Input Monitoring permission) |
+| Global Hotkeys       | `SharpHook` (cross-platform global hook via libuiohook; requires macOS Accessibility permission) |
 | Charts               | `LiveChartsCore.SkiaSharpView.Avalonia` (LiveCharts2's Avalonia renderer) |
 | DI                   | `Microsoft.Extensions.DependencyInjection`                                |
 | Persistence          | Local JSON under `~/.config/ContextSwitcher/`                             |
@@ -1292,7 +1292,7 @@ Command safety:
 Permissions:
 
 - The app may require macOS Automation permission for System Events, Music, Spotify, and app control.
-- The app requires macOS **Input Monitoring** permission for `SharpHook` to create its `CGEventTap`-based global hook; granting Accessibility also satisfies this, but Input Monitoring is the specific entry users will see under System Settings → Privacy & Security. Hotkeys silently do nothing without it, so this must be checked explicitly at startup (`CGPreflightListenEventAccess` equivalent) and after hotkey registration failures.
+- The app requires macOS **Accessibility** permission for `SharpHook` to create its global hook — confirmed via `SharpHook`'s actual API: `SharpHook.Providers.UioHookProvider.Instance.IsAxApiEnabled(promptUserIfDisabled)`, which checks/optionally prompts for the Accessibility grant under System Settings → Privacy & Security → Accessibility. Hotkeys silently do nothing without it (the hook still starts, it just never receives events), so this must be checked explicitly before registering hotkeys, not inferred from an exception.
 - Document Security & Privacy prompts clearly.
 - Detect common permission failures and show remediation.
 
@@ -1391,7 +1391,7 @@ Deliverables:
 
 - `SharpHookHotkeyService`, wrapping a `SharpHook` global hook (`SimpleGlobalHook` or `EventLoopGlobalHook`) to translate configured `accelerator` strings into key/modifier combinations.
 - Hotkey registration and conflict reporting.
-- Startup check for macOS Input Monitoring permission (`SharpHook` requires it to create a global hook); surface a clear remediation message in the dashboard/log if it is missing rather than failing silently.
+- Startup check for macOS Accessibility permission via `UioHookProvider.Instance.IsAxApiEnabled(false)` before registering hotkeys; surface a clear remediation message in the dashboard/log if it is missing rather than failing silently.
 - CLI command router.
 - `switch`, `status`, `list-contexts`, `validate-config`.
 - JSON output mode.
@@ -1400,7 +1400,7 @@ Acceptance criteria:
 
 - Hotkey switches context from another app.
 - CLI switches context from Terminal.
-- App detects missing Input Monitoring permission and reports it instead of the hook silently doing nothing.
+- App detects missing Accessibility permission and reports it instead of the hook silently doing nothing.
 - Shortcuts can call CLI entrypoint.
 
 ### Phase 6: Dashboard V1
@@ -1546,7 +1546,7 @@ README must include a prominent unsigned-app section:
 
 #### Why a self-signed certificate, even without a paid Developer ID
 
-Apple Silicon requires every executable to carry at least an ad-hoc signature to launch at all, and `dotnet publish` applies one automatically. The problem: macOS's permission system (TCC) keys Automation, Input Monitoring, and Accessibility grants to the app's code signature. An ad-hoc signature's identity hash changes on every rebuild, so a plain `dotnet publish` output would force every user to re-grant every permission (needed for AppleScript automation and, from Phase 5 onward, global hotkeys) after every single app update — an unacceptable experience for a project this dependent on automation permissions.
+Apple Silicon requires every executable to carry at least an ad-hoc signature to launch at all, and `dotnet publish` applies one automatically. The problem: macOS's permission system (TCC) keys Automation and Accessibility grants to the app's code signature. An ad-hoc signature's identity hash changes on every rebuild, so a plain `dotnet publish` output would force every user to re-grant every permission (needed for AppleScript automation and, from Phase 5 onward, global hotkeys) after every single app update — an unacceptable experience for a project this dependent on automation permissions.
 
 The fix costs nothing: generate a self-signed code-signing certificate once (Keychain Access → Certificate Assistant → "Code Signing Certificate", or `security create-certificate`), export it, and store it as a GitHub Actions secret (base64-encoded `.p12` + password). In `release.yml`, import it into a temporary CI keychain and run `codesign --force --deep --sign "<self-signed identity>" ContextSwitcher.app` before packaging. This keeps the signing identity — and therefore the user's granted permissions — stable across releases, without paying for or requiring an Apple Developer Program membership. It does not satisfy Gatekeeper/notarization, so the `xattr -cr` quarantine-removal step is still required on first launch.
 
