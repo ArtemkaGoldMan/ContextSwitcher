@@ -1,0 +1,27 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Light">
+      <!-- Semi-opaque neutral surface approximates depth without native blur-behind (agent.md section 11.2). -->
+      <SolidColorBrush x:Key="SurfaceBrush" Color="#F0F2F2F4" />
+      <SolidColorBrush x:Key="SurfaceAltBrush" Color="#FAFAFAFB" />
+      <SolidColorBrush x:Key="BorderBrush" Color="#14000000" />
+      <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FF1D1D1F" />
+      <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FF6E6E73" />
+      <SolidColorBrush x:Key="WarningBrush" Color="#FFB25000" />
+      <SolidColorBrush x:Key="ErrorBrush" Color="#FFD1392B" />
+      <SolidColorBrush x:Key="SuccessBrush" Color="#FF1E8E3E" />
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="Dark">
+      <SolidColorBrush x:Key="SurfaceBrush" Color="#F0242426" />
+      <SolidColorBrush x:Key="SurfaceAltBrush" Color="#FA2C2C2E" />
+      <SolidColorBrush x:Key="BorderBrush" Color="#1AFFFFFF" />
+      <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFF5F5F7" />
+      <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FFA1A1A6" />
+      <SolidColorBrush x:Key="WarningBrush" Color="#FFFFA033" />
+      <SolidColorBrush x:Key="ErrorBrush" Color="#FFFF6961" />
+      <SolidColorBrush x:Key="SuccessBrush" Color="#FF4CD964" />
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

@@ -37,6 +37,13 @@ public sealed class ConfigPaths
     public string AnalyticsLogPath => Path.Combine(BaseDirectory, "analytics.jsonl");
 
     /// <summary>
+    /// Gets the path to the marker for the currently in-progress analytics session, used to detect
+    /// and recover a session left open by a crash (section 6.3). Absent during normal operation
+    /// except while a session is actively open; deleted as soon as that session ends cleanly.
+    /// </summary>
+    public string AnalyticsMarkerPath => Path.Combine(BaseDirectory, "analytics.current.json");
+
+    /// <summary>
     /// Gets the path to the append-only application log.
     /// </summary>
     public string AppLogPath => Path.Combine(BaseDirectory, "app.log.jsonl");

@@ -32,7 +32,7 @@ Non-negotiable product qualities:
 | App Model            | Menu bar app with dropdown dashboard and optional settings windows        |
 | Menu Bar Integration | Avalonia's built-in `TrayIcon` (native `NSStatusBar` on macOS)           |
 | Global Hotkeys       | `SharpHook` (cross-platform global hook via libuiohook; requires macOS Accessibility permission) |
-| Charts               | `LiveChartsCore.SkiaSharpView.Avalonia` (LiveCharts2's Avalonia renderer) |
+| Charts               | `LiveChartsCore.SkiaSharpView.Avalonia`, pinned to `2.1.0-dev-798` (see note below) |
 | DI                   | `Microsoft.Extensions.DependencyInjection`                                |
 | Persistence          | Local JSON under `~/.config/ContextSwitcher/`                             |
 | Scripts              | `osascript`, `open`, `shortcuts`, `docker`, app-specific CLIs             |
@@ -43,6 +43,8 @@ Non-negotiable product qualities:
 Do not introduce a database, web server, telemetry platform, Electron shell, cloud synchronization, or paid licensing gate unless explicitly approved in a later specification.
 
 `H.NotifyIcon.Avalonia` is a WPF/Windows-oriented package and is not used; Avalonia's built-in `TrayIcon` already covers the menu bar icon cross-platform, including macOS's `NSStatusBar`. Likewise, Win32-hotkey packages (`RegisterHotKey`-style libraries) do not work on macOS; `SharpHook` is used instead because it wraps `libuiohook` and supports Windows, macOS, and Linux (X11) from one API.
+
+`LiveChartsCore.SkiaSharpView.Avalonia`'s latest stable release (`2.0.5`) targets Avalonia 11 and throws `MissingFieldException` at runtime (`Avalonia.Input.Gestures.PinchEvent`) when loaded against Avalonia 12 — a real binary-compat break, confirmed by actually running the app, not just a compile-time check. The `2.1.0-dev-798` prerelease targets `Avalonia 12.0.0` and resolves this. It is a dev/CI build, not a tagged stable release, so re-check for a stable Avalonia-12-compatible release before every LiveCharts2 or Avalonia upgrade, and re-verify by actually launching the dashboard (not just building) after any package bump in this area.
 
 ## 3. Repository Layout
 
@@ -297,6 +299,7 @@ Files:
   settings.json
   state.json
   analytics.jsonl
+  analytics.current.json
   app.log.jsonl
   license.json
   backups/
@@ -520,6 +523,14 @@ Session rules:
 - Close the previous session before switching to a new context.
 - If the app crashed, close the stale session on next launch with `endReason: "RecoveredAfterCrash"`.
 - Do not track active window titles, URLs visited, keystrokes, screenshots, or application usage beyond selected context duration.
+
+Crash detection uses a small separate marker file, `analytics.current.json`, containing the
+in-progress session (same shape as one `analytics.jsonl` entry, minus `endedAt`/`durationSeconds`/
+`endReason`). It is written when a session starts and deleted the moment that session ends cleanly.
+On startup, if it still exists, its session never got a clean end — append it to `analytics.jsonl`
+with `endReason: "RecoveredAfterCrash"` and `endedAt` set to the current time, then delete the
+marker. This keeps `analytics.jsonl` itself append-only (one entry per completed session, as
+written above) without needing to rewrite already-written lines to close them out.
 
 ### 6.4 `app.log.jsonl`
 
@@ -1116,30 +1127,84 @@ Shortcuts integration:
 
 ### 11.1 Interaction Model
 
-Primary UI is a dropdown mini-window from the menu bar icon.
+Two windows, not one: a small **Dashboard popover** anchored under the menu bar icon for
+day-to-day switching, and a separate **Main App window** for managing profiles, app-level
+settings, and stats. The Dashboard is where you live during normal use; the Main App is where you
+configure things. ("Profile" here is the user-facing name for what the rest of this document and
+the codebase call a "context" — same underlying `ContextDefinition`, friendlier label in the UI.)
 
-Dashboard contents:
+#### 11.1.1 Dashboard popover (small window)
+
+Opens from the menu bar icon (click, with the "Open Dashboard" native menu item as the reliable
+fallback per section 4.3's App rules).
+
+Contents, top to bottom:
 
 - Current context header with name, icon, accent color, and elapsed time.
+- A row of compact icon actions (e.g. quick toggles, refresh) - kept small and secondary to the
+  switch buttons, not competing with them for attention.
 - Two or more context switch buttons.
 - Switch progress state with current step.
 - Warnings panel for last switch.
 - Quick links for active context.
 - Rapid notes for active context.
-- Work-life balance chart.
-- Settings button.
-- Support the developer button (footer, opens the donation link; a plain link-out, never a gate on any feature).
-- Quit button behind a secondary menu or footer action.
+- Work-life balance chart (last 7 days).
+- Footer: **Open App** button (opens the Main App window, section 11.1.2), Support the developer
+  button (plain link-out, never a gate on any feature), Quit behind a secondary menu or footer
+  action.
 
-Settings window contents:
+#### 11.1.2 Main App window (multi-page)
 
-- Context list.
-- Per-context app closing/launching configuration.
-- Browser profile configuration.
-- Hotkey editor.
-- Automation permissions status.
-- Analytics retention toggle.
+Opened from the Dashboard's **Open App** button. A normal resizable window (860 x 620 default, see
+11.2) with a persistent left-hand page navigation: **Profiles**, **Settings**, **Stats**.
+
+**Profiles page** (default page on open):
+
+- List of all configured profiles (contexts), each showing name, icon, accent color.
+- Clicking a profile activates it - the same switch pipeline the Dashboard's switch buttons use.
+- A per-profile **Edit** action opens that profile's **Setup** (below), kept visually separate from
+  activating it - e.g. a pencil/gear icon per row - so "switch to this" and "edit this" can't be
+  triggered by the same click.
+- **Add new profile** button - creates a new context with sensible defaults and opens its Setup
+  immediately so it's never left half-configured.
+- Delete/duplicate profile actions (secondary, e.g. behind a row context menu).
+
+**Profile Setup** (editor for one profile, reachable only from the Profiles page):
+
+- Identity: display name, menu bar label, icon, accent color.
+- Apps: a single list of apps for this profile. Each app row has two independent toggles -
+  **Launch when entering** and **Close when leaving** - rather than maintaining `launchApps` and
+  `closeApps` as separate lists in the UI. The on-disk schema (section 6.1) is unchanged; this is
+  purely a friendlier editing surface over the same two flat lists.
+- Browser management: mode (URLs / tab groups / profiles / none), URLs, tab groups, browser
+  profiles, avoid-duplicate-tabs toggle - matching `browser_management` exactly (section 6.1).
+- Theme, wallpaper, Focus mode, media (player, playlist, autoplay), Docker start/stop lists.
+- Quick links and notes editors (add/remove rows).
+- Switch policy: which step categories are critical for this profile, continue-on-non-critical-
+  failure toggle.
+- A hotkey assignment for this profile lives here too (accelerator field), even though the
+  underlying `hotkeys[]` list in `settings.json` is app-level, not nested under the context - the
+  Setup page just filters/writes the entries whose `contextId` matches this profile.
+
+**Settings page** (app-level, not per-profile):
+
+- Default switch timeout, show-Dock-icon toggle.
+- Automation permissions status (Automation + Accessibility, see `docs/automation-permissions.md`)
+  with remediation links.
+- Analytics enabled toggle and retention (days).
 - Support the developer / cosmetic unlocks section.
+- A read-only or advanced view of the full hotkey list across all profiles, for when you want to
+  see everything at once rather than profile-by-profile.
+
+**Stats page**:
+
+- The full-size version of the Dashboard's balance chart - longer date ranges (week/month), a
+  per-context breakdown, not just the last 7 days.
+- Backed by the same `IAnalyticsService.GetDailyBalanceAsync` the Dashboard's mini chart uses, with
+  a larger `days` parameter and a date-range picker.
+
+This supersedes the placeholder `SettingsWindow` from Phase 6 (a single static page saying "not
+built yet") - see Phase 11 in the roadmap (section 14) for building this out.
 
 ### 11.2 Visual Design
 
@@ -1150,6 +1215,8 @@ Design language:
 - No landing-page composition inside the app.
 - No decorative cards nested inside other cards.
 - Use compact panels, clear section labels, and direct controls.
+- Modern, not skeuomorphic: flat neutral surfaces, generous spacing, an accent color used sparingly, soft corner radii. No native macOS blur-behind ("Liquid Glass" / vibrancy) — Avalonia's `TransparencyLevelHint` does not reliably support blur on macOS (`Blur`/`AcrylicBlur` are documented as non-functional there), and a custom `NSVisualEffectView` interop layer is not worth the platform-specific fragility for this app. Approximate depth instead with a semi-opaque neutral surface color (roughly 92-96% opaque, not fully solid), a subtle 1px border, and the window's native drop shadow — not a literal blurred background.
+- The Dashboard is a borderless popover anchored below the tray icon (like Control Center or a standard menu bar dropdown), not a centered window. Position it using the click location / tray icon's screen coordinates at open time.
 
 Window dimensions:
 
@@ -1482,6 +1549,36 @@ Acceptance criteria:
 - App is fully functional without license.
 - Invalid license never blocks context switching.
 - Donation copy is honest and unobtrusive.
+
+### Phase 11: Main App Window (Profiles, Settings, Stats)
+
+Replaces the Phase 6 `SettingsWindow` placeholder with the real multi-page management window
+described in section 11.1.2.
+
+Deliverables:
+
+- `MainAppWindow` (or renamed `SettingsWindow`) with left-hand page navigation: Profiles, Settings, Stats.
+- Profiles page: list, activate-on-click, per-row Edit action, Add new profile, delete/duplicate.
+- Profile Setup editor covering every `ContextDefinition` field: identity, apps (with the
+  launch-on-enter/close-on-leave dual-toggle UI over the existing `launchApps`/`closeApps` lists),
+  browser management, theme, wallpaper, Focus, media, Docker, quick links, notes, switch policy,
+  and this profile's hotkey.
+- Settings page: default switch timeout, show-Dock-icon, automation permissions status with
+  remediation links, analytics enabled/retention, support/cosmetic section, full cross-profile
+  hotkey list.
+- Stats page: longer-range balance chart (week/month) with a per-context breakdown and date-range
+  picker, built on the existing `IAnalyticsService.GetDailyBalanceAsync`.
+- Dashboard's "Open App" button (renamed from "Settings") opens this window to the Profiles page.
+
+Acceptance criteria:
+
+- Every field in `ContextDefinition` and `AppConfiguration` is editable from this window - no
+  setting requires hand-editing `settings.json` for normal use.
+- Adding, editing, and deleting a profile round-trips correctly to `settings.json` (atomic write,
+  passes `ConfigurationValidator`).
+- Editing the active profile's config and saving is reflected on the Dashboard without restarting
+  the app.
+- Stats page renders real data for date ranges beyond the Dashboard's fixed 7 days.
 
 ## 15. CI/CD Specification
 

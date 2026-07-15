@@ -141,7 +141,7 @@ public sealed class ContextSwitchServiceTests
         FakeAutomationStepExecutor executor = new();
         FakeClock clock = new();
         TestLogger logger = new();
-        AnalyticsService analytics = new(clock);
+        AnalyticsService analytics = new(clock, new InMemoryAnalyticsSessionStore());
         AutomationPlanBuilder planBuilder = new();
 
         ContextSwitchService service = new(

@@ -12,7 +12,7 @@ TestResults/
 ## Build output
 *.nupkg
 *.snupkg
-*.app/
+/*.app/
 *.dmg
 *.pkg
 

@@ -13,8 +13,8 @@ namespace ContextSwitcher.Infrastructure.Automation;
 /// <summary>
 /// Maps an <see cref="AutomationStepType"/> and its <see cref="AutomationStep.Arguments"/> to real
 /// <see cref="IProcessRunner"/>/<see cref="IScriptRunner"/> calls. Step types not implemented yet
-/// (Docker, Focus, media - later phases) are reported as <c>Skipped</c> rather than throwing, so
-/// the pipeline stays inspectable end to end even before every phase lands.
+/// (open-links, write-state, analytics-boundary steps never appear in the built plan) are reported
+/// as <c>Skipped</c> rather than throwing, so the pipeline stays inspectable end to end.
 /// </summary>
 public sealed class AutomationStepExecutor : IAutomationStepExecutor
 {
@@ -51,6 +51,10 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
             AutomationStepType.SetTheme => this.SetThemeAsync(step, cancellationToken),
             AutomationStepType.SetWallpaper => this.SetWallpaperAsync(step, cancellationToken),
             AutomationStepType.ManageBrowserContext => this.ManageBrowserContextAsync(step, cancellationToken),
+            AutomationStepType.StartDockerResources => this.RunDockerCommandAsync(step, "start", cancellationToken),
+            AutomationStepType.StopDockerResources => this.RunDockerCommandAsync(step, "stop", cancellationToken),
+            AutomationStepType.ControlMedia => this.ControlMediaAsync(step, cancellationToken),
+            AutomationStepType.SetFocusMode => this.SetFocusModeAsync(step, cancellationToken),
             _ => NotImplemented(step)
         };
     }
@@ -197,6 +201,118 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         }
 
         return Degraded(step, string.Join(' ', outcome.Warnings), standardError: string.Empty, startedAt, completedAt);
+    }
+
+    private async Task<AutomationResult> RunDockerCommandAsync(AutomationStep step, string dockerCommand, CancellationToken cancellationToken)
+    {
+        DateTimeOffset startedAt = this.clock.UtcNow;
+        string[] containers = SplitArgument(step.Arguments, "containers");
+
+        List<string> arguments = [dockerCommand, .. containers];
+        ProcessResult result = await this.processRunner
+            .RunAsync(new ProcessStartOptions("docker", arguments, step.Timeout), cancellationToken)
+            .ConfigureAwait(false);
+        DateTimeOffset completedAt = this.clock.UtcNow;
+
+        if (result.ExitCode == 0)
+        {
+            return Succeeded(step, $"Docker containers {dockerCommand}ed.", startedAt, completedAt);
+        }
+
+        AutomationResultStatus status = step.IsCritical ? AutomationResultStatus.Failed : AutomationResultStatus.Warning;
+        return new AutomationResult(
+            step.Id, step.Type, status, $"Could not {dockerCommand} containers: {string.Join(", ", containers)}.",
+            result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
+    }
+
+    private async Task<AutomationResult> ControlMediaAsync(AutomationStep step, CancellationToken cancellationToken)
+    {
+        DateTimeOffset startedAt = this.clock.UtcNow;
+        string player = step.Arguments.GetValueOrDefault("player", nameof(MediaPlayerKind.None));
+        string playlist = step.Arguments.GetValueOrDefault("playlist", string.Empty);
+        bool autoPlay = step.Arguments.GetValueOrDefault("autoPlay") == "True";
+
+        if (!autoPlay)
+        {
+            return Succeeded(step, "Auto-play disabled; media not started.", startedAt, this.clock.UtcNow);
+        }
+
+        if (string.IsNullOrWhiteSpace(playlist))
+        {
+            return new AutomationResult(
+                step.Id, step.Type, AutomationResultStatus.Warning, "No playlist configured.",
+                null, null, null, startedAt, this.clock.UtcNow);
+        }
+
+        return player switch
+        {
+            nameof(MediaPlayerKind.AppleMusic) => await this.PlayAppleMusicAsync(step, playlist, startedAt, cancellationToken).ConfigureAwait(false),
+            nameof(MediaPlayerKind.Spotify) => await this.PlaySpotifyAsync(step, playlist, startedAt, cancellationToken).ConfigureAwait(false),
+            _ => Succeeded(step, "No media player configured.", startedAt, this.clock.UtcNow)
+        };
+    }
+
+    private async Task<AutomationResult> PlayAppleMusicAsync(AutomationStep step, string playlist, DateTimeOffset startedAt, CancellationToken cancellationToken)
+    {
+        ProcessResult result = await this.scriptRunner
+            .RunAsync(AppleScriptBuilder.PlayAppleMusicPlaylist(playlist), step.Timeout, cancellationToken)
+            .ConfigureAwait(false);
+        DateTimeOffset completedAt = this.clock.UtcNow;
+
+        if (result.ExitCode == 0)
+        {
+            return Succeeded(step, "Apple Music playlist started.", startedAt, completedAt);
+        }
+
+        AutomationResultStatus status = step.IsCritical ? AutomationResultStatus.Failed : AutomationResultStatus.Warning;
+        return new AutomationResult(
+            step.Id, step.Type, status, $"Could not play Apple Music playlist '{playlist}'.",
+            result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
+    }
+
+    private async Task<AutomationResult> PlaySpotifyAsync(AutomationStep step, string playlist, DateTimeOffset startedAt, CancellationToken cancellationToken)
+    {
+        ProcessResult result = await this.scriptRunner
+            .RunAsync(AppleScriptBuilder.PlaySpotify(playlist), step.Timeout, cancellationToken)
+            .ConfigureAwait(false);
+        DateTimeOffset completedAt = this.clock.UtcNow;
+
+        if (result.ExitCode == 0)
+        {
+            return Succeeded(step, "Spotify playback started.", startedAt, completedAt);
+        }
+
+        // Spotify automation failures are always non-critical (section 9.10), regardless of step.IsCritical.
+        return new AutomationResult(
+            step.Id, step.Type, AutomationResultStatus.Warning, $"Could not start Spotify playback for '{playlist}'.",
+            result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
+    }
+
+    private async Task<AutomationResult> SetFocusModeAsync(AutomationStep step, CancellationToken cancellationToken)
+    {
+        DateTimeOffset startedAt = this.clock.UtcNow;
+        bool enabled = step.Arguments.GetValueOrDefault("enabled") == "True";
+        string modeName = step.Arguments.GetValueOrDefault("modeName", string.Empty);
+
+        string shortcutName = enabled && !string.IsNullOrWhiteSpace(modeName)
+            ? $"ContextSwitcher - Focus {modeName}"
+            : "ContextSwitcher - Focus Off";
+
+        ProcessResult result = await this.processRunner
+            .RunAsync(new ProcessStartOptions("shortcuts", ["run", shortcutName], step.Timeout), cancellationToken)
+            .ConfigureAwait(false);
+        DateTimeOffset completedAt = this.clock.UtcNow;
+
+        if (result.ExitCode == 0)
+        {
+            return Succeeded(step, $"Ran Shortcut '{shortcutName}'.", startedAt, completedAt);
+        }
+
+        AutomationResultStatus status = step.IsCritical ? AutomationResultStatus.Failed : AutomationResultStatus.Warning;
+        return new AutomationResult(
+            step.Id, step.Type, status,
+            $"Could not run Shortcut '{shortcutName}'. Create it in the Shortcuts app (see docs/shortcuts-integration.md) or check Shortcuts permissions.",
+            result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
     }
 
     private static IReadOnlyList<BrowserProfileConfig> DeserializeProfiles(string profilesJson)

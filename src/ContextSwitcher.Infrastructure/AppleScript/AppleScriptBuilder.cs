@@ -147,4 +147,30 @@ public static class AppleScriptBuilder
             "    end try",
             "end tell");
     }
+
+    /// <summary>
+    /// Builds a script that plays a named Apple Music playlist (section 9.9).
+    /// </summary>
+    public static string PlayAppleMusicPlaylist(string playlist)
+    {
+        string escaped = EscapeStringLiteral(playlist);
+        return $"tell application \"Music\" to play playlist \"{escaped}\"";
+    }
+
+    /// <summary>
+    /// Builds a script that plays a Spotify URI, or best-effort attempts a plain playlist/track
+    /// name (section 9.10). Spotify's scripting dictionary expects a URI for reliable playback;
+    /// plain names are unsupported per the spec and may simply fail, which callers treat as a
+    /// non-critical warning.
+    /// </summary>
+    public static string PlaySpotify(string uriOrName)
+    {
+        string escaped = EscapeStringLiteral(uriOrName);
+        return string.Join(
+            '\n',
+            "tell application \"Spotify\"",
+            "    activate",
+            $"    play track \"{escaped}\"",
+            "end tell");
+    }
 }

@@ -183,12 +183,159 @@ public sealed class AutomationStepExecutorTests
     {
         AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), new FakeScriptRunner(), new FakeClock());
         AutomationStep step = new(
-            "StartDockerResources.work", AutomationStepType.StartDockerResources, "Start Docker resources", false,
-            TimeSpan.FromSeconds(45), new Dictionary<string, string>());
+            "OpenUrls.work", AutomationStepType.OpenUrls, "Open urls", false,
+            TimeSpan.FromSeconds(10), new Dictionary<string, string>());
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
         Assert.Equal(AutomationResultStatus.Skipped, result.Status);
+    }
+
+    [Theory]
+    [InlineData(AutomationStepType.StartDockerResources, "start")]
+    [InlineData(AutomationStepType.StopDockerResources, "stop")]
+    public async Task ExecuteAsyncDockerCommandsCallDockerWithCommandAndContainers(AutomationStepType type, string expectedCommand)
+    {
+        FakeProcessRunner processRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+        AutomationStep step = new(
+            $"{type}.work", type, "Docker", false, TimeSpan.FromSeconds(45),
+            new Dictionary<string, string> { ["containers"] = "postgres-work,redis-work" });
+
+        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
+        ProcessStartOptions call = Assert.Single(processRunner.Calls);
+        Assert.Equal("docker", call.FileName);
+        Assert.Equal([expectedCommand, "postgres-work", "redis-work"], call.Arguments);
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncDockerCommandFailsWhenCriticalAndDockerUnavailable()
+    {
+        FakeProcessRunner processRunner = new();
+        processRunner.Enqueue(new ProcessResult(1, string.Empty, "docker: command not found", false));
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+        AutomationStep step = new(
+            "StopDockerResources.work", AutomationStepType.StopDockerResources, "Docker", true, TimeSpan.FromSeconds(45),
+            new Dictionary<string, string> { ["containers"] = "redis-work" });
+
+        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Failed, result.Status);
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncControlMediaSkipsWhenAutoPlayDisabled()
+    {
+        FakeScriptRunner scriptRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
+        AutomationStep step = MediaStep(player: "AppleMusic", playlist: "Deep Focus", autoPlay: false, isCritical: false);
+
+        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
+        Assert.Empty(scriptRunner.Scripts);
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncControlMediaWarnsWhenPlaylistMissing()
+    {
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), new FakeScriptRunner(), new FakeClock());
+        AutomationStep step = MediaStep(player: "AppleMusic", playlist: "", autoPlay: true, isCritical: false);
+
+        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Warning, result.Status);
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncControlMediaPlaysAppleMusicPlaylist()
+    {
+        FakeScriptRunner scriptRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
+        AutomationStep step = MediaStep(player: "AppleMusic", playlist: "Deep Focus", autoPlay: true, isCritical: false);
+
+        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
+        Assert.Contains("Music", Assert.Single(scriptRunner.Scripts));
+        Assert.Contains("Deep Focus", Assert.Single(scriptRunner.Scripts));
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncControlMediaSpotifyFailureIsAlwaysWarningEvenWhenCritical()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "spotify error", false));
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
+        AutomationStep step = MediaStep(player: "Spotify", playlist: "spotify:playlist:abc", autoPlay: true, isCritical: true);
+
+        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Warning, result.Status);
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncSetFocusModeRunsFocusShortcutWhenEnabled()
+    {
+        FakeProcessRunner processRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+        AutomationStep step = FocusStep(enabled: true, modeName: "Work", isCritical: false);
+
+        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
+        ProcessStartOptions call = Assert.Single(processRunner.Calls);
+        Assert.Equal("shortcuts", call.FileName);
+        Assert.Equal(["run", "ContextSwitcher - Focus Work"], call.Arguments);
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncSetFocusModeRunsFocusOffShortcutWhenDisabled()
+    {
+        FakeProcessRunner processRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+        AutomationStep step = FocusStep(enabled: false, modeName: string.Empty, isCritical: false);
+
+        await executor.ExecuteAsync(step, CancellationToken.None);
+
+        ProcessStartOptions call = Assert.Single(processRunner.Calls);
+        Assert.Equal(["run", "ContextSwitcher - Focus Off"], call.Arguments);
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncSetFocusModeFailsWhenCriticalAndShortcutMissing()
+    {
+        FakeProcessRunner processRunner = new();
+        processRunner.Enqueue(new ProcessResult(1, string.Empty, "No shortcut named...", false));
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+        AutomationStep step = FocusStep(enabled: true, modeName: "Work", isCritical: true);
+
+        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Failed, result.Status);
+    }
+
+    private static AutomationStep MediaStep(string player, string playlist, bool autoPlay, bool isCritical)
+    {
+        Dictionary<string, string> arguments = new()
+        {
+            ["player"] = player,
+            ["playlist"] = playlist,
+            ["autoPlay"] = autoPlay ? "True" : "False"
+        };
+        return new AutomationStep("ControlMedia.work", AutomationStepType.ControlMedia, "Control media", isCritical, TimeSpan.FromSeconds(8), arguments);
+    }
+
+    private static AutomationStep FocusStep(bool enabled, string modeName, bool isCritical)
+    {
+        Dictionary<string, string> arguments = new()
+        {
+            ["enabled"] = enabled ? "True" : "False",
+            ["modeName"] = modeName
+        };
+        return new AutomationStep("SetFocusMode.work", AutomationStepType.SetFocusMode, "Set Focus mode", isCritical, TimeSpan.FromSeconds(10), arguments);
     }
 
     private static AutomationStepExecutor CreateExecutor(FakeProcessRunner processRunner, FakeScriptRunner scriptRunner, FakeClock clock)
