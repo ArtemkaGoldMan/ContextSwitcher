@@ -1,13 +1,15 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App.Views;
 
 public sealed partial class DashboardWindow : Window
 {
     private DashboardViewModel? viewModel;
-    private SettingsWindow? settingsWindow;
+    private MainAppWindow? mainAppWindow;
 
     public DashboardWindow()
     {
@@ -19,27 +21,28 @@ public sealed partial class DashboardWindow : Window
     {
         this.viewModel = viewModel;
         DataContext = viewModel;
-        viewModel.OpenSettingsRequested += this.OnOpenSettingsRequested;
+        viewModel.OpenAppRequested += this.OnOpenAppRequested;
         this.Closed += this.OnClosed;
     }
 
-    private void OnOpenSettingsRequested(object? sender, EventArgs e)
+    private void OnOpenAppRequested(object? sender, EventArgs e)
     {
-        if (this.settingsWindow is null)
+        if (this.mainAppWindow is null)
         {
-            this.settingsWindow = new SettingsWindow();
-            this.settingsWindow.Closed += (_, _) => this.settingsWindow = null;
+            MainAppViewModel mainAppViewModel = AppHost.Services.GetRequiredService<MainAppViewModel>();
+            this.mainAppWindow = new MainAppWindow(mainAppViewModel);
+            this.mainAppWindow.Closed += (_, _) => this.mainAppWindow = null;
         }
 
-        this.settingsWindow.Show();
-        this.settingsWindow.Activate();
+        this.mainAppWindow.Show();
+        this.mainAppWindow.Activate();
     }
 
     private void OnClosed(object? sender, EventArgs e)
     {
         if (this.viewModel is not null)
         {
-            this.viewModel.OpenSettingsRequested -= this.OnOpenSettingsRequested;
+            this.viewModel.OpenAppRequested -= this.OnOpenAppRequested;
             this.viewModel.Dispose();
             this.viewModel = null;
         }

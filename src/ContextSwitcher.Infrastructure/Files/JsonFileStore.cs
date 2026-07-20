@@ -109,6 +109,29 @@ public sealed class JsonFileStore : IJsonStore
         }
     }
 
+    /// <summary>
+    /// Copies the file at <paramref name="path"/> into <paramref name="backupDirectory"/> with a
+    /// timestamped name. No-ops if the source file does not exist yet.
+    /// </summary>
+    public Task BackupAsync(string path, string backupDirectory, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ArgumentException.ThrowIfNullOrWhiteSpace(backupDirectory);
+
+        if (!File.Exists(path))
+        {
+            return Task.CompletedTask;
+        }
+
+        Directory.CreateDirectory(backupDirectory);
+
+        string timestamp = DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH-mm-ssZ");
+        string backupPath = Path.Combine(backupDirectory, $"{Path.GetFileNameWithoutExtension(path)}.{timestamp}{Path.GetExtension(path)}");
+        File.Copy(path, backupPath, overwrite: true);
+
+        return Task.CompletedTask;
+    }
+
     private static void QuarantineCorruptFile(string path)
     {
         string timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMddTHHmmssfffZ");

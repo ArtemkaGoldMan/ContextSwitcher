@@ -126,7 +126,7 @@
 
       <!-- Footer -->
       <StackPanel Orientation="Horizontal" Spacing="12">
-        <Button Classes="linkButton" Command="{Binding OpenSettingsCommand}" Content="Settings" />
+        <Button Classes="linkButton" Command="{Binding OpenAppCommand}" Content="Open App" />
         <Button Classes="linkButton" Command="{Binding SupportDeveloperCommand}" Content="Support the developer" />
       </StackPanel>
     </StackPanel>

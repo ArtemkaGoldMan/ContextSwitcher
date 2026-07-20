@@ -24,4 +24,14 @@ public interface IJsonStore
     /// <param name="cancellationToken">A token that can cancel the write.</param>
     Task WriteAsync<T>(string path, T value, CancellationToken cancellationToken = default)
         where T : class;
+
+    /// <summary>
+    /// Copies the file at <paramref name="path"/> into <paramref name="backupDirectory"/> with a
+    /// timestamped name, if it exists. Used to keep a backup before overwriting <c>settings.json</c>
+    /// from the UI (agent.md section 6).
+    /// </summary>
+    /// <param name="path">The file to back up.</param>
+    /// <param name="backupDirectory">The directory to copy the backup into.</param>
+    /// <param name="cancellationToken">A token that can cancel the operation.</param>
+    Task BackupAsync(string path, string backupDirectory, CancellationToken cancellationToken = default);
 }

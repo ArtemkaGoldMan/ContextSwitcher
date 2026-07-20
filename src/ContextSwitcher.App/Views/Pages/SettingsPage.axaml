@@ -1,0 +1,93 @@
+<UserControl
+  x:Class="ContextSwitcher.App.Views.Pages.SettingsPage"
+  xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:vm="using:ContextSwitcher.App.ViewModels"
+  x:DataType="vm:SettingsViewModel">
+  <StackPanel Spacing="16">
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBlock Grid.Column="0" Text="Settings" Classes="header" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Classes="switchContext current" Content="Save" Command="{Binding SaveCommand}" />
+    </Grid>
+
+    <TextBlock
+      Text="{Binding ErrorMessage}"
+      Classes="caption"
+      Foreground="{DynamicResource ErrorBrush}"
+      TextWrapping="Wrap"
+      IsVisible="{Binding HasErrorMessage}" />
+
+    <!-- General -->
+    <Border Classes="panel">
+      <StackPanel Spacing="8">
+        <TextBlock Text="GENERAL" Classes="sectionTitle" />
+        <Grid ColumnDefinitions="220,*">
+          <TextBlock Grid.Column="0" Text="Default switch timeout (seconds)" Classes="body" VerticalAlignment="Center" />
+          <TextBox Grid.Column="1" Text="{Binding DefaultSwitchTimeoutSecondsText}" Width="100" HorizontalAlignment="Left" />
+        </Grid>
+        <ToggleSwitch IsChecked="{Binding ShowDockIcon}" OnContent="Show Dock icon" OffContent="Show Dock icon" />
+        <TextBlock Text="Takes effect the next time Context Switcher starts." Classes="caption" />
+      </StackPanel>
+    </Border>
+
+    <!-- Permissions -->
+    <Border Classes="panel">
+      <StackPanel Spacing="8">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Grid.Column="0" Text="AUTOMATION PERMISSIONS" Classes="sectionTitle" VerticalAlignment="Center" />
+          <Button Grid.Column="1" Classes="linkButton" Content="Refresh" Command="{Binding RefreshPermissionsCommand}" />
+        </Grid>
+
+        <Grid ColumnDefinitions="160,Auto,*" RowDefinitions="Auto,Auto">
+          <TextBlock Grid.Row="0" Grid.Column="0" Text="Accessibility (hotkeys)" Classes="body" VerticalAlignment="Center" />
+          <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AccessibilityGranted}" Classes="body" VerticalAlignment="Center" Margin="0,0,8,0" />
+          <Button Grid.Row="0" Grid.Column="2" Classes="linkButton" Content="Open System Settings" Command="{Binding OpenAccessibilitySettingsCommand}" HorizontalAlignment="Left" />
+
+          <TextBlock Grid.Row="1" Grid.Column="0" Text="Automation (AppleScript)" Classes="body" VerticalAlignment="Center" Margin="0,6,0,0" />
+          <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AutomationGranted}" Classes="body" VerticalAlignment="Center" Margin="0,6,8,0" />
+          <Button Grid.Row="1" Grid.Column="2" Classes="linkButton" Content="Open System Settings" Command="{Binding OpenAutomationSettingsCommand}" HorizontalAlignment="Left" Margin="0,6,0,0" />
+        </Grid>
+        <TextBlock Text="See docs/automation-permissions.md for what each permission is used for." Classes="caption" />
+      </StackPanel>
+    </Border>
+
+    <!-- Analytics -->
+    <Border Classes="panel">
+      <StackPanel Spacing="8">
+        <TextBlock Text="ANALYTICS" Classes="sectionTitle" />
+        <ToggleSwitch IsChecked="{Binding AnalyticsEnabled}" OnContent="Track context time locally" OffContent="Track context time locally" />
+        <Grid ColumnDefinitions="160,*">
+          <TextBlock Grid.Column="0" Text="Retention (days)" Classes="body" VerticalAlignment="Center" />
+          <TextBox Grid.Column="1" Text="{Binding AnalyticsRetentionDaysText}" Width="100" HorizontalAlignment="Left" IsEnabled="{Binding AnalyticsEnabled}" />
+        </Grid>
+      </StackPanel>
+    </Border>
+
+    <!-- Support -->
+    <Border Classes="panel">
+      <StackPanel Spacing="8">
+        <TextBlock Text="SUPPORT" Classes="sectionTitle" />
+        <Button Classes="linkButton" Content="Support the developer" Command="{Binding SupportDeveloperCommand}" />
+      </StackPanel>
+    </Border>
+
+    <!-- Hotkeys -->
+    <Border Classes="panel">
+      <StackPanel Spacing="8">
+        <TextBlock Text="ALL HOTKEYS" Classes="sectionTitle" />
+        <TextBlock Text="Edit a hotkey from its profile's Setup page." Classes="caption" />
+        <ItemsControl ItemsSource="{Binding Hotkeys}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:HotkeyRowViewModel">
+              <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,2">
+                <TextBlock Grid.Column="0" Text="{Binding ContextDisplayName}" Classes="body" />
+                <TextBlock Grid.Column="1" Text="{Binding Accelerator}" Classes="body" Margin="0,0,12,0" />
+                <TextBlock Grid.Column="2" Text="{Binding Enabled}" Classes="caption" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>

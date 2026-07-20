@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ContextSwitcher.Core\ContextSwitcher.Core.csproj" />
     <ProjectReference Include="..\ContextSwitcher.Infrastructure\ContextSwitcher.Infrastructure.csproj" />
+    <ProjectReference Include="..\ContextSwitcher.App\ContextSwitcher.App.csproj" />
   </ItemGroup>
 
 </Project>

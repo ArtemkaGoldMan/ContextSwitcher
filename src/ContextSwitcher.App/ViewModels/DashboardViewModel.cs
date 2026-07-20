@@ -1,4 +1,3 @@
-using Avalonia.Media;
 using Avalonia.Threading;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
@@ -11,8 +10,6 @@ using ContextSwitcher.Infrastructure.Files;
 using LiveChartsCore;
 using LiveChartsCore.Kernel.Sketches;
 using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
-using SkiaSharp;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -43,6 +40,8 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     private DateTimeOffset? activeSince;
     private IReadOnlyList<ISeries> balanceSeries = [];
     private IReadOnlyList<ICartesianAxis> balanceXAxes = [new Axis()];
+    private IReadOnlyList<SwitchButtonViewModel> switchButtons = [];
+    private IReadOnlyList<string> configurationWarnings = [];
 
     public DashboardViewModel(
         IContextSwitchService switchService,
@@ -59,42 +58,51 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         this.configPaths = configPaths;
         this.clock = clock;
 
-        this.SwitchButtons = AppHost.Configuration.Contexts
-            .Select(context => new SwitchButtonViewModel(
-                context.Id,
-                context.DisplayName,
-                context.AccentColor,
-                new AsyncRelayCommand(() => this.SwitchToAsync(context.Id), () => !this.IsSwitching)))
-            .ToList();
-
-        this.ConfigurationWarnings = AppHost.ConfigurationValidation.Errors
-            .Select(error => $"{error.Path}: {error.Message}")
-            .ToList();
-        this.HasConfigurationWarnings = this.ConfigurationWarnings.Count > 0;
-
         this.SupportDeveloperCommand = new RelayCommand(() => { });
-        this.OpenSettingsCommand = new RelayCommand(() => this.OpenSettingsRequested?.Invoke(this, EventArgs.Empty));
+        this.OpenAppCommand = new RelayCommand(() => this.OpenAppRequested?.Invoke(this, EventArgs.Empty));
 
+        this.RefreshFromConfiguration();
         this.ApplyState(AppHost.State);
 
         this.elapsedTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         this.elapsedTimer.Tick += (_, _) => this.RefreshElapsedDisplay();
         this.elapsedTimer.Start();
 
+        AppHost.ConfigurationChanged += this.OnConfigurationChanged;
+        AppHost.StateChanged += this.OnStateChanged;
+
         _ = this.LoadBalanceChartAsync();
     }
 
-    public event EventHandler? OpenSettingsRequested;
+    /// <summary>
+    /// Raised when the footer's "Open App" button is pressed, so the view can open the Main App
+    /// window (agent.md section 11.1.2) to the Profiles page.
+    /// </summary>
+    public event EventHandler? OpenAppRequested;
 
-    public IReadOnlyList<SwitchButtonViewModel> SwitchButtons { get; }
+    public IReadOnlyList<SwitchButtonViewModel> SwitchButtons
+    {
+        get => this.switchButtons;
+        private set => this.SetProperty(ref this.switchButtons, value);
+    }
 
-    public IReadOnlyList<string> ConfigurationWarnings { get; }
+    public IReadOnlyList<string> ConfigurationWarnings
+    {
+        get => this.configurationWarnings;
+        private set
+        {
+            if (this.SetProperty(ref this.configurationWarnings, value))
+            {
+                this.OnPropertyChanged(nameof(this.HasConfigurationWarnings));
+            }
+        }
+    }
 
-    public bool HasConfigurationWarnings { get; }
+    public bool HasConfigurationWarnings => this.ConfigurationWarnings.Count > 0;
 
     public RelayCommand SupportDeveloperCommand { get; }
 
-    public RelayCommand OpenSettingsCommand { get; }
+    public RelayCommand OpenAppCommand { get; }
 
     public string ActiveContextDisplayName
     {
@@ -194,6 +202,35 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         this.elapsedTimer.Stop();
+        AppHost.ConfigurationChanged -= this.OnConfigurationChanged;
+        AppHost.StateChanged -= this.OnStateChanged;
+    }
+
+    private void OnConfigurationChanged(object? sender, EventArgs e)
+    {
+        this.RefreshFromConfiguration();
+        this.ApplyState(AppHost.State);
+    }
+
+    private void OnStateChanged(object? sender, EventArgs e)
+    {
+        this.ApplyState(AppHost.State);
+        _ = this.LoadBalanceChartAsync();
+    }
+
+    private void RefreshFromConfiguration()
+    {
+        this.SwitchButtons = AppHost.Configuration.Contexts
+            .Select(context => new SwitchButtonViewModel(
+                context.Id,
+                context.DisplayName,
+                context.AccentColor,
+                new AsyncRelayCommand(() => this.SwitchToAsync(context.Id), () => !this.IsSwitching)))
+            .ToList();
+
+        this.ConfigurationWarnings = AppHost.ConfigurationValidation.Errors
+            .Select(error => $"{error.Path}: {error.Message}")
+            .ToList();
     }
 
     private async Task SwitchToAsync(string contextId)
@@ -219,8 +256,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
             CurrentContextState? state = await this.jsonStore
                 .ReadAsync<CurrentContextState>(this.configPaths.StatePath)
                 .ConfigureAwait(true);
-            this.ApplyState(state ?? new CurrentContextState());
-            _ = this.LoadBalanceChartAsync();
+            AppHost.UpdateState(state ?? new CurrentContextState());
         }
         finally
         {
@@ -234,29 +270,8 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
             .GetDailyBalanceAsync(BalanceChartDays, CancellationToken.None)
             .ConfigureAwait(true);
 
-        List<ISeries> series = [];
-        foreach (ContextDefinition context in AppHost.Configuration.Contexts)
-        {
-            double[] hoursPerDay = summaries
-                .Select(day => day.SecondsByContextId.GetValueOrDefault(context.Id) / 3600.0)
-                .ToArray();
-
-            if (Array.TrueForAll(hoursPerDay, hours => hours == 0))
-            {
-                continue;
-            }
-
-            Color accent = Color.TryParse(context.AccentColor, out Color parsed) ? parsed : Colors.Gray;
-            series.Add(new StackedColumnSeries<double>
-            {
-                Name = context.DisplayName,
-                Values = hoursPerDay,
-                Fill = new SolidColorPaint(new SKColor(accent.R, accent.G, accent.B))
-            });
-        }
-
-        this.BalanceSeries = series;
-        this.BalanceXAxes = [new Axis { Labels = summaries.Select(day => day.Date.ToString("ddd")).ToList() }];
+        this.BalanceSeries = BalanceChartFactory.BuildSeries(summaries, AppHost.Configuration.Contexts);
+        this.BalanceXAxes = BalanceChartFactory.BuildXAxes(summaries);
     }
 
     private void ApplyState(CurrentContextState state)

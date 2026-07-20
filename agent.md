@@ -75,16 +75,26 @@ ContextSwitcher/
       Views/
         DashboardWindow.axaml
         DashboardWindow.axaml.cs
-        SettingsWindow.axaml
-        SettingsWindow.axaml.cs
+        MainAppWindow.axaml
+        MainAppWindow.axaml.cs
+        Pages/
+          ProfilesPage.axaml
+          ProfileSetupPage.axaml
+          SettingsPage.axaml
+          StatsPage.axaml
       ViewModels/
         DashboardViewModel.cs
-        ContextCardViewModel.cs
+        MainAppViewModel.cs
+        ProfilesViewModel.cs
+        ProfileRowViewModel.cs
+        ProfileSetupViewModel.cs
         SettingsViewModel.cs
-      Controls/
-        ContextSwitchButton.axaml
-        QuickLinkButton.axaml
-        InlineStatusBadge.axaml
+        StatsViewModel.cs
+        BalanceChartFactory.cs
+      Services/
+        ConfigurationStore.cs
+      Converters/
+        EnumEqualsConverter.cs
       Styles/
         Colors.axaml
         Typography.axaml
@@ -101,6 +111,7 @@ ContextSwitcher/
         IHotkeyService.cs
         IAnalyticsService.cs
         IAutomationStepExecutor.cs
+        IPermissionsChecker.cs
       ProcessExecution/
         ProcessResult.cs
         ProcessStartOptions.cs
@@ -160,16 +171,16 @@ ContextSwitcher/
       Time/
         SystemClock.cs
       MacOS/
-        FocusModeController.cs
-        MacThemeController.cs
-        WallpaperController.cs
-        MenuBarAppHost.cs
+        MacPermissionsChecker.cs
       ProcessExecution/
         ProcessRunner.cs
       Automation/
         AutomationStepExecutor.cs
     ContextSwitcher.Tests/
       ContextSwitcher.Tests.csproj
+      App/
+        ViewModels/
+        Services/
       Configuration/
       Contexts/
       Automation/
@@ -255,17 +266,19 @@ services.AddSingleton<ConfigurationValidator>();
 services.AddSingleton<IAnalyticsService, AnalyticsService>();
 services.AddSingleton<IContextSwitchService, ContextSwitchService>();
 services.AddSingleton<IHotkeyService, SharpHookHotkeyService>();
+services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
 
 services.AddSingleton<BrowserLauncher>();
-services.AddSingleton<MacThemeController>();
-services.AddSingleton<WallpaperController>();
-services.AddSingleton<FocusModeController>();
 services.AddSingleton<CliCommandRouter>();
+services.AddSingleton<ConfigurationStore>();
 
 services.AddTransient<DashboardViewModel>();
-services.AddTransient<SettingsViewModel>();
-services.AddSingleton<MenuBarAppHost>();
+services.AddTransient<MainAppViewModel>();
 ```
+
+`MainAppViewModel` is the only Main App window view model registered in DI, mirroring how `DashboardViewModel` is the sole DI entry point for the Dashboard: it constructs its child page view models (`ProfilesViewModel`, `SettingsViewModel`, `StatsViewModel`, and `ProfileSetupViewModel` on demand) directly with explicit dependencies rather than resolving each one from the container.
+
+`ConfigurationStore` (`ContextSwitcher.App.Services`) is the single place the Main App window's view models go through to persist edits: it validates via `ConfigurationValidator`, backs up the previous `settings.json` via `IJsonStore.BackupAsync`, writes atomically, and calls `AppHost.UpdateConfiguration` - which updates the static `AppHost.Configuration`/`ConfigurationValidation` and raises `AppHost.ConfigurationChanged`. Long-lived view models (`DashboardViewModel`, and the Main App window's page view models) subscribe to `ConfigurationChanged` (and the analogous `AppHost.UpdateState`/`StateChanged` pair, raised after every context switch) so edits and switches made from either window are reflected in the other without an app restart.
 
 Lifetime policy:
 
@@ -1287,6 +1300,7 @@ Rules:
 - Menu bar label should be optional and short.
 - Default should be icon-only to avoid menu bar clutter.
 - Do not show Dock icon unless `showDockIcon == true` or a debug flag is active.
+- `showDockIcon` is read once at startup (`Program.cs` passes it into `MacOSPlatformOptions.ShowInDock`); toggling it from the Settings page (section 11.1.2) persists immediately but takes effect on the next launch, not live - Avalonia's `MacOSPlatformOptions` is a startup-time `AppBuilder` configuration, not a runtime-toggleable property. The Settings page must say so next to the toggle rather than implying an instant change.
 
 ## 12. Error Handling Protocols
 
@@ -1362,6 +1376,7 @@ Permissions:
 - The app requires macOS **Accessibility** permission for `SharpHook` to create its global hook — confirmed via `SharpHook`'s actual API: `SharpHook.Providers.UioHookProvider.Instance.IsAxApiEnabled(promptUserIfDisabled)`, which checks/optionally prompts for the Accessibility grant under System Settings → Privacy & Security → Accessibility. Hotkeys silently do nothing without it (the hook still starts, it just never receives events), so this must be checked explicitly before registering hotkeys, not inferred from an exception.
 - Document Security & Privacy prompts clearly.
 - Detect common permission failures and show remediation.
+- The Settings page (section 11.1.2) surfaces both permission states through `IPermissionsChecker` (`ContextSwitcher.Core.Abstractions`, implemented by `MacPermissionsChecker` in Infrastructure): `IsAccessibilityPermissionGranted()` reuses the same `UioHookProvider.IsAxApiEnabled(false)` check as the hotkey service, and `IsAutomationPermissionGrantedAsync()` runs a harmless read-only probe script (`tell application "System Events" to return count of processes`) through `IScriptRunner` and treats a non-zero exit code as "not granted" — macOS exposes no direct query API for Automation access, so this is a best-effort probe, not a guarantee.
 
 ## 14. MVP Execution Roadmap
 

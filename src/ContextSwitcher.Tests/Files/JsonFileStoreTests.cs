@@ -80,6 +80,52 @@ public sealed class JsonFileStoreTests
         }
     }
 
+    [Fact]
+    public async Task BackupAsyncCopiesExistingFileIntoBackupDirectory()
+    {
+        string tempDirectory = CreateTempDirectory();
+        string settingsPath = Path.Combine(tempDirectory, "settings.json");
+        string backupDirectory = Path.Combine(tempDirectory, "backups");
+        JsonFileStore store = new();
+        await store.WriteAsync(settingsPath, new AppConfiguration { ActiveContextId = "work" });
+
+        try
+        {
+            await store.BackupAsync(settingsPath, backupDirectory);
+
+            string[] backups = Directory.GetFiles(backupDirectory, "settings.*.json");
+            Assert.Single(backups);
+
+            AppConfiguration? backedUp = await store.ReadAsync<AppConfiguration>(backups[0]);
+            Assert.NotNull(backedUp);
+            Assert.Equal("work", backedUp.ActiveContextId);
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task BackupAsyncDoesNothingWhenSourceFileDoesNotExist()
+    {
+        string tempDirectory = CreateTempDirectory();
+        string settingsPath = Path.Combine(tempDirectory, "settings.json");
+        string backupDirectory = Path.Combine(tempDirectory, "backups");
+        JsonFileStore store = new();
+
+        try
+        {
+            await store.BackupAsync(settingsPath, backupDirectory);
+
+            Assert.False(Directory.Exists(backupDirectory));
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
     private static string CreateTempDirectory()
     {
         string tempDirectory = Path.Combine(Path.GetTempPath(), $"ContextSwitcherTests-{Guid.NewGuid():N}");

@@ -8,6 +8,8 @@ public sealed class InMemoryJsonStore : IJsonStore
 
     public HashSet<string> WriteFailurePaths { get; } = [];
 
+    public List<string> BackedUpPaths { get; } = [];
+
     public void Seed<T>(string path, T value)
         where T : class
     {
@@ -35,6 +37,16 @@ public sealed class InMemoryJsonStore : IJsonStore
         }
 
         this.values[path] = value;
+        return Task.CompletedTask;
+    }
+
+    public Task BackupAsync(string path, string backupDirectory, CancellationToken cancellationToken = default)
+    {
+        if (this.values.ContainsKey(path))
+        {
+            this.BackedUpPaths.Add(path);
+        }
+
         return Task.CompletedTask;
     }
 }

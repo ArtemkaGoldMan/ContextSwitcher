@@ -40,4 +40,36 @@
     <Setter Property="HorizontalContentAlignment" Value="Left" />
     <Setter Property="Cursor" Value="Hand" />
   </Style>
+
+  <!-- Main App window's left-hand page navigation (agent.md section 11.1.2). -->
+  <Style Selector="Button.navItem">
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="Button.navItem.active">
+    <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="Button.navItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+  </Style>
+
+  <!-- Small secondary row action (edit/duplicate/delete icons on Profiles rows). -->
+  <Style Selector="Button.rowAction">
+    <Setter Property="Padding" Value="6,4" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="Button.rowAction:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+  </Style>
 </Styles>

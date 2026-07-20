@@ -1,3 +1,4 @@
+using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Analytics;
@@ -14,6 +15,7 @@ using ContextSwitcher.Infrastructure.Cli;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Infrastructure.Hotkeys;
 using ContextSwitcher.Infrastructure.Logging;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Infrastructure.ProcessExecution;
 using ContextSwitcher.Infrastructure.Time;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,6 +51,18 @@ public static class AppHost
     public static CurrentContextState State { get; private set; } = null!;
 
     /// <summary>
+    /// Raised after <see cref="UpdateConfiguration"/> replaces <see cref="Configuration"/>, so
+    /// long-lived view models (the Dashboard) can refresh without the app restarting.
+    /// </summary>
+    public static event EventHandler? ConfigurationChanged;
+
+    /// <summary>
+    /// Raised after <see cref="UpdateState"/> replaces <see cref="State"/>, so the Dashboard and
+    /// the Profiles page can both reflect a switch triggered from the other window.
+    /// </summary>
+    public static event EventHandler? StateChanged;
+
+    /// <summary>
     /// Builds the service container and runs the synchronous startup sequence.
     /// Must be called once, before the Avalonia application starts.
     /// </summary>
@@ -81,8 +95,11 @@ public static class AppHost
             provider.GetRequiredService<ConfigPaths>().StatePath));
         services.AddSingleton<CliCommandRouter>();
         services.AddSingleton<IHotkeyService, SharpHookHotkeyService>();
+        services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
+        services.AddSingleton<ConfigurationStore>();
 
         services.AddTransient<DashboardViewModel>();
+        services.AddTransient<MainAppViewModel>();
 
         Services = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
@@ -90,6 +107,34 @@ public static class AppHost
         // analytics session or a persistent global hook for it would be pointless and wasteful.
         bool isInteractive = args.Length == 0 || !CliCommandRouter.IsHeadlessCommand(args[0]);
         BootstrapAsync(isInteractive).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Replaces <see cref="Configuration"/> and <see cref="ConfigurationValidation"/> after the Main
+    /// App window persists a change (agent.md section 11.1.2), then raises
+    /// <see cref="ConfigurationChanged"/>. Callers must already have written and validated
+    /// <paramref name="configuration"/> - see <c>ConfigurationStore</c>.
+    /// </summary>
+    public static void UpdateConfiguration(AppConfiguration configuration, ConfigurationValidationResult validation)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(validation);
+
+        Configuration = configuration;
+        ConfigurationValidation = validation;
+        ConfigurationChanged?.Invoke(null, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Replaces <see cref="State"/> after a context switch completes, then raises
+    /// <see cref="StateChanged"/>.
+    /// </summary>
+    public static void UpdateState(CurrentContextState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+
+        State = state;
+        StateChanged?.Invoke(null, EventArgs.Empty);
     }
 
     /// <summary>

@@ -11,7 +11,7 @@ public sealed class SwitchButtonViewModel : ViewModelBase
     {
         this.ContextId = contextId;
         this.DisplayName = displayName;
-        this.AccentBrush = ParseAccentColor(accentColorHex);
+        this.AccentBrush = AccentColorParser.ToBrush(accentColorHex);
         this.SwitchCommand = switchCommand;
     }
 
@@ -27,12 +27,5 @@ public sealed class SwitchButtonViewModel : ViewModelBase
     {
         get => this.isCurrent;
         set => this.SetProperty(ref this.isCurrent, value);
-    }
-
-    private static IBrush ParseAccentColor(string accentColorHex)
-    {
-        return Color.TryParse(accentColorHex, out Color color)
-            ? new SolidColorBrush(color)
-            : Brushes.Gray;
     }
 }
