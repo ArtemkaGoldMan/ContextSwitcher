@@ -54,6 +54,12 @@ public sealed class ConfigPaths
     public string BackupsDirectory => Path.Combine(BaseDirectory, "backups");
 
     /// <summary>
+    /// Gets the directory holding PNG icons extracted from installed application bundles for the
+    /// app picker. Purely a derived cache - safe to delete, rebuilt on demand.
+    /// </summary>
+    public string IconCacheDirectory => Path.Combine(BaseDirectory, "icon-cache");
+
+    /// <summary>
     /// Ensures the configuration root and backup directory exist before persistence operations.
     /// </summary>
     public void EnsureCreated()

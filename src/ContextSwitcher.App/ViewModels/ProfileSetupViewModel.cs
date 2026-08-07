@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
+using Avalonia.Media.Imaging;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
+using ContextSwitcher.Core.Abstractions;
+using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Infrastructure.Hotkeys;
 
@@ -15,7 +18,14 @@ namespace ContextSwitcher.App.ViewModels;
 public sealed class ProfileSetupViewModel : ViewModelBase
 {
     private readonly ConfigurationStore configurationStore;
+    private readonly IInstalledAppsService installedAppsService;
     private readonly string originalContextId;
+    private readonly Dictionary<string, Bitmap?> iconsByAppName = new(StringComparer.OrdinalIgnoreCase);
+
+    private IReadOnlyList<InstalledAppViewModel> allInstalledApps = [];
+    private IReadOnlyList<InstalledAppViewModel> filteredInstalledApps = [];
+    private string appSearchText = string.Empty;
+    private bool isLoadingInstalledApps;
 
     private string id;
     private string displayName;
@@ -49,9 +59,13 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     private string? errorMessage;
     private bool isSaving;
 
-    public ProfileSetupViewModel(ConfigurationStore configurationStore, ContextDefinition? existing)
+    public ProfileSetupViewModel(
+        ConfigurationStore configurationStore,
+        IInstalledAppsService installedAppsService,
+        ContextDefinition? existing)
     {
         this.configurationStore = configurationStore;
+        this.installedAppsService = installedAppsService;
         this.IsNew = existing is null;
 
         ContextDefinition source = existing ?? CreateDefaultContext(AppHost.Configuration.Contexts);
@@ -128,6 +142,8 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
         this.SaveCommand = new AsyncRelayCommand(this.SaveAsync, () => !this.isSaving);
         this.CancelCommand = new RelayCommand(() => this.CancelRequested?.Invoke(this, EventArgs.Empty));
+
+        _ = this.LoadInstalledAppsAsync();
     }
 
     /// <summary>Raised after a successful save, so <see cref="MainAppViewModel"/> returns to Profiles.</summary>
@@ -191,6 +207,42 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     }
 
     public ObservableCollection<AppRowViewModel> Apps { get; }
+
+    /// <summary>
+    /// Installed apps offered by the picker, narrowed by <see cref="AppSearchText"/> and excluding
+    /// apps already added to this profile.
+    /// </summary>
+    public IReadOnlyList<InstalledAppViewModel> FilteredInstalledApps
+    {
+        get => this.filteredInstalledApps;
+        private set
+        {
+            if (this.SetProperty(ref this.filteredInstalledApps, value))
+            {
+                this.OnPropertyChanged(nameof(this.HasNoAppMatches));
+            }
+        }
+    }
+
+    public string AppSearchText
+    {
+        get => this.appSearchText;
+        set
+        {
+            if (this.SetProperty(ref this.appSearchText, value))
+            {
+                this.ApplyAppFilter();
+            }
+        }
+    }
+
+    public bool IsLoadingInstalledApps
+    {
+        get => this.isLoadingInstalledApps;
+        private set => this.SetProperty(ref this.isLoadingInstalledApps, value);
+    }
+
+    public bool HasNoAppMatches => !this.IsLoadingInstalledApps && this.FilteredInstalledApps.Count == 0;
 
     public IReadOnlyList<BrowserManagementMode> BrowserModes { get; } = Enum.GetValues<BrowserManagementMode>();
 
@@ -365,7 +417,117 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     public RelayCommand CancelCommand { get; }
 
-    private void RemoveApp(AppRowViewModel row) => this.Apps.Remove(row);
+    /// <summary>
+    /// Scans installed apps once when the editor opens, then decorates any already-configured rows
+    /// with their real icons. Failures are swallowed: the picker degrades to the manual-entry path
+    /// rather than breaking the whole editor.
+    /// </summary>
+    private async Task LoadInstalledAppsAsync()
+    {
+        this.IsLoadingInstalledApps = true;
+        try
+        {
+            IReadOnlyList<InstalledApp> installed = await this.installedAppsService
+                .GetInstalledAppsAsync(CancellationToken.None)
+                .ConfigureAwait(true);
+
+            List<InstalledAppViewModel> viewModels = [];
+            foreach (InstalledApp app in installed)
+            {
+                Bitmap? icon = LoadIcon(app.IconPath);
+                this.iconsByAppName[app.Name] = icon;
+                viewModels.Add(new InstalledAppViewModel(app.Name, icon, this.AddAppByName));
+            }
+
+            this.allInstalledApps = viewModels;
+
+            foreach (AppRowViewModel row in this.Apps)
+            {
+                row.Icon = this.ResolveIcon(row.Name);
+            }
+        }
+        catch (Exception)
+        {
+            // Deliberately broad: this runs fire-and-forget from the constructor, so anything that
+            // escapes becomes an unobserved task exception and vanishes silently (which is exactly
+            // how a missing CommandAllowlist entry for `sips` hid itself during development). The
+            // picker is an enhancement over manual entry, so degrade to the manual path instead of
+            // taking the editor down with it.
+            this.allInstalledApps = [];
+        }
+        finally
+        {
+            this.IsLoadingInstalledApps = false;
+            this.ApplyAppFilter();
+        }
+    }
+
+    private static Bitmap? LoadIcon(string? iconPath)
+    {
+        if (string.IsNullOrEmpty(iconPath) || !File.Exists(iconPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            return new Bitmap(iconPath);
+        }
+        catch (Exception ex) when (ex is IOException or ArgumentException or NotSupportedException)
+        {
+            // A truncated or unreadable cached PNG must not break the picker.
+            return null;
+        }
+    }
+
+    private Bitmap? ResolveIcon(string appName)
+    {
+        return this.iconsByAppName.TryGetValue(appName, out Bitmap? icon) ? icon : null;
+    }
+
+    private void ApplyAppFilter()
+    {
+        HashSet<string> alreadyAdded = this.Apps
+            .Select(row => row.Name)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        IEnumerable<InstalledAppViewModel> matches = this.allInstalledApps
+            .Where(app => !alreadyAdded.Contains(app.Name));
+
+        if (!string.IsNullOrWhiteSpace(this.AppSearchText))
+        {
+            matches = matches.Where(app => app.Name.Contains(this.AppSearchText.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+
+        this.FilteredInstalledApps = matches.ToList();
+    }
+
+    /// <summary>
+    /// Adds a picked app, defaulting to launch-on-enter and close-on-leave - the behavior someone
+    /// choosing an app for a profile almost always wants, and both toggles stay editable.
+    /// </summary>
+    private void AddAppByName(string appName)
+    {
+        if (this.Apps.Any(row => string.Equals(row.Name, appName, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        this.Apps.Add(new AppRowViewModel(appName, launchOnEnter: true, closeOnLeave: true, this.RemoveApp)
+        {
+            Icon = this.ResolveIcon(appName)
+        });
+
+        this.AppSearchText = string.Empty;
+        this.ApplyAppFilter();
+    }
+
+    private void RemoveApp(AppRowViewModel row)
+    {
+        this.Apps.Remove(row);
+        this.ApplyAppFilter();
+    }
 
     private void RemoveBrowserUrl(EditableStringRowViewModel row) => this.BrowserUrls.Remove(row);
 

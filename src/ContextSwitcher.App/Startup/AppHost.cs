@@ -8,6 +8,7 @@ using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Infrastructure.AppleScript;
+using ContextSwitcher.Infrastructure.Applications;
 using ContextSwitcher.Infrastructure.Automation;
 using ContextSwitcher.Infrastructure.Analytics;
 using ContextSwitcher.Infrastructure.Browser;
@@ -96,6 +97,7 @@ public static class AppHost
         services.AddSingleton<CliCommandRouter>();
         services.AddSingleton<IHotkeyService, SharpHookHotkeyService>();
         services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
+        services.AddSingleton<IInstalledAppsService, InstalledAppsService>();
         services.AddSingleton<ConfigurationStore>();
 
         services.AddTransient<DashboardViewModel>();

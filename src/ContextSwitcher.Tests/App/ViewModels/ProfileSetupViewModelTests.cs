@@ -1,6 +1,7 @@
 using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
+using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Infrastructure.Files;
@@ -22,7 +23,7 @@ public sealed class ProfileSetupViewModelTests
         AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
 
-        ProfileSetupViewModel viewModel = new(store, existing: null);
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), existing: null);
 
         Assert.True(viewModel.IsNew);
         Assert.True(viewModel.IsIdEditable);
@@ -45,7 +46,7 @@ public sealed class ProfileSetupViewModelTests
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
 
-        ProfileSetupViewModel viewModel = new(store, context);
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), context);
 
         Assert.False(viewModel.IsIdEditable);
         Assert.Equal(3, viewModel.Apps.Count);
@@ -66,7 +67,7 @@ public sealed class ProfileSetupViewModelTests
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
 
-        ProfileSetupViewModel viewModel = new(store, context)
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), context)
         {
             DisplayName = "Work Renamed"
         };
@@ -103,7 +104,7 @@ public sealed class ProfileSetupViewModelTests
         AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
 
-        ProfileSetupViewModel viewModel = new(store, work);
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), work);
         Assert.Equal("Cmd+Alt+Ctrl+W", viewModel.HotkeyAccelerator);
 
         viewModel.HotkeyAccelerator = "Cmd+Alt+Ctrl+Q";
@@ -124,7 +125,7 @@ public sealed class ProfileSetupViewModelTests
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
 
-        ProfileSetupViewModel viewModel = new(store, existing: null) { DisplayName = "Should not persist" };
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), existing: null) { DisplayName = "Should not persist" };
         bool cancelled = false;
         viewModel.CancelRequested += (_, _) => cancelled = true;
 
@@ -132,6 +133,55 @@ public sealed class ProfileSetupViewModelTests
 
         Assert.True(cancelled);
         Assert.Null(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath));
+    }
+
+    [Fact]
+    public void AppPickerExcludesAppsAlreadyAddedAndFiltersBySearch()
+    {
+        ContextDefinition context = new() { Id = "work", DisplayName = "Work", LaunchApps = ["Slack"] };
+        AppHost.UpdateConfiguration(
+            new AppConfiguration { ActiveContextId = "work", Contexts = [context] },
+            new ConfigurationValidationResult([]));
+        ConfigurationStore store = CreateStore(out _, out _);
+
+        FakeInstalledAppsService installed = new();
+        installed.Apps.Add(new InstalledApp("Slack", null));
+        installed.Apps.Add(new InstalledApp("Discord", null));
+        installed.Apps.Add(new InstalledApp("Docker", null));
+
+        ProfileSetupViewModel viewModel = new(store, installed, context);
+
+        // Slack is already on the profile, so the picker must not offer it again.
+        Assert.DoesNotContain(viewModel.FilteredInstalledApps, app => app.Name == "Slack");
+        Assert.Contains(viewModel.FilteredInstalledApps, app => app.Name == "Discord");
+
+        viewModel.AppSearchText = "doc";
+        InstalledAppViewModel match = Assert.Single(viewModel.FilteredInstalledApps);
+        Assert.Equal("Docker", match.Name);
+    }
+
+    [Fact]
+    public void PickingAnAppAddsItWithBothTogglesOnAndRemovesItFromThePicker()
+    {
+        ContextDefinition context = new() { Id = "work", DisplayName = "Work" };
+        AppHost.UpdateConfiguration(
+            new AppConfiguration { ActiveContextId = "work", Contexts = [context] },
+            new ConfigurationValidationResult([]));
+        ConfigurationStore store = CreateStore(out _, out _);
+
+        FakeInstalledAppsService installed = new();
+        installed.Apps.Add(new InstalledApp("Discord", null));
+
+        ProfileSetupViewModel viewModel = new(store, installed, context);
+        InstalledAppViewModel discord = Assert.Single(viewModel.FilteredInstalledApps);
+
+        discord.PickCommand.Execute(null);
+
+        AppRowViewModel added = Assert.Single(viewModel.Apps);
+        Assert.Equal("Discord", added.Name);
+        Assert.True(added.LaunchOnEnter);
+        Assert.True(added.CloseOnLeave);
+        Assert.Empty(viewModel.FilteredInstalledApps);
     }
 
     private static ConfigurationStore CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths)

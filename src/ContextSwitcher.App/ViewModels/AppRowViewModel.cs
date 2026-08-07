@@ -1,3 +1,5 @@
+using Avalonia.Media.Imaging;
+
 namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
@@ -10,6 +12,7 @@ public sealed class AppRowViewModel : ViewModelBase
     private string name;
     private bool launchOnEnter;
     private bool closeOnLeave;
+    private Bitmap? icon;
 
     public AppRowViewModel(string name, bool launchOnEnter, bool closeOnLeave, Action<AppRowViewModel> remove)
     {
@@ -36,6 +39,25 @@ public sealed class AppRowViewModel : ViewModelBase
         get => this.closeOnLeave;
         set => this.SetProperty(ref this.closeOnLeave, value);
     }
+
+    /// <summary>
+    /// The app's real icon when it could be matched to an installed bundle. Null for apps that
+    /// aren't installed (or were typed manually), in which case the view shows a neutral
+    /// placeholder rather than leaving a gap.
+    /// </summary>
+    public Bitmap? Icon
+    {
+        get => this.icon;
+        set
+        {
+            if (this.SetProperty(ref this.icon, value))
+            {
+                this.OnPropertyChanged(nameof(this.HasIcon));
+            }
+        }
+    }
+
+    public bool HasIcon => this.Icon is not null;
 
     public RelayCommand RemoveCommand { get; }
 }

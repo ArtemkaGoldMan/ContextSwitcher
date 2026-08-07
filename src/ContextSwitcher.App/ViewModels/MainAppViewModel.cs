@@ -15,6 +15,7 @@ namespace ContextSwitcher.App.ViewModels;
 public sealed class MainAppViewModel : ViewModelBase, IDisposable
 {
     private readonly ConfigurationStore configurationStore;
+    private readonly IInstalledAppsService installedAppsService;
 
     private object currentPage;
 
@@ -25,9 +26,11 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         ConfigPaths configPaths,
         IPermissionsChecker permissionsChecker,
         IProcessRunner processRunner,
-        IAnalyticsService analyticsService)
+        IAnalyticsService analyticsService,
+        IInstalledAppsService installedAppsService)
     {
         this.configurationStore = configurationStore;
+        this.installedAppsService = installedAppsService;
 
         this.Profiles = new ProfilesViewModel(switchService, configurationStore, jsonStore, configPaths);
         this.Settings = new SettingsViewModel(configurationStore, permissionsChecker, processRunner);
@@ -84,7 +87,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
 
     private void OnEditRequested(object? sender, ContextDefinition? context)
     {
-        ProfileSetupViewModel setup = new(this.configurationStore, context);
+        ProfileSetupViewModel setup = new(this.configurationStore, this.installedAppsService, context);
         setup.Saved += this.OnProfileSetupFinished;
         setup.CancelRequested += this.OnProfileSetupFinished;
         this.CurrentPage = setup;
