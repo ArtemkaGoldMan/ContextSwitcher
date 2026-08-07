@@ -1,75 +1,221 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <!-- Section 11.2: 8px max corner radius, flat surfaces, no nested decorative cards. -->
+  <!-- Card surface: the base building block for every section on every page. -->
   <Style Selector="Border.panel">
-    <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+    <Setter Property="Background" Value="{DynamicResource CardBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Padding" Value="10" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Padding" Value="16" />
   </Style>
 
-  <Style Selector="Button.switchContext">
-    <Setter Property="HorizontalContentAlignment" Value="Left" />
-    <Setter Property="Padding" Value="10,8" />
-    <Setter Property="CornerRadius" Value="8" />
+  <!-- Emphasized card border, e.g. the active profile's row. -->
+  <Style Selector="Border.panel.current">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="BorderThickness" Value="1.5" />
+  </Style>
+
+  <!-- Thin horizontal rule used to separate rows inside a card instead of nesting boxes. -->
+  <Style Selector="Border.divider">
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Background" Value="{DynamicResource DividerBrush}" />
+    <Setter Property="Margin" Value="0,4" />
+  </Style>
+
+  <!-- Small status chip (permission granted/not granted). Background is set per-instance via
+       PermissionStatusBrushConverter. -->
+  <Style Selector="Border.statusPill">
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="8,3" />
+  </Style>
+
+  <!-- Collapsible group of cards (Profile Setup's Environment/Advanced tiers). Transparent so the
+       cards inside keep their own surfaces rather than nesting a card in a card. -->
+  <Style Selector="Expander.section">
     <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="Expander.section /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Padding" Value="0,12,0,0" />
+  </Style>
+
+  <!-- Colored rounded-square icon badge (nav rows, page/section headers). Size and background
+       are set per-instance; this only fixes the shape and centers the glyph. -->
+  <Style Selector="Border.badge">
+    <Setter Property="CornerRadius" Value="9" />
+  </Style>
+
+  <Style Selector="Border.badge > TextBlock">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+
+  <Style Selector="Border.badge > Viewbox">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!-- Primary/pill button: neutral by default, filled accent when Classes="current" marks it as
+       the active/primary choice (Save, Add, the active Dashboard switch button, a selected
+       Week/Month segment). -->
+  <Style Selector="Button.switchContext">
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="Padding" Value="14,9" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Background" Value="{DynamicResource CardHoverBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Button.switchContext:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource SelectedNavBrush}" />
   </Style>
 
   <Style Selector="Button.switchContext.current">
-    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="Button.switchContext.current:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Opacity" Value="0.9" />
+  </Style>
+
+  <Style Selector="Button.switchContext:disabled">
+    <Setter Property="Opacity" Value="0.45" />
   </Style>
 
   <Style Selector="Button.iconButton">
     <Setter Property="Padding" Value="6" />
-    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="CornerRadius" Value="8" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
   </Style>
 
   <Style Selector="Button.iconButton:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource SelectedNavBrush}" />
   </Style>
 
+  <!-- Text-only action; accent-colored so it reads as a link, matching macOS convention. -->
   <Style Selector="Button.linkButton">
     <Setter Property="Padding" Value="0" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
     <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="Button.linkButton:pointerover /template/ ContentPresenter">
+    <Setter Property="Opacity" Value="0.75" />
   </Style>
 
   <!-- Main App window's left-hand page navigation (agent.md section 11.1.2). -->
   <Style Selector="Button.navItem">
     <Setter Property="HorizontalContentAlignment" Value="Left" />
-    <Setter Property="Padding" Value="10,8" />
-    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="Padding" Value="8" />
+    <Setter Property="CornerRadius" Value="10" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Cursor" Value="Hand" />
+    <!-- Semi themes borderless buttons with accent-colored text; nav labels must stay neutral
+         so the colored badge is the only accent in the rail. -->
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
   </Style>
 
   <Style Selector="Button.navItem.active">
-    <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Background" Value="{DynamicResource SelectedNavBrush}" />
   </Style>
 
   <Style Selector="Button.navItem:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource SelectedNavBrush}" />
   </Style>
 
   <!-- Small secondary row action (edit/duplicate/delete icons on Profiles rows). -->
   <Style Selector="Button.rowAction">
-    <Setter Property="Padding" Value="6,4" />
-    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="8,5" />
+    <Setter Property="CornerRadius" Value="8" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Cursor" Value="Hand" />
+    <!-- Neutral by default so a row's destructive action (Delete, which sets its own red) is the
+         only colored control in the row. -->
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+  </Style>
+
+  <Style Selector="Button.rowAction:pointerover">
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+
+  <!-- Destructive row action. Must be a class, not an inline Foreground: a class-level setter on
+       Button.rowAction wins over an inline DynamicResource, so inline red silently disappeared. -->
+  <Style Selector="Button.rowAction.danger">
+    <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+  </Style>
+
+  <Style Selector="Button.rowAction.danger:pointerover">
+    <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
   </Style>
 
   <Style Selector="Button.rowAction:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource CardHoverBrush}" />
   </Style>
+
+  <!-- Large gradient option card: a single-choice selector with icon + title + subtitle, used for
+       Theme mode. Built on RadioButton so mutual exclusivity is free; default chrome is stripped
+       via a custom template. -->
+  <Style Selector="RadioButton.optionCard">
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Margin" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border
+          x:Name="OptionBorder"
+          CornerRadius="12"
+          BorderThickness="2"
+          BorderBrush="Transparent"
+          Background="{TemplateBinding Background}"
+          Padding="14,12">
+          <ContentPresenter Content="{TemplateBinding Content}" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+
+  <Style Selector="RadioButton.optionCard:checked /template/ Border#OptionBorder">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+  <!-- Section title stays as-is elsewhere; option-card labels/sublabels use White since the
+       card background is always a colored gradient regardless of app theme. -->
+  <Style Selector="RadioButton.optionCard TextBlock.optionTitle">
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+
+  <Style Selector="RadioButton.optionCard TextBlock.optionSubtitle">
+    <Setter Property="Foreground" Value="#D9FFFFFF" />
+    <Setter Property="FontSize" Value="11" />
+  </Style>
+
+  <!-- No raw TextBox/ComboBox/Button styling here on purpose: Semi.Avalonia already themes every
+       standard control, and overriding its templates is what made the previous hand-rolled pass
+       look inconsistent. Only add a rule here if it is genuinely app-specific. -->
 </Styles>

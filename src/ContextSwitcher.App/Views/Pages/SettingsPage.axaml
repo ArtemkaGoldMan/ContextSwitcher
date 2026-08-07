@@ -3,11 +3,28 @@
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
+  xmlns:conv="using:ContextSwitcher.App.Converters"
   x:DataType="vm:SettingsViewModel">
-  <StackPanel Spacing="16">
-    <Grid ColumnDefinitions="*,Auto">
-      <TextBlock Grid.Column="0" Text="Settings" Classes="header" VerticalAlignment="Center" />
-      <Button Grid.Column="1" Classes="switchContext current" Content="Save" Command="{Binding SaveCommand}" />
+  <StackPanel Spacing="20">
+    <Grid ColumnDefinitions="Auto,*,Auto">
+      <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{DynamicResource BadgePurpleGradient}" Margin="0,0,12,0">
+        <StackPanel Width="16" Height="16" Spacing="4" VerticalAlignment="Center">
+          <Grid>
+            <Rectangle Height="1.6" Fill="White" VerticalAlignment="Center" Opacity="0.95" />
+            <Ellipse Width="5" Height="5" Fill="White" HorizontalAlignment="Left" />
+          </Grid>
+          <Grid>
+            <Rectangle Height="1.6" Fill="White" VerticalAlignment="Center" Opacity="0.95" />
+            <Ellipse Width="5" Height="5" Fill="White" HorizontalAlignment="Right" />
+          </Grid>
+          <Grid>
+            <Rectangle Height="1.6" Fill="White" VerticalAlignment="Center" Opacity="0.95" />
+            <Ellipse Width="5" Height="5" Fill="White" HorizontalAlignment="Center" />
+          </Grid>
+        </StackPanel>
+      </Border>
+      <TextBlock Grid.Column="1" Text="Settings" Classes="header" VerticalAlignment="Center" />
+      <Button Grid.Column="2" Classes="switchContext current" Content="Save" Command="{Binding SaveCommand}" />
     </Grid>
 
     <TextBlock
@@ -19,69 +36,97 @@
 
     <!-- General -->
     <Border Classes="panel">
-      <StackPanel Spacing="8">
+      <StackPanel Spacing="10">
         <TextBlock Text="GENERAL" Classes="sectionTitle" />
-        <Grid ColumnDefinitions="220,*">
-          <TextBlock Grid.Column="0" Text="Default switch timeout (seconds)" Classes="body" VerticalAlignment="Center" />
-          <TextBox Grid.Column="1" Text="{Binding DefaultSwitchTimeoutSecondsText}" Width="100" HorizontalAlignment="Left" />
+
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Grid.Column="0" Text="Default switch timeout" Classes="body" VerticalAlignment="Center" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+            <TextBox Text="{Binding DefaultSwitchTimeoutSecondsText}" Width="70" HorizontalContentAlignment="Right" />
+            <TextBlock Text="seconds" Classes="caption" VerticalAlignment="Center" />
+          </StackPanel>
         </Grid>
-        <ToggleSwitch IsChecked="{Binding ShowDockIcon}" OnContent="Show Dock icon" OffContent="Show Dock icon" />
-        <TextBlock Text="Takes effect the next time Context Switcher starts." Classes="caption" />
+        <Border Classes="divider" />
+
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Grid.Column="0" Spacing="2">
+            <TextBlock Text="Show Dock icon" Classes="body" VerticalAlignment="Center" />
+            <TextBlock Text="Takes effect the next time Context Switcher starts." Classes="caption" />
+          </StackPanel>
+          <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowDockIcon}" />
+        </Grid>
       </StackPanel>
     </Border>
 
     <!-- Permissions -->
     <Border Classes="panel">
-      <StackPanel Spacing="8">
+      <StackPanel Spacing="10">
         <Grid ColumnDefinitions="*,Auto">
           <TextBlock Grid.Column="0" Text="AUTOMATION PERMISSIONS" Classes="sectionTitle" VerticalAlignment="Center" />
           <Button Grid.Column="1" Classes="linkButton" Content="Refresh" Command="{Binding RefreshPermissionsCommand}" />
         </Grid>
 
-        <Grid ColumnDefinitions="160,Auto,*" RowDefinitions="Auto,Auto">
-          <TextBlock Grid.Row="0" Grid.Column="0" Text="Accessibility (hotkeys)" Classes="body" VerticalAlignment="Center" />
-          <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AccessibilityGranted}" Classes="body" VerticalAlignment="Center" Margin="0,0,8,0" />
-          <Button Grid.Row="0" Grid.Column="2" Classes="linkButton" Content="Open System Settings" Command="{Binding OpenAccessibilitySettingsCommand}" HorizontalAlignment="Left" />
-
-          <TextBlock Grid.Row="1" Grid.Column="0" Text="Automation (AppleScript)" Classes="body" VerticalAlignment="Center" Margin="0,6,0,0" />
-          <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AutomationGranted}" Classes="body" VerticalAlignment="Center" Margin="0,6,8,0" />
-          <Button Grid.Row="1" Grid.Column="2" Classes="linkButton" Content="Open System Settings" Command="{Binding OpenAutomationSettingsCommand}" HorizontalAlignment="Left" Margin="0,6,0,0" />
+        <Grid ColumnDefinitions="*,Auto,Auto">
+          <TextBlock Grid.Column="0" Text="Accessibility (hotkeys)" Classes="body" VerticalAlignment="Center" />
+          <Border Grid.Column="1" Classes="statusPill" Background="{Binding AccessibilityGranted, Converter={x:Static conv:PermissionStatusBrushConverter.Instance}}" Margin="0,0,10,0">
+            <TextBlock Text="{Binding AccessibilityGranted, Converter={x:Static conv:PermissionStatusTextConverter.Instance}}" Classes="caption" FontWeight="SemiBold" />
+          </Border>
+          <Button Grid.Column="2" Classes="linkButton" Content="Open System Settings" Command="{Binding OpenAccessibilitySettingsCommand}" />
         </Grid>
-        <TextBlock Text="See docs/automation-permissions.md for what each permission is used for." Classes="caption" />
+        <Border Classes="divider" />
+
+        <Grid ColumnDefinitions="*,Auto,Auto">
+          <TextBlock Grid.Column="0" Text="Automation (AppleScript)" Classes="body" VerticalAlignment="Center" />
+          <Border Grid.Column="1" Classes="statusPill" Background="{Binding AutomationGranted, Converter={x:Static conv:PermissionStatusBrushConverter.Instance}}" Margin="0,0,10,0">
+            <TextBlock Text="{Binding AutomationGranted, Converter={x:Static conv:PermissionStatusTextConverter.Instance}}" Classes="caption" FontWeight="SemiBold" />
+          </Border>
+          <Button Grid.Column="2" Classes="linkButton" Content="Open System Settings" Command="{Binding OpenAutomationSettingsCommand}" />
+        </Grid>
+
+        <TextBlock Text="See docs/automation-permissions.md for what each permission is used for." Classes="caption" Margin="0,4,0,0" />
       </StackPanel>
     </Border>
 
     <!-- Analytics -->
     <Border Classes="panel">
-      <StackPanel Spacing="8">
+      <StackPanel Spacing="10">
         <TextBlock Text="ANALYTICS" Classes="sectionTitle" />
-        <ToggleSwitch IsChecked="{Binding AnalyticsEnabled}" OnContent="Track context time locally" OffContent="Track context time locally" />
-        <Grid ColumnDefinitions="160,*">
-          <TextBlock Grid.Column="0" Text="Retention (days)" Classes="body" VerticalAlignment="Center" />
-          <TextBox Grid.Column="1" Text="{Binding AnalyticsRetentionDaysText}" Width="100" HorizontalAlignment="Left" IsEnabled="{Binding AnalyticsEnabled}" />
+
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Grid.Column="0" Text="Track context time locally" Classes="body" VerticalAlignment="Center" />
+          <ToggleSwitch Grid.Column="1" IsChecked="{Binding AnalyticsEnabled}" />
+        </Grid>
+        <Border Classes="divider" />
+
+        <Grid ColumnDefinitions="*,Auto" IsEnabled="{Binding AnalyticsEnabled}">
+          <TextBlock Grid.Column="0" Text="Retention" Classes="body" VerticalAlignment="Center" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+            <TextBox Text="{Binding AnalyticsRetentionDaysText}" Width="70" HorizontalContentAlignment="Right" />
+            <TextBlock Text="days" Classes="caption" VerticalAlignment="Center" />
+          </StackPanel>
         </Grid>
       </StackPanel>
     </Border>
 
     <!-- Support -->
     <Border Classes="panel">
-      <StackPanel Spacing="8">
+      <StackPanel Spacing="10">
         <TextBlock Text="SUPPORT" Classes="sectionTitle" />
-        <Button Classes="linkButton" Content="Support the developer" Command="{Binding SupportDeveloperCommand}" />
+        <Button Classes="linkButton" Content="Support the developer ↗" Command="{Binding SupportDeveloperCommand}" />
       </StackPanel>
     </Border>
 
     <!-- Hotkeys -->
     <Border Classes="panel">
-      <StackPanel Spacing="8">
+      <StackPanel Spacing="10">
         <TextBlock Text="ALL HOTKEYS" Classes="sectionTitle" />
         <TextBlock Text="Edit a hotkey from its profile's Setup page." Classes="caption" />
         <ItemsControl ItemsSource="{Binding Hotkeys}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="vm:HotkeyRowViewModel">
-              <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,2">
+              <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,5">
                 <TextBlock Grid.Column="0" Text="{Binding ContextDisplayName}" Classes="body" />
-                <TextBlock Grid.Column="1" Text="{Binding Accelerator}" Classes="body" Margin="0,0,12,0" />
+                <TextBlock Grid.Column="1" Text="{Binding Accelerator}" Classes="caption" FontFamily="monospace" Margin="0,0,12,0" VerticalAlignment="Center" />
                 <TextBlock Grid.Column="2" Text="{Binding Enabled}" Classes="caption" />
               </Grid>
             </DataTemplate>

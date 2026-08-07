@@ -2,6 +2,7 @@
   x:Class="ContextSwitcher.App.App"
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:semi="https://irihi.tech/semi"
   RequestedThemeVariant="Default">
   <Application.Resources>
     <ResourceDictionary>
@@ -11,7 +12,11 @@
     </ResourceDictionary>
   </Application.Resources>
   <Application.Styles>
-    <FluentTheme />
+    <!-- Semi.Avalonia supplies every standard control's chrome (buttons, inputs, toggles,
+         scrollbars, focus/disabled states) so this app does not hand-roll a design system.
+         Colors/Typography/Controls below only add app-specific tokens and layout classes
+         on top - see agent.md section 11.2. -->
+    <semi:SemiTheme Locale="en-US" />
     <StyleInclude Source="avares://ContextSwitcher/Styles/Typography.axaml" />
     <StyleInclude Source="avares://ContextSwitcher/Styles/Controls.axaml" />
   </Application.Styles>

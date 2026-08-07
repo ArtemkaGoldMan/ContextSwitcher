@@ -21,17 +21,19 @@
     Background="{DynamicResource SurfaceBrush}"
     BorderBrush="{DynamicResource BorderBrush}"
     BorderThickness="1"
-    CornerRadius="12"
-    BoxShadow="0 8 32 0 #33000000">
-    <StackPanel Margin="14" Spacing="12">
+    CornerRadius="16"
+    BoxShadow="0 12 40 0 #40000000">
+    <StackPanel Margin="16" Spacing="14">
       <!-- Header -->
-      <StackPanel Spacing="2">
-        <TextBlock Text="Context Switcher" Classes="header" />
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <TextBlock Text="{Binding ActiveContextDisplayName}" Classes="body" />
+      <Grid ColumnDefinitions="Auto,*">
+        <Border Grid.Column="0" Classes="badge" Width="34" Height="34" Background="{DynamicResource BadgeBlueGradient}" Margin="0,0,10,0">
+          <TextBlock Text="⇄" FontSize="16" FontWeight="Bold" />
+        </Border>
+        <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+          <TextBlock Text="{Binding ActiveContextDisplayName}" Classes="body" FontWeight="SemiBold" />
           <TextBlock Text="{Binding ElapsedDisplay}" Classes="caption" />
         </StackPanel>
-      </StackPanel>
+      </Grid>
 
       <!-- Switch buttons -->
       <StackPanel Spacing="8">
@@ -48,9 +50,10 @@
                 Classes="switchContext"
                 Classes.current="{Binding IsCurrent}"
                 Command="{Binding SwitchCommand}"
-                HorizontalAlignment="Stretch">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                  <Ellipse Width="10" Height="10" Fill="{Binding AccentBrush}" VerticalAlignment="Center" />
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <Border Width="10" Height="10" CornerRadius="3" Background="{Binding AccentBrush}" VerticalAlignment="Center" />
                   <TextBlock Text="{Binding DisplayName}" Classes="body" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
@@ -58,7 +61,7 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
         <TextBlock Text="Switching…" Classes="caption" IsVisible="{Binding IsSwitching}" />
-        <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsSwitching}" Height="3" />
+        <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsSwitching}" Height="3" CornerRadius="2" />
       </StackPanel>
 
       <!-- Last switch outcome -->
@@ -125,10 +128,11 @@
       </StackPanel>
 
       <!-- Footer -->
-      <StackPanel Orientation="Horizontal" Spacing="12">
-        <Button Classes="linkButton" Command="{Binding OpenAppCommand}" Content="Open App" />
-        <Button Classes="linkButton" Command="{Binding SupportDeveloperCommand}" Content="Support the developer" />
-      </StackPanel>
+      <Border Classes="divider" />
+      <Grid ColumnDefinitions="*,Auto">
+        <Button Grid.Column="0" Classes="linkButton" Command="{Binding OpenAppCommand}" Content="Open App" HorizontalAlignment="Left" />
+        <Button Grid.Column="1" Classes="linkButton" Command="{Binding SupportDeveloperCommand}" Content="Support the developer" Foreground="{DynamicResource TextSecondaryBrush}" />
+      </Grid>
     </StackPanel>
   </Border>
 </Window>

@@ -3,25 +3,76 @@
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <ResourceDictionary.ThemeDictionaries>
     <ResourceDictionary x:Key="Light">
-      <!-- Semi-opaque neutral surface approximates depth without native blur-behind (agent.md section 11.2). -->
-      <SolidColorBrush x:Key="SurfaceBrush" Color="#F0F2F2F4" />
-      <SolidColorBrush x:Key="SurfaceAltBrush" Color="#FAFAFAFB" />
-      <SolidColorBrush x:Key="BorderBrush" Color="#14000000" />
+      <!-- Surface hierarchy: app background < sidebar < card, lightest on top like the reference. -->
+      <SolidColorBrush x:Key="AppBackgroundBrush" Color="#FFF2F2F5" />
+      <SolidColorBrush x:Key="SidebarBrush" Color="#FFF7F7F9" />
+      <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFFFF" />
+      <SolidColorBrush x:Key="SurfaceAltBrush" Color="#FFFFFFFF" />
+      <SolidColorBrush x:Key="CardBrush" Color="#FFFFFFFF" />
+      <SolidColorBrush x:Key="CardHoverBrush" Color="#FFF6F6F8" />
+      <SolidColorBrush x:Key="SelectedNavBrush" Color="#14000000" />
+      <SolidColorBrush x:Key="BorderBrush" Color="#12000000" />
+      <SolidColorBrush x:Key="DividerBrush" Color="#0C000000" />
       <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FF1D1D1F" />
       <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FF6E6E73" />
       <SolidColorBrush x:Key="WarningBrush" Color="#FFB25000" />
       <SolidColorBrush x:Key="ErrorBrush" Color="#FFD1392B" />
       <SolidColorBrush x:Key="SuccessBrush" Color="#FF1E8E3E" />
+      <SolidColorBrush x:Key="AccentBrush" Color="#FF0A84FF" />
+      <SolidColorBrush x:Key="AccentSoftBrush" Color="#1A0A84FF" />
     </ResourceDictionary>
     <ResourceDictionary x:Key="Dark">
+      <SolidColorBrush x:Key="AppBackgroundBrush" Color="#FF19191B" />
+      <SolidColorBrush x:Key="SidebarBrush" Color="#FF1C1C1F" />
       <SolidColorBrush x:Key="SurfaceBrush" Color="#F0242426" />
       <SolidColorBrush x:Key="SurfaceAltBrush" Color="#FA2C2C2E" />
+      <SolidColorBrush x:Key="CardBrush" Color="#FF29292C" />
+      <SolidColorBrush x:Key="CardHoverBrush" Color="#FF303033" />
+      <SolidColorBrush x:Key="SelectedNavBrush" Color="#1AFFFFFF" />
       <SolidColorBrush x:Key="BorderBrush" Color="#1AFFFFFF" />
+      <SolidColorBrush x:Key="DividerBrush" Color="#12FFFFFF" />
       <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFF5F5F7" />
-      <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FFA1A1A6" />
+      <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FF9C9CA3" />
       <SolidColorBrush x:Key="WarningBrush" Color="#FFFFA033" />
       <SolidColorBrush x:Key="ErrorBrush" Color="#FFFF6961" />
       <SolidColorBrush x:Key="SuccessBrush" Color="#FF4CD964" />
+      <SolidColorBrush x:Key="AccentBrush" Color="#FF0A84FF" />
+      <SolidColorBrush x:Key="AccentSoftBrush" Color="#260A84FF" />
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
+
+  <!-- Badge colors: same in both themes, tuned to stay vivid and legible on light or dark cards. -->
+  <SolidColorBrush x:Key="BadgeBlueBrush" Color="#FF0A84FF" />
+  <SolidColorBrush x:Key="BadgeBlueBrush2" Color="#FF5E5CE6" />
+  <SolidColorBrush x:Key="BadgePurpleBrush" Color="#FFBF5AF2" />
+  <SolidColorBrush x:Key="BadgePurpleBrush2" Color="#FFFF375F" />
+  <SolidColorBrush x:Key="BadgeGreenBrush" Color="#FF30D158" />
+  <SolidColorBrush x:Key="BadgeGreenBrush2" Color="#FF64D2FF" />
+  <SolidColorBrush x:Key="BadgeOrangeBrush" Color="#FFFF9F0A" />
+  <SolidColorBrush x:Key="BadgeOrangeBrush2" Color="#FFFFD60A" />
+  <SolidColorBrush x:Key="BadgeGrayBrush" Color="#FF8E8E93" />
+  <SolidColorBrush x:Key="BadgeGrayBrush2" Color="#FF636366" />
+  <SolidColorBrush x:Key="BadgeRedBrush" Color="#FFFF453A" />
+  <SolidColorBrush x:Key="BadgeRedBrush2" Color="#FFFF7A5A" />
+
+  <LinearGradientBrush x:Key="BadgeBlueGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+    <GradientStop Color="#FF3E9CFF" Offset="0" />
+    <GradientStop Color="#FF0A5FE0" Offset="1" />
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="BadgePurpleGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+    <GradientStop Color="#FFBF5AF2" Offset="0" />
+    <GradientStop Color="#FFFF375F" Offset="1" />
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="BadgeGreenGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+    <GradientStop Color="#FF34D399" Offset="0" />
+    <GradientStop Color="#FF32ADE6" Offset="1" />
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="BadgeOrangeGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+    <GradientStop Color="#FFFFB13D" Offset="0" />
+    <GradientStop Color="#FFFF7A00" Offset="1" />
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="BadgeGrayGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+    <GradientStop Color="#FF9A9AA0" Offset="0" />
+    <GradientStop Color="#FF636366" Offset="1" />
+  </LinearGradientBrush>
 </ResourceDictionary>

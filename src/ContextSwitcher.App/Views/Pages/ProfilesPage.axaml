@@ -7,7 +7,7 @@
   <StackPanel Spacing="16">
     <Grid ColumnDefinitions="*,Auto">
       <TextBlock Grid.Column="0" Text="Profiles" Classes="header" VerticalAlignment="Center" />
-      <Button Grid.Column="1" Classes="switchContext" Content="Add new profile" Command="{Binding AddCommand}" />
+      <Button Grid.Column="1" Classes="switchContext current" Content="+ Add new profile" Command="{Binding AddCommand}" />
     </Grid>
 
     <TextBlock
@@ -25,13 +25,15 @@
       </ItemsControl.ItemsPanel>
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="vm:ProfileRowViewModel">
-          <Border Classes="panel">
+          <Border Classes="panel" Classes.current="{Binding IsActive}">
             <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
-              <Ellipse Grid.Column="0" Width="12" Height="12" Fill="{Binding AccentBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
+              <Border Grid.Column="0" Width="38" Height="38" CornerRadius="10" Background="{Binding AccentBrush}" Margin="0,0,14,0">
+                <Ellipse Width="10" Height="10" Fill="White" Opacity="0.9" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
 
               <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                <TextBlock Text="{Binding DisplayName}" Classes="body" />
-                <TextBlock Text="Active" Classes="caption" Foreground="{DynamicResource SuccessBrush}" IsVisible="{Binding IsActive}" />
+                <TextBlock Text="{Binding DisplayName}" Classes="body" FontWeight="Medium" />
+                <TextBlock Text="Active now" Classes="caption" Foreground="{DynamicResource AccentBrush}" IsVisible="{Binding IsActive}" />
               </StackPanel>
 
               <Button
@@ -42,16 +44,16 @@
                 IsEnabled="{Binding !IsActive}"
                 Margin="6,0" />
 
-              <Button Grid.Column="3" Classes="rowAction" Command="{Binding EditCommand}" ToolTip.Tip="Edit" Content="Edit" />
+              <Button Grid.Column="3" Classes="rowAction" Command="{Binding EditCommand}" ToolTip.Tip="Edit" Content="Edit" Margin="4,0,0,0" />
 
-              <Button Grid.Column="4" Classes="rowAction" Command="{Binding DuplicateCommand}" ToolTip.Tip="Duplicate" Content="Duplicate" />
+              <Button Grid.Column="4" Classes="rowAction" Command="{Binding DuplicateCommand}" ToolTip.Tip="Duplicate" Content="Duplicate" Margin="4,0,0,0" />
 
-              <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="4" IsVisible="{Binding !IsConfirmingDelete}">
-                <Button Classes="rowAction" Command="{Binding DeleteCommand}" ToolTip.Tip="Delete" Content="Delete" Foreground="{DynamicResource ErrorBrush}" />
+              <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="4" Margin="4,0,0,0" IsVisible="{Binding !IsConfirmingDelete}">
+                <Button Classes="rowAction danger" Command="{Binding DeleteCommand}" ToolTip.Tip="Delete" Content="Delete" />
               </StackPanel>
-              <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsConfirmingDelete}">
+              <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="4" Margin="4,0,0,0" IsVisible="{Binding IsConfirmingDelete}">
                 <TextBlock Text="Delete?" Classes="caption" VerticalAlignment="Center" />
-                <Button Classes="rowAction" Command="{Binding DeleteCommand}" Content="Yes" Foreground="{DynamicResource ErrorBrush}" />
+                <Button Classes="rowAction danger" Command="{Binding DeleteCommand}" Content="Yes" />
                 <Button Classes="rowAction" Command="{Binding CancelDeleteCommand}" Content="No" />
               </StackPanel>
             </Grid>

@@ -1168,7 +1168,7 @@ Contents, top to bottom:
 
 #### 11.1.2 Main App window (multi-page)
 
-Opened from the Dashboard's **Open App** button. A normal resizable window (860 x 620 default, see
+Opened from the Dashboard's **Open App** button. A normal resizable window (880 x 640 default, see
 11.2) with a persistent left-hand page navigation: **Profiles**, **Settings**, **Stats**.
 
 **Profiles page** (default page on open):
@@ -1221,57 +1221,111 @@ built yet") - see Phase 11 in the roadmap (section 14) for building this out.
 
 ### 11.2 Visual Design
 
+Revised 2026-07-20 (see below the divider for the original MVP-era spec, kept for historical
+context on constraints that are still true). The user supplied a reference screenshot of a
+macOS-native preferences app (colored rounded-square icon badges per nav row, card-based content
+with hairline-separated rows, a gradient 3-card segmented chooser) and asked for "the best, most
+modern... good UX UI" with full creative latitude ("I don't know anything about design"). This
+superseded the original flat/neutral/8px-radius language below for both the Dashboard and the Main
+App window.
+
 Design language:
 
-- Premium but quiet.
-- Dense enough for daily utility use.
-- No landing-page composition inside the app.
-- No decorative cards nested inside other cards.
-- Use compact panels, clear section labels, and direct controls.
-- Modern, not skeuomorphic: flat neutral surfaces, generous spacing, an accent color used sparingly, soft corner radii. No native macOS blur-behind ("Liquid Glass" / vibrancy) — Avalonia's `TransparencyLevelHint` does not reliably support blur on macOS (`Blur`/`AcrylicBlur` are documented as non-functional there), and a custom `NSVisualEffectView` interop layer is not worth the platform-specific fragility for this app. Approximate depth instead with a semi-opaque neutral surface color (roughly 92-96% opaque, not fully solid), a subtle 1px border, and the window's native drop shadow — not a literal blurred background.
-- The Dashboard is a borderless popover anchored below the tray icon (like Control Center or a standard menu bar dropdown), not a centered window. Position it using the click location / tray icon's screen coordinates at open time.
+- Card-based, not flat-neutral: every section is a `Border.panel` card (`CardBrush`, 14 px corner
+  radius, 1 px `BorderBrush`) sitting on an `AppBackgroundBrush` page and a slightly-different
+  `SidebarBrush` nav rail - a real surface hierarchy (app bg < sidebar < card), not one flat plane.
+- Colored icon badges: a 26-36 px rounded-square (`Border.badge`, `CornerRadius="9"`) filled with a
+  category-specific `LinearGradientBrush` (`BadgeBlueGradient` = Profiles/app logo,
+  `BadgePurpleGradient` = Settings, `BadgeGreenGradient` = Stats, `BadgeOrangeGradient` = Profile
+  Setup) containing a small white glyph, on every sidebar nav row and every page header. This is
+  the accent color's job now, not "used sparingly" - see Colors below.
+- Icons are hand-drawn from primitive shapes (`Rectangle`/`Ellipse`/`Path`/`Polygon`), not an icon
+  font or SVG package: a 2x2 dot grid (Profiles), three horizontal sliders (Settings), three bars
+  (Stats), a rotated rounded rect + triangle (Profile Setup/pencil), and for the Theme option cards
+  a filled circle (Light), a bordered dark circle (Dark), and a two-`Path` split circle via
+  elliptical arcs (System). Only `⇄` (app logo) and the row-remove `✕` are text glyphs; both are
+  plain Unicode symbols confirmed not to render as color emoji on macOS. Adding an icon package was
+  deliberately avoided to keep the dependency footprint unchanged (agent.md section 21).
+- List rows inside a card are separated by a 1 px `Border.divider` (`DividerBrush`), not nested
+  boxes - "no decorative cards nested inside other cards" still holds; a divider is not a card.
+  Label left, control right, per row.
+- A `RadioButton.optionCard` style (custom `ControlTemplate`, checked state gets an `AccentBrush`
+  ring) renders a single-choice control as 2-3 large gradient cards with icon + title + subtitle -
+  used for Theme mode, the one place in the app that maps cleanly onto the reference's flagship
+  "Break enforcement" 3-card selector.
+- Primary actions (Save, Add new profile, the active profile's row border, the active Dashboard
+  switch button, the selected Week/Month segment) are filled solid with `AccentBrush` via
+  `Classes="switchContext current"`; everything else is a neutral `CardHoverBrush` pill button.
+  Text-only actions (`Button.linkButton`: Open System Settings, Support the developer, +Add row
+  buttons) are accent-colored to read as links, matching macOS convention.
+- Still true from the original spec: no landing-page composition, dense enough for daily utility
+  use, and **no native macOS blur-behind ("Liquid Glass"/vibrancy)** - depth comes from a
+  semi-opaque surface color and the window's native drop shadow, not a literal blurred background.
+
+  **Empirically re-verified 2026-08-07, because the original note's reasoning was imprecise and
+  invited re-litigation.** Two separate things were being conflated: `AcrylicBlur` is genuinely
+  Windows-only, whereas `WindowTransparencyLevel.Blur` *is* documented as macOS-supported (it maps
+  to `NSVisualEffectView` vibrancy) - so "Avalonia can't blur on macOS" was the wrong reason. The
+  right reason is empirical: setting `TransparencyLevelHint="Blur, Transparent"` on the Dashboard
+  popover under Avalonia 12.1.1 and reading back `Window.ActualTransparencyLevel` at runtime
+  returns **`Transparent`**, i.e. macOS declined `Blur` and fell through to the fallback. No
+  vibrancy is applied. (Note the Dashboard is `WindowDecorations="None"`; blur may behave
+  differently on a decorated window, but a borderless popover is the shape this app needs.)
+  Anyone revisiting this must re-run that `ActualTransparencyLevel` check rather than reasoning
+  from the docs - the docs say it should work, and on this configuration it does not.
+
+  Real Apple "Liquid Glass" (macOS 26 Tahoe) is further out of reach regardless: it is real-time
+  lensing/refraction with motion-tracked specular highlights, implemented as an AppKit/SwiftUI
+  GPU material with no public cross-framework surface. Do not promise it.
+- The Dashboard is still a borderless popover anchored below the tray icon, not a centered window.
 
 Window dimensions:
 
-- Dashboard default width: 360 px.
-- Dashboard min width: 320 px.
-- Dashboard max width: 420 px.
-- Dashboard height: content-based up to 620 px, scroll if needed.
-- Settings default: 860 x 620 px.
+- Dashboard default width: 360 px (unchanged); min 320, max 420; height content-based up to 620 px.
+- Main App window: 880 x 640 px default (was 860 x 620), 640 x 440 minimum, with a 200 px fixed
+  sidebar and a max-640-px-wide centered content column so cards don't stretch full-bleed on a wide
+  window.
 
 Spacing:
 
-- Outer dashboard padding: 14 px.
-- Section spacing: 12 px.
-- Control spacing: 8 px.
-- Border radius: 8 px maximum for cards/buttons unless native control style requires otherwise.
+- Outer dashboard padding: 16 px (was 14).
+- Card padding: 16 px. Section spacing between cards: 16-20 px. Row spacing inside a card: 8-10 px.
+- Border radius: 14 px for cards, 9-10 px for inputs/buttons/badges, 16 px for the Dashboard
+  popover. The original "8 px maximum" cap no longer applies - the rounder radius is part of the
+  2026-07-20 direction.
 
 Typography:
 
-- Use system font.
-- Header: 18 px semibold.
-- Section title: 12 px medium, uppercase only where useful.
-- Body: 13 px.
-- Caption: 11 px.
-- Do not use viewport-scaled text.
-- Letter spacing must be 0.
+- Use system font (unchanged). Header: 20 px bold (was 18 px semibold). Section title: 11 px
+  semibold uppercase (was 12 px medium). Body: 13 px. Caption: 11 px. No viewport-scaled text, 0
+  letter spacing (unchanged).
 
 Colors:
 
-- Respect macOS light/dark appearance.
-- Use active context accent color sparingly: current status, selected context, chart highlight, menu icon variant.
-- Avoid one-note palettes; neutral surfaces must remain neutral.
-- Ensure WCAG AA contrast for text.
+- Respect macOS light/dark appearance (unchanged) - `Colors.axaml` defines a full surface ramp
+  (`AppBackgroundBrush`, `SidebarBrush`, `CardBrush`, `CardHoverBrush`, `SelectedNavBrush`,
+  `DividerBrush`) per theme, plus a theme-invariant badge palette (`BadgeBlueGradient` etc.) that
+  stays vivid on both light and dark cards.
+- `AccentBrush` (`#0A84FF`, macOS system blue) drives primary buttons, the active profile's card
+  border, selected nav/segment state, and link-styled text - a real accent color used deliberately
+  and often, not sparingly. `FluentTheme.Palettes` is set to the same blue in `App.axaml` so
+  standard controls (`ToggleSwitch`, `CheckBox`, `RadioButton`) match it automatically.
+- Ensure WCAG AA contrast for text (unchanged).
 
 Controls:
 
 - Use icon buttons for settings, quit, refresh, warning details, and link opening.
 - Use text buttons for context switches because labels matter.
-- Use toggles for binary settings.
-- Use segmented controls for theme mode.
+- Use toggles (`ToggleSwitch`) for binary settings.
+- Use the `RadioButton.optionCard` gradient selector for Theme mode; other multi-option pickers
+  (browser mode/kind, media player) use a restyled `ComboBox` (9 px radius, `CardHoverBrush` fill)
+  rather than every choice getting a bespoke control.
 - Use text fields for app names, paths, profile directories, and URLs.
 - Use list rows with add/remove buttons for app/browser/docker arrays.
 - Use tooltips for icons.
+- A small status pill (`Border.statusPill` + `PermissionStatusBrushConverter`/
+  `PermissionStatusTextConverter` in `ContextSwitcher.App.Converters`) renders a soft green/red/gray
+  chip for the Settings page's Accessibility/Automation permission state.
 
 States:
 
