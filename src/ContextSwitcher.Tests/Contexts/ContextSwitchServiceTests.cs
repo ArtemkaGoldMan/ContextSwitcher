@@ -203,7 +203,8 @@ public sealed class ContextSwitchServiceTests
         await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
 
         LogEntry launch = Assert.Single(
-            logger.Entries.Where(entry => entry.Data?.GetValueOrDefault("stepId") == "LaunchApplications.work"));
+            logger.Entries,
+            entry => entry.Data?.GetValueOrDefault("stepId") == "LaunchApplications.work");
 
         Assert.True(launch.Data!["stderr"].Length < 1000);
     }
