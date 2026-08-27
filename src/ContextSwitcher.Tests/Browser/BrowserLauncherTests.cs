@@ -73,6 +73,77 @@ public sealed class BrowserLauncherTests
         Assert.Single(processRunner.Calls);
     }
 
+    /// <summary>
+    /// The regression behind the "no URL opened at all" bug: a browser that does not answer
+    /// AppleEvents fails the duplicate-tab probe, and section 9.3 requires falling back to a plain
+    /// <c>open</c> rather than giving up on the URL.
+    /// </summary>
+    [Fact]
+    public async Task ManageBrowserContextAsyncUrlsModeStillOpensWhenTabInspectionFails()
+    {
+        FakeProcessRunner processRunner = new();
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(-1, string.Empty, string.Empty, TimedOut: true));
+
+        BrowserLauncher launcher = new(processRunner, scriptRunner);
+
+        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
+            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], [], true, [], Timeout),
+            CancellationToken.None);
+
+        ProcessStartOptions call = Assert.Single(processRunner.Calls);
+        Assert.Equal(["-a", "Google Chrome", "https://example.com/"], call.Arguments);
+        Assert.Contains(outcome.Warnings, warning => warning.Contains("Google Chrome", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Probing is best-effort, so it may never spend the whole step budget - that is what starved
+    /// the <c>open</c> fallback when a browser hung.
+    /// </summary>
+    [Fact]
+    public async Task ManageBrowserContextAsyncUrlsModeGivesTabInspectionOnlyASliceOfTheStepTimeout()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(0, "false", string.Empty, false));
+
+        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+
+        await launcher.ManageBrowserContextAsync(
+            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], [], true, [], Timeout),
+            CancellationToken.None);
+
+        Assert.True(Assert.Single(scriptRunner.Timeouts) < Timeout);
+    }
+
+    /// <summary>
+    /// Once inspection has failed once the browser is not scriptable, so re-probing every remaining
+    /// URL would only burn the step's budget to reach the same answer.
+    /// </summary>
+    [Fact]
+    public async Task ManageBrowserContextAsyncUrlsModeStopsProbingAfterInspectionFailsOnce()
+    {
+        FakeProcessRunner processRunner = new();
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(-1, string.Empty, string.Empty, TimedOut: true));
+
+        BrowserLauncher launcher = new(processRunner, scriptRunner);
+
+        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
+            new BrowserContextRequest(
+                BrowserManagementMode.Urls,
+                BrowserKind.Chrome,
+                ["https://example.com/", "https://example.org/", "https://example.net/"],
+                [],
+                true,
+                [],
+                Timeout),
+            CancellationToken.None);
+
+        Assert.Single(scriptRunner.Scripts);
+        Assert.Equal(3, processRunner.Calls.Count);
+        Assert.Single(outcome.Warnings);
+    }
+
     [Fact]
     public async Task ManageBrowserContextAsyncUrlsModeReportsWarningOnNonZeroExit()
     {

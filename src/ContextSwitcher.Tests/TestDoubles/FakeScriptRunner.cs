@@ -9,6 +9,9 @@ public sealed class FakeScriptRunner : IScriptRunner
 
     public List<string> Scripts { get; } = [];
 
+    /// <summary>The timeout each script was given, positionally matching <see cref="Scripts"/>.</summary>
+    public List<TimeSpan> Timeouts { get; } = [];
+
     public ProcessResult DefaultResult { get; set; } = new(0, string.Empty, string.Empty, false);
 
     public void Enqueue(ProcessResult result) => this.queuedResults.Enqueue(result);
@@ -16,6 +19,7 @@ public sealed class FakeScriptRunner : IScriptRunner
     public Task<ProcessResult> RunAsync(string script, TimeSpan timeout, CancellationToken cancellationToken)
     {
         this.Scripts.Add(script);
+        this.Timeouts.Add(timeout);
         ProcessResult result = this.queuedResults.Count > 0 ? this.queuedResults.Dequeue() : this.DefaultResult;
         return Task.FromResult(result);
     }

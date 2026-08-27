@@ -12,6 +12,15 @@ namespace ContextSwitcher.Infrastructure.Browser;
 /// </summary>
 public sealed class BrowserLauncher
 {
+    /// <summary>
+    /// Duplicate-tab inspection is a best-effort nicety, so it gets a small slice of the step's
+    /// budget rather than all of it. A browser that answers AppleEvents at all answers in
+    /// milliseconds; one that does not (no Automation permission, or a wedged process) blocks until
+    /// the script is killed. Handing it the whole step timeout used to starve the plain
+    /// <c>open</c> fallback that agent.md section 9.3 requires, so no URL opened at all.
+    /// </summary>
+    private static readonly TimeSpan TabProbeTimeout = TimeSpan.FromSeconds(3);
+
     private readonly IProcessRunner processRunner;
     private readonly IScriptRunner scriptRunner;
 
@@ -52,14 +61,31 @@ public sealed class BrowserLauncher
     {
         List<string> warnings = [];
 
+        // The default browser is unknown ahead of time, so it cannot be targeted by AppleScript.
+        bool probeTabs = avoidDuplicateTabs && browser != BrowserKind.Default;
+        TimeSpan probeTimeout = timeout < TabProbeTimeout ? timeout : TabProbeTimeout;
+
         foreach (string url in urls)
         {
-            bool focused = avoidDuplicateTabs
-                && await this.TryFocusExistingTabAsync(browser, url, timeout, cancellationToken).ConfigureAwait(false);
-
-            if (focused)
+            if (probeTabs)
             {
-                continue;
+                TabProbeOutcome probe = await this.TryFocusExistingTabAsync(browser, url, probeTimeout, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (probe == TabProbeOutcome.Focused)
+                {
+                    continue;
+                }
+
+                if (probe == TabProbeOutcome.InspectionFailed)
+                {
+                    // One failure is enough to conclude the browser is not scriptable right now.
+                    // Re-probing every remaining URL would burn the rest of the step's budget to
+                    // reach the same answer, and section 9.3 says to fall back to `open` instead.
+                    probeTabs = false;
+                    warnings.Add(
+                        $"Could not check {BrowserAppName(browser)} for existing tabs, so URLs were opened without duplicate checking. Check Automation permissions.");
+                }
             }
 
             ProcessResult result = await this.OpenUrlAsync(browser, url, timeout, cancellationToken).ConfigureAwait(false);
@@ -139,20 +165,24 @@ public sealed class BrowserLauncher
         return new BrowserLaunchOutcome(warnings);
     }
 
-    private async Task<bool> TryFocusExistingTabAsync(BrowserKind browser, string url, TimeSpan timeout, CancellationToken cancellationToken)
+    private async Task<TabProbeOutcome> TryFocusExistingTabAsync(BrowserKind browser, string url, TimeSpan timeout, CancellationToken cancellationToken)
     {
-        if (browser == BrowserKind.Default)
-        {
-            // The default browser is unknown ahead of time, so it cannot be targeted by AppleScript.
-            return false;
-        }
-
         string script = browser == BrowserKind.Safari
             ? AppleScriptBuilder.FocusSafariTabWithUrl(url)
             : AppleScriptBuilder.FocusChromiumTabWithUrl(BrowserAppName(browser), url);
 
         ProcessResult result = await this.scriptRunner.RunAsync(script, timeout, cancellationToken).ConfigureAwait(false);
-        return result.ExitCode == 0 && result.StandardOutput.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
+
+        // A non-zero exit means the inspection itself did not run - a timeout, a denied Automation
+        // prompt, or a browser without tab scripting - which is different from "no matching tab".
+        if (result.ExitCode != 0)
+        {
+            return TabProbeOutcome.InspectionFailed;
+        }
+
+        return result.StandardOutput.Trim().Equals("true", StringComparison.OrdinalIgnoreCase)
+            ? TabProbeOutcome.Focused
+            : TabProbeOutcome.NotFound;
     }
 
     private Task<ProcessResult> OpenUrlAsync(BrowserKind browser, string url, TimeSpan timeout, CancellationToken cancellationToken)
@@ -162,6 +192,21 @@ public sealed class BrowserLauncher
             : ["-a", BrowserAppName(browser), url];
 
         return this.processRunner.RunAsync(new ProcessStartOptions("open", arguments, timeout), cancellationToken);
+    }
+
+    /// <summary>
+    /// Why a duplicate-tab probe did not end in "focus this tab, skip the open".
+    /// </summary>
+    private enum TabProbeOutcome
+    {
+        /// <summary>A matching tab was found and focused; the URL must not be opened again.</summary>
+        Focused,
+
+        /// <summary>The inspection ran and found no matching tab.</summary>
+        NotFound,
+
+        /// <summary>The inspection could not run at all, so nothing is known about existing tabs.</summary>
+        InspectionFailed
     }
 
     private static string BrowserAppName(BrowserKind browser) => browser switch
