@@ -58,10 +58,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         ContextDefinition? existing)
     {
         this.configurationStore = configurationStore;
-        this.AppPicker = new AppPickerViewModel(
-            installedAppsService,
-            () => this.Apps.Select(row => row.Name),
-            this.AddAppByName);
         this.IsNew = existing is null;
 
         ContextDefinition source = existing ?? CreateDefaultContext(AppHost.Configuration.Contexts);
@@ -81,6 +77,12 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                     source.LaunchApps.Contains(name),
                     source.CloseApps.Contains(name),
                     this.RemoveApp)));
+
+        // Constructed after Apps, since its "already added" callback reads that collection.
+        this.AppPicker = new AppPickerViewModel(
+            installedAppsService,
+            () => this.Apps.Select(row => row.Name),
+            this.AddAppByName);
 
         this.browserMode = source.BrowserManagement.Mode;
         this.browserKind = source.BrowserManagement.Browser;
