@@ -363,7 +363,7 @@ Schema versioned configuration:
             "menuBarLabel": "WORK",
             "accentColor": "#2F6FED",
             "icon": "briefcase",
-            "closeApps": ["Spotify", "Discord", "Steam"],
+            "closeApps": ["Slack", "Microsoft Teams", "Visual Studio Code"],
             "launchApps": ["Slack", "Microsoft Teams", "Visual Studio Code"],
             "browser_management": {
                 "mode": "groups",
@@ -424,7 +424,7 @@ Schema versioned configuration:
             "menuBarLabel": "HOME",
             "accentColor": "#20A67A",
             "icon": "home",
-            "closeApps": ["Slack", "Microsoft Teams"],
+            "closeApps": ["Obsidian", "Spotify", "Discord", "Steam"],
             "launchApps": ["Obsidian"],
             "browser_management": {
                 "mode": "urls",
@@ -461,7 +461,7 @@ Schema versioned configuration:
                     "icon": "play"
                 }
             ],
-            "notes": ["Work apps should be closed before hobby time."],
+            "notes": ["Hobby apps are quit on the way out, so work starts clean."],
             "switchPolicy": {
                 "continueOnNonCriticalFailure": true,
                 "criticalSteps": []
@@ -475,6 +475,11 @@ Validation rules:
 
 - `schemaVersion` must be supported.
 - `contexts[].id` must be unique, lowercase, URL-safe, and stable.
+- `launchApps[]` is launched when the context is **entered**; `closeApps[]` is quit when the
+  context is **left**. Both lists therefore belong to the profile that owns those apps, which is
+  what the launch-on-enter / close-on-leave toggles in section 11.1.2 edit. To have an app quit
+  as you *arrive* at a context, list it in the `closeApps` of the context you are arriving
+  *from* - not in the `closeApps` of the one you are arriving at.
 - `activeContextId` must match an existing context.
 - `hotkeys[].contextId` must match an existing context.
 - `switchPolicy.criticalSteps[]` entries must match an `AutomationStepType` member name exactly (e.g. `LaunchApplications`, `ManageBrowserContext`); criticality is resolved per step *category*, not per individual app or resource.
@@ -727,7 +732,8 @@ The switch pipeline must execute in this order:
 6. Build automation plan from previous and target context.
 7. Execute resource-freeing steps:
     - Stop Docker resources from previous context.
-    - Close unwanted apps.
+    - Close the previous context's `closeApps` (nothing is closed on the first switch, when there
+      is no previous context).
 8. Execute environment steps:
     - Theme.
     - Wallpaper.

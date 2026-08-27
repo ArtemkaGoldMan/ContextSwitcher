@@ -71,6 +71,54 @@ public sealed class AutomationPlanBuilderTests
         Assert.Equal([AutomationStepType.SetFocusMode], plan.Steps.Select(step => step.Type));
     }
 
+    /// <summary>
+    /// Pins the direction of <c>closeApps</c>: a profile's list names the apps quit on the way
+    /// *out* of it, matching the close-on-leave toggle in section 11.1.2. The example config in
+    /// section 6.1 was once written the other way round, which read as "these are closed when you
+    /// arrive" and silently did nothing on that transition.
+    /// </summary>
+    [Fact]
+    public void BuildClosesThePreviousContextsAppsAndNotTheTargets()
+    {
+        AutomationPlanBuilder builder = new();
+
+        ContextDefinition previous = new()
+        {
+            Id = "personal",
+            DisplayName = "Personal",
+            CloseApps = ["Obsidian", "Spotify"]
+        };
+
+        ContextDefinition target = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            CloseApps = ["Slack"]
+        };
+
+        AutomationPlan plan = builder.Build(previous, target);
+
+        AutomationStep close = Assert.Single(plan.Steps, step => step.Type == AutomationStepType.CloseApplications);
+        Assert.Equal("Obsidian,Spotify", close.Arguments["apps"]);
+    }
+
+    [Fact]
+    public void BuildOmitsCloseApplicationsWhenThereIsNoPreviousContext()
+    {
+        AutomationPlanBuilder builder = new();
+
+        ContextDefinition target = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            CloseApps = ["Slack"]
+        };
+
+        AutomationPlan plan = builder.Build(previous: null, target);
+
+        Assert.DoesNotContain(plan.Steps, step => step.Type == AutomationStepType.CloseApplications);
+    }
+
     [Fact]
     public void BuildMarksStepCriticalWhenTypeNameIsInSwitchPolicy()
     {
