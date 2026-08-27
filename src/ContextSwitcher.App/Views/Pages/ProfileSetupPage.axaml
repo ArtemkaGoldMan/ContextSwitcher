@@ -115,13 +115,13 @@
               <Border Width="330" Padding="4">
                 <StackPanel Spacing="8">
                   <TextBox
-                    Text="{Binding AppSearchText}"
+                    Text="{Binding AppPicker.SearchText}"
                     PlaceholderText="Search installed apps…" />
 
-                  <TextBlock Text="Scanning your apps…" Classes="caption" IsVisible="{Binding IsLoadingInstalledApps}" />
+                  <TextBlock Text="Scanning your apps…" Classes="caption" IsVisible="{Binding AppPicker.IsLoading}" />
 
-                  <ScrollViewer MaxHeight="280" IsVisible="{Binding !IsLoadingInstalledApps}">
-                    <ItemsControl ItemsSource="{Binding FilteredInstalledApps}">
+                  <ScrollViewer MaxHeight="280" IsVisible="{Binding !AppPicker.IsLoading}">
+                    <ItemsControl ItemsSource="{Binding AppPicker.FilteredApps}">
                       <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                           <StackPanel Spacing="2" />
@@ -149,7 +149,7 @@
                   <TextBlock
                     Text="No matching apps."
                     Classes="caption"
-                    IsVisible="{Binding HasNoAppMatches}" />
+                    IsVisible="{Binding AppPicker.HasNoMatches}" />
 
                   <Border Classes="divider" />
                   <Button

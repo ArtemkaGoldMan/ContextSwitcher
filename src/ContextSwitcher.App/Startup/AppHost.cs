@@ -102,6 +102,7 @@ public static class AppHost
 
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<MainAppViewModel>();
+        services.AddTransient<OnboardingViewModel>();
 
         Services = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
@@ -249,6 +250,10 @@ public static class AppHost
         return new AppConfiguration
         {
             ActiveContextId = defaultContextId,
+
+            // The one place this is written as false: a brand-new install, which is exactly when
+            // the first-run wizard should appear. See AppConfiguration.OnboardingCompleted.
+            OnboardingCompleted = false,
             Contexts =
             [
                 new ContextDefinition

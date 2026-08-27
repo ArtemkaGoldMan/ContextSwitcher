@@ -152,11 +152,11 @@ public sealed class ProfileSetupViewModelTests
         ProfileSetupViewModel viewModel = new(store, installed, context);
 
         // Slack is already on the profile, so the picker must not offer it again.
-        Assert.DoesNotContain(viewModel.FilteredInstalledApps, app => app.Name == "Slack");
-        Assert.Contains(viewModel.FilteredInstalledApps, app => app.Name == "Discord");
+        Assert.DoesNotContain(viewModel.AppPicker.FilteredApps, app => app.Name == "Slack");
+        Assert.Contains(viewModel.AppPicker.FilteredApps, app => app.Name == "Discord");
 
-        viewModel.AppSearchText = "doc";
-        InstalledAppViewModel match = Assert.Single(viewModel.FilteredInstalledApps);
+        viewModel.AppPicker.SearchText = "doc";
+        InstalledAppViewModel match = Assert.Single(viewModel.AppPicker.FilteredApps);
         Assert.Equal("Docker", match.Name);
     }
 
@@ -173,7 +173,7 @@ public sealed class ProfileSetupViewModelTests
         installed.Apps.Add(new InstalledApp("Discord", null));
 
         ProfileSetupViewModel viewModel = new(store, installed, context);
-        InstalledAppViewModel discord = Assert.Single(viewModel.FilteredInstalledApps);
+        InstalledAppViewModel discord = Assert.Single(viewModel.AppPicker.FilteredApps);
 
         discord.PickCommand.Execute(null);
 
@@ -181,7 +181,7 @@ public sealed class ProfileSetupViewModelTests
         Assert.Equal("Discord", added.Name);
         Assert.True(added.LaunchOnEnter);
         Assert.True(added.CloseOnLeave);
-        Assert.Empty(viewModel.FilteredInstalledApps);
+        Assert.Empty(viewModel.AppPicker.FilteredApps);
     }
 
     private static ConfigurationStore CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths)
