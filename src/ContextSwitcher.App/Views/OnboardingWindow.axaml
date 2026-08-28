@@ -38,7 +38,9 @@
                       </Panel>
                       <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="body" VerticalAlignment="Center" />
                       <CheckBox Grid.Column="2" Content="Quit on leave" IsChecked="{Binding CloseOnLeave}" Margin="8,0" />
-                      <Button Grid.Column="3" Classes="rowAction" Content="✕" Command="{Binding RemoveCommand}" />
+                      <Button Grid.Column="3" Classes="rowAction" Command="{Binding RemoveCommand}">
+                        <Path Classes="icon rowAction" Data="{StaticResource IconX}" />
+                      </Button>
                     </Grid>
                   </Border>
                 </DataTemplate>
@@ -95,7 +97,7 @@
       <!-- 0: Welcome -->
       <StackPanel Spacing="18" VerticalAlignment="Center" IsVisible="{Binding IsWelcomeStep}">
         <Border Classes="badge" Width="56" Height="56" Background="{DynamicResource BadgeBlueGradient}" HorizontalAlignment="Left">
-          <TextBlock Text="⇄" FontSize="26" FontWeight="Bold" />
+          <Path Classes="icon lg" Data="{StaticResource IconArrowLeftRight}" />
         </Border>
         <TextBlock Text="Welcome to Context Switcher" Classes="header" FontSize="26" TextWrapping="Wrap" />
         <TextBlock
@@ -115,7 +117,9 @@
           <DataTemplate x:DataType="vm:OnboardingProfileViewModel">
             <StackPanel Spacing="16">
               <StackPanel Orientation="Horizontal" Spacing="12">
-                <Border Width="40" Height="40" CornerRadius="11" Background="{Binding AccentBrush}" />
+                <Border Width="40" Height="40" CornerRadius="11" Background="{Binding AccentBrush}">
+                  <Path Classes="icon" Data="{StaticResource IconBriefcase}" Width="19" Height="19" StrokeThickness="1.8" />
+                </Border>
                 <StackPanel VerticalAlignment="Center">
                   <TextBlock Text="Your work profile" Classes="header" />
                   <TextBlock Text="Apps to open when you start working, and close when you stop." Classes="caption" />
@@ -136,7 +140,9 @@
           <DataTemplate x:DataType="vm:OnboardingProfileViewModel">
             <StackPanel Spacing="16">
               <StackPanel Orientation="Horizontal" Spacing="12">
-                <Border Width="40" Height="40" CornerRadius="11" Background="{Binding AccentBrush}" />
+                <Border Width="40" Height="40" CornerRadius="11" Background="{Binding AccentBrush}">
+                  <Path Classes="icon" Data="{StaticResource IconHouse}" Width="19" Height="19" StrokeThickness="1.8" />
+                </Border>
                 <StackPanel VerticalAlignment="Center">
                   <TextBlock Text="Your personal profile" Classes="header" />
                   <TextBlock Text="Apps for your own time — and the work apps you want gone." Classes="caption" />
@@ -154,7 +160,7 @@
       <!-- 3: Done -->
       <StackPanel Spacing="18" VerticalAlignment="Center" IsVisible="{Binding IsDoneStep}">
         <Border Classes="badge" Width="56" Height="56" Background="{DynamicResource BadgeGreenGradient}" HorizontalAlignment="Left">
-          <TextBlock Text="✓" FontSize="28" FontWeight="Bold" />
+          <Path Classes="icon lg" Data="{StaticResource IconCircleCheck}" />
         </Border>
         <TextBlock Text="You're set" Classes="header" FontSize="26" />
         <TextBlock

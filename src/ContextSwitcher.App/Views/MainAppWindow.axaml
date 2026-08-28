@@ -31,7 +31,7 @@
       <DockPanel Margin="14,20,14,14">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="6,0,0,24">
           <Border Classes="badge" Width="30" Height="30" Background="{DynamicResource BadgeBlueGradient}">
-            <TextBlock Text="⇄" FontSize="15" FontWeight="Bold" />
+            <Path Classes="icon" Data="{StaticResource IconArrowLeftRight}" />
           </Border>
           <TextBlock Text="Context Switcher" Classes="body" FontWeight="Bold" VerticalAlignment="Center" />
         </StackPanel>
@@ -40,12 +40,7 @@
           <Button Classes="navItem" Classes.active="{Binding IsProfilesActive}" Command="{Binding NavigateToProfilesCommand}">
             <StackPanel Orientation="Horizontal" Spacing="10">
               <Border Classes="badge" Width="26" Height="26" Background="{DynamicResource BadgeBlueGradient}">
-                <UniformGrid Columns="2" Rows="2" Width="12" Height="12">
-                  <Ellipse Width="4.5" Height="4.5" Fill="White" Margin="0.5" />
-                  <Ellipse Width="4.5" Height="4.5" Fill="White" Margin="0.5" />
-                  <Ellipse Width="4.5" Height="4.5" Fill="White" Margin="0.5" />
-                  <Ellipse Width="4.5" Height="4.5" Fill="White" Margin="0.5" />
-                </UniformGrid>
+                <Path Classes="icon" Data="{StaticResource IconLayoutGrid}" />
               </Border>
               <TextBlock Text="Profiles" Classes="body" VerticalAlignment="Center" />
             </StackPanel>
@@ -54,20 +49,7 @@
           <Button Classes="navItem" Classes.active="{Binding IsSettingsActive}" Command="{Binding NavigateToSettingsCommand}">
             <StackPanel Orientation="Horizontal" Spacing="10">
               <Border Classes="badge" Width="26" Height="26" Background="{DynamicResource BadgePurpleGradient}">
-                <StackPanel Width="13" Height="13" Spacing="3.5" VerticalAlignment="Center">
-                  <Grid>
-                    <Rectangle Height="1.4" Fill="White" VerticalAlignment="Center" Opacity="0.95" />
-                    <Ellipse Width="4" Height="4" Fill="White" HorizontalAlignment="Left" />
-                  </Grid>
-                  <Grid>
-                    <Rectangle Height="1.4" Fill="White" VerticalAlignment="Center" Opacity="0.95" />
-                    <Ellipse Width="4" Height="4" Fill="White" HorizontalAlignment="Right" />
-                  </Grid>
-                  <Grid>
-                    <Rectangle Height="1.4" Fill="White" VerticalAlignment="Center" Opacity="0.95" />
-                    <Ellipse Width="4" Height="4" Fill="White" HorizontalAlignment="Center" />
-                  </Grid>
-                </StackPanel>
+                <Path Classes="icon" Data="{StaticResource IconSliders}" />
               </Border>
               <TextBlock Text="Settings" Classes="body" VerticalAlignment="Center" />
             </StackPanel>
@@ -76,11 +58,7 @@
           <Button Classes="navItem" Classes.active="{Binding IsStatsActive}" Command="{Binding NavigateToStatsCommand}">
             <StackPanel Orientation="Horizontal" Spacing="10">
               <Border Classes="badge" Width="26" Height="26" Background="{DynamicResource BadgeGreenGradient}">
-                <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Bottom" Height="13">
-                  <Rectangle Width="3" Height="7" Fill="White" RadiusX="1" RadiusY="1" VerticalAlignment="Bottom" />
-                  <Rectangle Width="3" Height="13" Fill="White" RadiusX="1" RadiusY="1" VerticalAlignment="Bottom" />
-                  <Rectangle Width="3" Height="10" Fill="White" RadiusX="1" RadiusY="1" VerticalAlignment="Bottom" />
-                </StackPanel>
+                <Path Classes="icon" Data="{StaticResource IconChartColumn}" />
               </Border>
               <TextBlock Text="Stats" Classes="body" VerticalAlignment="Center" />
             </StackPanel>
