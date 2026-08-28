@@ -127,4 +127,31 @@ public sealed class OnboardingViewModelTests
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator());
         return new OnboardingViewModel(store, installed, new StubContextSwitchService());
     }
+
+    /// <summary>
+    /// The wizard seeds suggestions with close-on-leave already on, and until this was surfaced in
+    /// the UI the only way to keep an app running was to remove it from the profile entirely.
+    /// Unticking must now be enough.
+    /// </summary>
+    [Fact]
+    public void ClearingQuitOnLeaveKeepsTheAppLaunchingButNotClosing()
+    {
+        OnboardingProfileViewModel profile = new(
+            "work", "Work", "WORK", "#2F6FED",
+            new AppPickerViewModel(new FakeInstalledAppsService(), () => [], _ => { }));
+
+        profile.AddApp("Visual Studio Code");
+        profile.AddApp("Calculator");
+
+        AppRowViewModel editor = profile.Apps.Single(row => row.Name == "Visual Studio Code");
+        Assert.True(editor.CloseOnLeave);
+        editor.CloseOnLeave = false;
+
+        ContextDefinition context = profile.ToContextDefinition();
+
+        Assert.Contains("Visual Studio Code", context.LaunchApps);
+        Assert.DoesNotContain("Visual Studio Code", context.CloseApps);
+        Assert.Contains("Calculator", context.CloseApps);
+    }
+
 }

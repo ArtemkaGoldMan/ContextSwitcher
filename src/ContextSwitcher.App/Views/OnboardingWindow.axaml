@@ -17,7 +17,7 @@
         <StackPanel Spacing="10">
           <TextBlock Text="APPS" Classes="sectionTitle" />
           <TextBlock
-            Text="We've pre-filled a few we found installed. Remove anything you don't want."
+            Text="We've pre-filled a few we found installed. Remove anything you don't want. Quit on leave also closes the app when you switch away — untick it to leave the app running."
             Classes="caption"
             TextWrapping="Wrap" />
 
@@ -31,13 +31,14 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:AppRowViewModel">
                   <Border Background="{DynamicResource CardHoverBrush}" CornerRadius="10" Padding="10,8">
-                    <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                       <Panel Grid.Column="0" Width="22" Height="22" Margin="0,0,10,0">
                         <Border CornerRadius="5" Background="{DynamicResource BorderBrush}" IsVisible="{Binding !HasIcon}" />
                         <Image Source="{Binding Icon}" IsVisible="{Binding HasIcon}" />
                       </Panel>
                       <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="body" VerticalAlignment="Center" />
-                      <Button Grid.Column="2" Classes="rowAction" Content="✕" Command="{Binding RemoveCommand}" />
+                      <CheckBox Grid.Column="2" Content="Quit on leave" IsChecked="{Binding CloseOnLeave}" Margin="8,0" />
+                      <Button Grid.Column="3" Classes="rowAction" Content="✕" Command="{Binding RemoveCommand}" />
                     </Grid>
                   </Border>
                 </DataTemplate>
