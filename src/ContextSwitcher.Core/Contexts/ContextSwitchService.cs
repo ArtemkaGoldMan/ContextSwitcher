@@ -75,6 +75,20 @@ public sealed class ContextSwitchService : IContextSwitchService
             return new ContextSwitchResult(request.TargetContextId, null, ContextSwitchStatus.Cancelled, [], startedAt, this.clock.UtcNow, correlationId);
         }
 
+        // The semaphore above only guards this process. Section 10 has macOS Shortcuts and Siri
+        // triggering switches through the CLI, and every one of those is a separate process - two
+        // fired together used to run their AppleScript concurrently and interleave their state
+        // writes, with neither one rejected. The file lock makes "one switch at a time" true across
+        // processes; the OS releases it if a holder dies, so a crash cannot wedge it.
+        FileStream? processLock = this.TryAcquireCrossProcessLock();
+        if (processLock is null)
+        {
+            this.switchLock.Release();
+            await LogAsync(LogLevel.Warning, "SwitchRejected", "Another switch is already running.", request.TargetContextId, correlationId, cancellationToken)
+                .ConfigureAwait(false);
+            return new ContextSwitchResult(request.TargetContextId, null, ContextSwitchStatus.Cancelled, [], startedAt, this.clock.UtcNow, correlationId);
+        }
+
         try
         {
             return await RunSwitchAsync(request, correlationId, startedAt, cancellationToken).ConfigureAwait(false);
@@ -87,9 +101,54 @@ public sealed class ContextSwitchService : IContextSwitchService
         }
         finally
         {
+            processLock.Dispose();
             this.switchLock.Release();
         }
     }
+
+    /// <summary>
+    /// Takes an exclusive lock on a file beside <c>state.json</c>, or returns <see langword="null"/>
+    /// when another process already holds it. <see cref="FileShare.None"/> is enforced with an
+    /// advisory lock on Unix, which the kernel drops when the owning process exits.
+    /// </summary>
+    private FileStream? TryAcquireCrossProcessLock()
+    {
+        try
+        {
+            // A bare filename has an empty directory part, not a null one - Directory.CreateDirectory
+            // throws on empty, so fall back to the working directory explicitly.
+            string directory = Path.GetDirectoryName(this.statePath) is { Length: > 0 } parent
+                ? parent
+                : Directory.GetCurrentDirectory();
+
+            Directory.CreateDirectory(directory);
+
+            return new FileStream(
+                Path.Combine(directory, $"{Path.GetFileName(this.statePath)}.lock"),
+                FileMode.OpenOrCreate,
+                FileAccess.ReadWrite,
+                FileShare.None);
+        }
+        catch (IOException)
+        {
+            // Held by another switch.
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Can't create the lock file at all - a read-only config directory, say. Serialising
+            // across processes is a safeguard, not a precondition, so let the switch proceed
+            // rather than making the app unusable.
+            return NoLockNeeded();
+        }
+    }
+
+    /// <summary>
+    /// A disposable stand-in used when the lock file cannot be created, so the caller's
+    /// <c>finally</c> stays uniform.
+    /// </summary>
+    private static FileStream NoLockNeeded() =>
+        new(Path.Combine(Path.GetTempPath(), $"cs-switch-{Guid.NewGuid():N}.lock"), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite, 1, FileOptions.DeleteOnClose);
 
     private async Task<ContextSwitchResult> RunSwitchAsync(
         ContextSwitchRequest request,
