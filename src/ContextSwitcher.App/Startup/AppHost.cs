@@ -99,6 +99,7 @@ public static class AppHost
         services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
         services.AddSingleton<IInstalledAppsService, InstalledAppsService>();
         services.AddSingleton<ConfigurationStore>();
+        services.AddSingleton<HotkeySynchronizer>();
 
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<MainAppViewModel>();
@@ -199,12 +200,17 @@ public static class AppHost
             await analyticsService.StartSessionAsync(activeContextId, CancellationToken.None).ConfigureAwait(false);
         }
 
-        if (ConfigurationValidation.IsValid)
-        {
-            IHotkeyService hotkeyService = Services.GetRequiredService<IHotkeyService>();
-            hotkeyService.HotkeyPressed += OnHotkeyPressed;
-            await hotkeyService.RegisterAsync(Configuration.Hotkeys, CancellationToken.None).ConfigureAwait(false);
-        }
+        IHotkeyService hotkeyService = Services.GetRequiredService<IHotkeyService>();
+        hotkeyService.HotkeyPressed += OnHotkeyPressed;
+
+        // Re-apply on every configuration change, not just at startup: accelerators are editable
+        // from Profile Setup, and registering only once left the live hook holding the old key while
+        // the UI showed the new one. Subscribed even when the current configuration is invalid, so
+        // fixing it in the UI registers hotkeys without a restart.
+        HotkeySynchronizer synchronizer = Services.GetRequiredService<HotkeySynchronizer>();
+        ConfigurationChanged += (_, _) => _ = synchronizer.ApplyAsync(Configuration, ConfigurationValidation.IsValid, CancellationToken.None);
+
+        await synchronizer.ApplyAsync(Configuration, ConfigurationValidation.IsValid, CancellationToken.None).ConfigureAwait(false);
     }
 
     private static void OnHotkeyPressed(object? sender, string contextId)
