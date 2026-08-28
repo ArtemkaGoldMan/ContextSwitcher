@@ -183,8 +183,11 @@
         <Border Classes="divider" />
 
         <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Grid.Column="0" Text="Avoid duplicate tabs" Classes="body" VerticalAlignment="Center" />
-          <ToggleSwitch Grid.Column="1" IsChecked="{Binding AvoidDuplicateTabs}" />
+          <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+            <TextBlock Text="Avoid duplicate tabs" Classes="body" />
+            <TextBlock Text="{Binding AvoidDuplicateTabsHint}" Classes="caption" TextWrapping="Wrap" />
+          </StackPanel>
+          <ToggleSwitch Grid.Column="1" IsChecked="{Binding AvoidDuplicateTabs}" IsEnabled="{Binding CanAvoidDuplicateTabs}" />
         </Grid>
 
         <StackPanel Spacing="6" IsVisible="{Binding IsUrlsMode}" Margin="0,6,0,0">

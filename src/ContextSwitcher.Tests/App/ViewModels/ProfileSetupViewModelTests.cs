@@ -190,4 +190,51 @@ public sealed class ProfileSetupViewModelTests
         configPaths = new ConfigPaths("/tmp/context-switcher-tests");
         return new ConfigurationStore(jsonStore, configPaths, new ConfigurationValidator());
     }
+
+    /// <summary>
+    /// The two shipping defaults are <c>browser: Default</c> and <c>avoidDuplicateTabs: true</c>,
+    /// which combine into a toggle that is on and inert: the default browser cannot be scripted to
+    /// find an already-open tab, so a second tab opens on every switch.
+    /// </summary>
+    [Fact]
+    public void AvoidDuplicateTabsIsUnavailableForTheDefaultBrowser()
+    {
+        ProfileSetupViewModel viewModel = NewProfileViewModel();
+
+        viewModel.BrowserKind = BrowserKind.Default;
+
+        Assert.False(viewModel.CanAvoidDuplicateTabs);
+        Assert.Contains("default browser", viewModel.AvoidDuplicateTabsHint, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void AvoidDuplicateTabsBecomesAvailableWhenAConcreteBrowserIsChosen()
+    {
+        ProfileSetupViewModel viewModel = NewProfileViewModel();
+        viewModel.BrowserKind = BrowserKind.Default;
+
+        List<string> changed = [];
+        viewModel.PropertyChanged += (_, e) => changed.Add(e.PropertyName ?? string.Empty);
+
+        viewModel.BrowserKind = BrowserKind.Chrome;
+
+        Assert.True(viewModel.CanAvoidDuplicateTabs);
+        Assert.Contains(nameof(ProfileSetupViewModel.CanAvoidDuplicateTabs), changed);
+        Assert.Contains(nameof(ProfileSetupViewModel.AvoidDuplicateTabsHint), changed);
+    }
+
+
+    private static ProfileSetupViewModel NewProfileViewModel()
+    {
+        AppHost.UpdateConfiguration(
+            new AppConfiguration
+            {
+                ActiveContextId = "work",
+                Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }]
+            },
+            new ConfigurationValidationResult([]));
+
+        return new ProfileSetupViewModel(CreateStore(out _, out _), new FakeInstalledAppsService(), existing: null);
+    }
+
 }

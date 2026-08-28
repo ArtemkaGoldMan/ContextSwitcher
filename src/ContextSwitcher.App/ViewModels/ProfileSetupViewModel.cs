@@ -238,8 +238,27 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     public BrowserKind BrowserKind
     {
         get => this.browserKind;
-        set => this.SetProperty(ref this.browserKind, value);
+        set
+        {
+            if (this.SetProperty(ref this.browserKind, value))
+            {
+                this.OnPropertyChanged(nameof(this.CanAvoidDuplicateTabs));
+                this.OnPropertyChanged(nameof(this.AvoidDuplicateTabsHint));
+            }
+        }
     }
+
+    /// <summary>
+    /// Whether duplicate-tab avoidance can do anything at all. Finding an already-open tab means
+    /// scripting a named browser, and the default browser cannot be named ahead of time - so with
+    /// <see cref="BrowserKind.Default"/> the setting is inert and a new tab opens every switch.
+    /// Surfacing that here is the difference between a toggle that lies and one that explains.
+    /// </summary>
+    public bool CanAvoidDuplicateTabs => this.BrowserKind != BrowserKind.Default;
+
+    public string AvoidDuplicateTabsHint => this.CanAvoidDuplicateTabs
+        ? "Focuses a matching tab instead of opening a second one."
+        : "Needs a specific browser - the default browser can't be checked for open tabs.";
 
     public bool AvoidDuplicateTabs
     {
