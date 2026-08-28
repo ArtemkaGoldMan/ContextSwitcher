@@ -194,6 +194,72 @@ public sealed class AutomationStepExecutorTests
         Assert.Empty(scriptRunner.Scripts);
     }
 
+    /// <summary>
+    /// System Events accepts any path, so pointing the wallpaper at a text file used to report
+    /// Succeeded and "Wallpaper updated." while the desktop referenced something undrawable.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsyncSetWallpaperWarnsWithoutSettingWhenFileIsNotAnImage()
+    {
+        FakeProcessRunner processRunner = new();
+        // sips exits 0 even for a text file - only the reported width distinguishes them.
+        processRunner.Enqueue(new ProcessResult(0, "/tmp/x.txt\n  pixelWidth: <nil>", string.Empty, false));
+        FakeScriptRunner scriptRunner = new();
+
+        AutomationStepExecutor executor = CreateExecutor(processRunner, scriptRunner, new FakeClock());
+
+        string notAnImage = Path.Combine(Path.GetTempPath(), $"cs-not-an-image-{Guid.NewGuid():N}.txt");
+        await File.WriteAllTextAsync(notAnImage, "definitely not a picture");
+
+        try
+        {
+            AutomationStep step = new(
+                "SetWallpaper.work", AutomationStepType.SetWallpaper, "Set wallpaper", false, TimeSpan.FromSeconds(10),
+                new Dictionary<string, string> { ["path"] = notAnImage, ["allSpaces"] = "True" });
+
+            AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+            Assert.Equal(AutomationResultStatus.Warning, result.Status);
+            Assert.Contains("not a readable image", result.Message, StringComparison.Ordinal);
+
+            // The wallpaper must not have been set at all.
+            Assert.Empty(scriptRunner.Scripts);
+        }
+        finally
+        {
+            File.Delete(notAnImage);
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncSetWallpaperSetsItWhenTheFileIsARealImage()
+    {
+        FakeProcessRunner processRunner = new();
+        processRunner.Enqueue(new ProcessResult(0, "/tmp/x.jpg\n  pixelWidth: 1920", string.Empty, false));
+        FakeScriptRunner scriptRunner = new();
+
+        AutomationStepExecutor executor = CreateExecutor(processRunner, scriptRunner, new FakeClock());
+
+        string image = Path.Combine(Path.GetTempPath(), $"cs-image-{Guid.NewGuid():N}.jpg");
+        await File.WriteAllTextAsync(image, "pretend jpeg");
+
+        try
+        {
+            AutomationStep step = new(
+                "SetWallpaper.work", AutomationStepType.SetWallpaper, "Set wallpaper", false, TimeSpan.FromSeconds(10),
+                new Dictionary<string, string> { ["path"] = image, ["allSpaces"] = "True" });
+
+            AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+            Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
+            Assert.Single(scriptRunner.Scripts);
+        }
+        finally
+        {
+            File.Delete(image);
+        }
+    }
+
     [Fact]
     public async Task ExecuteAsyncManageBrowserContextSucceedsWhenUrlOpensCleanly()
     {
