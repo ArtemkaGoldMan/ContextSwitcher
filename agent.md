@@ -992,6 +992,9 @@ Expected user-created Shortcuts:
 Rules:
 
 - The app must document exactly how to create these shortcuts.
+- Only build the Focus step when Focus is actually in play: the target context enables it, or the
+  context being left enabled it and it needs clearing. Running "Focus Off" unconditionally means a
+  user who never configured Focus gets a warning on every switch, and every switch exits 5.
 - If the shortcut does not exist or fails, report warning with remediation.
 - Do not require private macOS APIs.
 

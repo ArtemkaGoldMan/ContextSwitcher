@@ -68,7 +68,9 @@ public sealed class AutomationPlanBuilderTests
 
         AutomationPlan plan = builder.Build(previous: null, target);
 
-        Assert.Equal([AutomationStepType.SetFocusMode], plan.Steps.Select(step => step.Type));
+        // Nothing configured means nothing to do. SetFocusMode used to appear here regardless,
+        // which is what made every switch report a warning on a machine without the Shortcuts.
+        Assert.Empty(plan.Steps);
     }
 
     /// <summary>
@@ -129,6 +131,7 @@ public sealed class AutomationPlanBuilderTests
             Id = "work",
             DisplayName = "Work",
             LaunchApps = ["Slack"],
+            Focus = new FocusConfig { Enabled = true, ModeName = "Work" },
             SwitchPolicy = new SwitchPolicyConfig { CriticalSteps = ["LaunchApplications"] }
         };
 
@@ -140,4 +143,65 @@ public sealed class AutomationPlanBuilderTests
         Assert.True(launchStep.IsCritical);
         Assert.False(focusStep.IsCritical);
     }
+
+    /// <summary>
+    /// Running "Focus Off" is only worth doing when something turned Focus on. Building the step
+    /// unconditionally meant anyone who had not created the three Shortcuts saw a warning on every
+    /// switch, and every switch exited 5 rather than 0.
+    /// </summary>
+    [Fact]
+    public void BuildOmitsFocusStepWhenNeitherContextUsesFocus()
+    {
+        AutomationPlanBuilder builder = new();
+
+        ContextDefinition previous = new() { Id = "personal", DisplayName = "Personal" };
+        ContextDefinition target = new() { Id = "work", DisplayName = "Work", LaunchApps = ["Slack"] };
+
+        AutomationPlan plan = builder.Build(previous, target);
+
+        Assert.DoesNotContain(plan.Steps, step => step.Type == AutomationStepType.SetFocusMode);
+    }
+
+    [Fact]
+    public void BuildIncludesFocusStepWhenTheTargetEnablesIt()
+    {
+        AutomationPlanBuilder builder = new();
+
+        ContextDefinition target = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            Focus = new FocusConfig { Enabled = true, ModeName = "Work" }
+        };
+
+        AutomationPlan plan = builder.Build(previous: null, target);
+
+        AutomationStep focus = Assert.Single(plan.Steps, step => step.Type == AutomationStepType.SetFocusMode);
+        Assert.Equal("True", focus.Arguments["enabled"]);
+        Assert.Equal("Work", focus.Arguments["modeName"]);
+    }
+
+    /// <summary>
+    /// The case that keeps the step honest: leaving a profile that turned Focus on still has to
+    /// clear it, even though the profile being entered wants no Focus of its own.
+    /// </summary>
+    [Fact]
+    public void BuildIncludesFocusStepToClearFocusLeftOnByThePreviousContext()
+    {
+        AutomationPlanBuilder builder = new();
+
+        ContextDefinition previous = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            Focus = new FocusConfig { Enabled = true, ModeName = "Work" }
+        };
+        ContextDefinition target = new() { Id = "personal", DisplayName = "Personal" };
+
+        AutomationPlan plan = builder.Build(previous, target);
+
+        AutomationStep focus = Assert.Single(plan.Steps, step => step.Type == AutomationStepType.SetFocusMode);
+        Assert.Equal("False", focus.Arguments["enabled"]);
+    }
+
 }
