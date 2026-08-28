@@ -53,6 +53,88 @@ public sealed class AutomationStepExecutorTests
         Assert.Equal(AutomationResultStatus.Failed, result.Status);
     }
 
+    /// <summary>
+    /// A graceful quit can block indefinitely on a modal "save this document?" sheet. Every script
+    /// used to get the whole step budget, so the first such app consumed all of it: the step-level
+    /// timeout fired mid-quit, the "Could not close" warning never ran, and later apps in the list
+    /// were never asked to quit at all.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsyncCloseApplicationsSplitsTheBudgetAcrossAppsAndTheirChecks()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.DefaultResult = new ProcessResult(0, "false", string.Empty, false);
+
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
+
+        // Mirrors the plan builder, which sizes the step at ten seconds per app.
+        TimeSpan stepTimeout = TimeSpan.FromSeconds(20);
+        AutomationStep step = new(
+            "CloseApplications.personal", AutomationStepType.CloseApplications, "Close applications", false,
+            stepTimeout, new Dictionary<string, string> { ["apps"] = "Chess,Stickies" });
+
+        await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(4, scriptRunner.Timeouts.Count);
+        Assert.All(scriptRunner.Timeouts, timeout => Assert.True(timeout < stepTimeout));
+
+        // Everything the step can spend must still fit inside the step's own budget, or the
+        // step-level timeout wins the race and the per-app reporting is lost again.
+        TimeSpan worstCase = scriptRunner.Timeouts.Aggregate(TimeSpan.Zero, (total, next) => total + next);
+        Assert.True(worstCase <= stepTimeout, $"worst case {worstCase} exceeds the step's {stepTimeout}");
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncLaunchApplicationsSplitsTheBudgetAcrossApps()
+    {
+        FakeProcessRunner processRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+
+        TimeSpan stepTimeout = TimeSpan.FromSeconds(30);
+        AutomationStep step = new(
+            "LaunchApplications.work", AutomationStepType.LaunchApplications, "Launch applications", false,
+            stepTimeout, new Dictionary<string, string> { ["apps"] = "Calculator,Stickies" });
+
+        await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(2, processRunner.Calls.Count);
+        TimeSpan worstCase = processRunner.Calls.Aggregate(TimeSpan.Zero, (total, call) => total + call.Timeout);
+        Assert.True(worstCase < stepTimeout, $"worst case {worstCase} exceeds the step's {stepTimeout}");
+    }
+
+    /// <summary>
+    /// Single-call steps have the same failure shape: handing the command the whole step budget
+    /// meant a hung Shortcuts invocation surfaced as a bare "step timed out" instead of the
+    /// actionable "create this Shortcut" warning below it.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsyncSetFocusModeLeavesHeadroomToReportItsOwnFailure()
+    {
+        FakeProcessRunner processRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+
+        AutomationStep step = FocusStep(enabled: true, modeName: "Work", isCritical: false);
+
+        await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.True(Assert.Single(processRunner.Calls).Timeout < step.Timeout);
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncSetThemeLeavesHeadroomToReportItsOwnFailure()
+    {
+        FakeScriptRunner scriptRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
+
+        AutomationStep step = new(
+            "SetTheme.work", AutomationStepType.SetTheme, "Set theme", false,
+            TimeSpan.FromSeconds(5), new Dictionary<string, string> { ["mode"] = "Dark" });
+
+        await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.True(Assert.Single(scriptRunner.Timeouts) < step.Timeout);
+    }
+
     [Fact]
     public async Task ExecuteAsyncLaunchApplicationsCallsOpenWithAppNameArgument()
     {
