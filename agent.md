@@ -1600,7 +1600,7 @@ Deliverables:
 
 - GitHub Actions CI.
 - GitHub Actions release workflow.
-- `.app` bundle publish for `osx-arm64`.
+- `.app` bundle publish for `osx-arm64`, with a stable `CFBundleIdentifier` and a code signature.
 - `.dmg` packaging script.
 - README installation docs including quarantine workaround.
 
@@ -1609,6 +1609,13 @@ Acceptance criteria:
 - Tag `vX.Y.Z` creates GitHub Release.
 - Release contains `.dmg`.
 - Fresh install can launch after documented quarantine command.
+- The Accessibility grant survives an app update. macOS keys that grant to the application's code
+  identity, so global hotkeys depend on packaging: measured on a dev build, the bare executable is
+  ad-hoc signed with the generic identifier `apphost`, which every unsigned .NET app shares, and its
+  code hash changes on every build. Granting Accessibility to it works exactly once - the next build
+  silently invalidates the grant, `RegisterAsync` returns early, and hotkeys stop firing with only a
+  log line to explain it. A signed bundle with a fixed `CFBundleIdentifier` is what makes the grant
+  durable, so hotkeys are not really shippable until this phase lands.
 
 ### Phase 10: Cosmetic Donation Unlocks
 
