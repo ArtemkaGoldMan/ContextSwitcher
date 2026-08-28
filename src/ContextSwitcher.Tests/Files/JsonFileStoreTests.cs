@@ -132,4 +132,95 @@ public sealed class JsonFileStoreTests
         Directory.CreateDirectory(tempDirectory);
         return tempDirectory;
     }
+
+    /// <summary>
+    /// Nothing pruned backups before, so the directory grew by one file per save, forever - five
+    /// had already accumulated on a real machine from a couple of sessions of editing.
+    /// </summary>
+    [Fact]
+    public async Task BackupAsyncKeepsOnlyTheMostRecentBackups()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), $"cs-backup-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        string settings = Path.Combine(directory, "settings.json");
+        string backups = Path.Combine(directory, "backups");
+
+        try
+        {
+            JsonFileStore store = new();
+            await store.WriteAsync(settings, new AppConfiguration { ActiveContextId = "work" });
+
+            for (int i = 0; i < 25; i++)
+            {
+                await store.BackupAsync(settings, backups);
+            }
+
+            string[] kept = Directory.GetFiles(backups, "settings.*.json");
+            Assert.Equal(10, kept.Length);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// The filename used second resolution, so two saves inside one second overwrote each other.
+    /// </summary>
+    [Fact]
+    public async Task BackupAsyncDoesNotOverwriteWhenCalledTwiceWithinASecond()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), $"cs-backup-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        string settings = Path.Combine(directory, "settings.json");
+        string backups = Path.Combine(directory, "backups");
+
+        try
+        {
+            JsonFileStore store = new();
+            await store.WriteAsync(settings, new AppConfiguration { ActiveContextId = "work" });
+
+            await store.BackupAsync(settings, backups);
+            await store.BackupAsync(settings, backups);
+
+            Assert.Equal(2, Directory.GetFiles(backups, "settings.*.json").Length);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    /// <summary>Backups of one file must not prune another file's.</summary>
+    [Fact]
+    public async Task BackupAsyncPrunesEachFileIndependently()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), $"cs-backup-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        string settings = Path.Combine(directory, "settings.json");
+        string state = Path.Combine(directory, "state.json");
+        string backups = Path.Combine(directory, "backups");
+
+        try
+        {
+            JsonFileStore store = new();
+            await store.WriteAsync(settings, new AppConfiguration { ActiveContextId = "work" });
+            await store.WriteAsync(state, new AppConfiguration { ActiveContextId = "personal" });
+
+            for (int i = 0; i < 15; i++)
+            {
+                await store.BackupAsync(settings, backups);
+            }
+
+            await store.BackupAsync(state, backups);
+
+            Assert.Equal(10, Directory.GetFiles(backups, "settings.*.json").Length);
+            Assert.Single(Directory.GetFiles(backups, "state.*.json"));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
 }

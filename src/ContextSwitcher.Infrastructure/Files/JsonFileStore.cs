@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using ContextSwitcher.Core.Abstractions;
@@ -10,6 +11,12 @@ namespace ContextSwitcher.Infrastructure.Files;
 /// </summary>
 public sealed class JsonFileStore : IJsonStore
 {
+    /// <summary>
+    /// How many timestamped copies of any one file to keep. Enough to recover from a bad edit
+    /// several saves ago, without the directory growing without limit.
+    /// </summary>
+    private const int MaxBackupsPerFile = 10;
+
     /// <summary>
     /// Reads a JSON file and returns the deserialized value.
     /// </summary>
@@ -111,7 +118,8 @@ public sealed class JsonFileStore : IJsonStore
 
     /// <summary>
     /// Copies the file at <paramref name="path"/> into <paramref name="backupDirectory"/> with a
-    /// timestamped name. No-ops if the source file does not exist yet.
+    /// timestamped name, then prunes older copies of that same file down to
+    /// <see cref="MaxBackupsPerFile"/>. No-ops if the source file does not exist yet.
     /// </summary>
     public Task BackupAsync(string path, string backupDirectory, CancellationToken cancellationToken = default)
     {
@@ -125,11 +133,45 @@ public sealed class JsonFileStore : IJsonStore
 
         Directory.CreateDirectory(backupDirectory);
 
-        string timestamp = DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH-mm-ssZ");
-        string backupPath = Path.Combine(backupDirectory, $"{Path.GetFileNameWithoutExtension(path)}.{timestamp}{Path.GetExtension(path)}");
-        File.Copy(path, backupPath, overwrite: true);
+        string stem = Path.GetFileNameWithoutExtension(path);
+        string extension = Path.GetExtension(path);
+
+        // The name used second resolution, so two saves inside one second silently overwrote each
+        // other. Milliseconds alone are not enough either - a tight loop still collides - so a short
+        // random suffix makes the name unique outright. The timestamp stays first, which is what
+        // keeps ordinal name order equal to age order for pruning.
+        string timestamp = DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH-mm-ss-fffZ", CultureInfo.InvariantCulture);
+        string unique = Guid.NewGuid().ToString("N")[..8];
+        File.Copy(path, Path.Combine(backupDirectory, $"{stem}.{timestamp}.{unique}{extension}"), overwrite: false);
+
+        PruneBackups(backupDirectory, stem, extension);
 
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Keeps the newest <see cref="MaxBackupsPerFile"/> backups of one file and deletes the rest.
+    /// Nothing pruned these before, so the directory grew by one file per save, forever.
+    /// </summary>
+    private static void PruneBackups(string backupDirectory, string stem, string extension)
+    {
+        try
+        {
+            // The timestamp format sorts chronologically as text, so ordinal name order is age order.
+            List<string> backups = [.. Directory
+                .EnumerateFiles(backupDirectory, $"{stem}.*{extension}")
+                .OrderByDescending(file => file, StringComparer.Ordinal)];
+
+            foreach (string stale in backups.Skip(MaxBackupsPerFile))
+            {
+                File.Delete(stale);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Housekeeping must never fail the save that triggered it. A backup that outlives its
+            // welcome is harmless; losing the write is not.
+        }
     }
 
     private static void QuarantineCorruptFile(string path)
