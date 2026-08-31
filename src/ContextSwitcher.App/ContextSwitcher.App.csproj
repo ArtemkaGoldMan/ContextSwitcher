@@ -9,6 +9,10 @@
     <AssemblyName>ContextSwitcher</AssemblyName>
     <RootNamespace>ContextSwitcher.App</RootNamespace>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <!-- Single source of truth for the version. scripts/build-app.sh reads it from here so the
+         bundle, the Info.plist and the .dmg filename cannot drift apart. -->
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="Assets/**" />
+    <AvaloniaResource Include="Assets/**" Exclude="Assets/AppIcon.icns" />
   </ItemGroup>
 
 </Project>

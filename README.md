@@ -58,6 +58,12 @@ dotnet run --project src/ContextSwitcher.App/ContextSwitcher.App.csproj
 Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download). The app lives in the menu bar —
 look for the two-squares icon rather than a Dock icon or a window.
 
+To build a real `.app` and a `.dmg` instead of running from the project:
+
+```bash
+./scripts/build-dmg.sh      # dist/ContextSwitcher-0.1.0.dmg
+```
+
 ### From a release
 
 Download the `.dmg` from [Releases](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases) and
