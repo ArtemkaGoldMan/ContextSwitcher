@@ -45,7 +45,7 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         this.RefreshPermissionsCommand = new AsyncRelayCommand(this.RefreshPermissionsAsync);
         this.OpenAccessibilitySettingsCommand = new RelayCommand(() => this.OpenUrl(AccessibilitySettingsUrl));
         this.OpenAutomationSettingsCommand = new RelayCommand(() => this.OpenUrl(AutomationSettingsUrl));
-        this.SupportDeveloperCommand = new RelayCommand(() => { });
+        this.SupportDeveloperCommand = new RelayCommand(() => this.OpenUrl(AppLinks.Support));
 
         AppHost.ConfigurationChanged += this.OnConfigurationChanged;
         _ = this.RefreshPermissionsAsync();
