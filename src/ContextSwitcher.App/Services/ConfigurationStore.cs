@@ -47,9 +47,14 @@ public sealed class ConfigurationStore
             return ConfigurationSaveResult.Invalid(validation.Errors.Select(error => $"{error.Path}: {error.Message}").ToList());
         }
 
+        // ConfigureAwait(true): UpdateConfiguration below raises ConfigurationChanged inline, and
+        // its subscribers rebuild view models that construct Avalonia objects. Resuming on the
+        // thread pool meant those were built off the UI thread - the brushes among them ended up
+        // owned by a pool thread, and the next frame that drew one threw "the calling thread cannot
+        // access this object because a different thread owns it" from inside Border.Render.
         await this.jsonStore.BackupAsync(this.configPaths.SettingsPath, this.configPaths.BackupsDirectory, cancellationToken)
-            .ConfigureAwait(false);
-        await this.jsonStore.WriteAsync(this.configPaths.SettingsPath, configuration, cancellationToken).ConfigureAwait(false);
+            .ConfigureAwait(true);
+        await this.jsonStore.WriteAsync(this.configPaths.SettingsPath, configuration, cancellationToken).ConfigureAwait(true);
 
         AppHost.UpdateConfiguration(configuration, validation);
         return ConfigurationSaveResult.Success;
