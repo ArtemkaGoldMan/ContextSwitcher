@@ -32,7 +32,7 @@
           <TextBlock Grid.Column="0" Text="Default switch timeout" Classes="body" VerticalAlignment="Center" />
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
             <TextBox Text="{Binding DefaultSwitchTimeoutSecondsText}" Width="70" HorizontalContentAlignment="Right" />
-            <TextBlock Text="seconds" Classes="caption" VerticalAlignment="Center" />
+            <TextBlock Text="seconds" Classes="caption" VerticalAlignment="Center" Width="50" />
           </StackPanel>
         </Grid>
         <Border Classes="divider" />
@@ -91,7 +91,7 @@
           <TextBlock Grid.Column="0" Text="Retention" Classes="body" VerticalAlignment="Center" />
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
             <TextBox Text="{Binding AnalyticsRetentionDaysText}" Width="70" HorizontalContentAlignment="Right" />
-            <TextBlock Text="days" Classes="caption" VerticalAlignment="Center" />
+            <TextBlock Text="days" Classes="caption" VerticalAlignment="Center" Width="50" />
           </StackPanel>
         </Grid>
       </StackPanel>

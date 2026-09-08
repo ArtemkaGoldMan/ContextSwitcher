@@ -51,10 +51,10 @@
 
         <Grid ColumnDefinitions="140,*">
           <TextBlock Grid.Column="0" Text="Accent color" Classes="body" VerticalAlignment="Center" />
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
-            <Border Width="30" Height="30" CornerRadius="8" Background="{Binding AccentBrush}" />
-            <TextBox Text="{Binding AccentColor}" Width="120" />
-          </StackPanel>
+          <Grid Grid.Column="1" ColumnDefinitions="30,10,*">
+            <Border Grid.Column="0" Width="30" Height="30" CornerRadius="8" Background="{Binding AccentBrush}" />
+            <TextBox Grid.Column="2" Text="{Binding AccentColor}" />
+          </Grid>
         </Grid>
         <Border Classes="divider" />
 
@@ -171,13 +171,13 @@
 
         <Grid ColumnDefinitions="140,*">
           <TextBlock Grid.Column="0" Text="Mode" Classes="body" VerticalAlignment="Center" />
-          <ComboBox Grid.Column="1" ItemsSource="{Binding BrowserModes}" SelectedItem="{Binding BrowserMode}" HorizontalAlignment="Left" MinWidth="160" />
+          <ComboBox Grid.Column="1" ItemsSource="{Binding BrowserModes}" SelectedItem="{Binding BrowserMode}" HorizontalAlignment="Stretch" />
         </Grid>
         <Border Classes="divider" />
 
         <Grid ColumnDefinitions="140,*">
           <TextBlock Grid.Column="0" Text="Browser" Classes="body" VerticalAlignment="Center" />
-          <ComboBox Grid.Column="1" ItemsSource="{Binding BrowserKinds}" SelectedItem="{Binding BrowserKind}" HorizontalAlignment="Left" MinWidth="160" />
+          <ComboBox Grid.Column="1" ItemsSource="{Binding BrowserKinds}" SelectedItem="{Binding BrowserKind}" HorizontalAlignment="Stretch" />
         </Grid>
         <Border Classes="divider" />
 
@@ -354,7 +354,7 @@
           <TextBlock Text="MEDIA" Classes="sectionTitle" />
           <Grid ColumnDefinitions="140,*">
             <TextBlock Grid.Column="0" Text="Player" Classes="body" VerticalAlignment="Center" />
-            <ComboBox Grid.Column="1" ItemsSource="{Binding MediaPlayers}" SelectedItem="{Binding MediaPlayer}" HorizontalAlignment="Left" MinWidth="160" />
+            <ComboBox Grid.Column="1" ItemsSource="{Binding MediaPlayers}" SelectedItem="{Binding MediaPlayer}" HorizontalAlignment="Stretch" />
           </Grid>
           <Border Classes="divider" />
           <Grid ColumnDefinitions="140,*">
