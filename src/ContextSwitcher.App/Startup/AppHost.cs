@@ -164,11 +164,33 @@ public static class AppHost
 
         configPaths.EnsureCreated();
 
+        // A settings file that is present but unparseable is moved aside by the store as
+        // settings.json.corrupt.<timestamp> and read back as null - the same signal as "no settings
+        // yet". Only the file's existence tells the two apart, and it has to be checked before the
+        // write below recreates it. Without this a single typo in a hand-edited config just made
+        // every profile disappear, with nothing in the log to say why.
+        bool settingsFileExisted = File.Exists(configPaths.SettingsPath);
+
         AppConfiguration? configuration = await jsonStore.ReadAsync<AppConfiguration>(configPaths.SettingsPath)
             .ConfigureAwait(false);
 
         if (configuration is null)
         {
+            if (settingsFileExisted)
+            {
+                await Services.GetRequiredService<ILogger>().LogAsync(
+                    new LogEntry
+                    {
+                        Timestamp = Services.GetRequiredService<IClock>().UtcNow,
+                        Level = LogLevel.Warning,
+                        Category = "Configuration",
+                        EventId = "ConfigurationQuarantined",
+                        Message = $"'{configPaths.SettingsPath}' could not be parsed and was moved aside as "
+                            + "settings.json.corrupt.<timestamp>; starting from a default configuration. "
+                            + "Correct the JSON in that file and move it back to restore your profiles."
+                    }).ConfigureAwait(false);
+            }
+
             configuration = CreateDefaultConfiguration();
             await jsonStore.WriteAsync(configPaths.SettingsPath, configuration).ConfigureAwait(false);
         }
