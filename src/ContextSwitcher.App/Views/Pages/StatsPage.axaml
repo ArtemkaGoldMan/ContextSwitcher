@@ -8,7 +8,9 @@
   <StackPanel Spacing="20">
     <Grid ColumnDefinitions="Auto,*,Auto">
       <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{DynamicResource BadgeGreenGradient}" Margin="0,0,12,0">
-        <Path Classes="icon" Data="{StaticResource IconChartColumn}" Width="18" Height="18" StrokeThickness="1.8" />
+        <Viewbox Classes="icon" Width="18" Height="18">
+          <Path Classes="glyph" Data="{StaticResource IconChartColumn}" />
+        </Viewbox>
       </Border>
       <TextBlock Grid.Column="1" Text="Stats" Classes="header" VerticalAlignment="Center" />
       <Border Grid.Column="2" CornerRadius="10" Background="{DynamicResource CardHoverBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="3">

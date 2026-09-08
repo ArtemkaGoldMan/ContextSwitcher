@@ -31,7 +31,9 @@
       <DockPanel Margin="14,20,14,14">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="6,0,0,24">
           <Border Classes="badge" Width="30" Height="30" Background="{DynamicResource BadgeBlueGradient}">
-            <Path Classes="icon" Data="{StaticResource IconArrowLeftRight}" />
+            <Viewbox Classes="icon">
+              <Path Classes="glyph" Data="{StaticResource IconArrowLeftRight}" />
+            </Viewbox>
           </Border>
           <TextBlock Text="Context Switcher" Classes="body" FontWeight="Bold" VerticalAlignment="Center" />
         </StackPanel>
@@ -40,7 +42,9 @@
           <Button Classes="navItem" Classes.active="{Binding IsProfilesActive}" Command="{Binding NavigateToProfilesCommand}">
             <StackPanel Orientation="Horizontal" Spacing="10">
               <Border Classes="badge" Width="26" Height="26" Background="{DynamicResource BadgeBlueGradient}">
-                <Path Classes="icon" Data="{StaticResource IconLayoutGrid}" />
+                <Viewbox Classes="icon">
+                  <Path Classes="glyph" Data="{StaticResource IconLayoutGrid}" />
+                </Viewbox>
               </Border>
               <TextBlock Text="Profiles" Classes="body" VerticalAlignment="Center" />
             </StackPanel>
@@ -49,7 +53,9 @@
           <Button Classes="navItem" Classes.active="{Binding IsSettingsActive}" Command="{Binding NavigateToSettingsCommand}">
             <StackPanel Orientation="Horizontal" Spacing="10">
               <Border Classes="badge" Width="26" Height="26" Background="{DynamicResource BadgePurpleGradient}">
-                <Path Classes="icon" Data="{StaticResource IconSliders}" />
+                <Viewbox Classes="icon">
+                  <Path Classes="glyph" Data="{StaticResource IconSliders}" />
+                </Viewbox>
               </Border>
               <TextBlock Text="Settings" Classes="body" VerticalAlignment="Center" />
             </StackPanel>
@@ -58,7 +64,9 @@
           <Button Classes="navItem" Classes.active="{Binding IsStatsActive}" Command="{Binding NavigateToStatsCommand}">
             <StackPanel Orientation="Horizontal" Spacing="10">
               <Border Classes="badge" Width="26" Height="26" Background="{DynamicResource BadgeGreenGradient}">
-                <Path Classes="icon" Data="{StaticResource IconChartColumn}" />
+                <Viewbox Classes="icon">
+                  <Path Classes="glyph" Data="{StaticResource IconChartColumn}" />
+                </Viewbox>
               </Border>
               <TextBlock Text="Stats" Classes="body" VerticalAlignment="Center" />
             </StackPanel>

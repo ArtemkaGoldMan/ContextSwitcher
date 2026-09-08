@@ -215,31 +215,45 @@
     <Setter Property="FontSize" Value="11" />
   </Style>
 
-  <!-- Lucide icons are stroked on a 24x24 grid, never filled, at 2px. Stretch scales the geometry
-       but not the stroke, so thickness has to be scaled by hand per size class or the icons render
-       far heavier than they were drawn: 2px at 14px is the weight Lucide intends at 24px. -->
-  <Style Selector="Path.icon">
-    <Setter Property="Stroke" Value="White" />
-    <Setter Property="StrokeThickness" Value="1.5" />
-    <Setter Property="StrokeLineCap" Value="Round" />
-    <Setter Property="StrokeJoin" Value="Round" />
-    <Setter Property="Fill" Value="Transparent" />
-    <Setter Property="Stretch" Value="Uniform" />
+  <!-- Lucide icons are drawn on a 24x24 grid, stroked at 2px, never filled. The Path keeps that
+       grid (Stretch=None at 24x24) and the Viewbox around it does the scaling, so every icon
+       shrinks by the same factor and its stroke scales with it.
+
+       Sizing each Path with Stretch="Uniform" instead normalised every icon to its own bounding
+       box rather than to the shared grid, so an icon deliberately drawn small inside that grid
+       came out larger than one that fills it: x, whose geometry is 12x12, rendered half again the
+       size of the 18x18 icons beside it. Scaling here also removes the per-size-class stroke
+       thicknesses that were compensating for Stretch not scaling the stroke. -->
+  <Style Selector="Viewbox.icon">
     <Setter Property="Width" Value="14" />
     <Setter Property="Height" Value="14" />
   </Style>
 
-  <Style Selector="Path.icon.lg">
+  <Style Selector="Viewbox.icon.lg">
     <Setter Property="Width" Value="26" />
     <Setter Property="Height" Value="26" />
-    <Setter Property="StrokeThickness" Value="2.2" />
   </Style>
 
-  <Style Selector="Path.icon.rowAction">
+  <Style Selector="Viewbox.icon.rowAction">
+    <Setter Property="Width" Value="13" />
+    <Setter Property="Height" Value="13" />
+  </Style>
+
+  <Style Selector="Path.glyph">
+    <Setter Property="Width" Value="24" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Stretch" Value="None" />
+    <Setter Property="Stroke" Value="White" />
+    <Setter Property="StrokeThickness" Value="2" />
+    <Setter Property="StrokeLineCap" Value="Round" />
+    <Setter Property="StrokeJoin" Value="Round" />
+    <Setter Property="Fill" Value="Transparent" />
+  </Style>
+
+  <!-- Row actions sit on the page rather than inside a coloured badge, so the glyph takes the
+       secondary text colour instead of white. -->
+  <Style Selector="Viewbox.icon.rowAction Path.glyph">
     <Setter Property="Stroke" Value="{DynamicResource TextSecondaryBrush}" />
-    <Setter Property="Width" Value="11" />
-    <Setter Property="Height" Value="11" />
-    <Setter Property="StrokeThickness" Value="1.5" />
   </Style>
 
   <!-- No raw TextBox/ComboBox/Button styling here on purpose: Semi.Avalonia already themes every

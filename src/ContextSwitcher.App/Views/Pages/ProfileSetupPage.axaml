@@ -10,7 +10,9 @@
     <!-- Header -->
     <Grid ColumnDefinitions="Auto,*,Auto,Auto">
       <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{DynamicResource BadgeOrangeGradient}" Margin="0,0,12,0">
-        <Path Classes="icon" Data="{StaticResource IconPencil}" Width="17" Height="17" StrokeThickness="1.8" />
+        <Viewbox Classes="icon" Width="17" Height="17">
+          <Path Classes="glyph" Data="{StaticResource IconPencil}" />
+        </Viewbox>
       </Border>
       <TextBlock Grid.Column="1" Text="{Binding HeaderText}" Classes="header" VerticalAlignment="Center" />
       <Button Grid.Column="2" Classes="switchContext" Content="Cancel" Command="{Binding CancelCommand}" Margin="0,0,8,0" />
@@ -90,7 +92,9 @@
                   <CheckBox Grid.Column="2" Content="Launch" IsChecked="{Binding LaunchOnEnter}" Margin="8,0" />
                   <CheckBox Grid.Column="3" Content="Close" IsChecked="{Binding CloseOnLeave}" Margin="8,0" />
                   <Button Grid.Column="4" Classes="rowAction" Command="{Binding RemoveCommand}">
-                    <Path Classes="icon rowAction" Data="{StaticResource IconX}" />
+                    <Viewbox Classes="icon rowAction">
+                      <Path Classes="glyph" Data="{StaticResource IconX}" />
+                    </Viewbox>
                   </Button>
                 </Grid>
               </Border>
@@ -198,7 +202,9 @@
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Grid.Column="0" Text="{Binding Value}" PlaceholderText="https://..." Margin="0,0,8,0" />
                   <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
-                    <Path Classes="icon rowAction" Data="{StaticResource IconX}" />
+                    <Viewbox Classes="icon rowAction">
+                      <Path Classes="glyph" Data="{StaticResource IconX}" />
+                    </Viewbox>
                   </Button>
                 </Grid>
               </DataTemplate>
@@ -220,7 +226,9 @@
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Grid.Column="0" Text="{Binding Value}" PlaceholderText="Tab group name" Margin="0,0,8,0" />
                   <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
-                    <Path Classes="icon rowAction" Data="{StaticResource IconX}" />
+                    <Viewbox Classes="icon rowAction">
+                      <Path Classes="glyph" Data="{StaticResource IconX}" />
+                    </Viewbox>
                   </Button>
                 </Grid>
               </DataTemplate>
@@ -244,7 +252,9 @@
                     <Grid ColumnDefinitions="*,Auto">
                       <ComboBox Grid.Column="0" ItemsSource="{x:Static vm:BrowserProfileRowViewModel.SupportedBrowsers}" SelectedItem="{Binding Browser}" HorizontalAlignment="Left" MinWidth="140" />
                       <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
-                        <Path Classes="icon rowAction" Data="{StaticResource IconX}" />
+                        <Viewbox Classes="icon rowAction">
+                          <Path Classes="glyph" Data="{StaticResource IconX}" />
+                        </Viewbox>
                       </Button>
                     </Grid>
                     <TextBox Text="{Binding ProfileDirectory}" PlaceholderText="Profile directory" />
@@ -379,7 +389,9 @@
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Grid.Column="0" Text="{Binding Value}" PlaceholderText="container-name" Margin="0,0,8,0" />
                   <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
-                    <Path Classes="icon rowAction" Data="{StaticResource IconX}" />
+                    <Viewbox Classes="icon rowAction">
+                      <Path Classes="glyph" Data="{StaticResource IconX}" />
+                    </Viewbox>
                   </Button>
                 </Grid>
               </DataTemplate>
@@ -401,7 +413,9 @@
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Grid.Column="0" Text="{Binding Value}" PlaceholderText="container-name" Margin="0,0,8,0" />
                   <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
-                    <Path Classes="icon rowAction" Data="{StaticResource IconX}" />
+                    <Viewbox Classes="icon rowAction">
+                      <Path Classes="glyph" Data="{StaticResource IconX}" />
+                    </Viewbox>
                   </Button>
                 </Grid>
               </DataTemplate>
@@ -429,7 +443,9 @@
                     <TextBox Grid.Column="1" Text="{Binding Url}" PlaceholderText="https://..." Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,8,0" />
                     <TextBox Grid.Column="2" Text="{Binding Icon}" PlaceholderText="icon" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,8,0" />
                     <Button Grid.Column="3" Classes="rowAction" Command="{Binding RemoveCommand}">
-                      <Path Classes="icon rowAction" Data="{StaticResource IconX}" />
+                      <Viewbox Classes="icon rowAction">
+                        <Path Classes="glyph" Data="{StaticResource IconX}" />
+                      </Viewbox>
                     </Button>
                   </Grid>
                 </Border>

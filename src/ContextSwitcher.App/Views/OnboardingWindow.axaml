@@ -39,7 +39,9 @@
                       <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="body" VerticalAlignment="Center" />
                       <CheckBox Grid.Column="2" Content="Quit on leave" IsChecked="{Binding CloseOnLeave}" Margin="8,0" />
                       <Button Grid.Column="3" Classes="rowAction" Command="{Binding RemoveCommand}">
-                        <Path Classes="icon rowAction" Data="{StaticResource IconX}" />
+                        <Viewbox Classes="icon rowAction">
+                          <Path Classes="glyph" Data="{StaticResource IconX}" />
+                        </Viewbox>
                       </Button>
                     </Grid>
                   </Border>
@@ -97,7 +99,9 @@
       <!-- 0: Welcome -->
       <StackPanel Spacing="18" VerticalAlignment="Center" IsVisible="{Binding IsWelcomeStep}">
         <Border Classes="badge" Width="56" Height="56" Background="{DynamicResource BadgeBlueGradient}" HorizontalAlignment="Left">
-          <Path Classes="icon lg" Data="{StaticResource IconArrowLeftRight}" />
+          <Viewbox Classes="icon lg">
+            <Path Classes="glyph" Data="{StaticResource IconArrowLeftRight}" />
+          </Viewbox>
         </Border>
         <TextBlock Text="Welcome to Context Switcher" Classes="header" FontSize="26" TextWrapping="Wrap" />
         <TextBlock
@@ -118,7 +122,9 @@
             <StackPanel Spacing="16">
               <StackPanel Orientation="Horizontal" Spacing="12">
                 <Border Width="40" Height="40" CornerRadius="11" Background="{Binding AccentBrush}">
-                  <Path Classes="icon" Data="{StaticResource IconBriefcase}" Width="19" Height="19" StrokeThickness="1.8" />
+                  <Viewbox Classes="icon" Width="19" Height="19">
+                    <Path Classes="glyph" Data="{StaticResource IconBriefcase}" />
+                  </Viewbox>
                 </Border>
                 <StackPanel VerticalAlignment="Center">
                   <TextBlock Text="Your work profile" Classes="header" />
@@ -141,7 +147,9 @@
             <StackPanel Spacing="16">
               <StackPanel Orientation="Horizontal" Spacing="12">
                 <Border Width="40" Height="40" CornerRadius="11" Background="{Binding AccentBrush}">
-                  <Path Classes="icon" Data="{StaticResource IconHouse}" Width="19" Height="19" StrokeThickness="1.8" />
+                  <Viewbox Classes="icon" Width="19" Height="19">
+                    <Path Classes="glyph" Data="{StaticResource IconHouse}" />
+                  </Viewbox>
                 </Border>
                 <StackPanel VerticalAlignment="Center">
                   <TextBlock Text="Your personal profile" Classes="header" />
@@ -160,7 +168,9 @@
       <!-- 3: Done -->
       <StackPanel Spacing="18" VerticalAlignment="Center" IsVisible="{Binding IsDoneStep}">
         <Border Classes="badge" Width="56" Height="56" Background="{DynamicResource BadgeGreenGradient}" HorizontalAlignment="Left">
-          <Path Classes="icon lg" Data="{StaticResource IconCircleCheck}" />
+          <Viewbox Classes="icon lg">
+            <Path Classes="glyph" Data="{StaticResource IconCircleCheck}" />
+          </Viewbox>
         </Border>
         <TextBlock Text="You're set" Classes="header" FontSize="26" />
         <TextBlock
