@@ -75,18 +75,33 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         TimeSpan checkTimeout = perApp / 5;
         TimeSpan quitTimeout = perApp - (2 * checkTimeout);
 
-        foreach (string app in apps)
+        // The apps are quit concurrently. The budget above is already per app, so running them
+        // together makes the step cost the slowest single quit instead of the sum of all of them -
+        // on six apps that is the difference between about 1.2s and 0.2s. They stay one script per
+        // app rather than one script for all of them precisely so an app sitting on a modal "save
+        // this document?" sheet still only spends its own budget, which is what the split above
+        // exists to guarantee. Task.WhenAll preserves the input order, so the message below names
+        // the apps in configured order however the quits interleave.
+        (string App, string Error, bool StillRunning)[] outcomes = await Task.WhenAll(
+            apps.Select(async app =>
+            {
+                ProcessResult quitResult = await this.scriptRunner
+                    .RunAsync(AppleScriptBuilder.QuitApplicationIfRunning(app), quitTimeout, cancellationToken)
+                    .ConfigureAwait(false);
+
+                ProcessResult checkResult = await this.scriptRunner
+                    .RunAsync(AppleScriptBuilder.IsApplicationRunning(app), checkTimeout, cancellationToken)
+                    .ConfigureAwait(false);
+
+                return (app, quitResult.StandardError,
+                    checkResult.StandardOutput.Trim().Equals("true", StringComparison.OrdinalIgnoreCase));
+            })).ConfigureAwait(false);
+
+        foreach ((string app, string error, bool isStillRunning) in outcomes)
         {
-            ProcessResult quitResult = await this.scriptRunner
-                .RunAsync(AppleScriptBuilder.QuitApplicationIfRunning(app), quitTimeout, cancellationToken)
-                .ConfigureAwait(false);
-            AppendIfPresent(standardError, app, quitResult.StandardError);
+            AppendIfPresent(standardError, app, error);
 
-            ProcessResult checkResult = await this.scriptRunner
-                .RunAsync(AppleScriptBuilder.IsApplicationRunning(app), checkTimeout, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (checkResult.StandardOutput.Trim().Equals("true", StringComparison.OrdinalIgnoreCase))
+            if (isStillRunning)
             {
                 stillRunning.Add(app);
             }
@@ -117,15 +132,23 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         // single slow launch may spend the budget the apps after it still need.
         TimeSpan perApp = WithReportingHeadroom(step.Timeout) / Math.Max(apps.Length, 1);
 
-        foreach (string app in apps)
-        {
-            ProcessStartOptions options = new("open", ["-a", app], perApp);
-            ProcessResult result = await this.processRunner.RunAsync(options, cancellationToken).ConfigureAwait(false);
+        // Launched concurrently for the same reason as the quits above: `open -a` calls are
+        // independent of one another, and the per-app budget means running them together costs the
+        // slowest launch rather than their total.
+        (string App, string Error, bool Failed)[] outcomes = await Task.WhenAll(
+            apps.Select(async app =>
+            {
+                ProcessStartOptions options = new("open", ["-a", app], perApp);
+                ProcessResult result = await this.processRunner.RunAsync(options, cancellationToken).ConfigureAwait(false);
+                return (app, result.StandardError, result.ExitCode != 0);
+            })).ConfigureAwait(false);
 
-            if (result.ExitCode != 0)
+        foreach ((string app, string error, bool failed) in outcomes)
+        {
+            if (failed)
             {
                 failedApps.Add(app);
-                AppendIfPresent(standardError, app, result.StandardError);
+                AppendIfPresent(standardError, app, error);
             }
         }
 
