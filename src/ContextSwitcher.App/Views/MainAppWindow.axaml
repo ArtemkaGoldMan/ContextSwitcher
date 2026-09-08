@@ -75,7 +75,13 @@
       </DockPanel>
     </Border>
     <ScrollViewer Name="ContentScroll" Grid.Column="1" Background="{DynamicResource AppBackgroundBrush}">
-      <ContentControl Content="{Binding CurrentPage}" Margin="28,24" MaxWidth="640" HorizontalAlignment="Stretch" />
+      <!-- MaxWidth with HorizontalAlignment="Stretch" centres the column inside this pane, and the
+           pane is offset by the 200px rail: at 640 the column left a 300px gutter each side and sat
+           100px right of the window's own centre, which reads as "not centred" rather than as a
+           deliberate column. Left-aligning instead makes the control shrink to its content's
+           desired width, which is narrower still. A cap generous enough that it only binds on very
+           wide windows keeps the content filling the pane at every size anyone actually uses. -->
+      <ContentControl Content="{Binding CurrentPage}" Margin="28,24" MaxWidth="1100" HorizontalAlignment="Stretch" />
     </ScrollViewer>
   </Grid>
 </Window>
