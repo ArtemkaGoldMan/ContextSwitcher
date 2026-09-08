@@ -9,10 +9,13 @@
     <Setter Property="Padding" Value="16" />
   </Style>
 
-  <!-- Emphasized card border, e.g. the active profile's row. -->
+  <!-- Emphasized card, e.g. the active profile's row. The border stays 1px like every other card
+       and only its colour changes: a thicker border shrinks the content box, and with layout
+       rounding that moved the whole Activate/Edit/Duplicate/Delete cluster a pixel sideways on
+       whichever row happened to be active. Compensating with half-pixel padding does not survive
+       the rounding, so the accent colour carries the emphasis on its own. -->
   <Style Selector="Border.panel.current">
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-    <Setter Property="BorderThickness" Value="1.5" />
   </Style>
 
   <!-- Thin horizontal rule used to separate rows inside a card instead of nesting boxes. -->
