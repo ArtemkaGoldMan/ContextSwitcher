@@ -39,12 +39,16 @@ public sealed class BrowserLauncherTests
         Assert.Equal(["-a", "Google Chrome", "https://example.com/"], call.Arguments);
     }
 
+    /// <summary>
+    /// The tab listing is one script for the whole context, so a URL that is already open costs
+    /// that listing plus a single focus - never an `open`, and never a sweep per URL.
+    /// </summary>
     [Fact]
     public async Task ManageBrowserContextAsyncUrlsModeSkipsOpenWhenExistingTabFocused()
     {
         FakeProcessRunner processRunner = new();
         FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, "true", string.Empty, false));
+        scriptRunner.Enqueue(new ProcessResult(0, "https://other.example/\nhttps://example.com/\n", string.Empty, false));
 
         BrowserLauncher launcher = new(processRunner, scriptRunner);
 
@@ -54,7 +58,33 @@ public sealed class BrowserLauncherTests
 
         Assert.Empty(outcome.Warnings);
         Assert.Empty(processRunner.Calls);
-        Assert.Single(scriptRunner.Scripts);
+        Assert.Equal(2, scriptRunner.Scripts.Count);
+    }
+
+    /// <summary>
+    /// Three URLs that are all already open still cost exactly one listing plus one focus, rather
+    /// than growing a tab sweep at a time the way the per-URL probe did.
+    /// </summary>
+    [Fact]
+    public async Task ManageBrowserContextAsyncUrlsModeChecksExistingTabsWithASingleListing()
+    {
+        FakeProcessRunner processRunner = new();
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(
+            0, "https://a.example/\nhttps://b.example/\nhttps://c.example/\n", string.Empty, false));
+
+        BrowserLauncher launcher = new(processRunner, scriptRunner);
+
+        await launcher.ManageBrowserContextAsync(
+            new BrowserContextRequest(
+                BrowserManagementMode.Urls,
+                BrowserKind.Chrome,
+                ["https://a.example/", "https://b.example/", "https://c.example/"],
+                [], true, [], Timeout),
+            CancellationToken.None);
+
+        Assert.Empty(processRunner.Calls);
+        Assert.Equal(2, scriptRunner.Scripts.Count);
     }
 
     [Fact]
@@ -62,7 +92,7 @@ public sealed class BrowserLauncherTests
     {
         FakeProcessRunner processRunner = new();
         FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, "false", string.Empty, false));
+        scriptRunner.Enqueue(new ProcessResult(0, "https://unrelated.example/\n", string.Empty, false));
 
         BrowserLauncher launcher = new(processRunner, scriptRunner);
 

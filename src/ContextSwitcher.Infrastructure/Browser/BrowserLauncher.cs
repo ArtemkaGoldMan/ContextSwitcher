@@ -65,34 +65,62 @@ public sealed class BrowserLauncher
         bool probeTabs = avoidDuplicateTabs && browser != BrowserKind.Default;
         TimeSpan probeTimeout = timeout < TabProbeTimeout ? timeout : TabProbeTimeout;
 
+        // One sweep of the browser's tabs for the whole context. This used to be a tab sweep per
+        // URL, which is what made a three-URL context spend about 490ms deciding what to open even
+        // when every tab was already there; a single listing costs about 130ms and does not grow
+        // with the URL count.
+        HashSet<string> openTabs = [];
+        if (probeTabs)
+        {
+            ProcessResult listing = await this.scriptRunner
+                .RunAsync(AppleScriptBuilder.ListTabUrls(BrowserAppName(browser)), probeTimeout, cancellationToken)
+                .ConfigureAwait(false);
+
+            // A non-zero exit means the inspection itself did not run - a timeout, a denied
+            // Automation prompt, or a browser without tab scripting - which is different from
+            // "no matching tab". Section 9.3 says to fall back to a plain `open` for everything.
+            if (listing.ExitCode == 0)
+            {
+                foreach (string tabUrl in listing.StandardOutput
+                    .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    openTabs.Add(tabUrl);
+                }
+            }
+            else
+            {
+                probeTabs = false;
+                warnings.Add(
+                    $"Could not check {BrowserAppName(browser)} for existing tabs, so URLs were opened without duplicate checking. Check Automation permissions.");
+            }
+        }
+
+        // The last configured URL that was already open with nothing opened after it. Focusing just
+        // that one at the end leaves the browser where the old per-URL probe left it, which focused
+        // every match in turn and so ended on the last action, without paying for the ones whose
+        // focus a later `open` would immediately have replaced.
+        string? tabToFocus = null;
+
         foreach (string url in urls)
         {
-            if (probeTabs)
+            if (probeTabs && openTabs.Contains(url))
             {
-                TabProbeOutcome probe = await this.TryFocusExistingTabAsync(browser, url, probeTimeout, cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (probe == TabProbeOutcome.Focused)
-                {
-                    continue;
-                }
-
-                if (probe == TabProbeOutcome.InspectionFailed)
-                {
-                    // One failure is enough to conclude the browser is not scriptable right now.
-                    // Re-probing every remaining URL would burn the rest of the step's budget to
-                    // reach the same answer, and section 9.3 says to fall back to `open` instead.
-                    probeTabs = false;
-                    warnings.Add(
-                        $"Could not check {BrowserAppName(browser)} for existing tabs, so URLs were opened without duplicate checking. Check Automation permissions.");
-                }
+                tabToFocus = url;
+                continue;
             }
 
             ProcessResult result = await this.OpenUrlAsync(browser, url, timeout, cancellationToken).ConfigureAwait(false);
+            tabToFocus = null;
+
             if (result.ExitCode != 0)
             {
                 warnings.Add($"Could not open '{url}': {result.StandardError.Trim()}");
             }
+        }
+
+        if (tabToFocus is not null)
+        {
+            await this.TryFocusExistingTabAsync(browser, tabToFocus, probeTimeout, cancellationToken).ConfigureAwait(false);
         }
 
         return new BrowserLaunchOutcome(warnings);
