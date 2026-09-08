@@ -34,7 +34,13 @@ public sealed partial class App : Application
             };
             this.trayIcon = CreateTrayIcon(desktop);
 
-            if (desktop.Args?.Contains("open-dashboard") == true)
+            // A fresh install otherwise lands on one empty "Default" profile - a context switcher
+            // with nothing to switch between. Run the wizard before anything else in that case.
+            if (!AppHost.Configuration.OnboardingCompleted)
+            {
+                this.ShowOnboarding();
+            }
+            else if (desktop.Args?.Contains("open-dashboard") == true)
             {
                 this.ShowDashboard();
             }
@@ -77,6 +83,17 @@ public sealed partial class App : Application
         MacOSProperties.SetIsTemplateIcon(trayIcon, true);
 
         return trayIcon;
+    }
+
+    private void ShowOnboarding()
+    {
+        OnboardingViewModel viewModel = AppHost.Services.GetRequiredService<OnboardingViewModel>();
+        OnboardingWindow window = new(viewModel);
+
+        // Show the Dashboard once setup finishes so the user immediately sees the profiles they
+        // just created, rather than being dropped into an app with no visible window.
+        window.Closed += (_, _) => this.ShowDashboard();
+        window.Show();
     }
 
     private void ShowDashboard()

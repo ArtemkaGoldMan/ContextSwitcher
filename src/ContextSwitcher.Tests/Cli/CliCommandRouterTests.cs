@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
+using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Infrastructure.Cli;
 using ContextSwitcher.Tests.TestDoubles;
@@ -170,4 +171,96 @@ public sealed class CliCommandRouterTests
             ]
         };
     }
+
+    /// <summary>
+    /// The engine has supported dry run since phase 2, but nothing ever set the flag: not the CLI,
+    /// not the UI. The capability existed and no user could reach it.
+    /// </summary>
+    [Fact]
+    public async Task RunAsyncSwitchPassesDryRunThroughToTheSwitchService()
+    {
+        (CliCommandRouter router, StubContextSwitchService service, StringWriter output) = Create();
+
+        await router.RunAsync(
+            ["switch", "--context", "work", "--dry-run"], TwoContextConfiguration(), Valid, new CurrentContextState(), output, CancellationToken.None);
+
+        Assert.NotNull(service.LastRequest);
+        Assert.True(service.LastRequest.DryRun);
+    }
+
+    /// <summary>
+    /// Without this the <see cref="ContextSwitchRequest.Force"/> flag was unreachable - the service
+    /// honoured it, but nothing ever set it, so a context that had drifted out of sync could not be
+    /// re-applied: switching to the already-active context just returned NoOp.
+    /// </summary>
+    [Fact]
+    public async Task RunAsyncSwitchPassesForceThroughToTheSwitchService()
+    {
+        (CliCommandRouter router, StubContextSwitchService service, StringWriter output) = Create();
+
+        await router.RunAsync(
+            ["switch", "--context", "work", "--force"], TwoContextConfiguration(), Valid, new CurrentContextState(), output, CancellationToken.None);
+
+        Assert.NotNull(service.LastRequest);
+        Assert.True(service.LastRequest.Force);
+    }
+
+    [Fact]
+    public async Task RunAsyncSwitchWithoutForceFlagDoesNotForce()
+    {
+        (CliCommandRouter router, StubContextSwitchService service, StringWriter output) = Create();
+
+        await router.RunAsync(
+            ["switch", "--context", "work"], TwoContextConfiguration(), Valid, new CurrentContextState(), output, CancellationToken.None);
+
+        Assert.NotNull(service.LastRequest);
+        Assert.False(service.LastRequest.Force);
+    }
+
+    [Fact]
+    public async Task RunAsyncSwitchWithoutDryRunFlagRunsForReal()
+    {
+        (CliCommandRouter router, StubContextSwitchService service, StringWriter output) = Create();
+
+        await router.RunAsync(
+            ["switch", "--context", "work"], TwoContextConfiguration(), Valid, new CurrentContextState(), output, CancellationToken.None);
+
+        Assert.NotNull(service.LastRequest);
+        Assert.False(service.LastRequest.DryRun);
+    }
+
+    [Fact]
+    public async Task RunAsyncSwitchDryRunJsonReportsItAndListsTheSteps()
+    {
+        (CliCommandRouter router, StubContextSwitchService service, StringWriter output) = Create();
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        service.Result = new ContextSwitchResult(
+            "work",
+            null,
+            ContextSwitchStatus.Succeeded,
+            [
+                new AutomationResult("LaunchApplications.work", AutomationStepType.LaunchApplications, AutomationResultStatus.Skipped, "Dry run: no changes applied.", null, null, null, now, now)
+            ],
+            now,
+            now,
+            "correlation-id");
+
+        await router.RunAsync(
+            ["switch", "--context", "work", "--dry-run", "--json"], TwoContextConfiguration(), Valid, new CurrentContextState(), output, CancellationToken.None);
+
+        using JsonDocument document = JsonDocument.Parse(output.ToString());
+        Assert.True(document.RootElement.GetProperty("dryRun").GetBoolean());
+        Assert.Equal("LaunchApplications", document.RootElement.GetProperty("steps")[0].GetString());
+    }
+
+    [Fact]
+    public async Task RunAsyncUsageMentionsDryRun()
+    {
+        (CliCommandRouter router, _, StringWriter output) = Create();
+
+        await router.RunAsync([], TwoContextConfiguration(), Valid, new CurrentContextState(), output, CancellationToken.None);
+
+        Assert.Contains("--dry-run", output.ToString(), StringComparison.Ordinal);
+    }
+
 }

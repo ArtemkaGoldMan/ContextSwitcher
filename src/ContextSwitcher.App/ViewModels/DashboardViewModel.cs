@@ -58,7 +58,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         this.configPaths = configPaths;
         this.clock = clock;
 
-        this.SupportDeveloperCommand = new RelayCommand(() => { });
+        this.SupportDeveloperCommand = new RelayCommand(() => this.OpenQuickLink(AppLinks.Support));
         this.OpenAppCommand = new RelayCommand(() => this.OpenAppRequested?.Invoke(this, EventArgs.Empty));
 
         this.RefreshFromConfiguration();

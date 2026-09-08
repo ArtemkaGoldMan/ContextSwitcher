@@ -16,12 +16,16 @@ For each context that has `focus.enabled: true`, ContextSwitcher runs:
 shortcuts run "ContextSwitcher - Focus <ModeName>"
 ```
 
-where `<ModeName>` is exactly the context's `focus.modeName` value from `settings.json`. For a
-context with `focus.enabled: false`, it instead runs:
+where `<ModeName>` is exactly the context's `focus.modeName` value from `settings.json`. Switching
+to a context with `focus.enabled: false` **from one that had it enabled** instead runs:
 
 ```text
 shortcuts run "ContextSwitcher - Focus Off"
 ```
+
+If neither the context being left nor the one being entered enables Focus, no Focus step runs at
+all. That matters: without it, anyone who has not created these Shortcuts would get a warning on
+every single switch for a feature they never asked for.
 
 **You must create these Shortcuts yourself** — ContextSwitcher does not create them for you, and a
 missing Shortcut just produces a `Warning` (or `Failed`, if you've marked focus critical for that

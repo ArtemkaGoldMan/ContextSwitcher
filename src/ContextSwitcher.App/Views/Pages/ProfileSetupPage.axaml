@@ -10,14 +10,9 @@
     <!-- Header -->
     <Grid ColumnDefinitions="Auto,*,Auto,Auto">
       <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{DynamicResource BadgeOrangeGradient}" Margin="0,0,12,0">
-        <Canvas Width="16" Height="16">
-          <Rectangle Canvas.Left="6.5" Canvas.Top="1" Width="3" Height="11" RadiusX="1.2" RadiusY="1.2" Fill="White">
-            <Rectangle.RenderTransform>
-              <RotateTransform Angle="45" />
-            </Rectangle.RenderTransform>
-          </Rectangle>
-          <Polygon Points="2,12 5.5,12 2,15.5" Fill="White" Opacity="0.9" />
-        </Canvas>
+        <Viewbox Classes="icon" Width="17" Height="17">
+          <Path Classes="glyph" Data="{StaticResource IconPencil}" />
+        </Viewbox>
       </Border>
       <TextBlock Grid.Column="1" Text="{Binding HeaderText}" Classes="header" VerticalAlignment="Center" />
       <Button Grid.Column="2" Classes="switchContext" Content="Cancel" Command="{Binding CancelCommand}" Margin="0,0,8,0" />
@@ -56,10 +51,10 @@
 
         <Grid ColumnDefinitions="140,*">
           <TextBlock Grid.Column="0" Text="Accent color" Classes="body" VerticalAlignment="Center" />
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
-            <Border Width="30" Height="30" CornerRadius="8" Background="{Binding AccentBrush}" />
-            <TextBox Text="{Binding AccentColor}" Width="120" />
-          </StackPanel>
+          <Grid Grid.Column="1" ColumnDefinitions="30,10,*">
+            <Border Grid.Column="0" Width="30" Height="30" CornerRadius="8" Background="{Binding AccentBrush}" />
+            <TextBox Grid.Column="2" Text="{Binding AccentColor}" />
+          </Grid>
         </Grid>
         <Border Classes="divider" />
 
@@ -96,7 +91,11 @@
                   <TextBox Grid.Column="1" Text="{Binding Name}" PlaceholderText="App name" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,10,0" VerticalAlignment="Center" />
                   <CheckBox Grid.Column="2" Content="Launch" IsChecked="{Binding LaunchOnEnter}" Margin="8,0" />
                   <CheckBox Grid.Column="3" Content="Close" IsChecked="{Binding CloseOnLeave}" Margin="8,0" />
-                  <Button Grid.Column="4" Classes="rowAction" Command="{Binding RemoveCommand}" Content="✕" />
+                  <Button Grid.Column="4" Classes="rowAction" Command="{Binding RemoveCommand}">
+                    <Viewbox Classes="icon rowAction">
+                      <Path Classes="glyph" Data="{StaticResource IconX}" />
+                    </Viewbox>
+                  </Button>
                 </Grid>
               </Border>
             </DataTemplate>
@@ -115,13 +114,13 @@
               <Border Width="330" Padding="4">
                 <StackPanel Spacing="8">
                   <TextBox
-                    Text="{Binding AppSearchText}"
+                    Text="{Binding AppPicker.SearchText}"
                     PlaceholderText="Search installed apps…" />
 
-                  <TextBlock Text="Scanning your apps…" Classes="caption" IsVisible="{Binding IsLoadingInstalledApps}" />
+                  <TextBlock Text="Scanning your apps…" Classes="caption" IsVisible="{Binding AppPicker.IsLoading}" />
 
-                  <ScrollViewer MaxHeight="280" IsVisible="{Binding !IsLoadingInstalledApps}">
-                    <ItemsControl ItemsSource="{Binding FilteredInstalledApps}">
+                  <ScrollViewer MaxHeight="280" IsVisible="{Binding !AppPicker.IsLoading}">
+                    <ItemsControl ItemsSource="{Binding AppPicker.FilteredApps}">
                       <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                           <StackPanel Spacing="2" />
@@ -149,7 +148,7 @@
                   <TextBlock
                     Text="No matching apps."
                     Classes="caption"
-                    IsVisible="{Binding HasNoAppMatches}" />
+                    IsVisible="{Binding AppPicker.HasNoMatches}" />
 
                   <Border Classes="divider" />
                   <Button
@@ -172,19 +171,22 @@
 
         <Grid ColumnDefinitions="140,*">
           <TextBlock Grid.Column="0" Text="Mode" Classes="body" VerticalAlignment="Center" />
-          <ComboBox Grid.Column="1" ItemsSource="{Binding BrowserModes}" SelectedItem="{Binding BrowserMode}" HorizontalAlignment="Left" MinWidth="160" />
+          <ComboBox Grid.Column="1" ItemsSource="{Binding BrowserModes}" SelectedItem="{Binding BrowserMode}" HorizontalAlignment="Stretch" />
         </Grid>
         <Border Classes="divider" />
 
         <Grid ColumnDefinitions="140,*">
           <TextBlock Grid.Column="0" Text="Browser" Classes="body" VerticalAlignment="Center" />
-          <ComboBox Grid.Column="1" ItemsSource="{Binding BrowserKinds}" SelectedItem="{Binding BrowserKind}" HorizontalAlignment="Left" MinWidth="160" />
+          <ComboBox Grid.Column="1" ItemsSource="{Binding BrowserKinds}" SelectedItem="{Binding BrowserKind}" HorizontalAlignment="Stretch" />
         </Grid>
         <Border Classes="divider" />
 
         <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Grid.Column="0" Text="Avoid duplicate tabs" Classes="body" VerticalAlignment="Center" />
-          <ToggleSwitch Grid.Column="1" IsChecked="{Binding AvoidDuplicateTabs}" />
+          <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+            <TextBlock Text="Avoid duplicate tabs" Classes="body" />
+            <TextBlock Text="{Binding AvoidDuplicateTabsHint}" Classes="caption" TextWrapping="Wrap" />
+          </StackPanel>
+          <ToggleSwitch Grid.Column="1" IsChecked="{Binding AvoidDuplicateTabs}" IsEnabled="{Binding CanAvoidDuplicateTabs}" />
         </Grid>
 
         <StackPanel Spacing="6" IsVisible="{Binding IsUrlsMode}" Margin="0,6,0,0">
@@ -199,7 +201,11 @@
               <DataTemplate x:DataType="vm:EditableStringRowViewModel">
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Grid.Column="0" Text="{Binding Value}" PlaceholderText="https://..." Margin="0,0,8,0" />
-                  <Button Grid.Column="1" Classes="rowAction" Content="✕" Command="{Binding RemoveCommand}" />
+                  <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
+                    <Viewbox Classes="icon rowAction">
+                      <Path Classes="glyph" Data="{StaticResource IconX}" />
+                    </Viewbox>
+                  </Button>
                 </Grid>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
@@ -219,7 +225,11 @@
               <DataTemplate x:DataType="vm:EditableStringRowViewModel">
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Grid.Column="0" Text="{Binding Value}" PlaceholderText="Tab group name" Margin="0,0,8,0" />
-                  <Button Grid.Column="1" Classes="rowAction" Content="✕" Command="{Binding RemoveCommand}" />
+                  <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
+                    <Viewbox Classes="icon rowAction">
+                      <Path Classes="glyph" Data="{StaticResource IconX}" />
+                    </Viewbox>
+                  </Button>
                 </Grid>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
@@ -241,7 +251,11 @@
                   <StackPanel Spacing="6">
                     <Grid ColumnDefinitions="*,Auto">
                       <ComboBox Grid.Column="0" ItemsSource="{x:Static vm:BrowserProfileRowViewModel.SupportedBrowsers}" SelectedItem="{Binding Browser}" HorizontalAlignment="Left" MinWidth="140" />
-                      <Button Grid.Column="1" Classes="rowAction" Content="✕" Command="{Binding RemoveCommand}" />
+                      <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
+                        <Viewbox Classes="icon rowAction">
+                          <Path Classes="glyph" Data="{StaticResource IconX}" />
+                        </Viewbox>
+                      </Button>
                     </Grid>
                     <TextBox Text="{Binding ProfileDirectory}" PlaceholderText="Profile directory" />
                     <TextBox Text="{Binding UrlsText}" PlaceholderText="One URL per line" AcceptsReturn="True" Height="56" TextWrapping="Wrap" />
@@ -340,7 +354,7 @@
           <TextBlock Text="MEDIA" Classes="sectionTitle" />
           <Grid ColumnDefinitions="140,*">
             <TextBlock Grid.Column="0" Text="Player" Classes="body" VerticalAlignment="Center" />
-            <ComboBox Grid.Column="1" ItemsSource="{Binding MediaPlayers}" SelectedItem="{Binding MediaPlayer}" HorizontalAlignment="Left" MinWidth="160" />
+            <ComboBox Grid.Column="1" ItemsSource="{Binding MediaPlayers}" SelectedItem="{Binding MediaPlayer}" HorizontalAlignment="Stretch" />
           </Grid>
           <Border Classes="divider" />
           <Grid ColumnDefinitions="140,*">
@@ -374,7 +388,11 @@
               <DataTemplate x:DataType="vm:EditableStringRowViewModel">
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Grid.Column="0" Text="{Binding Value}" PlaceholderText="container-name" Margin="0,0,8,0" />
-                  <Button Grid.Column="1" Classes="rowAction" Content="✕" Command="{Binding RemoveCommand}" />
+                  <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
+                    <Viewbox Classes="icon rowAction">
+                      <Path Classes="glyph" Data="{StaticResource IconX}" />
+                    </Viewbox>
+                  </Button>
                 </Grid>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
@@ -394,7 +412,11 @@
               <DataTemplate x:DataType="vm:EditableStringRowViewModel">
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Grid.Column="0" Text="{Binding Value}" PlaceholderText="container-name" Margin="0,0,8,0" />
-                  <Button Grid.Column="1" Classes="rowAction" Content="✕" Command="{Binding RemoveCommand}" />
+                  <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
+                    <Viewbox Classes="icon rowAction">
+                      <Path Classes="glyph" Data="{StaticResource IconX}" />
+                    </Viewbox>
+                  </Button>
                 </Grid>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
@@ -420,7 +442,11 @@
                     <TextBox Grid.Column="0" Text="{Binding Title}" PlaceholderText="Title" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,8,0" />
                     <TextBox Grid.Column="1" Text="{Binding Url}" PlaceholderText="https://..." Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,8,0" />
                     <TextBox Grid.Column="2" Text="{Binding Icon}" PlaceholderText="icon" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,8,0" />
-                    <Button Grid.Column="3" Classes="rowAction" Content="✕" Command="{Binding RemoveCommand}" />
+                    <Button Grid.Column="3" Classes="rowAction" Command="{Binding RemoveCommand}">
+                      <Viewbox Classes="icon rowAction">
+                        <Path Classes="glyph" Data="{StaticResource IconX}" />
+                      </Viewbox>
+                    </Button>
                   </Grid>
                 </Border>
               </DataTemplate>

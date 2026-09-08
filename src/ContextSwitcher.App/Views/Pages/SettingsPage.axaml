@@ -8,20 +8,9 @@
   <StackPanel Spacing="20">
     <Grid ColumnDefinitions="Auto,*,Auto">
       <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{DynamicResource BadgePurpleGradient}" Margin="0,0,12,0">
-        <StackPanel Width="16" Height="16" Spacing="4" VerticalAlignment="Center">
-          <Grid>
-            <Rectangle Height="1.6" Fill="White" VerticalAlignment="Center" Opacity="0.95" />
-            <Ellipse Width="5" Height="5" Fill="White" HorizontalAlignment="Left" />
-          </Grid>
-          <Grid>
-            <Rectangle Height="1.6" Fill="White" VerticalAlignment="Center" Opacity="0.95" />
-            <Ellipse Width="5" Height="5" Fill="White" HorizontalAlignment="Right" />
-          </Grid>
-          <Grid>
-            <Rectangle Height="1.6" Fill="White" VerticalAlignment="Center" Opacity="0.95" />
-            <Ellipse Width="5" Height="5" Fill="White" HorizontalAlignment="Center" />
-          </Grid>
-        </StackPanel>
+        <Viewbox Classes="icon" Width="18" Height="18">
+          <Path Classes="glyph" Data="{StaticResource IconSliders}" />
+        </Viewbox>
       </Border>
       <TextBlock Grid.Column="1" Text="Settings" Classes="header" VerticalAlignment="Center" />
       <Button Grid.Column="2" Classes="switchContext current" Content="Save" Command="{Binding SaveCommand}" />
@@ -43,7 +32,7 @@
           <TextBlock Grid.Column="0" Text="Default switch timeout" Classes="body" VerticalAlignment="Center" />
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
             <TextBox Text="{Binding DefaultSwitchTimeoutSecondsText}" Width="70" HorizontalContentAlignment="Right" />
-            <TextBlock Text="seconds" Classes="caption" VerticalAlignment="Center" />
+            <TextBlock Text="seconds" Classes="caption" VerticalAlignment="Center" Width="50" />
           </StackPanel>
         </Grid>
         <Border Classes="divider" />
@@ -102,7 +91,7 @@
           <TextBlock Grid.Column="0" Text="Retention" Classes="body" VerticalAlignment="Center" />
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
             <TextBox Text="{Binding AnalyticsRetentionDaysText}" Width="70" HorizontalContentAlignment="Right" />
-            <TextBlock Text="days" Classes="caption" VerticalAlignment="Center" />
+            <TextBlock Text="days" Classes="caption" VerticalAlignment="Center" Width="50" />
           </StackPanel>
         </Grid>
       </StackPanel>

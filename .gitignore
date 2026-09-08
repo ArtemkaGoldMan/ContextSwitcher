@@ -33,3 +33,6 @@ TestResults/
 ## Logs
 *.log
 *.log.jsonl
+
+# Local packaging output
+dist/

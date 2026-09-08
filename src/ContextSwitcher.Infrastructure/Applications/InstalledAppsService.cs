@@ -125,11 +125,29 @@ public sealed class InstalledAppsService : IInstalledAppsService
 
         try
         {
-            // CFBundleIconFile in Info.plist is the authoritative name, but reading it costs another
-            // process launch per app. Every bundle keeps its icon in Resources, and bundles
-            // essentially always ship exactly one top-level .icns, so picking the first is both
-            // accurate in practice and an order of magnitude cheaper.
-            return Directory.EnumerateFiles(resources, "*.icns", SearchOption.TopDirectoryOnly).FirstOrDefault();
+            List<FileInfo> candidates = new DirectoryInfo(resources)
+                .EnumerateFiles("*.icns", SearchOption.TopDirectoryOnly)
+                .ToList();
+
+            if (candidates.Count == 0)
+            {
+                return null;
+            }
+
+            // CFBundleIconFile in Info.plist is authoritative, but plists are frequently in binary
+            // format which .NET cannot read without shelling out to `plutil`/`defaults` - another
+            // process launch per app, and another CommandAllowlist entry, for a cosmetic feature.
+            //
+            // Instead: prefer an .icns named after the bundle, then fall back to the largest one.
+            // Electron apps (VS Code, Cursor) ship a document icon per supported file type
+            // alongside the real app icon, and simply taking the first match picked up things like
+            // `javascript.icns`. The app icon is reliably the biggest because it carries every
+            // resolution variant, so size is a good discriminator.
+            string bundleName = Path.GetFileNameWithoutExtension(bundlePath);
+            FileInfo? byName = candidates.FirstOrDefault(
+                file => string.Equals(Path.GetFileNameWithoutExtension(file.Name), bundleName, StringComparison.OrdinalIgnoreCase));
+
+            return (byName ?? candidates.MaxBy(file => file.Length))?.FullName;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

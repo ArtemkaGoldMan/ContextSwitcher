@@ -53,6 +53,88 @@ public sealed class AutomationStepExecutorTests
         Assert.Equal(AutomationResultStatus.Failed, result.Status);
     }
 
+    /// <summary>
+    /// A graceful quit can block indefinitely on a modal "save this document?" sheet. Every script
+    /// used to get the whole step budget, so the first such app consumed all of it: the step-level
+    /// timeout fired mid-quit, the "Could not close" warning never ran, and later apps in the list
+    /// were never asked to quit at all.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsyncCloseApplicationsSplitsTheBudgetAcrossAppsAndTheirChecks()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.DefaultResult = new ProcessResult(0, "false", string.Empty, false);
+
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
+
+        // Mirrors the plan builder, which sizes the step at ten seconds per app.
+        TimeSpan stepTimeout = TimeSpan.FromSeconds(20);
+        AutomationStep step = new(
+            "CloseApplications.personal", AutomationStepType.CloseApplications, "Close applications", false,
+            stepTimeout, new Dictionary<string, string> { ["apps"] = "Chess,Stickies" });
+
+        await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(4, scriptRunner.Timeouts.Count);
+        Assert.All(scriptRunner.Timeouts, timeout => Assert.True(timeout < stepTimeout));
+
+        // Everything the step can spend must still fit inside the step's own budget, or the
+        // step-level timeout wins the race and the per-app reporting is lost again.
+        TimeSpan worstCase = scriptRunner.Timeouts.Aggregate(TimeSpan.Zero, (total, next) => total + next);
+        Assert.True(worstCase <= stepTimeout, $"worst case {worstCase} exceeds the step's {stepTimeout}");
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncLaunchApplicationsSplitsTheBudgetAcrossApps()
+    {
+        FakeProcessRunner processRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+
+        TimeSpan stepTimeout = TimeSpan.FromSeconds(30);
+        AutomationStep step = new(
+            "LaunchApplications.work", AutomationStepType.LaunchApplications, "Launch applications", false,
+            stepTimeout, new Dictionary<string, string> { ["apps"] = "Calculator,Stickies" });
+
+        await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(2, processRunner.Calls.Count);
+        TimeSpan worstCase = processRunner.Calls.Aggregate(TimeSpan.Zero, (total, call) => total + call.Timeout);
+        Assert.True(worstCase < stepTimeout, $"worst case {worstCase} exceeds the step's {stepTimeout}");
+    }
+
+    /// <summary>
+    /// Single-call steps have the same failure shape: handing the command the whole step budget
+    /// meant a hung Shortcuts invocation surfaced as a bare "step timed out" instead of the
+    /// actionable "create this Shortcut" warning below it.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsyncSetFocusModeLeavesHeadroomToReportItsOwnFailure()
+    {
+        FakeProcessRunner processRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+
+        AutomationStep step = FocusStep(enabled: true, modeName: "Work", isCritical: false);
+
+        await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.True(Assert.Single(processRunner.Calls).Timeout < step.Timeout);
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncSetThemeLeavesHeadroomToReportItsOwnFailure()
+    {
+        FakeScriptRunner scriptRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
+
+        AutomationStep step = new(
+            "SetTheme.work", AutomationStepType.SetTheme, "Set theme", false,
+            TimeSpan.FromSeconds(5), new Dictionary<string, string> { ["mode"] = "Dark" });
+
+        await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.True(Assert.Single(scriptRunner.Timeouts) < step.Timeout);
+    }
+
     [Fact]
     public async Task ExecuteAsyncLaunchApplicationsCallsOpenWithAppNameArgument()
     {
@@ -110,6 +192,72 @@ public sealed class AutomationStepExecutorTests
 
         Assert.Equal(AutomationResultStatus.Warning, result.Status);
         Assert.Empty(scriptRunner.Scripts);
+    }
+
+    /// <summary>
+    /// System Events accepts any path, so pointing the wallpaper at a text file used to report
+    /// Succeeded and "Wallpaper updated." while the desktop referenced something undrawable.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsyncSetWallpaperWarnsWithoutSettingWhenFileIsNotAnImage()
+    {
+        FakeProcessRunner processRunner = new();
+        // sips exits 0 even for a text file - only the reported width distinguishes them.
+        processRunner.Enqueue(new ProcessResult(0, "/tmp/x.txt\n  pixelWidth: <nil>", string.Empty, false));
+        FakeScriptRunner scriptRunner = new();
+
+        AutomationStepExecutor executor = CreateExecutor(processRunner, scriptRunner, new FakeClock());
+
+        string notAnImage = Path.Combine(Path.GetTempPath(), $"cs-not-an-image-{Guid.NewGuid():N}.txt");
+        await File.WriteAllTextAsync(notAnImage, "definitely not a picture");
+
+        try
+        {
+            AutomationStep step = new(
+                "SetWallpaper.work", AutomationStepType.SetWallpaper, "Set wallpaper", false, TimeSpan.FromSeconds(10),
+                new Dictionary<string, string> { ["path"] = notAnImage, ["allSpaces"] = "True" });
+
+            AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+            Assert.Equal(AutomationResultStatus.Warning, result.Status);
+            Assert.Contains("not a readable image", result.Message, StringComparison.Ordinal);
+
+            // The wallpaper must not have been set at all.
+            Assert.Empty(scriptRunner.Scripts);
+        }
+        finally
+        {
+            File.Delete(notAnImage);
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncSetWallpaperSetsItWhenTheFileIsARealImage()
+    {
+        FakeProcessRunner processRunner = new();
+        processRunner.Enqueue(new ProcessResult(0, "/tmp/x.jpg\n  pixelWidth: 1920", string.Empty, false));
+        FakeScriptRunner scriptRunner = new();
+
+        AutomationStepExecutor executor = CreateExecutor(processRunner, scriptRunner, new FakeClock());
+
+        string image = Path.Combine(Path.GetTempPath(), $"cs-image-{Guid.NewGuid():N}.jpg");
+        await File.WriteAllTextAsync(image, "pretend jpeg");
+
+        try
+        {
+            AutomationStep step = new(
+                "SetWallpaper.work", AutomationStepType.SetWallpaper, "Set wallpaper", false, TimeSpan.FromSeconds(10),
+                new Dictionary<string, string> { ["path"] = image, ["allSpaces"] = "True" });
+
+            AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+            Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
+            Assert.Single(scriptRunner.Scripts);
+        }
+        finally
+        {
+            File.Delete(image);
+        }
     }
 
     [Fact]

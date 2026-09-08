@@ -1,7 +1,9 @@
+using ContextSwitcher.App;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Tests.TestDoubles;
@@ -87,4 +89,31 @@ public sealed class SettingsViewModelTests
         Assert.Equal("Work", row.ContextDisplayName);
         Assert.Equal("Cmd+Alt+Ctrl+W", row.Accelerator);
     }
+
+    /// <summary>
+    /// Both "Support the developer" buttons were wired to an empty lambda - visible, clickable and
+    /// doing nothing.
+    /// </summary>
+    [Fact]
+    public void SupportDeveloperCommandOpensTheSupportLink()
+    {
+        AppHost.UpdateConfiguration(
+            new AppConfiguration
+            {
+                ActiveContextId = "work",
+                Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }]
+            },
+            new ConfigurationValidationResult([]));
+
+        FakeProcessRunner processRunner = new();
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator());
+        SettingsViewModel viewModel = new(store, new FakePermissionsChecker(), processRunner);
+
+        viewModel.SupportDeveloperCommand.Execute(null);
+
+        ProcessStartOptions call = Assert.Single(processRunner.Calls);
+        Assert.Equal("open", call.FileName);
+        Assert.Equal([AppLinks.Support], call.Arguments);
+    }
+
 }

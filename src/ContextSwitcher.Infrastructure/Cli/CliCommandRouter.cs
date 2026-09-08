@@ -70,7 +70,8 @@ public sealed class CliCommandRouter
 
         return args[0] switch
         {
-            "switch" => await this.RunSwitchAsync(GetOptionValue(args, "--context"), configuration, configurationValidation, json, output, cancellationToken)
+            "switch" => await this.RunSwitchAsync(
+                    GetOptionValue(args, "--context"), configuration, configurationValidation, json, args.Contains("--dry-run"), args.Contains("--force"), output, cancellationToken)
                 .ConfigureAwait(false),
             "status" => RunStatus(state, json, output),
             "list-contexts" => RunListContexts(configuration, json, output),
@@ -84,6 +85,8 @@ public sealed class CliCommandRouter
         AppConfiguration configuration,
         ConfigurationValidationResult configurationValidation,
         bool json,
+        bool dryRun,
+        bool force,
         TextWriter output,
         CancellationToken cancellationToken)
     {
@@ -106,7 +109,7 @@ public sealed class CliCommandRouter
         }
 
         ContextSwitchResult result = await this.switchService
-            .SwitchAsync(new ContextSwitchRequest(contextId, ContextSwitchSource.Cli), cancellationToken)
+            .SwitchAsync(new ContextSwitchRequest(contextId, ContextSwitchSource.Cli, DryRun: dryRun, Force: force), cancellationToken)
             .ConfigureAwait(false);
 
         List<string> warnings = result.StepResults
@@ -116,11 +119,31 @@ public sealed class CliCommandRouter
 
         if (json)
         {
-            WriteJson(output, new { status = result.Status.ToString(), contextId = result.TargetContextId, warnings });
+            WriteJson(
+                output,
+                new
+                {
+                    status = result.Status.ToString(),
+                    contextId = result.TargetContextId,
+                    dryRun,
+                    steps = result.StepResults.Select(step => step.Type.ToString()).ToList(),
+                    warnings
+                });
         }
         else
         {
-            output.WriteLine($"Switch to '{result.TargetContextId}' finished with status: {result.Status}");
+            output.WriteLine(dryRun
+                ? $"Dry run for '{result.TargetContextId}': {result.StepResults.Count} step(s) would run, nothing was changed."
+                : $"Switch to '{result.TargetContextId}' finished with status: {result.Status}");
+
+            if (dryRun)
+            {
+                foreach (AutomationResult step in result.StepResults)
+                {
+                    output.WriteLine($"  - {step.Type}");
+                }
+            }
+
             foreach (string warning in warnings)
             {
                 output.WriteLine($"  - {warning}");
@@ -232,6 +255,8 @@ public sealed class CliCommandRouter
         output.WriteLine();
         output.WriteLine("Options:");
         output.WriteLine("  --json                  Emit machine-readable JSON instead of text");
+        output.WriteLine("  --dry-run               With 'switch': show the steps without applying anything");
+        output.WriteLine("  --force                 With 'switch': re-apply even if the context is already active");
     }
 
     private static void WriteError(TextWriter output, bool json, string message)

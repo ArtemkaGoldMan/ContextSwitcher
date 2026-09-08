@@ -1,0 +1,218 @@
+<Window
+  x:Class="ContextSwitcher.App.Views.OnboardingWindow"
+  xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:vm="using:ContextSwitcher.App.ViewModels"
+  x:DataType="vm:OnboardingViewModel"
+  Title="Welcome to Context Switcher"
+  Width="620"
+  Height="620"
+  CanResize="False"
+  Background="{DynamicResource AppBackgroundBrush}"
+  WindowStartupLocation="CenterScreen">
+  <Window.Resources>
+    <!-- Shared by the Work and Personal steps: chosen-app list + the installed-app picker flyout. -->
+    <DataTemplate x:Key="AppChooserTemplate" x:DataType="vm:OnboardingProfileViewModel">
+      <Border Classes="panel">
+        <StackPanel Spacing="10">
+          <TextBlock Text="APPS" Classes="sectionTitle" />
+          <TextBlock
+            Text="We've pre-filled a few we found installed. Remove anything you don't want. Quit on leave also closes the app when you switch away — untick it to leave the app running."
+            Classes="caption"
+            TextWrapping="Wrap" />
+
+          <ScrollViewer MaxHeight="210">
+            <ItemsControl ItemsSource="{Binding Apps}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Spacing="6" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:AppRowViewModel">
+                  <Border Background="{DynamicResource CardHoverBrush}" CornerRadius="10" Padding="10,8">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                      <Panel Grid.Column="0" Width="22" Height="22" Margin="0,0,10,0">
+                        <Border CornerRadius="5" Background="{DynamicResource BorderBrush}" IsVisible="{Binding !HasIcon}" />
+                        <Image Source="{Binding Icon}" IsVisible="{Binding HasIcon}" />
+                      </Panel>
+                      <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="body" VerticalAlignment="Center" />
+                      <CheckBox Grid.Column="2" Content="Quit on leave" IsChecked="{Binding CloseOnLeave}" Margin="8,0" />
+                      <Button Grid.Column="3" Classes="rowAction" Command="{Binding RemoveCommand}">
+                        <Viewbox Classes="icon rowAction">
+                          <Path Classes="glyph" Data="{StaticResource IconX}" />
+                        </Viewbox>
+                      </Button>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+
+          <TextBlock Text="No apps chosen yet." Classes="caption" IsVisible="{Binding !HasApps}" />
+
+          <Button Classes="switchContext" HorizontalAlignment="Left" Content="+ Add app">
+            <Button.Flyout>
+              <Flyout Placement="BottomEdgeAlignedLeft">
+                <Border Width="320" Padding="4">
+                  <StackPanel Spacing="8">
+                    <TextBox Text="{Binding AppPicker.SearchText}" PlaceholderText="Search installed apps…" />
+                    <TextBlock Text="Scanning your apps…" Classes="caption" IsVisible="{Binding AppPicker.IsLoading}" />
+                    <ScrollViewer MaxHeight="260" IsVisible="{Binding !AppPicker.IsLoading}">
+                      <ItemsControl ItemsSource="{Binding AppPicker.FilteredApps}">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <StackPanel Spacing="2" />
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="vm:InstalledAppViewModel">
+                            <Button Classes="navItem" Command="{Binding PickCommand}" HorizontalAlignment="Stretch">
+                              <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Panel Width="22" Height="22">
+                                  <Border CornerRadius="5" Background="{DynamicResource BorderBrush}" IsVisible="{Binding !HasIcon}" />
+                                  <Image Source="{Binding Icon}" IsVisible="{Binding HasIcon}" />
+                                </Panel>
+                                <TextBlock Text="{Binding Name}" Classes="body" VerticalAlignment="Center" />
+                              </StackPanel>
+                            </Button>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </ScrollViewer>
+                    <TextBlock Text="No matching apps." Classes="caption" IsVisible="{Binding AppPicker.HasNoMatches}" />
+                  </StackPanel>
+                </Border>
+              </Flyout>
+            </Button.Flyout>
+          </Button>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+  </Window.Resources>
+  <Grid RowDefinitions="*,Auto" Margin="28,24">
+
+    <!-- Steps -->
+    <Panel Grid.Row="0">
+
+      <!-- 0: Welcome -->
+      <StackPanel Spacing="18" VerticalAlignment="Center" IsVisible="{Binding IsWelcomeStep}">
+        <Border Classes="badge" Width="56" Height="56" Background="{DynamicResource BadgeBlueGradient}" HorizontalAlignment="Left">
+          <Viewbox Classes="icon lg">
+            <Path Classes="glyph" Data="{StaticResource IconArrowLeftRight}" />
+          </Viewbox>
+        </Border>
+        <TextBlock Text="Welcome to Context Switcher" Classes="header" FontSize="26" TextWrapping="Wrap" />
+        <TextBlock
+          Text="One click flips your Mac between work and personal — opening the apps you need, closing the ones you don't, and keeping the two from bleeding into each other."
+          Classes="body"
+          TextWrapping="Wrap"
+          Foreground="{DynamicResource TextSecondaryBrush}" />
+        <TextBlock
+          Text="Let's set up two profiles. Takes about a minute, and you can change everything later."
+          Classes="body"
+          TextWrapping="Wrap" />
+      </StackPanel>
+
+      <!-- 1: Work -->
+      <ContentControl Content="{Binding Work}" IsVisible="{Binding IsWorkStep}">
+        <ContentControl.ContentTemplate>
+          <DataTemplate x:DataType="vm:OnboardingProfileViewModel">
+            <StackPanel Spacing="16">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <Border Width="40" Height="40" CornerRadius="11" Background="{Binding AccentBrush}">
+                  <Viewbox Classes="icon" Width="19" Height="19">
+                    <Path Classes="glyph" Data="{StaticResource IconBriefcase}" />
+                  </Viewbox>
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock Text="Your work profile" Classes="header" />
+                  <TextBlock Text="Apps to open when you start working, and close when you stop." Classes="caption" />
+                </StackPanel>
+              </StackPanel>
+
+              <TextBox Text="{Binding DisplayName}" PlaceholderText="Profile name" />
+
+              <ContentControl Content="{Binding}" ContentTemplate="{StaticResource AppChooserTemplate}" />
+            </StackPanel>
+          </DataTemplate>
+        </ContentControl.ContentTemplate>
+      </ContentControl>
+
+      <!-- 2: Personal -->
+      <ContentControl Content="{Binding Personal}" IsVisible="{Binding IsPersonalStep}">
+        <ContentControl.ContentTemplate>
+          <DataTemplate x:DataType="vm:OnboardingProfileViewModel">
+            <StackPanel Spacing="16">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <Border Width="40" Height="40" CornerRadius="11" Background="{Binding AccentBrush}">
+                  <Viewbox Classes="icon" Width="19" Height="19">
+                    <Path Classes="glyph" Data="{StaticResource IconHouse}" />
+                  </Viewbox>
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock Text="Your personal profile" Classes="header" />
+                  <TextBlock Text="Apps for your own time — and the work apps you want gone." Classes="caption" />
+                </StackPanel>
+              </StackPanel>
+
+              <TextBox Text="{Binding DisplayName}" PlaceholderText="Profile name" />
+
+              <ContentControl Content="{Binding}" ContentTemplate="{StaticResource AppChooserTemplate}" />
+            </StackPanel>
+          </DataTemplate>
+        </ContentControl.ContentTemplate>
+      </ContentControl>
+
+      <!-- 3: Done -->
+      <StackPanel Spacing="18" VerticalAlignment="Center" IsVisible="{Binding IsDoneStep}">
+        <Border Classes="badge" Width="56" Height="56" Background="{DynamicResource BadgeGreenGradient}" HorizontalAlignment="Left">
+          <Viewbox Classes="icon lg">
+            <Path Classes="glyph" Data="{StaticResource IconCircleCheck}" />
+          </Viewbox>
+        </Border>
+        <TextBlock Text="You're set" Classes="header" FontSize="26" />
+        <TextBlock
+          Text="Finishing will save both profiles and switch you into Work, so you can see exactly what it does."
+          Classes="body"
+          TextWrapping="Wrap"
+          Foreground="{DynamicResource TextSecondaryBrush}" />
+        <Border Classes="panel">
+          <StackPanel Spacing="8">
+            <TextBlock Text="NEXT" Classes="sectionTitle" />
+            <TextBlock Text="• Switch anytime from the menu bar icon" Classes="body" />
+            <TextBlock Text="• Add browser tabs, wallpaper, Focus and Docker in Profile Setup" Classes="body" />
+            <TextBlock Text="• Assign a keyboard shortcut to each profile" Classes="body" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </Panel>
+
+    <!-- Footer -->
+    <StackPanel Grid.Row="1" Spacing="10" Margin="0,20,0,0">
+      <TextBlock
+        Text="{Binding ErrorMessage}"
+        Classes="caption"
+        Foreground="{DynamicResource ErrorBrush}"
+        TextWrapping="Wrap"
+        IsVisible="{Binding HasErrorMessage}" />
+
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+        <TextBlock Grid.Column="0" Text="{Binding StepLabel}" Classes="caption" VerticalAlignment="Center" />
+
+        <Button Grid.Column="1" Classes="linkButton" Content="Skip setup" Command="{Binding SkipCommand}"
+                HorizontalAlignment="Left" Margin="16,0,0,0"
+                Foreground="{DynamicResource TextSecondaryBrush}" />
+
+        <Button Grid.Column="2" Classes="switchContext" Content="Back" Command="{Binding BackCommand}"
+                IsVisible="{Binding CanGoBack}" Margin="0,0,8,0" />
+
+        <Button Grid.Column="3" Classes="switchContext current" Content="Continue" Command="{Binding NextCommand}"
+                IsVisible="{Binding CanGoNext}" />
+        <Button Grid.Column="3" Classes="switchContext current" Content="Finish &amp; switch to Work" Command="{Binding FinishCommand}"
+                IsVisible="{Binding IsDoneStep}" />
+      </Grid>
+    </StackPanel>
+  </Grid>
+</Window>

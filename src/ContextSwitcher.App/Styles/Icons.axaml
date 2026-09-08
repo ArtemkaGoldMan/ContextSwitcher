@@ -1,0 +1,41 @@
+<!--
+  Icon geometry from Lucide (https://lucide.dev), ISC licensed - see THIRD-PARTY-NOTICES.md.
+
+  Lucide is drawn on a 24x24 grid and stroked, not filled: 2px strokes with round caps and joins.
+  The Path.icon style below reproduces exactly that, so the icons look the way they were drawn
+  rather than the way a set of stacked rectangles and Unicode glyphs happened to land.
+
+  Where an icon uses <rect> or <circle> in the original SVG, the shape is written here as the
+  equivalent path so the whole icon is one geometry.
+-->
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- arrow-left-right: the product mark, two arrows swapping places -->
+  <StreamGeometry x:Key="IconArrowLeftRight">M8 3 4 7l4 4 M4 7h16 M16 21l4-4-4-4 M20 17H4</StreamGeometry>
+
+  <!-- layout-grid: Profiles -->
+  <StreamGeometry x:Key="IconLayoutGrid">M4 3H9A1 1 0 0 1 10 4V9A1 1 0 0 1 9 10H4A1 1 0 0 1 3 9V4A1 1 0 0 1 4 3Z M15 3H20A1 1 0 0 1 21 4V9A1 1 0 0 1 20 10H15A1 1 0 0 1 14 9V4A1 1 0 0 1 15 3Z M15 14H20A1 1 0 0 1 21 15V20A1 1 0 0 1 20 21H15A1 1 0 0 1 14 20V15A1 1 0 0 1 15 14Z M4 14H9A1 1 0 0 1 10 15V20A1 1 0 0 1 9 21H4A1 1 0 0 1 3 20V15A1 1 0 0 1 4 14Z</StreamGeometry>
+
+  <!-- sliders-horizontal: Settings -->
+  <StreamGeometry x:Key="IconSliders">M10 5H3 M12 19H3 M14 3v4 M16 17v4 M21 12h-9 M21 19h-5 M21 5h-7 M8 10v4 M8 12H3</StreamGeometry>
+
+  <!-- chart-column: Stats -->
+  <StreamGeometry x:Key="IconChartColumn">M3 3v16a2 2 0 0 0 2 2h16 M18 17V9 M13 17V5 M8 17v-3</StreamGeometry>
+
+  <!-- circle-check: the wizard's final step -->
+  <StreamGeometry x:Key="IconCircleCheck">M2 12A10 10 0 1 1 22 12A10 10 0 1 1 2 12Z M9 12l2 2 4-4</StreamGeometry>
+
+  <!-- briefcase / house: the wizard's two profiles, matching the icon names the config schema
+       already uses for them in agent.md section 6.1 -->
+  <StreamGeometry x:Key="IconBriefcase">M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16 M4 6H20A2 2 0 0 1 22 8V18A2 2 0 0 1 20 20H4A2 2 0 0 1 2 18V8A2 2 0 0 1 4 6Z</StreamGeometry>
+  <StreamGeometry x:Key="IconHouse">M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8 M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z</StreamGeometry>
+
+  <!-- pencil: the Profile Setup header -->
+  <StreamGeometry x:Key="IconPencil">M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z M15 5l4 4</StreamGeometry>
+
+  <!-- x: remove-row buttons -->
+  <StreamGeometry x:Key="IconX">M18 6 6 18 M6 6l12 12</StreamGeometry>
+
+</ResourceDictionary>

@@ -31,6 +31,18 @@ public sealed record AppConfiguration
     public AnalyticsConfiguration Analytics { get; init; } = new();
 
     /// <summary>
+    /// Gets or sets a value indicating whether the first-run wizard has been completed.
+    /// </summary>
+    /// <remarks>
+    /// Defaults to <see langword="true"/> on purpose. A <c>settings.json</c> written before this
+    /// field existed simply omits it, and must deserialize as already-onboarded so upgrading users
+    /// are never shown the wizard. Only <see cref="AppHost"/>'s freshly-created default
+    /// configuration writes <see langword="false"/> explicitly, so the wizard appears exactly once,
+    /// on a genuinely new install.
+    /// </remarks>
+    public bool OnboardingCompleted { get; init; } = true;
+
+    /// <summary>
     /// Gets or sets the list of registered hotkeys for context switching.
     /// </summary>
     public IReadOnlyList<HotkeyConfig> Hotkeys { get; init; } = [];

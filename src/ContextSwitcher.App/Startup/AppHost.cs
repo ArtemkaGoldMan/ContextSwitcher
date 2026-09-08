@@ -99,9 +99,11 @@ public static class AppHost
         services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
         services.AddSingleton<IInstalledAppsService, InstalledAppsService>();
         services.AddSingleton<ConfigurationStore>();
+        services.AddSingleton<HotkeySynchronizer>();
 
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<MainAppViewModel>();
+        services.AddTransient<OnboardingViewModel>();
 
         Services = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
@@ -162,11 +164,33 @@ public static class AppHost
 
         configPaths.EnsureCreated();
 
+        // A settings file that is present but unparseable is moved aside by the store as
+        // settings.json.corrupt.<timestamp> and read back as null - the same signal as "no settings
+        // yet". Only the file's existence tells the two apart, and it has to be checked before the
+        // write below recreates it. Without this a single typo in a hand-edited config just made
+        // every profile disappear, with nothing in the log to say why.
+        bool settingsFileExisted = File.Exists(configPaths.SettingsPath);
+
         AppConfiguration? configuration = await jsonStore.ReadAsync<AppConfiguration>(configPaths.SettingsPath)
             .ConfigureAwait(false);
 
         if (configuration is null)
         {
+            if (settingsFileExisted)
+            {
+                await Services.GetRequiredService<ILogger>().LogAsync(
+                    new LogEntry
+                    {
+                        Timestamp = Services.GetRequiredService<IClock>().UtcNow,
+                        Level = LogLevel.Warning,
+                        Category = "Configuration",
+                        EventId = "ConfigurationQuarantined",
+                        Message = $"'{configPaths.SettingsPath}' could not be parsed and was moved aside as "
+                            + "settings.json.corrupt.<timestamp>; starting from a default configuration. "
+                            + "Correct the JSON in that file and move it back to restore your profiles."
+                    }).ConfigureAwait(false);
+            }
+
             configuration = CreateDefaultConfiguration();
             await jsonStore.WriteAsync(configPaths.SettingsPath, configuration).ConfigureAwait(false);
         }
@@ -198,12 +222,17 @@ public static class AppHost
             await analyticsService.StartSessionAsync(activeContextId, CancellationToken.None).ConfigureAwait(false);
         }
 
-        if (ConfigurationValidation.IsValid)
-        {
-            IHotkeyService hotkeyService = Services.GetRequiredService<IHotkeyService>();
-            hotkeyService.HotkeyPressed += OnHotkeyPressed;
-            await hotkeyService.RegisterAsync(Configuration.Hotkeys, CancellationToken.None).ConfigureAwait(false);
-        }
+        IHotkeyService hotkeyService = Services.GetRequiredService<IHotkeyService>();
+        hotkeyService.HotkeyPressed += OnHotkeyPressed;
+
+        // Re-apply on every configuration change, not just at startup: accelerators are editable
+        // from Profile Setup, and registering only once left the live hook holding the old key while
+        // the UI showed the new one. Subscribed even when the current configuration is invalid, so
+        // fixing it in the UI registers hotkeys without a restart.
+        HotkeySynchronizer synchronizer = Services.GetRequiredService<HotkeySynchronizer>();
+        ConfigurationChanged += (_, _) => _ = synchronizer.ApplyAsync(Configuration, ConfigurationValidation.IsValid, CancellationToken.None);
+
+        await synchronizer.ApplyAsync(Configuration, ConfigurationValidation.IsValid, CancellationToken.None).ConfigureAwait(false);
     }
 
     private static void OnHotkeyPressed(object? sender, string contextId)
@@ -249,6 +278,10 @@ public static class AppHost
         return new AppConfiguration
         {
             ActiveContextId = defaultContextId,
+
+            // The one place this is written as false: a brand-new install, which is exactly when
+            // the first-run wizard should appear. See AppConfiguration.OnboardingCompleted.
+            OnboardingCompleted = false,
             Contexts =
             [
                 new ContextDefinition

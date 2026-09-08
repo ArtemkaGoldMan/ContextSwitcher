@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using ContextSwitcher.Core.Abstractions;
@@ -8,8 +9,9 @@ namespace ContextSwitcher.Infrastructure.ProcessExecution;
 
 /// <summary>
 /// Runs external processes with argument arrays (never shell strings), captures output, and kills
-/// the process tree on timeout. Never throws for a non-zero exit code; only for programmer errors
-/// such as an executable outside <see cref="CommandAllowlist"/>.
+/// the process tree whenever the wait is cancelled - by this runner's own timeout or by the
+/// caller's token - so a hung child is never left behind. Never throws for a non-zero exit code;
+/// only for programmer errors such as an executable outside <see cref="CommandAllowlist"/>.
 /// </summary>
 public sealed class ProcessRunner : IProcessRunner
 {
@@ -84,10 +86,20 @@ public sealed class ProcessRunner : IProcessRunner
             await process.WaitForExitAsync(linkedCts.Token).ConfigureAwait(false);
             return new ProcessResult(process.ExitCode, standardOutput.ToString(), standardError.ToString(), TimedOut: false);
         }
-        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException)
         {
+            // Kill on *any* cancellation, not just our own timeout. A caller-side timeout - which is
+            // what a step timeout in ContextSwitchService looks like from here - always wins the race
+            // when its clock started first, and previously left the child orphaned to launchd, still
+            // blocked on whatever made it hang, long after this process exited.
             TryKillProcessTree(process);
-            return new ProcessResult(-1, standardOutput.ToString(), standardError.ToString(), TimedOut: true);
+
+            if (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                return new ProcessResult(-1, standardOutput.ToString(), standardError.ToString(), TimedOut: true);
+            }
+
+            throw;
         }
     }
 
@@ -99,7 +111,12 @@ public sealed class ProcessRunner : IProcessRunner
         }
         catch (InvalidOperationException)
         {
-            // Process already exited between the timeout firing and the kill attempt.
+            // Process already exited between the cancellation firing and the kill attempt.
+        }
+        catch (Win32Exception)
+        {
+            // The OS refused the kill (already reaped, or no longer ours). Nothing more to do, and
+            // this runs while an exception may already be unwinding, so it must not throw.
         }
     }
 }

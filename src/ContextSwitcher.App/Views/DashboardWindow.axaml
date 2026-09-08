@@ -27,7 +27,9 @@
       <!-- Header -->
       <Grid ColumnDefinitions="Auto,*">
         <Border Grid.Column="0" Classes="badge" Width="34" Height="34" Background="{DynamicResource BadgeBlueGradient}" Margin="0,0,10,0">
-          <TextBlock Text="⇄" FontSize="16" FontWeight="Bold" />
+          <Viewbox Classes="icon">
+            <Path Classes="glyph" Data="{StaticResource IconArrowLeftRight}" />
+          </Viewbox>
         </Border>
         <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
           <TextBlock Text="{Binding ActiveContextDisplayName}" Classes="body" FontWeight="SemiBold" />

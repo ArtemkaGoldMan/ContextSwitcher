@@ -2,6 +2,7 @@ using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Contexts;
@@ -14,7 +15,7 @@ public sealed class ContextSwitchServiceTests
     [Fact]
     public async Task SwitchAsyncReturnsNoOpWhenTargetIsAlreadyActive()
     {
-        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _) = CreateService();
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _, _) = CreateService();
         store.Seed(SettingsPath, TwoContextConfiguration());
         store.Seed(StatePath, new CurrentContextState { CurrentContextId = "work" });
 
@@ -30,7 +31,7 @@ public sealed class ContextSwitchServiceTests
     [Fact]
     public async Task SwitchAsyncRejectsConcurrentSwitch()
     {
-        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _) = CreateService();
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _, _) = CreateService();
         store.Seed(SettingsPath, TwoContextConfiguration());
         store.Seed(StatePath, new CurrentContextState { CurrentContextId = "personal" });
 
@@ -57,7 +58,7 @@ public sealed class ContextSwitchServiceTests
     [Fact]
     public async Task SwitchAsyncFailsWhenCriticalStepFails()
     {
-        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _) = CreateService();
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _, _) = CreateService();
         AppConfiguration configuration = TwoContextConfiguration(criticalSteps: ["LaunchApplications"]);
         store.Seed(SettingsPath, configuration);
         store.Seed(StatePath, new CurrentContextState { CurrentContextId = "personal" });
@@ -81,7 +82,7 @@ public sealed class ContextSwitchServiceTests
     [Fact]
     public async Task SwitchAsyncSucceedsWithWarningsWhenNonCriticalStepFails()
     {
-        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _) = CreateService();
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _, _) = CreateService();
         store.Seed(SettingsPath, TwoContextConfiguration());
         store.Seed(StatePath, new CurrentContextState { CurrentContextId = "personal" });
 
@@ -104,7 +105,7 @@ public sealed class ContextSwitchServiceTests
     [Fact]
     public async Task SwitchAsyncDryRunSkipsExecutionAndDoesNotPersistState()
     {
-        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _) = CreateService();
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _, _) = CreateService();
         store.Seed(SettingsPath, TwoContextConfiguration());
         store.Seed(StatePath, new CurrentContextState { CurrentContextId = "personal" });
 
@@ -123,7 +124,7 @@ public sealed class ContextSwitchServiceTests
     [Fact]
     public async Task SwitchAsyncFailsWhenStateWriteFails()
     {
-        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor _, _) = CreateService();
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor _, _, _) = CreateService();
         store.Seed(SettingsPath, TwoContextConfiguration());
         store.Seed(StatePath, new CurrentContextState { CurrentContextId = "personal" });
         store.WriteFailurePaths.Add(StatePath);
@@ -135,7 +136,80 @@ public sealed class ContextSwitchServiceTests
         Assert.Equal(ContextSwitchStatus.Failed, result.Status);
     }
 
-    private static (ContextSwitchService Service, InMemoryJsonStore Store, FakeAutomationStepExecutor Executor, FakeClock Clock) CreateService()
+    /// <summary>
+    /// Section 12 asks the developer log to carry the step id, exit code and trimmed output for
+    /// every step. Previously a switch logged only SwitchStarted/SwitchCompleted, so there was no
+    /// way to tell afterwards which steps had run or how they ended.
+    /// </summary>
+    [Fact]
+    public async Task SwitchAsyncLogsEveryStepWithItsIdExitCodeAndOutput()
+    {
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _, TestLogger logger) = CreateService();
+        store.Seed(SettingsPath, TwoContextConfiguration());
+        store.Seed(StatePath, new CurrentContextState { CurrentContextId = "personal" });
+
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        executor.SetResult(
+            "LaunchApplications.work",
+            new AutomationResult(
+                "LaunchApplications.work",
+                AutomationStepType.LaunchApplications,
+                AutomationResultStatus.Warning,
+                "Could not launch: Slack.",
+                ExitCode: 1,
+                StandardOutput: null,
+                StandardError: "Slack: not found",
+                now,
+                now));
+
+        ContextSwitchResult result = await service.SwitchAsync(
+            new ContextSwitchRequest("work", ContextSwitchSource.Test),
+            CancellationToken.None);
+
+        List<LogEntry> stepEntries = logger.Entries.Where(entry => entry.EventId == "StepCompleted").ToList();
+        Assert.Equal(result.StepResults.Count, stepEntries.Count);
+
+        LogEntry launch = Assert.Single(stepEntries, entry => entry.Data?["stepId"] == "LaunchApplications.work");
+        Assert.Equal(LogLevel.Warning, launch.Level);
+        Assert.Equal("Warning", launch.Data!["status"]);
+        Assert.Equal("1", launch.Data["exitCode"]);
+        Assert.Equal("Slack: not found", launch.Data["stderr"]);
+
+        // Every step entry shares the switch's correlation id, so one switch can be reassembled.
+        Assert.All(stepEntries, entry => Assert.Equal(result.CorrelationId, entry.CorrelationId));
+    }
+
+    [Fact]
+    public async Task SwitchAsyncTrimsLongProcessOutputBeforeLogging()
+    {
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _, TestLogger logger) = CreateService();
+        store.Seed(SettingsPath, TwoContextConfiguration());
+        store.Seed(StatePath, new CurrentContextState { CurrentContextId = "personal" });
+
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        executor.SetResult(
+            "LaunchApplications.work",
+            new AutomationResult(
+                "LaunchApplications.work",
+                AutomationStepType.LaunchApplications,
+                AutomationResultStatus.Warning,
+                "noisy",
+                ExitCode: 1,
+                StandardOutput: null,
+                StandardError: new string('x', 5000),
+                now,
+                now));
+
+        await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
+
+        LogEntry launch = Assert.Single(
+            logger.Entries,
+            entry => entry.Data?.GetValueOrDefault("stepId") == "LaunchApplications.work");
+
+        Assert.True(launch.Data!["stderr"].Length < 1000);
+    }
+
+    private static (ContextSwitchService Service, InMemoryJsonStore Store, FakeAutomationStepExecutor Executor, FakeClock Clock, TestLogger Logger) CreateService()
     {
         InMemoryJsonStore store = new();
         FakeAutomationStepExecutor executor = new();
@@ -154,7 +228,7 @@ public sealed class ContextSwitchServiceTests
             SettingsPath,
             StatePath);
 
-        return (service, store, executor, clock);
+        return (service, store, executor, clock, logger);
     }
 
     private static AppConfiguration TwoContextConfiguration(IReadOnlyList<string>? criticalSteps = null)

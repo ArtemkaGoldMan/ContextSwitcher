@@ -31,7 +31,9 @@
       <DockPanel Margin="14,20,14,14">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="6,0,0,24">
           <Border Classes="badge" Width="30" Height="30" Background="{DynamicResource BadgeBlueGradient}">
-            <TextBlock Text="⇄" FontSize="15" FontWeight="Bold" />
+            <Viewbox Classes="icon">
+              <Path Classes="glyph" Data="{StaticResource IconArrowLeftRight}" />
+            </Viewbox>
           </Border>
           <TextBlock Text="Context Switcher" Classes="body" FontWeight="Bold" VerticalAlignment="Center" />
         </StackPanel>
@@ -40,12 +42,9 @@
           <Button Classes="navItem" Classes.active="{Binding IsProfilesActive}" Command="{Binding NavigateToProfilesCommand}">
             <StackPanel Orientation="Horizontal" Spacing="10">
               <Border Classes="badge" Width="26" Height="26" Background="{DynamicResource BadgeBlueGradient}">
-                <UniformGrid Columns="2" Rows="2" Width="12" Height="12">
-                  <Ellipse Width="4.5" Height="4.5" Fill="White" Margin="0.5" />
-                  <Ellipse Width="4.5" Height="4.5" Fill="White" Margin="0.5" />
-                  <Ellipse Width="4.5" Height="4.5" Fill="White" Margin="0.5" />
-                  <Ellipse Width="4.5" Height="4.5" Fill="White" Margin="0.5" />
-                </UniformGrid>
+                <Viewbox Classes="icon">
+                  <Path Classes="glyph" Data="{StaticResource IconLayoutGrid}" />
+                </Viewbox>
               </Border>
               <TextBlock Text="Profiles" Classes="body" VerticalAlignment="Center" />
             </StackPanel>
@@ -54,20 +53,9 @@
           <Button Classes="navItem" Classes.active="{Binding IsSettingsActive}" Command="{Binding NavigateToSettingsCommand}">
             <StackPanel Orientation="Horizontal" Spacing="10">
               <Border Classes="badge" Width="26" Height="26" Background="{DynamicResource BadgePurpleGradient}">
-                <StackPanel Width="13" Height="13" Spacing="3.5" VerticalAlignment="Center">
-                  <Grid>
-                    <Rectangle Height="1.4" Fill="White" VerticalAlignment="Center" Opacity="0.95" />
-                    <Ellipse Width="4" Height="4" Fill="White" HorizontalAlignment="Left" />
-                  </Grid>
-                  <Grid>
-                    <Rectangle Height="1.4" Fill="White" VerticalAlignment="Center" Opacity="0.95" />
-                    <Ellipse Width="4" Height="4" Fill="White" HorizontalAlignment="Right" />
-                  </Grid>
-                  <Grid>
-                    <Rectangle Height="1.4" Fill="White" VerticalAlignment="Center" Opacity="0.95" />
-                    <Ellipse Width="4" Height="4" Fill="White" HorizontalAlignment="Center" />
-                  </Grid>
-                </StackPanel>
+                <Viewbox Classes="icon">
+                  <Path Classes="glyph" Data="{StaticResource IconSliders}" />
+                </Viewbox>
               </Border>
               <TextBlock Text="Settings" Classes="body" VerticalAlignment="Center" />
             </StackPanel>
@@ -76,11 +64,9 @@
           <Button Classes="navItem" Classes.active="{Binding IsStatsActive}" Command="{Binding NavigateToStatsCommand}">
             <StackPanel Orientation="Horizontal" Spacing="10">
               <Border Classes="badge" Width="26" Height="26" Background="{DynamicResource BadgeGreenGradient}">
-                <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Bottom" Height="13">
-                  <Rectangle Width="3" Height="7" Fill="White" RadiusX="1" RadiusY="1" VerticalAlignment="Bottom" />
-                  <Rectangle Width="3" Height="13" Fill="White" RadiusX="1" RadiusY="1" VerticalAlignment="Bottom" />
-                  <Rectangle Width="3" Height="10" Fill="White" RadiusX="1" RadiusY="1" VerticalAlignment="Bottom" />
-                </StackPanel>
+                <Viewbox Classes="icon">
+                  <Path Classes="glyph" Data="{StaticResource IconChartColumn}" />
+                </Viewbox>
               </Border>
               <TextBlock Text="Stats" Classes="body" VerticalAlignment="Center" />
             </StackPanel>
@@ -89,7 +75,13 @@
       </DockPanel>
     </Border>
     <ScrollViewer Name="ContentScroll" Grid.Column="1" Background="{DynamicResource AppBackgroundBrush}">
-      <ContentControl Content="{Binding CurrentPage}" Margin="28,24" MaxWidth="640" HorizontalAlignment="Stretch" />
+      <!-- MaxWidth with HorizontalAlignment="Stretch" centres the column inside this pane, and the
+           pane is offset by the 200px rail: at 640 the column left a 300px gutter each side and sat
+           100px right of the window's own centre, which reads as "not centred" rather than as a
+           deliberate column. Left-aligning instead makes the control shrink to its content's
+           desired width, which is narrower still. A cap generous enough that it only binds on very
+           wide windows keeps the content filling the pane at every size anyone actually uses. -->
+      <ContentControl Content="{Binding CurrentPage}" Margin="28,24" MaxWidth="1100" HorizontalAlignment="Stretch" />
     </ScrollViewer>
   </Grid>
 </Window>

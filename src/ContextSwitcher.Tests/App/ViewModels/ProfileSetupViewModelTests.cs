@@ -152,11 +152,11 @@ public sealed class ProfileSetupViewModelTests
         ProfileSetupViewModel viewModel = new(store, installed, context);
 
         // Slack is already on the profile, so the picker must not offer it again.
-        Assert.DoesNotContain(viewModel.FilteredInstalledApps, app => app.Name == "Slack");
-        Assert.Contains(viewModel.FilteredInstalledApps, app => app.Name == "Discord");
+        Assert.DoesNotContain(viewModel.AppPicker.FilteredApps, app => app.Name == "Slack");
+        Assert.Contains(viewModel.AppPicker.FilteredApps, app => app.Name == "Discord");
 
-        viewModel.AppSearchText = "doc";
-        InstalledAppViewModel match = Assert.Single(viewModel.FilteredInstalledApps);
+        viewModel.AppPicker.SearchText = "doc";
+        InstalledAppViewModel match = Assert.Single(viewModel.AppPicker.FilteredApps);
         Assert.Equal("Docker", match.Name);
     }
 
@@ -173,7 +173,7 @@ public sealed class ProfileSetupViewModelTests
         installed.Apps.Add(new InstalledApp("Discord", null));
 
         ProfileSetupViewModel viewModel = new(store, installed, context);
-        InstalledAppViewModel discord = Assert.Single(viewModel.FilteredInstalledApps);
+        InstalledAppViewModel discord = Assert.Single(viewModel.AppPicker.FilteredApps);
 
         discord.PickCommand.Execute(null);
 
@@ -181,7 +181,7 @@ public sealed class ProfileSetupViewModelTests
         Assert.Equal("Discord", added.Name);
         Assert.True(added.LaunchOnEnter);
         Assert.True(added.CloseOnLeave);
-        Assert.Empty(viewModel.FilteredInstalledApps);
+        Assert.Empty(viewModel.AppPicker.FilteredApps);
     }
 
     private static ConfigurationStore CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths)
@@ -190,4 +190,51 @@ public sealed class ProfileSetupViewModelTests
         configPaths = new ConfigPaths("/tmp/context-switcher-tests");
         return new ConfigurationStore(jsonStore, configPaths, new ConfigurationValidator());
     }
+
+    /// <summary>
+    /// The two shipping defaults are <c>browser: Default</c> and <c>avoidDuplicateTabs: true</c>,
+    /// which combine into a toggle that is on and inert: the default browser cannot be scripted to
+    /// find an already-open tab, so a second tab opens on every switch.
+    /// </summary>
+    [Fact]
+    public void AvoidDuplicateTabsIsUnavailableForTheDefaultBrowser()
+    {
+        ProfileSetupViewModel viewModel = NewProfileViewModel();
+
+        viewModel.BrowserKind = BrowserKind.Default;
+
+        Assert.False(viewModel.CanAvoidDuplicateTabs);
+        Assert.Contains("default browser", viewModel.AvoidDuplicateTabsHint, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void AvoidDuplicateTabsBecomesAvailableWhenAConcreteBrowserIsChosen()
+    {
+        ProfileSetupViewModel viewModel = NewProfileViewModel();
+        viewModel.BrowserKind = BrowserKind.Default;
+
+        List<string> changed = [];
+        viewModel.PropertyChanged += (_, e) => changed.Add(e.PropertyName ?? string.Empty);
+
+        viewModel.BrowserKind = BrowserKind.Chrome;
+
+        Assert.True(viewModel.CanAvoidDuplicateTabs);
+        Assert.Contains(nameof(ProfileSetupViewModel.CanAvoidDuplicateTabs), changed);
+        Assert.Contains(nameof(ProfileSetupViewModel.AvoidDuplicateTabsHint), changed);
+    }
+
+
+    private static ProfileSetupViewModel NewProfileViewModel()
+    {
+        AppHost.UpdateConfiguration(
+            new AppConfiguration
+            {
+                ActiveContextId = "work",
+                Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }]
+            },
+            new ConfigurationValidationResult([]));
+
+        return new ProfileSetupViewModel(CreateStore(out _, out _), new FakeInstalledAppsService(), existing: null);
+    }
+
 }
