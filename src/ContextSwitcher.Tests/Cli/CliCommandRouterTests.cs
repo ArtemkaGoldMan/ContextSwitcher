@@ -188,6 +188,35 @@ public sealed class CliCommandRouterTests
         Assert.True(service.LastRequest.DryRun);
     }
 
+    /// <summary>
+    /// Without this the <see cref="ContextSwitchRequest.Force"/> flag was unreachable - the service
+    /// honoured it, but nothing ever set it, so a context that had drifted out of sync could not be
+    /// re-applied: switching to the already-active context just returned NoOp.
+    /// </summary>
+    [Fact]
+    public async Task RunAsyncSwitchPassesForceThroughToTheSwitchService()
+    {
+        (CliCommandRouter router, StubContextSwitchService service, StringWriter output) = Create();
+
+        await router.RunAsync(
+            ["switch", "--context", "work", "--force"], TwoContextConfiguration(), Valid, new CurrentContextState(), output, CancellationToken.None);
+
+        Assert.NotNull(service.LastRequest);
+        Assert.True(service.LastRequest.Force);
+    }
+
+    [Fact]
+    public async Task RunAsyncSwitchWithoutForceFlagDoesNotForce()
+    {
+        (CliCommandRouter router, StubContextSwitchService service, StringWriter output) = Create();
+
+        await router.RunAsync(
+            ["switch", "--context", "work"], TwoContextConfiguration(), Valid, new CurrentContextState(), output, CancellationToken.None);
+
+        Assert.NotNull(service.LastRequest);
+        Assert.False(service.LastRequest.Force);
+    }
+
     [Fact]
     public async Task RunAsyncSwitchWithoutDryRunFlagRunsForReal()
     {
