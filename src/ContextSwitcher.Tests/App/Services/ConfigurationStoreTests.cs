@@ -2,7 +2,6 @@ using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
-using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Infrastructure.Files;
 using System.Collections.Concurrent;
 using ContextSwitcher.Tests.TestDoubles;
@@ -72,32 +71,6 @@ public sealed class ConfigurationStoreTests
         }
 
         Assert.Equal(context.ThreadId, publishedOn);
-    }
-
-    /// <summary>
-    /// Wraps a store so every call yields before delegating, the way real file IO does.
-    /// </summary>
-    private sealed class YieldingJsonStore(IJsonStore inner) : IJsonStore
-    {
-        public async Task<T?> ReadAsync<T>(string path, CancellationToken cancellationToken = default)
-            where T : class
-        {
-            await Task.Yield();
-            return await inner.ReadAsync<T>(path, cancellationToken);
-        }
-
-        public async Task WriteAsync<T>(string path, T value, CancellationToken cancellationToken = default)
-            where T : class
-        {
-            await Task.Yield();
-            await inner.WriteAsync(path, value, cancellationToken);
-        }
-
-        public async Task BackupAsync(string path, string backupsDirectory, CancellationToken cancellationToken = default)
-        {
-            await Task.Yield();
-            await inner.BackupAsync(path, backupsDirectory, cancellationToken);
-        }
     }
 
     /// <summary>
