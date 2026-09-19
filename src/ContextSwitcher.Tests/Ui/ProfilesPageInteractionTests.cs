@@ -76,6 +76,116 @@ public sealed class ProfilesPageInteractionTests : UiTest
         });
     }
 
+    /// <summary>
+    /// Delete is a two-step: the first click swaps the row's actions for a "Delete? Yes / No"
+    /// confirmation, and only Yes removes the profile. Both halves live behind IsVisible swaps in
+    /// the same grid cell, which is exactly the kind of thing that renders wrong without anyone
+    /// noticing.
+    /// </summary>
+    [Fact]
+    public async Task DeleteAsksForConfirmationAndNoBacksOut()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfilesViewModel viewModel, _, _) = Create();
+            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 600);
+
+            Click(window, FindVisibleButton(window, "Delete"));
+            Settle(window);
+
+            Assert.Contains(viewModel.Rows, r => r.IsConfirmingDelete);
+            Button no = FindVisibleButton(window, "No");
+
+            Click(window, no);
+
+            Assert.DoesNotContain(viewModel.Rows, r => r.IsConfirmingDelete);
+            Assert.Equal(2, viewModel.Rows.Count);
+        });
+    }
+
+    [Fact]
+    public async Task ConfirmingDeleteRemovesAnInactiveProfileAndThePageStillRenders()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfilesViewModel viewModel, _, _) = Create();
+            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 600);
+
+            // The second row is Personal; work is active and may not be deleted.
+            Click(window, VisibleButtonsNamed(window, "Delete")[1]);
+            Settle(window);
+
+            Click(window, FindVisibleButton(window, "Yes"));
+            PumpUntil(WaitForRowCount(viewModel, 1));
+            Settle(window);
+
+            Assert.Single(viewModel.Rows);
+            Assert.Equal("work", viewModel.Rows[0].Context.Id);
+            Assert.False(viewModel.HasErrorMessage);
+        });
+    }
+
+    /// <summary>
+    /// Deleting the profile you are currently in is refused, and the refusal has to reach the
+    /// screen - the message is bound to a TextBlock whose IsVisible flips with it.
+    /// </summary>
+    [Fact]
+    public async Task DeletingTheActiveProfileIsRefusedAndSaysWhyOnScreen()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfilesViewModel viewModel, _, _) = Create();
+            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 600);
+
+            Click(window, VisibleButtonsNamed(window, "Delete")[0]);
+            Settle(window);
+            Click(window, FindVisibleButton(window, "Yes"));
+            PumpUntil(WaitForErrorMessage(viewModel));
+            Settle(window);
+
+            Assert.Equal(2, viewModel.Rows.Count);
+            Assert.True(viewModel.HasErrorMessage);
+
+            TextBlock shown = FindControl<TextBlock>(window, t => t.Text == viewModel.ErrorMessage && IsClickable(t));
+            Assert.Contains("active profile", shown.Text!, StringComparison.Ordinal);
+        });
+    }
+
+    private static async Task WaitForErrorMessage(ProfilesViewModel viewModel)
+    {
+        for (int attempt = 0; attempt < 200 && !viewModel.HasErrorMessage; attempt++)
+        {
+            await Task.Delay(5);
+        }
+    }
+
+    private static IReadOnlyList<Button> VisibleButtonsNamed(Window window, string content) =>
+        FindAll<Button>(window).Where(b => b.Content as string == content && IsClickable(b)).ToList();
+
+    [Fact]
+    public async Task DuplicateAddsACopyAndThePageStillRenders()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfilesViewModel viewModel, _, _) = Create();
+            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 600);
+
+            Click(window, FindVisibleButton(window, "Duplicate"));
+            PumpUntil(WaitForRowCount(viewModel, 3));
+            Settle(window);
+
+            Assert.Equal(3, viewModel.Rows.Count);
+        });
+    }
+
+    private static async Task WaitForRowCount(ProfilesViewModel viewModel, int expected)
+    {
+        for (int attempt = 0; attempt < 200 && viewModel.Rows.Count != expected; attempt++)
+        {
+            await Task.Delay(5);
+        }
+    }
+
     private static (ProfilesViewModel ViewModel, StubContextSwitchService SwitchService, ConfigurationStore Store) Create()
     {
         AppConfiguration configuration = new()

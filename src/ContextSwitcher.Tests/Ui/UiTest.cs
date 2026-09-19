@@ -102,6 +102,32 @@ public abstract class UiTest
     protected static Button FindButton(Visual root, string content) =>
         FindControl<Button>(root, b => b.Content as string == content);
 
+    /// <summary>
+    /// Finds a button a person could actually click. Several screens keep two variants of a row in
+    /// the same grid cell and swap them with IsVisible - the profile rows' Delete and its
+    /// "Delete? Yes / No" confirmation, for one - so searching by text alone happily returns a
+    /// button that is laid out at zero size and cannot be clicked.
+    /// </summary>
+    protected static Button FindVisibleButton(Visual root, string content) =>
+        FindControl<Button>(root, b => b.Content as string == content && IsClickable(b));
+
+    protected static bool IsClickable(Control control) =>
+        control.IsEffectivelyVisible && control.Bounds.Width > 0 && control.Bounds.Height > 0;
+
+    /// <summary>
+    /// Opens Profile Setup's collapsible tiers. Their contents are not in the visual tree while
+    /// collapsed, so anything inside them is unfindable until this runs.
+    /// </summary>
+    protected static void ExpandSections(Window window)
+    {
+        foreach (Expander expander in FindAll<Expander>(window))
+        {
+            expander.IsExpanded = true;
+        }
+
+        Settle(window);
+    }
+
     protected static IReadOnlyList<T> FindAll<T>(Visual root)
         where T : Visual =>
         root.GetVisualDescendants().OfType<T>().ToList();

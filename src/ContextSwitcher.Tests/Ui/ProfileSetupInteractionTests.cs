@@ -116,6 +116,138 @@ public sealed class ProfileSetupInteractionTests : UiTest
         });
     }
 
+    /// <summary>
+    /// Each "+ Add" row button is bound to a different collection, and each lives behind two gates:
+    /// a collapsed tier, and - for the browser rows - the browser mode that section belongs to.
+    /// </summary>
+    [Theory]
+    [InlineData("+ Add URL", BrowserManagementMode.Urls)]
+    [InlineData("+ Add tab group", BrowserManagementMode.Groups)]
+    [InlineData("+ Add browser profile", BrowserManagementMode.Profiles)]
+    [InlineData("+ Add quick link", BrowserManagementMode.None)]
+    public async Task EachAddRowButtonAddsToItsOwnSection(string label, BrowserManagementMode mode)
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            viewModel.BrowserMode = mode;
+            Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2400);
+            ExpandSections(window);
+
+            int before = CountRows(viewModel);
+            Click(window, FindVisibleButton(window, label));
+            Settle(window);
+
+            Assert.Equal(before + 1, CountRows(viewModel));
+        });
+    }
+
+    /// <summary>
+    /// Choosing a browser mode swaps which section is on screen: URLs, tab groups and browser
+    /// profiles are mutually exclusive, and None shows none of them.
+    /// </summary>
+    [Fact]
+    public async Task TheBrowserModeDecidesWhichSectionIsShown()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2400);
+            ExpandSections(window);
+
+            viewModel.BrowserMode = BrowserManagementMode.None;
+            Settle(window);
+            Assert.Empty(VisibleButtons(window, "+ Add URL"));
+
+            viewModel.BrowserMode = BrowserManagementMode.Urls;
+            Settle(window);
+            Assert.NotEmpty(VisibleButtons(window, "+ Add URL"));
+            Assert.Empty(VisibleButtons(window, "+ Add tab group"));
+
+            viewModel.BrowserMode = BrowserManagementMode.Groups;
+            Settle(window);
+            Assert.NotEmpty(VisibleButtons(window, "+ Add tab group"));
+            Assert.Empty(VisibleButtons(window, "+ Add URL"));
+        });
+    }
+
+    private static IReadOnlyList<Button> VisibleButtons(Window window, string content) =>
+        FindAll<Button>(window).Where(b => b.Content as string == content && IsClickable(b)).ToList();
+
+    /// <summary>
+    /// The lower tiers are collapsed on arrival - their contents are not even in the visual tree
+    /// until the header is clicked, which is what keeps the page approachable.
+    /// </summary>
+    [Fact]
+    public async Task CollapsedSectionsRevealTheirContentsWhenOpened()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2400);
+
+            Assert.Empty(FindAll<Button>(window).Where(b => b.Content as string == "+ Add quick link"));
+
+            ExpandSections(window);
+
+            Assert.NotEmpty(FindAll<Button>(window).Where(b => b.Content as string == "+ Add quick link"));
+        });
+    }
+
+    [Fact]
+    public async Task CancelLeavesTheConfigurationUntouched()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel });
+
+            string originalName = AppHost.Configuration.Contexts[0].DisplayName;
+            viewModel.DisplayName = "Renamed But Not Saved";
+            Settle(window);
+
+            bool cancelled = false;
+            viewModel.CancelRequested += (_, _) => cancelled = true;
+
+            Click(window, FindVisibleButton(window, "Cancel"));
+            Settle(window);
+
+            Assert.True(cancelled);
+            Assert.Equal(originalName, AppHost.Configuration.Contexts[0].DisplayName);
+        });
+    }
+
+    [Fact]
+    public async Task SavingWithAnEmptyDisplayNameShowsAnErrorRatherThanSaving()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel });
+
+            viewModel.DisplayName = string.Empty;
+            Settle(window);
+
+            Click(window, FindVisibleButton(window, "Save"));
+            PumpUntil(WaitUntil(() => viewModel.HasErrorMessage));
+            Settle(window);
+
+            Assert.True(viewModel.HasErrorMessage);
+        });
+    }
+
+    private static int CountRows(ProfileSetupViewModel viewModel) =>
+        viewModel.BrowserUrls.Count + viewModel.TabGroups.Count + viewModel.BrowserProfiles.Count
+        + viewModel.QuickLinks.Count + viewModel.DockerStart.Count + viewModel.DockerStop.Count;
+
+    private static async Task WaitUntil(Func<bool> condition)
+    {
+        for (int attempt = 0; attempt < 400 && !condition(); attempt++)
+        {
+            await Task.Delay(5);
+        }
+    }
+
     private static (ProfileSetupViewModel ViewModel, ConfigurationStore Store) CreateViewModel()
     {
         AppConfiguration configuration = new()
