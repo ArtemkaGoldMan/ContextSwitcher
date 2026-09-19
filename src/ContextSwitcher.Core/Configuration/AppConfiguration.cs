@@ -8,7 +8,13 @@ public sealed record AppConfiguration
     /// <summary>
     /// Gets or sets the schema version for the configuration document.
     /// </summary>
-    public int SchemaVersion { get; init; } = 1;
+    /// <summary>
+    /// The newest schema this build writes and understands. Anything higher was written by a later
+    /// version and is refused rather than silently rewritten without its unknown fields.
+    /// </summary>
+    public const int CurrentSchemaVersion = 1;
+
+    public int SchemaVersion { get; init; } = CurrentSchemaVersion;
 
     /// <summary>
     /// Gets or sets the currently active context identifier.

@@ -15,8 +15,8 @@
         </Viewbox>
       </Border>
       <TextBlock Grid.Column="1" Text="{Binding HeaderText}" Classes="header" VerticalAlignment="Center" />
-      <Button Grid.Column="2" Classes="switchContext" Content="Cancel" Command="{Binding CancelCommand}" Margin="0,0,8,0" />
-      <Button Grid.Column="3" Classes="switchContext current" Content="Save" Command="{Binding SaveCommand}" />
+      <Button Grid.Column="2" Classes="switchContext" Content="Cancel" Command="{Binding CancelCommand}" IsCancel="True" Margin="0,0,8,0" />
+      <Button Grid.Column="3" Classes="switchContext current" Content="Save" Command="{Binding SaveCommand}" IsDefault="True" />
     </Grid>
 
     <TextBlock
@@ -91,7 +91,7 @@
                   <TextBox Grid.Column="1" Text="{Binding Name}" PlaceholderText="App name" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,10,0" VerticalAlignment="Center" />
                   <CheckBox Grid.Column="2" Content="Launch" IsChecked="{Binding LaunchOnEnter}" Margin="8,0" />
                   <CheckBox Grid.Column="3" Content="Close" IsChecked="{Binding CloseOnLeave}" Margin="8,0" />
-                  <Button Grid.Column="4" Classes="rowAction" Command="{Binding RemoveCommand}">
+                  <Button Grid.Column="4" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
                     <Viewbox Classes="icon rowAction">
                       <Path Classes="glyph" Data="{StaticResource IconX}" />
                     </Viewbox>
@@ -201,7 +201,7 @@
               <DataTemplate x:DataType="vm:EditableStringRowViewModel">
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Grid.Column="0" Text="{Binding Value}" PlaceholderText="https://..." Margin="0,0,8,0" />
-                  <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
+                  <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
                     <Viewbox Classes="icon rowAction">
                       <Path Classes="glyph" Data="{StaticResource IconX}" />
                     </Viewbox>
@@ -225,7 +225,7 @@
               <DataTemplate x:DataType="vm:EditableStringRowViewModel">
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Grid.Column="0" Text="{Binding Value}" PlaceholderText="Tab group name" Margin="0,0,8,0" />
-                  <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
+                  <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
                     <Viewbox Classes="icon rowAction">
                       <Path Classes="glyph" Data="{StaticResource IconX}" />
                     </Viewbox>
@@ -251,7 +251,7 @@
                   <StackPanel Spacing="6">
                     <Grid ColumnDefinitions="*,Auto">
                       <ComboBox Grid.Column="0" ItemsSource="{x:Static vm:BrowserProfileRowViewModel.SupportedBrowsers}" SelectedItem="{Binding Browser}" HorizontalAlignment="Left" MinWidth="140" />
-                      <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
+                      <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
                         <Viewbox Classes="icon rowAction">
                           <Path Classes="glyph" Data="{StaticResource IconX}" />
                         </Viewbox>
@@ -388,7 +388,7 @@
               <DataTemplate x:DataType="vm:EditableStringRowViewModel">
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Grid.Column="0" Text="{Binding Value}" PlaceholderText="container-name" Margin="0,0,8,0" />
-                  <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
+                  <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
                     <Viewbox Classes="icon rowAction">
                       <Path Classes="glyph" Data="{StaticResource IconX}" />
                     </Viewbox>
@@ -412,7 +412,7 @@
               <DataTemplate x:DataType="vm:EditableStringRowViewModel">
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Grid.Column="0" Text="{Binding Value}" PlaceholderText="container-name" Margin="0,0,8,0" />
-                  <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}">
+                  <Button Grid.Column="1" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
                     <Viewbox Classes="icon rowAction">
                       <Path Classes="glyph" Data="{StaticResource IconX}" />
                     </Viewbox>
@@ -442,7 +442,7 @@
                     <TextBox Grid.Column="0" Text="{Binding Title}" PlaceholderText="Title" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,8,0" />
                     <TextBox Grid.Column="1" Text="{Binding Url}" PlaceholderText="https://..." Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,8,0" />
                     <TextBox Grid.Column="2" Text="{Binding Icon}" PlaceholderText="icon" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,8,0" />
-                    <Button Grid.Column="3" Classes="rowAction" Command="{Binding RemoveCommand}">
+                    <Button Grid.Column="3" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
                       <Viewbox Classes="icon rowAction">
                         <Path Classes="glyph" Data="{StaticResource IconX}" />
                       </Viewbox>

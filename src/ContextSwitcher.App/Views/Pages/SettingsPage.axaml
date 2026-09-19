@@ -13,7 +13,7 @@
         </Viewbox>
       </Border>
       <TextBlock Grid.Column="1" Text="Settings" Classes="header" VerticalAlignment="Center" />
-      <Button Grid.Column="2" Classes="switchContext current" Content="Save" Command="{Binding SaveCommand}" />
+      <Button Grid.Column="2" Classes="switchContext current" Content="Save" Command="{Binding SaveCommand}" IsDefault="True" />
     </Grid>
 
     <TextBlock

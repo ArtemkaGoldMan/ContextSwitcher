@@ -12,6 +12,13 @@ namespace ContextSwitcher.Infrastructure.Logging;
 /// </summary>
 public sealed class LocalJsonLogger : ILogger
 {
+    /// <summary>
+    /// Roll the log at this size and keep one previous generation, so the audit trail stays useful
+    /// without growing without bound - nothing trimmed it before, and a switch writes about five
+    /// lines, so a daily user added megabytes a year that were never reclaimed.
+    /// </summary>
+    private const long MaxLogBytes = 5 * 1024 * 1024;
+
     private const int LockAttempts = 500;
     private static readonly TimeSpan LockRetryDelay = TimeSpan.FromMilliseconds(2);
 
@@ -53,6 +60,8 @@ public sealed class LocalJsonLogger : ILogger
             FileStream? processLock = await this.TryAcquireCrossProcessLockAsync(cancellationToken).ConfigureAwait(false);
             try
             {
+                RollIfTooLarge();
+
                 FileStream stream = new(
                     this.path,
                     FileMode.Append,
@@ -75,6 +84,31 @@ public sealed class LocalJsonLogger : ILogger
         finally
         {
             this.writeLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Moves the log aside once it passes <see cref="MaxLogBytes"/>, keeping a single previous
+    /// generation. Runs under the cross-process lock the caller already holds, so two processes
+    /// cannot roll it at the same time. Failures are swallowed deliberately: losing the roll is a
+    /// far better outcome than a switch that fails because its log could not be tidied.
+    /// </summary>
+    private void RollIfTooLarge()
+    {
+        try
+        {
+            FileInfo current = new(this.path);
+            if (!current.Exists || current.Length < MaxLogBytes)
+            {
+                return;
+            }
+
+            string previous = this.path + ".1";
+            File.Move(this.path, previous, overwrite: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Keep appending to the oversized file rather than dropping the entry.
         }
     }
 

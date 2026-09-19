@@ -46,13 +46,19 @@ public sealed class CliCommandRouter
     /// Runs the given command-line arguments against already-loaded startup state and returns the
     /// process exit code.
     /// </summary>
+    /// <param name="configurationQuarantined">
+    /// Whether startup found a settings file it could not parse and moved it aside. Without this the
+    /// one command whose job is to answer "is my configuration all right?" validated the in-memory
+    /// fallback and cheerfully reported a broken file as valid.
+    /// </param>
     public async Task<int> RunAsync(
         string[] args,
         AppConfiguration configuration,
         ConfigurationValidationResult configurationValidation,
         CurrentContextState state,
         TextWriter output,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool configurationQuarantined = false)
     {
         ArgumentNullException.ThrowIfNull(args);
         ArgumentNullException.ThrowIfNull(configuration);
@@ -75,7 +81,7 @@ public sealed class CliCommandRouter
                 .ConfigureAwait(false),
             "status" => RunStatus(state, json, output),
             "list-contexts" => RunListContexts(configuration, json, output),
-            "validate-config" => RunValidateConfig(configurationValidation, json, output),
+            "validate-config" => RunValidateConfig(configurationValidation, configurationQuarantined, json, output),
             _ => RunUnknownCommand(args[0], output)
         };
     }
@@ -206,8 +212,18 @@ public sealed class CliCommandRouter
         return (int)CliExitCode.Success;
     }
 
-    private static int RunValidateConfig(ConfigurationValidationResult validation, bool json, TextWriter output)
+    private static int RunValidateConfig(ConfigurationValidationResult validation, bool quarantined, bool json, TextWriter output)
     {
+        if (quarantined)
+        {
+            const string Message =
+                "settings.json could not be parsed and was moved aside as settings.json.corrupt.<timestamp>; "
+                + "the running configuration is a fresh default. Correct the JSON in that file and move it back.";
+
+            WriteError(output, json, Message);
+            return (int)CliExitCode.ConfigurationInvalid;
+        }
+
         if (json)
         {
             WriteJson(

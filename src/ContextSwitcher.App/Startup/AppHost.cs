@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Abstractions;
@@ -45,6 +46,14 @@ public static class AppHost
     /// Gets the result of validating <see cref="Configuration"/>.
     /// </summary>
     public static ConfigurationValidationResult ConfigurationValidation { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets whether startup found a settings file it could not parse and moved it aside, in which
+    /// case <see cref="Configuration"/> is a fresh default rather than the user's own.
+    /// </summary>
+    public static bool ConfigurationWasQuarantined { get; private set; }
+
+    private static StateFileWatcher? stateWatcher;
 
     /// <summary>
     /// Gets the runtime state loaded during startup, or a fresh default when none was persisted.
@@ -100,6 +109,7 @@ public static class AppHost
         services.AddSingleton<IInstalledAppsService, InstalledAppsService>();
         services.AddSingleton<ConfigurationStore>();
         services.AddSingleton<HotkeySynchronizer>();
+        services.AddSingleton<StateFileWatcher>();
 
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<MainAppViewModel>();
@@ -147,6 +157,9 @@ public static class AppHost
     /// </summary>
     public static async Task ShutdownAsync()
     {
+        stateWatcher?.Dispose();
+        stateWatcher = null;
+
         IAnalyticsService analyticsService = Services.GetRequiredService<IAnalyticsService>();
         await analyticsService.EndCurrentSessionAsync(SessionEndReason.AppShutdown, CancellationToken.None)
             .ConfigureAwait(false);
@@ -176,6 +189,8 @@ public static class AppHost
 
         if (configuration is null)
         {
+            ConfigurationWasQuarantined = settingsFileExisted;
+
             if (settingsFileExisted)
             {
                 await Services.GetRequiredService<ILogger>().LogAsync(
@@ -217,6 +232,8 @@ public static class AppHost
         await analyticsService.RecoverFromCrashAsync(CancellationToken.None).ConfigureAwait(false);
         await analyticsService.PruneOldSessionsAsync(Configuration.Analytics.RetentionDays, CancellationToken.None).ConfigureAwait(false);
 
+
+
         if (activeContextIsValid)
         {
             await analyticsService.StartSessionAsync(activeContextId, CancellationToken.None).ConfigureAwait(false);
@@ -233,6 +250,53 @@ public static class AppHost
         ConfigurationChanged += (_, _) => _ = synchronizer.ApplyAsync(Configuration, ConfigurationValidation.IsValid, CancellationToken.None);
 
         await synchronizer.ApplyAsync(Configuration, ConfigurationValidation.IsValid, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Re-prunes analytics on a slow timer for the life of the process. Fire-and-forget on purpose:
+    /// housekeeping must never take the app down, and the next tick retries anyway.
+    /// </summary>
+    /// <summary>
+    /// Starts the things that need Avalonia's dispatcher, and so cannot run during
+    /// <see cref="Initialize"/> - that happens before the platform is set up, and merely
+    /// constructing a DispatcherTimer there claims the UI dispatcher for the calling thread, which
+    /// made Avalonia's own initialization fail with "the calling thread cannot access this object".
+    /// Called from OnFrameworkInitializationCompleted instead.
+    /// </summary>
+    public static void StartRuntimeServices()
+    {
+        if (Services is null)
+        {
+            return;
+        }
+
+        // Pruning only at startup meant a menu bar app left up for months honoured its retention
+        // setting exactly once, keeping every session past the cutoff until the next restart.
+        StartPeriodicPruning(Services.GetRequiredService<IAnalyticsService>());
+
+        // Keeps the UI honest about switches made by Shortcuts, Siri or the CLI, each of which runs
+        // in its own process and so cannot raise StateChanged here.
+        stateWatcher ??= Services.GetRequiredService<StateFileWatcher>();
+    }
+
+    private static void StartPeriodicPruning(IAnalyticsService analyticsService)
+    {
+        DispatcherTimer timer = new() { Interval = TimeSpan.FromHours(6) };
+        timer.Tick += (_, _) => _ = PruneQuietlyAsync(analyticsService);
+        timer.Start();
+    }
+
+    private static async Task PruneQuietlyAsync(IAnalyticsService analyticsService)
+    {
+        try
+        {
+            await analyticsService.PruneOldSessionsAsync(Configuration.Analytics.RetentionDays, CancellationToken.None)
+                .ConfigureAwait(true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Nothing to do about it here; the next tick tries again.
+        }
     }
 
     private static void OnHotkeyPressed(object? sender, string contextId)
