@@ -197,6 +197,22 @@ public sealed class ProfileSetupInteractionTests : UiTest
     }
 
     [Fact]
+    public async Task ClickingASwatchChangesTheAccentColor()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel });
+
+            Button violet = FindControl<Button>(window, b => b.Classes.Contains("swatch") && ToolTip.GetTip(b) as string == "Violet");
+            Click(window, violet);
+
+            Assert.Equal("#7B61FF", viewModel.AccentColor);
+            Assert.Contains("selected", violet.Classes);
+        });
+    }
+
+    [Fact]
     public async Task CancelLeavesTheConfigurationUntouched()
     {
         await OnUiThreadAsync(() =>

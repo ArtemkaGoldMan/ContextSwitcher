@@ -57,6 +57,10 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.displayName = source.DisplayName;
         this.menuBarLabel = source.MenuBarLabel;
         this.accentColor = source.AccentColor;
+        this.AccentPresets = AccentPalette
+            .Select(entry => new AccentSwatchViewModel(entry.Hex, entry.Name, hex => this.AccentColor = hex))
+            .ToList();
+        this.SyncAccentSelection();
         this.icon = source.Icon;
 
         this.Apps = new ObservableCollection<AppRowViewModel>(
@@ -171,11 +175,33 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             if (this.SetProperty(ref this.accentColor, value))
             {
                 this.OnPropertyChanged(nameof(this.AccentBrush));
+                this.OnPropertyChanged(nameof(this.AccentColorValue));
+                this.OnPropertyChanged(nameof(this.IsCustomAccent));
+                this.SyncAccentSelection();
             }
         }
     }
 
     public Avalonia.Media.IBrush AccentBrush => AccentColorParser.ToBrush(this.AccentColor);
+
+    /// <summary>
+    /// One-click presets. Chosen to stay legible under the white glyph drawn on top of them, which
+    /// rules out a yellow; the first and the green are the two colors onboarding gives its profiles.
+    /// </summary>
+    public IReadOnlyList<AccentSwatchViewModel> AccentPresets { get; }
+
+    /// <summary>True when the current color is none of the presets - it came from the custom picker.</summary>
+    public bool IsCustomAccent => !this.AccentPresets.Any(p => p.IsSelected);
+
+    /// <summary>
+    /// The accent as a <see cref="Avalonia.Media.Color"/> for the custom color picker. Config keeps
+    /// the plain #RRGGBB string it always has; the picker's alpha is ignored.
+    /// </summary>
+    public Avalonia.Media.Color AccentColorValue
+    {
+        get => Avalonia.Media.Color.TryParse(this.AccentColor, out Avalonia.Media.Color color) ? color : Avalonia.Media.Colors.Gray;
+        set => this.AccentColor = $"#{value.R:X2}{value.G:X2}{value.B:X2}";
+    }
 
     public string Icon
     {
@@ -474,6 +500,31 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 CriticalSteps = this.CriticalStepOptions.Where(o => o.IsSelected).Select(o => o.StepType.ToString()).ToList()
             }
         };
+    }
+
+    private static readonly (string Hex, string Name)[] AccentPalette =
+    [
+        ("#2F6FED", "Blue"),
+        ("#7B61FF", "Violet"),
+        ("#D6409F", "Pink"),
+        ("#E5484D", "Red"),
+        ("#F2994A", "Orange"),
+        ("#20A67A", "Green"),
+        ("#0FA3B1", "Teal"),
+        ("#6E7781", "Graphite")
+    ];
+
+    private void SyncAccentSelection()
+    {
+        if (this.AccentPresets is null)
+        {
+            return;
+        }
+
+        foreach (AccentSwatchViewModel preset in this.AccentPresets)
+        {
+            preset.IsSelected = string.Equals(preset.Hex, this.AccentColor?.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     /// <summary>

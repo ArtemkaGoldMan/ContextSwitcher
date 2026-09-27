@@ -43,10 +43,36 @@
 
         <Grid ColumnDefinitions="140,*">
           <TextBlock Grid.Column="0" Text="Accent color" Classes="body" VerticalAlignment="Center" />
-          <Grid Grid.Column="1" ColumnDefinitions="30,10,*">
-            <Border Grid.Column="0" Width="30" Height="30" CornerRadius="8" Background="{Binding AccentBrush}" />
-            <TextBox Grid.Column="2" Text="{Binding AccentColor}" />
-          </Grid>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+            <ItemsControl ItemsSource="{Binding AccentPresets}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" Spacing="4" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:AccentSwatchViewModel">
+                  <Button
+                    Classes="swatch"
+                    Classes.selected="{Binding IsSelected}"
+                    Command="{Binding SelectCommand}"
+                    ToolTip.Tip="{Binding Name}"
+                    AutomationProperties.Name="{Binding Name}">
+                    <Ellipse Width="22" Height="22" Fill="{Binding Brush}" />
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Anything outside the presets: the full picker, with spectrum, palette and hex entry. -->
+            <ColorPicker
+              Color="{Binding AccentColorValue}"
+              IsAlphaEnabled="False"
+              IsAlphaVisible="False"
+              Margin="6,0,0,0"
+              ToolTip.Tip="Custom color"
+              AutomationProperties.Name="Custom color" />
+          </StackPanel>
         </Grid>
         <Border Classes="divider" />
 

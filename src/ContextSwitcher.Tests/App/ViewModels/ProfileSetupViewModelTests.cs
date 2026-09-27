@@ -118,6 +118,55 @@ public sealed class ProfileSetupViewModelTests
     }
 
     [Fact]
+    public void PickingAPresetSetsTheAccentAndMarksOnlyThatSwatch()
+    {
+        ProfileSetupViewModel viewModel = NewProfile();
+
+        AccentSwatchViewModel teal = viewModel.AccentPresets.Single(p => p.Name == "Teal");
+        teal.SelectCommand.Execute(null);
+
+        Assert.Equal("#0FA3B1", viewModel.AccentColor);
+        Assert.Equal([teal], viewModel.AccentPresets.Where(p => p.IsSelected));
+        Assert.False(viewModel.IsCustomAccent);
+    }
+
+    /// <summary>
+    /// The custom picker works in Avalonia colors; config keeps the plain #RRGGBB string, and the
+    /// picker's alpha must not leak into it.
+    /// </summary>
+    [Fact]
+    public void ACustomColorIsStoredAsPlainHexAndSelectsNoPreset()
+    {
+        ProfileSetupViewModel viewModel = NewProfile();
+
+        viewModel.AccentColorValue = Avalonia.Media.Color.FromArgb(0x80, 0x12, 0xAB, 0xEF);
+
+        Assert.Equal("#12ABEF", viewModel.AccentColor);
+        Assert.True(viewModel.IsCustomAccent);
+        Assert.DoesNotContain(viewModel.AccentPresets, p => p.IsSelected);
+    }
+
+    /// <summary>Hand-edited configs may use lowercase hex; the matching swatch still lights up.</summary>
+    [Fact]
+    public void AnExistingLowercaseAccentStillMatchesItsPreset()
+    {
+        ContextDefinition context = new() { Id = "work", DisplayName = "Work", AccentColor = "#2f6fed" };
+        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+
+        ProfileSetupViewModel viewModel = new(CreateStore(out _, out _), new FakeInstalledAppsService(), context);
+
+        Assert.True(viewModel.AccentPresets.Single(p => p.Name == "Blue").IsSelected);
+    }
+
+    private static ProfileSetupViewModel NewProfile()
+    {
+        AppHost.UpdateConfiguration(
+            new AppConfiguration { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] },
+            new ConfigurationValidationResult([]));
+        return new ProfileSetupViewModel(CreateStore(out _, out _), new FakeInstalledAppsService(), existing: null);
+    }
+
+    [Fact]
     public void CancelCommandRaisesCancelRequestedWithoutSaving()
     {
         ContextDefinition context = new() { Id = "work", DisplayName = "Work" };

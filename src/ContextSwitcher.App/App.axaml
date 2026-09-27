@@ -18,6 +18,7 @@
          Colors/Typography/Controls below only add app-specific tokens and layout classes
          on top - see agent.md section 11.2. -->
     <semi:SemiTheme Locale="en-US" />
+    <semi:ColorPickerSemiTheme />
     <StyleInclude Source="avares://ContextSwitcher/Styles/Typography.axaml" />
     <StyleInclude Source="avares://ContextSwitcher/Styles/Controls.axaml" />
   </Application.Styles>
