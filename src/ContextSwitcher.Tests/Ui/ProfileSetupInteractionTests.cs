@@ -213,6 +213,22 @@ public sealed class ProfileSetupInteractionTests : UiTest
     }
 
     [Fact]
+    public async Task ClickingAnIconTileChoosesItAndUpdatesThePreview()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel });
+
+            Button music = FindControl<Button>(window, b => b.Classes.Contains("iconChoice") && ToolTip.GetTip(b) as string == "Music");
+            Click(window, music);
+
+            Assert.Equal("music", viewModel.Icon);
+            Assert.Contains("selected", music.Classes);
+        });
+    }
+
+    [Fact]
     public async Task CancelLeavesTheConfigurationUntouched()
     {
         await OnUiThreadAsync(() =>

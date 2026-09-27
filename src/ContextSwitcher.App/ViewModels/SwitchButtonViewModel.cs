@@ -7,8 +7,9 @@ public sealed class SwitchButtonViewModel : ViewModelBase
 {
     private bool isCurrent;
 
-    public SwitchButtonViewModel(string contextId, string displayName, string accentColorHex, ICommand switchCommand)
+    public SwitchButtonViewModel(string contextId, string displayName, string accentColorHex, string icon, ICommand switchCommand)
     {
+        this.Icon = icon;
         this.ContextId = contextId;
         this.DisplayName = displayName;
         this.AccentBrush = AccentColorParser.ToBrush(accentColorHex);
@@ -20,6 +21,9 @@ public sealed class SwitchButtonViewModel : ViewModelBase
     public string DisplayName { get; }
 
     public IBrush AccentBrush { get; }
+
+    /// <summary>The stored icon name, drawn by ProfileIconConverter.</summary>
+    public string Icon { get; }
 
     public ICommand SwitchCommand { get; }
 

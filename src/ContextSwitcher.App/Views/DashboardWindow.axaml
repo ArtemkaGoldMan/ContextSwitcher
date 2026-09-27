@@ -3,6 +3,7 @@
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
+  xmlns:conv="using:ContextSwitcher.App.Converters"
   xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
   x:DataType="vm:DashboardViewModel"
   Title="Context Switcher"
@@ -55,7 +56,14 @@
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Left">
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                  <Border Width="10" Height="10" CornerRadius="3" Background="{Binding AccentBrush}" VerticalAlignment="Center" />
+                  <!-- The faint ring keeps the badge visible on the current profile, whose whole button is
+                       filled with the accent. -->
+                  <Border Width="22" Height="22" CornerRadius="6" Background="{Binding AccentBrush}"
+                          BorderBrush="#59FFFFFF" BorderThickness="1" VerticalAlignment="Center">
+                    <Viewbox Classes="icon" Width="13" Height="13">
+                      <Path Classes="glyph" Data="{Binding Icon, Converter={x:Static conv:ProfileIconConverter.Instance}}" />
+                    </Viewbox>
+                  </Border>
                   <TextBlock Text="{Binding DisplayName}" Classes="body" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>

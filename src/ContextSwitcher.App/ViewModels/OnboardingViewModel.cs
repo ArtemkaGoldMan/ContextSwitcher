@@ -45,11 +45,11 @@ public sealed class OnboardingViewModel : ViewModelBase
         this.switchService = switchService;
 
         this.Work = new OnboardingProfileViewModel(
-            "work", "Work", "WORK", "#2F6FED",
+            "work", "Work", "WORK", "#2F6FED", "briefcase",
             new AppPickerViewModel(installedAppsService, () => this.Work!.Apps.Select(a => a.Name), name => this.Work!.AddApp(name)));
 
         this.Personal = new OnboardingProfileViewModel(
-            "personal", "Personal", "HOME", "#20A67A",
+            "personal", "Personal", "HOME", "#20A67A", "house",
             new AppPickerViewModel(installedAppsService, () => this.Personal!.Apps.Select(a => a.Name), name => this.Personal!.AddApp(name)));
 
         this.NextCommand = new RelayCommand(this.GoNext, () => this.CanGoNext);

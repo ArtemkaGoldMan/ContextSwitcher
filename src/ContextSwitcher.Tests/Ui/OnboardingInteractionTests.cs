@@ -85,6 +85,9 @@ public sealed class OnboardingInteractionTests : UiTest
 
             Assert.True(AppHost.Configuration.OnboardingCompleted);
             Assert.Equal(2, AppHost.Configuration.Contexts.Count);
+
+            // The wizard shows a briefcase and a house; the saved profiles carry the same icons.
+            Assert.Equal(["briefcase", "house"], AppHost.Configuration.Contexts.Select(c => c.Icon));
         });
     }
 

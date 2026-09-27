@@ -137,7 +137,7 @@ public sealed class OnboardingViewModelTests
     public void ClearingQuitOnLeaveKeepsTheAppLaunchingButNotClosing()
     {
         OnboardingProfileViewModel profile = new(
-            "work", "Work", "WORK", "#2F6FED",
+            "work", "Work", "WORK", "#2F6FED", "briefcase",
             new AppPickerViewModel(new FakeInstalledAppsService(), () => [], _ => { }));
 
         profile.AddApp("Visual Studio Code");

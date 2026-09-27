@@ -3,13 +3,17 @@
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
+  xmlns:conv="using:ContextSwitcher.App.Converters"
   x:DataType="vm:ProfileSetupViewModel">
   <StackPanel Spacing="20">
     <!-- Header -->
     <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-      <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{DynamicResource BadgeOrangeGradient}" Margin="0,0,12,0">
+      <!-- A live preview of the profile: its icon on its accent color, as the rows and the menu bar
+           popover will draw it. -->
+      <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{Binding AccentBrush}" Margin="0,0,12,0"
+              ToolTip.Tip="Preview" AutomationProperties.Name="Profile preview">
         <Viewbox Classes="icon" Width="17" Height="17">
-          <Path Classes="glyph" Data="{StaticResource IconPencil}" />
+          <Path Classes="glyph" Data="{Binding Icon, Converter={x:Static conv:ProfileIconConverter.Instance}}" />
         </Viewbox>
       </Border>
       <TextBlock Grid.Column="1" Text="{Binding HeaderText}" Classes="header" VerticalAlignment="Center" />
@@ -77,8 +81,34 @@
         <Border Classes="divider" />
 
         <Grid ColumnDefinitions="140,*">
-          <TextBlock Grid.Column="0" Text="Icon" Classes="body" VerticalAlignment="Center" />
-          <TextBox Grid.Column="1" Text="{Binding Icon}" />
+          <TextBlock Grid.Column="0" Text="Icon" Classes="body" VerticalAlignment="Top" Margin="0,8,0,0" />
+          <ItemsControl Grid.Column="1" ItemsSource="{Binding IconChoices}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:IconChoiceViewModel">
+                <Button
+                  Classes="iconChoice"
+                  Classes.selected="{Binding IsSelected}"
+                  Command="{Binding SelectCommand}"
+                  ToolTip.Tip="{Binding Label}"
+                  AutomationProperties.Name="{Binding Label}"
+                  Margin="0,0,6,6">
+                  <Panel Width="34" Height="34">
+                    <!-- The chosen icon is drawn exactly as the profile will show it, on its accent. -->
+                    <Border CornerRadius="9" Background="{Binding $parent[UserControl].((vm:ProfileSetupViewModel)DataContext).AccentBrush}" IsVisible="{Binding IsSelected}" />
+                    <Border CornerRadius="9" Background="{DynamicResource CardHoverBrush}" IsVisible="{Binding !IsSelected}" />
+                    <Viewbox Classes="icon" Classes.muted="{Binding !IsSelected}" Width="17" Height="17">
+                      <Path Classes="glyph" Data="{Binding Name, Converter={x:Static conv:ProfileIconConverter.Instance}}" />
+                    </Viewbox>
+                  </Panel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
         </Grid>
       </StackPanel>
     </Border>

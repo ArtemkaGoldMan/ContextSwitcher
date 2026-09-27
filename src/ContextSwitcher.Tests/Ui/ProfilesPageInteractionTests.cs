@@ -186,6 +186,24 @@ public sealed class ProfilesPageInteractionTests : UiTest
         }
     }
 
+    /// <summary>Rows draw each profile's icon; a name this build does not know must still render.</summary>
+    [Fact]
+    public async Task RowsRenderWithAnUnknownIconName()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            UiScenario scenario = UiScenario.With(new AppConfiguration
+            {
+                ActiveContextId = "work",
+                Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work", Icon = "rocket" }]
+            });
+            Window window = ShowWindow(new ProfilesPage { DataContext = scenario.Profiles() }, height: 400);
+
+            Settle(window);
+            Assert.NotEmpty(FindAll<Avalonia.Controls.Shapes.Path>(window));
+        });
+    }
+
     private static (ProfilesViewModel ViewModel, StubContextSwitchService SwitchService, ConfigurationStore Store) Create()
     {
         AppConfiguration configuration = new()

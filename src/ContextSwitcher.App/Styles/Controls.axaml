@@ -201,6 +201,22 @@
     <Setter Property="BorderBrush" Value="{DynamicResource TextPrimaryBrush}" />
   </Style>
 
+  <!-- Icon picker tile in Profile Setup; the tile's own Borders carry its color. -->
+  <Style Selector="Button.iconChoice">
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="CornerRadius" Value="9" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="Button.iconChoice:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Opacity" Value="0.8" />
+  </Style>
+
   <!-- Lucide icons are drawn on a 24x24 grid, stroked at 2px, never filled. The Path keeps that
        grid (Stretch=None at 24x24) and the Viewbox around it does the scaling, so every icon
        shrinks by the same factor and its stroke scales with it.
@@ -234,6 +250,11 @@
     <Setter Property="StrokeLineCap" Value="Round" />
     <Setter Property="StrokeJoin" Value="Round" />
     <Setter Property="Fill" Value="Transparent" />
+  </Style>
+
+  <!-- An icon drawn on a neutral tile rather than a colored badge, e.g. the unselected icon choices. -->
+  <Style Selector="Viewbox.icon.muted Path.glyph">
+    <Setter Property="Stroke" Value="{DynamicResource TextSecondaryBrush}" />
   </Style>
 
   <!-- Row actions sit on the page rather than inside a coloured badge, so the glyph takes the

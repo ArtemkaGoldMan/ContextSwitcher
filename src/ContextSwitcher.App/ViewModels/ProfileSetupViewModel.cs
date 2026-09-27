@@ -62,6 +62,10 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             .ToList();
         this.SyncAccentSelection();
         this.icon = source.Icon;
+        this.IconChoices = ProfileIcons.All
+            .Select(icon => new IconChoiceViewModel(icon, name => this.Icon = name))
+            .ToList();
+        this.SyncIconSelection();
 
         this.Apps = new ObservableCollection<AppRowViewModel>(
             source.LaunchApps.Concat(source.CloseApps)
@@ -203,11 +207,24 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         set => this.AccentColor = $"#{value.R:X2}{value.G:X2}{value.B:X2}";
     }
 
+    /// <summary>
+    /// The stored icon name. An unknown name - a hand-edited config, or one saved by a build with more
+    /// icons - is kept as-is until the user picks another, and is drawn as the fallback meanwhile.
+    /// </summary>
     public string Icon
     {
         get => this.icon;
-        set => this.SetProperty(ref this.icon, value);
+        set
+        {
+            if (this.SetProperty(ref this.icon, value))
+            {
+                this.SyncIconSelection();
+            }
+        }
     }
+
+    /// <summary>Every icon a profile can use, previewed in the picker.</summary>
+    public IReadOnlyList<IconChoiceViewModel> IconChoices { get; }
 
     public ObservableCollection<AppRowViewModel> Apps { get; }
 
@@ -513,6 +530,20 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         ("#0FA3B1", "Teal"),
         ("#6E7781", "Graphite")
     ];
+
+    private void SyncIconSelection()
+    {
+        if (this.IconChoices is null)
+        {
+            return;
+        }
+
+        string shown = ProfileIcons.Find(this.Icon).Name;
+        foreach (IconChoiceViewModel choice in this.IconChoices)
+        {
+            choice.IsSelected = choice.Name == shown;
+        }
+    }
 
     private void SyncAccentSelection()
     {

@@ -158,6 +158,33 @@ public sealed class ProfileSetupViewModelTests
         Assert.True(viewModel.AccentPresets.Single(p => p.Name == "Blue").IsSelected);
     }
 
+    [Fact]
+    public void PickingAnIconStoresItsNameAndSelectsOnlyThatTile()
+    {
+        ProfileSetupViewModel viewModel = NewProfile();
+
+        viewModel.IconChoices.Single(c => c.Name == "coffee").SelectCommand.Execute(null);
+
+        Assert.Equal("coffee", viewModel.Icon);
+        Assert.Equal(["coffee"], viewModel.IconChoices.Where(c => c.IsSelected).Select(c => c.Name));
+    }
+
+    /// <summary>
+    /// An icon name this build does not know is kept, not silently rewritten, until the user picks
+    /// something else; meanwhile the circle it is drawn as is the tile that shows selected.
+    /// </summary>
+    [Fact]
+    public void AnUnknownStoredIconIsKeptAndShownAsTheCircle()
+    {
+        ContextDefinition context = new() { Id = "work", DisplayName = "Work", Icon = "rocket" };
+        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+
+        ProfileSetupViewModel viewModel = new(CreateStore(out _, out _), new FakeInstalledAppsService(), context);
+
+        Assert.Equal("rocket", viewModel.Icon);
+        Assert.Equal(["circle"], viewModel.IconChoices.Where(c => c.IsSelected).Select(c => c.Name));
+    }
+
     private static ProfileSetupViewModel NewProfile()
     {
         AppHost.UpdateConfiguration(

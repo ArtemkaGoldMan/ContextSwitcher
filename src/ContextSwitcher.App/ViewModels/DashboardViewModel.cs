@@ -225,6 +225,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
                 context.Id,
                 context.DisplayName,
                 context.AccentColor,
+                context.Icon,
                 new AsyncRelayCommand(() => this.SwitchToAsync(context.Id), () => !this.IsSwitching)))
             .ToList();
 
