@@ -81,7 +81,6 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
     {
         this.Profiles.EditRequested -= this.OnEditRequested;
         this.Profiles.Dispose();
-        this.Settings.Dispose();
         this.Stats.Dispose();
     }
 

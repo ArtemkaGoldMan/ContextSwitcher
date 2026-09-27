@@ -419,26 +419,6 @@
         </StackPanel>
       </Border>
 
-      <!-- Hotkey -->
-      <Border Classes="panel">
-        <StackPanel Spacing="10">
-          <TextBlock Text="HOTKEY" Classes="sectionTitle" />
-          <Grid ColumnDefinitions="140,*">
-            <TextBlock Grid.Column="0" Text="Accelerator" Classes="body" VerticalAlignment="Center" />
-            <TextBox Grid.Column="1" Text="{Binding HotkeyAccelerator}" PlaceholderText="Cmd+Alt+Ctrl+W" />
-          </Grid>
-          <TextBlock
-            Text="Unrecognized accelerator format - it won't register until this is fixed."
-            Classes="caption"
-            Foreground="{DynamicResource WarningBrush}"
-            IsVisible="{Binding HotkeyAcceleratorLooksInvalid}" />
-          <Border Classes="divider" />
-          <Grid ColumnDefinitions="*,Auto">
-            <TextBlock Grid.Column="0" Text="Enabled" Classes="body" VerticalAlignment="Center" />
-            <ToggleSwitch Grid.Column="1" IsChecked="{Binding HotkeyEnabled}" />
-          </Grid>
-        </StackPanel>
-      </Border>
       </StackPanel>
     </Expander>
   </StackPanel>

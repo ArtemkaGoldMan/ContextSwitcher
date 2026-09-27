@@ -142,8 +142,7 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
 
         AppConfiguration updated = AppHost.Configuration with
         {
-            Contexts = AppHost.Configuration.Contexts.Where(c => c.Id != context.Id).ToList(),
-            Hotkeys = AppHost.Configuration.Hotkeys.Where(h => h.ContextId != context.Id).ToList()
+            Contexts = AppHost.Configuration.Contexts.Where(c => c.Id != context.Id).ToList()
         };
 
         await this.SaveAsync(updated).ConfigureAwait(true);

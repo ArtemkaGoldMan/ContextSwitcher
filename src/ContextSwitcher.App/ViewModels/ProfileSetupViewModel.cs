@@ -6,14 +6,12 @@ using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Infrastructure.Hotkeys;
 
 namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
 /// Backs the Profile Setup editor (agent.md section 11.1.2), reachable only from the Profiles
-/// page. Edits every <see cref="ContextDefinition"/> field for one profile, plus this profile's
-/// entry (if any) in the app-level <c>hotkeys[]</c> list. Nothing is written to disk until
+/// page. Edits every <see cref="ContextDefinition"/> field for one profile. Nothing is written to disk until
 /// <see cref="SaveCommand"/> succeeds, so a cancelled "Add new profile" never touches config.
 /// </summary>
 public sealed class ProfileSetupViewModel : ViewModelBase
@@ -41,8 +39,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     private bool continueOnNonCriticalFailure;
 
-    private string hotkeyAccelerator;
-    private bool hotkeyEnabled;
 
     private string? errorMessage;
     private bool isSaving;
@@ -113,10 +109,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 FormatStepTypeName(stepType),
                 source.SwitchPolicy.CriticalSteps.Contains(stepType.ToString())))
             .ToList();
-
-        HotkeyConfig? hotkey = AppHost.Configuration.Hotkeys.FirstOrDefault(h => h.ContextId == this.originalContextId);
-        this.hotkeyAccelerator = hotkey?.Accelerator ?? string.Empty;
-        this.hotkeyEnabled = hotkey?.Enabled ?? true;
 
         this.AddAppCommand = new RelayCommand(() => this.Apps.Add(new AppRowViewModel(string.Empty, true, true, this.RemoveApp)));
         this.AddBrowserUrlCommand = new RelayCommand(() => this.BrowserUrls.Add(new EditableStringRowViewModel(string.Empty, this.RemoveBrowserUrl)));
@@ -311,33 +303,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     public IReadOnlyList<CriticalStepOptionViewModel> CriticalStepOptions { get; }
 
-    public string HotkeyAccelerator
-    {
-        get => this.hotkeyAccelerator;
-        set
-        {
-            if (this.SetProperty(ref this.hotkeyAccelerator, value))
-            {
-                this.OnPropertyChanged(nameof(this.HotkeyAcceleratorLooksInvalid));
-            }
-        }
-    }
-
-    /// <summary>
-    /// Non-blocking hint only - like <see cref="Core.Configuration.Validation.ConfigurationValidator"/>,
-    /// this never rejects a save; an unparseable accelerator is just logged as a warning when
-    /// hotkeys register at next startup.
-    /// </summary>
-    public bool HotkeyAcceleratorLooksInvalid =>
-        !string.IsNullOrWhiteSpace(this.HotkeyAccelerator) &&
-        !AcceleratorParser.TryParse(this.HotkeyAccelerator, out _, out _);
-
-    public bool HotkeyEnabled
-    {
-        get => this.hotkeyEnabled;
-        set => this.SetProperty(ref this.hotkeyEnabled, value);
-    }
-
     public string? ErrorMessage
     {
         get => this.errorMessage;
@@ -442,24 +407,9 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 contexts.Add(edited);
             }
 
-            List<HotkeyConfig> hotkeys = AppHost.Configuration.Hotkeys
-                .Where(h => h.ContextId != this.originalContextId)
-                .ToList();
-            if (!string.IsNullOrWhiteSpace(this.HotkeyAccelerator))
-            {
-                hotkeys.Add(new HotkeyConfig
-                {
-                    Id = $"switch-{edited.Id}",
-                    ContextId = edited.Id,
-                    Accelerator = this.HotkeyAccelerator.Trim(),
-                    Enabled = this.HotkeyEnabled
-                });
-            }
-
             AppConfiguration updated = AppHost.Configuration with
             {
                 Contexts = contexts,
-                Hotkeys = hotkeys,
                 ActiveContextId = AppHost.Configuration.ActiveContextId == this.originalContextId
                     ? edited.Id
                     : AppHost.Configuration.ActiveContextId

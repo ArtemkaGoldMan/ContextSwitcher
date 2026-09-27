@@ -57,22 +57,27 @@ public sealed class SettingsPageInteractionTests : UiTest
         });
     }
 
+    /// <summary>
+    /// Automation is the only permission left now that global hotkeys - the one thing that needed
+    /// Accessibility - are gone, so Refresh has to redraw its pill after it is granted.
+    /// </summary>
     [Fact]
-    public async Task RefreshingPermissionsRedrawsTheStatusPills()
+    public async Task RefreshingPermissionsRedrawsTheStatusPill()
     {
         await OnUiThreadAsync(() =>
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
-            scenario.Permissions.AccessibilityGranted = false;
+            scenario.Permissions.AutomationGranted = false;
             SettingsViewModel viewModel = scenario.Settings();
             Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 1000);
+            PumpUntil(WaitUntil(() => viewModel.AutomationGranted == false));
 
-            scenario.Permissions.AccessibilityGranted = true;
+            scenario.Permissions.AutomationGranted = true;
             Click(window, FindVisibleButton(window, "Refresh"));
-            PumpUntil(WaitUntil(() => viewModel.AccessibilityGranted));
+            PumpUntil(WaitUntil(() => viewModel.AutomationGranted == true));
             Settle(window);
 
-            Assert.True(viewModel.AccessibilityGranted);
+            Assert.True(viewModel.AutomationGranted);
         });
     }
 

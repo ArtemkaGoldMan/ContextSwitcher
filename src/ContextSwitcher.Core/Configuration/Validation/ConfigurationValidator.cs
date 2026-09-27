@@ -44,7 +44,6 @@ public sealed class ConfigurationValidator
         }
 
         ValidateContexts(configuration, errors);
-        ValidateHotkeys(configuration, errors);
 
         return new ConfigurationValidationResult(errors);
     }
@@ -85,23 +84,6 @@ public sealed class ConfigurationValidator
             !seenContextIds.Contains(configuration.ActiveContextId))
         {
             errors.Add(new ConfigurationValidationError("activeContextId", "Active context must reference an existing context."));
-        }
-    }
-
-    private static void ValidateHotkeys(AppConfiguration configuration, List<ConfigurationValidationError> errors)
-    {
-        HashSet<string> contextIds = configuration.Contexts
-            .Select(context => context.Id)
-            .ToHashSet(StringComparer.Ordinal);
-
-        for (int i = 0; i < configuration.Hotkeys.Count; i++)
-        {
-            HotkeyConfig hotkey = configuration.Hotkeys[i];
-
-            if (!contextIds.Contains(hotkey.ContextId))
-            {
-                errors.Add(new ConfigurationValidationError($"hotkeys[{i}].contextId", "Hotkey context must reference an existing context."));
-            }
         }
     }
 

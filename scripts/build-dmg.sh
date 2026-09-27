@@ -40,10 +40,6 @@ ContextSwitcher $version
 3. The app lives in the menu bar. Look for the two-squares icon - there is no Dock icon and no
    window until you open one.
 
-Global hotkeys need Accessibility permission (System Settings > Privacy & Security >
-Accessibility). Because the app is not signed with a Developer ID, macOS drops that permission
-whenever the app is updated, so you will need to grant it again after installing a new version.
-
 Docs: https://github.com/ArtemkaGoldMan/ContextSwitcher
 TXT
 

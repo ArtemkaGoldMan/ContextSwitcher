@@ -25,16 +25,7 @@ xattr -d com.apple.quarantine /Applications/ContextSwitcher.app
 or use **System Settings → Privacy & Security → Open Anyway**. This is normal for unsigned
 open-source Mac apps, but it must be in the README and in every release note.
 
-**Accessibility permission breaks on every update.** macOS ties that grant to the app's code
-identity. An ad-hoc signature (`codesign -s -`) pins the code hash, so a new build is a new identity
-even when `CFBundleIdentifier` is unchanged — this was measured, not assumed: dropping a fresh build
-into a signed bundle and re-signing changed the cdhash and the grant was dropped.
-
-The practical effect is that **global hotkeys stop working after an update** until the user grants
-Accessibility again. Settings already shows the permission as "Not granted" when this happens, so the
-app can tell them — the release notes should too.
-
-A paid Developer ID is the only thing that fixes either problem.
+A paid Developer ID is the only thing that fixes this.
 
 ## Building locally
 
@@ -74,8 +65,7 @@ quarantine command — a user who hits Gatekeeper with no explanation just delet
 2. Confirm `dotnet build` is warning-free and `dotnet test` is green.
 3. Tag: `git tag vX.Y.Z && git push --tags`.
 4. The release workflow builds, packages the `.dmg`, and creates the GitHub Release.
-5. Write release notes including the quarantine command and, when hotkeys are affected, the
-   re-grant note above.
+5. Write release notes including the quarantine command.
 
 ## Versioning
 
@@ -91,4 +81,4 @@ release note, not just a new field.
 - [ ] A switch completes and `state.json` updates
 - [ ] Bundle opens on a machine that has never run it, after the quarantine command
 - [ ] README install steps followed literally on that machine
-- [ ] Release notes mention quarantine, and the Accessibility re-grant if relevant
+- [ ] Release notes mention quarantine

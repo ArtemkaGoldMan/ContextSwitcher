@@ -12,7 +12,7 @@ Opens the apps you need, closes the ones you don't, and keeps the two from bleed
 ![Apple silicon](https://img.shields.io/badge/Apple%20silicon-arm64-555555)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
 ![License MIT](https://img.shields.io/badge/license-MIT-2F6FED)
-![Tests 207](https://img.shields.io/badge/tests-207%20passing-20A67A)
+![Tests 190](https://img.shields.io/badge/tests-190%20passing-20A67A)
 
 <img src="docs/images/dashboard.png" width="330" alt="The ContextSwitcher menu bar popover">
 
@@ -35,7 +35,6 @@ applies all of it.
 - **Focus mode** — via a Shortcut you create, since macOS has no Focus scripting API
 - **Docker** — start the containers this context needs, stop the ones it doesn't
 - **Media** — start an Apple Music or Spotify playlist
-- **Global hotkeys** — bind a key to each profile
 - **Time tracking** — see the work/personal balance of your week, stored only on your Mac
 
 Everything is optional. A profile that only opens two apps is a perfectly good profile.
@@ -92,7 +91,7 @@ it to keep the app running. You can change all of this later.
 
 ## Using it
 
-Click the menu bar icon to switch, or press the hotkey you assigned. From the popover you can reach
+Click the menu bar icon to switch. From the popover you can reach
 the main window, where profiles are created and edited.
 
 <div align="center">
@@ -105,24 +104,19 @@ the main window, where profiles are created and edited.
 
 ## Permissions
 
-macOS gates the things ContextSwitcher does. It asks for the minimum, and every switch works without
-any of them — you just get warnings for the parts that need one.
+macOS gates the things ContextSwitcher does. It needs one permission, and every switch works
+without it — you just get warnings for the steps that need it.
 
 | Permission | Needed for | If you skip it |
 | --- | --- | --- |
 | **Automation** | Quitting apps, tabs, media | Those steps report a warning |
-| **Accessibility** | Global hotkeys only | Hotkeys silently never fire |
 
-Settings shows the live status of both, with a button that opens the right pane. See
+Settings shows its live status, with a button that opens the right pane. See
 [docs/automation-permissions.md](docs/automation-permissions.md).
 
 <div align="center">
-<img src="docs/images/settings.png" width="700" alt="Settings, showing live Automation and Accessibility permission status">
+<img src="docs/images/settings.png" width="700" alt="Settings, showing live Automation permission status">
 </div>
-
-> **Known limitation.** Because the app isn't signed with an Apple Developer ID, macOS ties the
-> Accessibility grant to the exact build. **After updating, you'll need to grant it again** or
-> hotkeys stop working. Settings will show it as "Not granted" when this happens.
 
 ## Command line
 

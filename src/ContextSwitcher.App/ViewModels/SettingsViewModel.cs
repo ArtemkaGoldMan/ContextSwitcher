@@ -8,11 +8,10 @@ namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
 /// Backs the Settings page (agent.md section 11.1.2): app-level settings that apply across every
-/// profile, plus automation permission status and a read-only view of every profile's hotkey.
+/// profile, plus automation permission status.
 /// </summary>
-public sealed class SettingsViewModel : ViewModelBase, IDisposable
+public sealed class SettingsViewModel : ViewModelBase
 {
-    private const string AccessibilitySettingsUrl = "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility";
     private const string AutomationSettingsUrl = "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation";
 
     private readonly ConfigurationStore configurationStore;
@@ -23,11 +22,9 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
     private bool showDockIcon;
     private bool analyticsEnabled;
     private string analyticsRetentionDaysText;
-    private bool accessibilityGranted;
     private bool? automationGranted;
     private bool isCheckingPermissions;
     private string? errorMessage;
-    private IReadOnlyList<HotkeyRowViewModel> hotkeys = [];
 
     public SettingsViewModel(ConfigurationStore configurationStore, IPermissionsChecker permissionsChecker, IProcessRunner processRunner)
     {
@@ -39,15 +36,12 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         this.showDockIcon = AppHost.Configuration.ShowDockIcon;
         this.analyticsEnabled = AppHost.Configuration.Analytics.Enabled;
         this.analyticsRetentionDaysText = AppHost.Configuration.Analytics.RetentionDays.ToString();
-        this.RefreshHotkeys();
 
         this.SaveCommand = new AsyncRelayCommand(this.SaveAsync);
         this.RefreshPermissionsCommand = new AsyncRelayCommand(this.RefreshPermissionsAsync);
-        this.OpenAccessibilitySettingsCommand = new RelayCommand(() => this.OpenUrl(AccessibilitySettingsUrl));
         this.OpenAutomationSettingsCommand = new RelayCommand(() => this.OpenUrl(AutomationSettingsUrl));
         this.SupportDeveloperCommand = new RelayCommand(() => this.OpenUrl(AppLinks.Support));
 
-        AppHost.ConfigurationChanged += this.OnConfigurationChanged;
         _ = this.RefreshPermissionsAsync();
     }
 
@@ -75,12 +69,6 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         set => this.SetProperty(ref this.analyticsRetentionDaysText, value);
     }
 
-    public bool AccessibilityGranted
-    {
-        get => this.accessibilityGranted;
-        private set => this.SetProperty(ref this.accessibilityGranted, value);
-    }
-
     public bool? AutomationGranted
     {
         get => this.automationGranted;
@@ -91,12 +79,6 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
     {
         get => this.isCheckingPermissions;
         private set => this.SetProperty(ref this.isCheckingPermissions, value);
-    }
-
-    public IReadOnlyList<HotkeyRowViewModel> Hotkeys
-    {
-        get => this.hotkeys;
-        private set => this.SetProperty(ref this.hotkeys, value);
     }
 
     public string? ErrorMessage
@@ -117,37 +99,15 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
 
     public AsyncRelayCommand RefreshPermissionsCommand { get; }
 
-    public RelayCommand OpenAccessibilitySettingsCommand { get; }
-
     public RelayCommand OpenAutomationSettingsCommand { get; }
 
     public RelayCommand SupportDeveloperCommand { get; }
-
-    public void Dispose()
-    {
-        AppHost.ConfigurationChanged -= this.OnConfigurationChanged;
-    }
-
-    private void OnConfigurationChanged(object? sender, EventArgs e) => this.RefreshHotkeys();
-
-    private void RefreshHotkeys()
-    {
-        this.Hotkeys = AppHost.Configuration.Hotkeys
-            .Select(hotkey =>
-            {
-                string contextName = AppHost.Configuration.Contexts
-                    .FirstOrDefault(context => context.Id == hotkey.ContextId)?.DisplayName ?? hotkey.ContextId;
-                return new HotkeyRowViewModel(contextName, hotkey.Accelerator, hotkey.Enabled);
-            })
-            .ToList();
-    }
 
     private async Task RefreshPermissionsAsync()
     {
         this.IsCheckingPermissions = true;
         try
         {
-            this.AccessibilityGranted = this.permissionsChecker.IsAccessibilityPermissionGranted();
             this.AutomationGranted = await this.permissionsChecker
                 .IsAutomationPermissionGrantedAsync(CancellationToken.None)
                 .ConfigureAwait(true);

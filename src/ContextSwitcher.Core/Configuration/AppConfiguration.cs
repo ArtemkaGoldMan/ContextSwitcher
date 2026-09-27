@@ -49,11 +49,6 @@ public sealed record AppConfiguration
     public bool OnboardingCompleted { get; init; } = true;
 
     /// <summary>
-    /// Gets or sets the list of registered hotkeys for context switching.
-    /// </summary>
-    public IReadOnlyList<HotkeyConfig> Hotkeys { get; init; } = [];
-
-    /// <summary>
     /// Gets or sets the collection of configured contexts.
     /// </summary>
     public IReadOnlyList<ContextDefinition> Contexts { get; init; } = [];

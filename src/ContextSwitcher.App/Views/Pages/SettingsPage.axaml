@@ -56,15 +56,6 @@
         </Grid>
 
         <Grid ColumnDefinitions="*,Auto,Auto">
-          <TextBlock Grid.Column="0" Text="Accessibility (hotkeys)" Classes="body" VerticalAlignment="Center" />
-          <Border Grid.Column="1" Classes="statusPill" Background="{Binding AccessibilityGranted, Converter={x:Static conv:PermissionStatusBrushConverter.Instance}}" Margin="0,0,10,0">
-            <TextBlock Text="{Binding AccessibilityGranted, Converter={x:Static conv:PermissionStatusTextConverter.Instance}}" Classes="caption" FontWeight="SemiBold" />
-          </Border>
-          <Button Grid.Column="2" Classes="linkButton" Content="Open System Settings" Command="{Binding OpenAccessibilitySettingsCommand}" />
-        </Grid>
-        <Border Classes="divider" />
-
-        <Grid ColumnDefinitions="*,Auto,Auto">
           <TextBlock Grid.Column="0" Text="Automation (AppleScript)" Classes="body" VerticalAlignment="Center" />
           <Border Grid.Column="1" Classes="statusPill" Background="{Binding AutomationGranted, Converter={x:Static conv:PermissionStatusBrushConverter.Instance}}" Margin="0,0,10,0">
             <TextBlock Text="{Binding AutomationGranted, Converter={x:Static conv:PermissionStatusTextConverter.Instance}}" Classes="caption" FontWeight="SemiBold" />
@@ -105,23 +96,5 @@
       </StackPanel>
     </Border>
 
-    <!-- Hotkeys -->
-    <Border Classes="panel">
-      <StackPanel Spacing="10">
-        <TextBlock Text="ALL HOTKEYS" Classes="sectionTitle" />
-        <TextBlock Text="Edit a hotkey from its profile's Setup page." Classes="caption" />
-        <ItemsControl ItemsSource="{Binding Hotkeys}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="vm:HotkeyRowViewModel">
-              <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,5">
-                <TextBlock Grid.Column="0" Text="{Binding ContextDisplayName}" Classes="body" />
-                <TextBlock Grid.Column="1" Text="{Binding Accelerator}" Classes="caption" FontFamily="monospace" Margin="0,0,12,0" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="2" Text="{Binding Enabled}" Classes="caption" />
-              </Grid>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </StackPanel>
-    </Border>
   </StackPanel>
 </UserControl>

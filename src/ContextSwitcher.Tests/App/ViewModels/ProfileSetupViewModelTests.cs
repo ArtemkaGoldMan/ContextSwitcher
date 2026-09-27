@@ -118,36 +118,6 @@ public sealed class ProfileSetupViewModelTests
     }
 
     [Fact]
-    public void SaveCommandWritesOnlyThisProfilesHotkeyPreservingOthers()
-    {
-        ContextDefinition work = new() { Id = "work", DisplayName = "Work" };
-        ContextDefinition personal = new() { Id = "personal", DisplayName = "Personal" };
-        AppConfiguration configuration = new()
-        {
-            ActiveContextId = "work",
-            Contexts = [work, personal],
-            Hotkeys =
-            [
-                new HotkeyConfig { Id = "switch-work", ContextId = "work", Accelerator = "Cmd+Alt+Ctrl+W", Enabled = true },
-                new HotkeyConfig { Id = "switch-personal", ContextId = "personal", Accelerator = "Cmd+Alt+Ctrl+P", Enabled = true }
-            ]
-        };
-        AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
-        ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
-
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), work);
-        Assert.Equal("Cmd+Alt+Ctrl+W", viewModel.HotkeyAccelerator);
-
-        viewModel.HotkeyAccelerator = "Cmd+Alt+Ctrl+Q";
-        viewModel.SaveCommand.Execute(null);
-
-        AppConfiguration? persisted = jsonStore.Get<AppConfiguration>(configPaths.SettingsPath);
-        Assert.Equal(2, persisted!.Hotkeys.Count);
-        Assert.Equal("Cmd+Alt+Ctrl+Q", persisted.Hotkeys.Single(h => h.ContextId == "work").Accelerator);
-        Assert.Equal("Cmd+Alt+Ctrl+P", persisted.Hotkeys.Single(h => h.ContextId == "personal").Accelerator);
-    }
-
-    [Fact]
     public void CancelCommandRaisesCancelRequestedWithoutSaving()
     {
         ContextDefinition context = new() { Id = "work", DisplayName = "Work" };

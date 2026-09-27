@@ -21,7 +21,7 @@ ContextSwitcher validate-config
 
 | File | Contents |
 | --- | --- |
-| `settings.json` | Profiles, hotkeys, app settings. The only file you'd edit. |
+| `settings.json` | Profiles and app settings. The only file you'd edit. |
 | `state.json` | Which profile is active, and how the last switch went. |
 | `analytics.jsonl` | Local time tracking, one line per session. |
 | `app.log.jsonl` | Structured log, one line per event. First place to look when something misbehaves. |
@@ -38,7 +38,6 @@ ContextSwitcher validate-config
   "showDockIcon": false,
   "onboardingCompleted": true,
   "analytics": { "enabled": true, "retentionDays": 365 },
-  "hotkeys": [],
   "contexts": []
 }
 ```
@@ -86,8 +85,9 @@ field has a sensible default, and an omitted section simply does nothing.
 }
 ```
 
-`id` must be lowercase and URL-safe, and it's permanent once saved — hotkeys, `state.json` and your
-recorded time all reference it.
+`id` is generated from the profile's name when you create it (`Deep Work` becomes `deep-work`) and
+never changes after that — `state.json`, the CLI and your recorded time all reference it. If you
+edit the file by hand, keep it lowercase and URL-safe.
 
 ## Apps: launch on enter, quit on leave
 
@@ -141,18 +141,6 @@ in [shortcuts-integration.md](shortcuts-integration.md).
 **`docker.start` / `docker.stop`** take container names. `start` runs on entering the profile,
 `stop` on leaving it — the same direction as the app lists.
 
-## Hotkeys
-
-```json
-"hotkeys": [
-  { "id": "switch-work", "contextId": "work", "accelerator": "Cmd+Alt+Ctrl+W", "enabled": true }
-]
-```
-
-Modifiers are `Cmd`, `Ctrl`, `Alt`, `Shift`, joined with `+`. Editing a hotkey takes effect
-immediately — no restart. Global hotkeys need Accessibility permission; without it the app logs that
-it can't register and hotkeys simply never fire.
-
 ## Switch policy
 
 ```json
@@ -173,10 +161,6 @@ Criticality applies to the whole step, not to one app inside it.
 {
   "schemaVersion": 1,
   "activeContextId": "work",
-  "hotkeys": [
-    { "id": "switch-work", "contextId": "work", "accelerator": "Cmd+Alt+Ctrl+W", "enabled": true },
-    { "id": "switch-personal", "contextId": "personal", "accelerator": "Cmd+Alt+Ctrl+P", "enabled": true }
-  ],
   "contexts": [
     {
       "id": "work",

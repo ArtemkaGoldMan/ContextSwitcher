@@ -1,7 +1,7 @@
 # Automation Permissions
 
-Context Switcher controls other apps and system settings through AppleScript and global hotkeys.
-macOS gates both behind explicit user permission. This page explains what each permission is for,
+Context Switcher controls other apps through AppleScript, which macOS gates behind an explicit
+Automation permission. This page explains what that permission is for,
 how to grant it, and how to tell when a missing permission — rather than a bug — is the reason a
 switch step failed.
 
@@ -30,28 +30,6 @@ you have to switch it on manually here.
 *"Could not check Google Chrome for existing tabs, so URLs were opened without duplicate checking. Check Automation permissions."* — the AppleScript ran, macOS silently
 blocked it, and `osascript` returned a non-zero exit code.
 
-## Accessibility permission (global hotkeys)
-
-**What it's for:** global hotkeys are implemented with `SharpHook`, a cross-platform keyboard hook.
-On macOS this requires **Accessibility** access, not Automation.
-
-**Granting it:**
-
-1. Open **System Settings → Privacy & Security → Accessibility**.
-2. Enable **ContextSwitcher**.
-3. Restart the app — the hotkey hook checks this once at startup, not continuously.
-
-**Symptom of a missing grant:** hotkeys silently do nothing (macOS doesn't error, it just never
-delivers key events to an unauthorized hook). Context Switcher detects this proactively at startup
-and logs a `HotkeyPermissionMissing` warning to `~/.config/ContextSwitcher/app.log.jsonl` instead of
-failing silently — check there if your hotkeys aren't firing.
-
-> Unsigned/self-signed builds: because the app isn't signed with a paid Apple Developer ID, macOS
-> ties this permission grant to the exact build's code signature. If you rebuild from source with a
-> different signing identity, you'll need to re-grant Accessibility access. Official releases use a
-> stable self-signed certificate specifically so this only needs to be granted once across updates
-> (see agent.md section 15.2).
-
 ## Music and Spotify automation
 
 Apple Music and Spotify are each controlled via their own AppleScript dictionary (`tell application
@@ -72,7 +50,6 @@ permission above — there's no separate music-specific toggle. If media control
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | App doesn't quit/launch | Automation permission denied for that app, or app not installed | Check Automation settings; verify the app name matches exactly |
-| Hotkeys do nothing | Accessibility permission not granted | Grant it, then restart the app |
 | Focus mode doesn't change | Required Shortcut missing or Shortcuts automation blocked | See `docs/shortcuts-integration.md` |
 | Docker steps fail | Docker CLI not installed or daemon not running | Install Docker Desktop / start the daemon |
 | A step reports `Skipped` | That automation isn't implemented yet in this phase | Check agent.md's roadmap for the target phase |

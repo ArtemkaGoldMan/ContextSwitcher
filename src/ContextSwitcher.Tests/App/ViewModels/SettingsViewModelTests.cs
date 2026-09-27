@@ -69,27 +69,6 @@ public sealed class SettingsViewModelTests
         Assert.Null(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath));
     }
 
-    [Fact]
-    public void HotkeysListsEveryProfilesHotkeyWithDisplayName()
-    {
-        AppConfiguration configuration = new()
-        {
-            ActiveContextId = "work",
-            Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }],
-            Hotkeys = [new HotkeyConfig { Id = "switch-work", ContextId = "work", Accelerator = "Cmd+Alt+Ctrl+W", Enabled = true }]
-        };
-        AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
-
-        InMemoryJsonStore jsonStore = new();
-        ConfigPaths configPaths = new("/tmp/context-switcher-tests");
-        ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator());
-        SettingsViewModel viewModel = new(configurationStore, new FakePermissionsChecker(), new FakeProcessRunner());
-
-        HotkeyRowViewModel row = Assert.Single(viewModel.Hotkeys);
-        Assert.Equal("Work", row.ContextDisplayName);
-        Assert.Equal("Cmd+Alt+Ctrl+W", row.Accelerator);
-    }
-
     /// <summary>
     /// Both "Support the developer" buttons were wired to an empty lambda - visible, clickable and
     /// doing nothing.

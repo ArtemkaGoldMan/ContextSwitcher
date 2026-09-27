@@ -6,17 +6,22 @@ using ContextSwitcher.Infrastructure.Files;
 namespace ContextSwitcher.Tests.Configuration;
 
 /// <summary>
-/// Theme and wallpaper support was removed, but every settings.json written before that carries a
-/// "theme" and a "wallpaper" block in each profile. Those files must keep loading: a file that fails
-/// to parse is quarantined and replaced with a default, which would look to the user like every
-/// profile had vanished. These go through the real JsonFileStore for exactly that reason.
+/// Theme, wallpaper and global hotkeys have all been removed, but settings.json files written before
+/// that carry a "theme" and a "wallpaper" block in each profile and a top-level "hotkeys" array.
+/// Those files must keep loading: a file that fails to parse is quarantined and replaced with a
+/// default, which would look to the user like every profile had vanished. These go through the real
+/// JsonFileStore for exactly that reason.
 /// </summary>
-public sealed class RemovedThemeAndWallpaperCompatibilityTests
+public sealed class RemovedFeaturesCompatibilityTests
 {
     private const string LegacySettings = """
         {
           "schemaVersion": 1,
           "activeContextId": "work",
+          "hotkeys": [
+            { "id": "switch-work", "contextId": "work", "accelerator": "Cmd+Alt+Ctrl+1", "enabled": true },
+            { "id": "switch-personal", "contextId": "personal", "accelerator": "Cmd+Alt+Ctrl+2", "enabled": false }
+          ],
           "contexts": [
             {
               "id": "work",
@@ -37,7 +42,7 @@ public sealed class RemovedThemeAndWallpaperCompatibilityTests
         """;
 
     [Fact]
-    public async Task ASettingsFileWithThemeAndWallpaperBlocksStillLoadsWithEveryProfile()
+    public async Task ASettingsFileWithRemovedFeaturesStillLoadsWithEveryProfile()
     {
         string directory = CreateTempDirectory();
         try
@@ -106,6 +111,7 @@ public sealed class RemovedThemeAndWallpaperCompatibilityTests
 
             Assert.DoesNotContain("\"theme\"", rewritten, StringComparison.Ordinal);
             Assert.DoesNotContain("\"wallpaper\"", rewritten, StringComparison.Ordinal);
+            Assert.DoesNotContain("\"hotkeys\"", rewritten, StringComparison.Ordinal);
             Assert.Contains("\"work\"", rewritten, StringComparison.Ordinal);
         }
         finally

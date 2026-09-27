@@ -6,10 +6,9 @@
 # Self-contained on purpose: a framework-dependent build would make every user install the .NET
 # runtime first, which is a worse first experience than a larger download.
 #
-# Ad-hoc signed, because there is no Apple Developer ID. Two consequences worth knowing, both
-# documented in docs/release-process.md: Gatekeeper blocks the download until the user clears the
-# quarantine flag, and macOS drops the Accessibility grant on every update because an ad-hoc
-# signature pins the code hash. Hotkeys stop working until the user re-grants it.
+# Ad-hoc signed, because there is no Apple Developer ID. The consequence worth knowing, documented
+# in docs/release-process.md: Gatekeeper blocks the download until the user clears the quarantine
+# flag.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

@@ -31,7 +31,6 @@ Non-negotiable product qualities:
 | UI                   | Avalonia UI with Metal/Skia rendering                                     |
 | App Model            | Menu bar app with dropdown dashboard and optional settings windows        |
 | Menu Bar Integration | Avalonia's built-in `TrayIcon` (native `NSStatusBar` on macOS)           |
-| Global Hotkeys       | `SharpHook` (cross-platform global hook via libuiohook; requires macOS Accessibility permission) |
 | Charts               | `LiveChartsCore.SkiaSharpView.Avalonia`, pinned to `2.1.0-dev-798` (see note below) |
 | DI                   | `Microsoft.Extensions.DependencyInjection`                                |
 | Persistence          | Local JSON under `~/.config/ContextSwitcher/`                             |
@@ -42,7 +41,7 @@ Non-negotiable product qualities:
 
 Do not introduce a database, web server, telemetry platform, Electron shell, cloud synchronization, or paid licensing gate unless explicitly approved in a later specification.
 
-`H.NotifyIcon.Avalonia` is a WPF/Windows-oriented package and is not used; Avalonia's built-in `TrayIcon` already covers the menu bar icon cross-platform, including macOS's `NSStatusBar`. Likewise, Win32-hotkey packages (`RegisterHotKey`-style libraries) do not work on macOS; `SharpHook` is used instead because it wraps `libuiohook` and supports Windows, macOS, and Linux (X11) from one API.
+`H.NotifyIcon.Avalonia` is a WPF/Windows-oriented package and is not used; Avalonia's built-in `TrayIcon` already covers the menu bar icon cross-platform, including macOS's `NSStatusBar`.
 
 `LiveChartsCore.SkiaSharpView.Avalonia`'s latest stable release (`2.0.5`) targets Avalonia 11 and throws `MissingFieldException` at runtime (`Avalonia.Input.Gestures.PinchEvent`) when loaded against Avalonia 12 — a real binary-compat break, confirmed by actually running the app, not just a compile-time check. The `2.1.0-dev-798` prerelease targets `Avalonia 12.0.0` and resolves this. It is a dev/CI build, not a tagged stable release, so re-check for a stable Avalonia-12-compatible release before every LiveCharts2 or Avalonia upgrade, and re-verify by actually launching the dashboard (not just building) after any package bump in this area.
 
@@ -108,7 +107,6 @@ ContextSwitcher/
         IProcessRunner.cs
         IScriptRunner.cs
         IContextSwitchService.cs
-        IHotkeyService.cs
         IAnalyticsService.cs
         IAutomationStepExecutor.cs
         IPermissionsChecker.cs
@@ -132,7 +130,6 @@ ContextSwitcher/
         BrowserManagementConfig.cs
         BrowserProfileConfig.cs
         DockerResourceConfig.cs
-        HotkeyConfig.cs
         MediaConfig.cs
         QuickLinkConfig.cs
         Validation/
@@ -162,8 +159,6 @@ ContextSwitcher/
       Files/
         JsonFileStore.cs
         ConfigPaths.cs
-      Hotkeys/
-        SharpHookHotkeyService.cs
       Logging/
         LocalJsonLogger.cs
       Time/
@@ -222,7 +217,7 @@ Core rules:
 
 ### 4.2 Infrastructure
 
-`ContextSwitcher.Infrastructure` implements macOS automation, filesystem persistence, AppleScript execution, global hotkeys, browser launching, process execution, and CLI routing.
+`ContextSwitcher.Infrastructure` implements macOS automation, filesystem persistence, AppleScript execution, browser launching, process execution, and CLI routing.
 
 Infrastructure rules:
 
@@ -263,7 +258,6 @@ services.AddSingleton<ILogger, LocalJsonLogger>();
 services.AddSingleton<ConfigurationValidator>();
 services.AddSingleton<IAnalyticsService, AnalyticsService>();
 services.AddSingleton<IContextSwitchService, ContextSwitchService>();
-services.AddSingleton<IHotkeyService, SharpHookHotkeyService>();
 services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
 
 services.AddSingleton<BrowserLauncher>();
@@ -291,9 +285,8 @@ Startup sequence:
 3. Validate configuration.
 4. Load `state.json`.
 5. Start analytics session for current context if valid.
-6. Register global hotkeys.
-7. Start menu bar host.
-8. If CLI arguments are present, route the command and exit without starting full UI unless the command needs a running UI.
+6. Start menu bar host.
+7. If CLI arguments are present, route the command and exit without starting full UI unless the command needs a running UI.
 
 ## 6. Local Persistence Contract
 
@@ -340,20 +333,6 @@ Schema versioned configuration:
         "enabled": true,
         "retentionDays": 365
     },
-    "hotkeys": [
-        {
-            "id": "switch-work",
-            "contextId": "work",
-            "accelerator": "Cmd+Alt+Ctrl+W",
-            "enabled": true
-        },
-        {
-            "id": "switch-personal",
-            "contextId": "personal",
-            "accelerator": "Cmd+Alt+Ctrl+P",
-            "enabled": true
-        }
-    ],
     "contexts": [
         {
             "id": "work",
@@ -465,7 +444,6 @@ Validation rules:
   as you *arrive* at a context, list it in the `closeApps` of the context you are arriving
   *from* - not in the `closeApps` of the one you are arriving at.
 - `activeContextId` must match an existing context.
-- `hotkeys[].contextId` must match an existing context.
 - `switchPolicy.criticalSteps[]` entries must match an `AutomationStepType` member name exactly (e.g. `LaunchApplications`, `ManageBrowserContext`); criticality is resolved per step *category*, not per individual app or resource.
 - `accentColor` must be a valid 6-digit hex color.
 - `browser_management.mode` allowed values: `urls`, `groups`, `profiles`, `none`.
@@ -546,7 +524,7 @@ Append structured logs:
     "message": "Switching from personal to work.",
     "contextId": "work",
     "correlationId": "018fd1a4-7b64-7c30-a1a8-f50c6f78d222",
-    "data": { "source": "hotkey" }
+    "data": { "source": "menuBar" }
 }
 ```
 
@@ -581,7 +559,6 @@ public enum ContextSwitchSource
 {
     MenuBar,
     Dashboard,
-    GlobalHotkey,
     Cli,
     Shortcut,
     StartupRecovery,
@@ -1156,19 +1133,14 @@ Opened from the Dashboard's **Open App** button. A normal resizable window (880 
 - Quick links and notes editors (add/remove rows).
 - Switch policy: which step categories are critical for this profile, continue-on-non-critical-
   failure toggle.
-- A hotkey assignment for this profile lives here too (accelerator field), even though the
-  underlying `hotkeys[]` list in `settings.json` is app-level, not nested under the context - the
-  Setup page just filters/writes the entries whose `contextId` matches this profile.
 
 **Settings page** (app-level, not per-profile):
 
 - Default switch timeout, show-Dock-icon toggle.
-- Automation permissions status (Automation + Accessibility, see `docs/automation-permissions.md`)
+- Automation permission status (see `docs/automation-permissions.md`)
   with remediation links.
 - Analytics enabled toggle and retention (days).
 - Support the developer / cosmetic unlocks section.
-- A read-only or advanced view of the full hotkey list across all profiles, for when you want to
-  see everything at once rather than profile-by-profile.
 
 **Stats page**:
 
@@ -1279,7 +1251,7 @@ Controls:
 - Use tooltips for icons.
 - A small status pill (`Border.statusPill` + `PermissionStatusBrushConverter`/
   `PermissionStatusTextConverter` in `ContextSwitcher.App.Converters`) renders a soft green/red/gray
-  chip for the Settings page's Accessibility/Automation permission state.
+  chip for the Settings page's Automation permission state.
 
 States:
 
@@ -1317,7 +1289,7 @@ Every operation must produce structured errors that can be shown in the dashboar
 Error classes:
 
 - `ConfigurationError`: invalid config, unsupported schema, unknown context.
-- `PermissionError`: macOS Automation, Accessibility, Shortcuts, file access.
+- `PermissionError`: macOS Automation, Shortcuts, file access.
 - `ProcessExecutionError`: non-zero exit, timeout, missing executable.
 - `ScriptError`: AppleScript compilation/runtime failure.
 - `PersistenceError`: failed read/write, corrupt JSON.
@@ -1365,7 +1337,6 @@ Privacy guarantees:
 - No background network calls except user-configured URLs and optional donation/license validation if implemented.
 - No collection of browser history, active windows, keystrokes, clipboard, screenshots, or file contents.
 - Analytics track only selected context and time interval.
-- `SharpHook`'s global hook technically receives every system-wide key event (that is how macOS `CGEventTap`-based hooks work; there is no way to subscribe to only specific combinations). `SharpHookHotkeyService` must compare each event against configured accelerators in memory and discard it immediately after matching or not matching. Never log, buffer, persist, or transmit raw key event data.
 
 Command safety:
 
@@ -1379,10 +1350,9 @@ Command safety:
 Permissions:
 
 - The app may require macOS Automation permission for System Events, Music, Spotify, and app control.
-- The app requires macOS **Accessibility** permission for `SharpHook` to create its global hook — confirmed via `SharpHook`'s actual API: `SharpHook.Providers.UioHookProvider.Instance.IsAxApiEnabled(promptUserIfDisabled)`, which checks/optionally prompts for the Accessibility grant under System Settings → Privacy & Security → Accessibility. Hotkeys silently do nothing without it (the hook still starts, it just never receives events), so this must be checked explicitly before registering hotkeys, not inferred from an exception.
 - Document Security & Privacy prompts clearly.
 - Detect common permission failures and show remediation.
-- The Settings page (section 11.1.2) surfaces both permission states through `IPermissionsChecker` (`ContextSwitcher.Core.Abstractions`, implemented by `MacPermissionsChecker` in Infrastructure): `IsAccessibilityPermissionGranted()` reuses the same `UioHookProvider.IsAxApiEnabled(false)` check as the hotkey service, and `IsAutomationPermissionGrantedAsync()` runs a harmless read-only probe script (`tell application "System Events" to return count of processes`) through `IScriptRunner` and treats a non-zero exit code as "not granted" — macOS exposes no direct query API for Automation access, so this is a best-effort probe, not a guarantee.
+- The Settings page (section 11.1.2) surfaces the Automation permission state through `IPermissionsChecker` (`ContextSwitcher.Core.Abstractions`, implemented by `MacPermissionsChecker` in Infrastructure): `IsAutomationPermissionGrantedAsync()` runs a harmless read-only probe script (`tell application "System Events" to return count of processes`) through `IScriptRunner` and treats a non-zero exit code as "not granted" — macOS exposes no direct query API for Automation access, so this is a best-effort probe, not a guarantee. (It also reported Accessibility while global hotkeys existed; they have since been removed, and with them the app's only need for Accessibility.)
 
 ## 14. MVP Execution Roadmap
 
@@ -1470,22 +1440,17 @@ Acceptance criteria:
 - Invalid URL is rejected during validation.
 - Browser launch failures are visible in dashboard.
 
-### Phase 5: Global Hotkeys and CLI
+### Phase 5: CLI (global hotkeys since removed)
 
 Deliverables:
 
-- `SharpHookHotkeyService`, wrapping a `SharpHook` global hook (`SimpleGlobalHook` or `EventLoopGlobalHook`) to translate configured `accelerator` strings into key/modifier combinations.
-- Hotkey registration and conflict reporting.
-- Startup check for macOS Accessibility permission via `UioHookProvider.Instance.IsAxApiEnabled(false)` before registering hotkeys; surface a clear remediation message in the dashboard/log if it is missing rather than failing silently.
 - CLI command router.
 - `switch`, `status`, `list-contexts`, `validate-config`.
 - JSON output mode.
 
 Acceptance criteria:
 
-- Hotkey switches context from another app.
 - CLI switches context from Terminal.
-- App detects missing Accessibility permission and reports it instead of the hook silently doing nothing.
 - Shortcuts can call CLI entrypoint.
 
 ### Phase 6: Dashboard V1
@@ -1552,13 +1517,6 @@ Acceptance criteria:
 - Tag `vX.Y.Z` creates GitHub Release.
 - Release contains `.dmg`.
 - Fresh install can launch after documented quarantine command.
-- The Accessibility grant survives an app update. macOS keys that grant to the application's code
-  identity, so global hotkeys depend on packaging: measured on a dev build, the bare executable is
-  ad-hoc signed with the generic identifier `apphost`, which every unsigned .NET app shares, and its
-  code hash changes on every build. Granting Accessibility to it works exactly once - the next build
-  silently invalidates the grant, `RegisterAsync` returns early, and hotkeys stop firing with only a
-  log line to explain it. A signed bundle with a fixed `CFBundleIdentifier` is what makes the grant
-  durable, so hotkeys are not really shippable until this phase lands.
 
 ### Phase 10: Cosmetic Donation Unlocks
 
@@ -1586,11 +1544,9 @@ Deliverables:
 - Profiles page: list, activate-on-click, per-row Edit action, Add new profile, delete/duplicate.
 - Profile Setup editor covering every `ContextDefinition` field: identity, apps (with the
   launch-on-enter/close-on-leave dual-toggle UI over the existing `launchApps`/`closeApps` lists),
-  browser management, Focus, media, Docker, quick links, notes, switch policy,
-  and this profile's hotkey.
+  browser management, Focus, media, Docker, quick links, notes, and switch policy.
 - Settings page: default switch timeout, show-Dock-icon, automation permissions status with
-  remediation links, analytics enabled/retention, support/cosmetic section, full cross-profile
-  hotkey list.
+  remediation links, analytics enabled/retention, support/cosmetic section.
 - Stats page: longer-range balance chart (week/month) with a per-context breakdown and date-range
   picker, built on the existing `IAnalyticsService.GetDailyBalanceAsync`.
 - Dashboard's "Open App" button (renamed from "Settings") opens this window to the Profiles page.
@@ -1668,7 +1624,7 @@ README must include a prominent unsigned-app section:
 
 #### Why a self-signed certificate, even without a paid Developer ID
 
-Apple Silicon requires every executable to carry at least an ad-hoc signature to launch at all, and `dotnet publish` applies one automatically. The problem: macOS's permission system (TCC) keys Automation and Accessibility grants to the app's code signature. An ad-hoc signature's identity hash changes on every rebuild, so a plain `dotnet publish` output would force every user to re-grant every permission (needed for AppleScript automation and, from Phase 5 onward, global hotkeys) after every single app update — an unacceptable experience for a project this dependent on automation permissions.
+Apple Silicon requires every executable to carry at least an ad-hoc signature to launch at all, and `dotnet publish` applies one automatically. The problem: macOS's permission system (TCC) keys Automation grants to the app's code signature. An ad-hoc signature's identity hash changes on every rebuild, so a plain `dotnet publish` output would force every user to re-grant every permission (needed for AppleScript automation) after every single app update — an unacceptable experience for a project this dependent on automation permissions.
 
 The fix costs nothing: generate a self-signed code-signing certificate once (Keychain Access → Certificate Assistant → "Code Signing Certificate", or `security create-certificate`), export it, and store it as a GitHub Actions secret (base64-encoded `.p12` + password). In `release.yml`, import it into a temporary CI keychain and run `codesign --force --deep --sign "<self-signed identity>" ContextSwitcher.app` before packaging. This keeps the signing identity — and therefore the user's granted permissions — stable across releases, without paying for or requiring an Apple Developer Program membership. It does not satisfy Gatekeeper/notarization, so the `xattr -cr` quarantine-removal step is still required on first launch.
 
@@ -1711,7 +1667,6 @@ Manual QA checklist:
 - Fresh launch with no config.
 - Switch Work from dashboard.
 - Switch Personal from dashboard.
-- Switch Work from hotkey.
 - Switch Personal from CLI.
 - Close app and relaunch.
 - Corrupt `settings.json`.
