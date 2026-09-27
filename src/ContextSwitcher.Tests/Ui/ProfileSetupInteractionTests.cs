@@ -186,11 +186,11 @@ public sealed class ProfileSetupInteractionTests : UiTest
             (ProfileSetupViewModel viewModel, _) = CreateViewModel();
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2400);
 
-            Assert.Empty(FindAll<Button>(window).Where(b => b.Content as string == "+ Add quick link"));
+            Assert.DoesNotContain(FindAll<Button>(window), b => b.Content as string == "+ Add quick link");
 
             ExpandSections(window);
 
-            Assert.NotEmpty(FindAll<Button>(window).Where(b => b.Content as string == "+ Add quick link"));
+            Assert.Contains(FindAll<Button>(window), b => b.Content as string == "+ Add quick link");
         });
     }
 

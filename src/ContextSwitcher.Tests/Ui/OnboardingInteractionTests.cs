@@ -59,7 +59,7 @@ public sealed class OnboardingInteractionTests : UiTest
 
             Assert.True(viewModel.IsDoneStep);
             Assert.False(viewModel.CanGoNext);
-            Assert.Empty(FindAll<Button>(window).Where(b => b.Content as string == "Continue" && IsClickable(b)));
+            Assert.DoesNotContain(FindAll<Button>(window), b => b.Content as string == "Continue" && IsClickable(b));
             Assert.Contains(FindAll<Button>(window), b => (b.Content as string)?.StartsWith("Finish", StringComparison.Ordinal) == true && IsClickable(b));
         });
     }
