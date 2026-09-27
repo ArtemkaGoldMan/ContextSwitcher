@@ -8,8 +8,6 @@ public enum AutomationStepType
     CloseApplications,
     LaunchApplications,
     ManageBrowserContext,
-    SetTheme,
-    SetWallpaper,
     SetFocusMode,
     ControlMedia,
     StartDockerResources,

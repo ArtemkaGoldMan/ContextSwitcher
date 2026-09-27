@@ -120,15 +120,18 @@ public sealed class AutomationStepExecutorTests
         Assert.True(Assert.Single(processRunner.Calls).Timeout < step.Timeout);
     }
 
+    /// <summary>
+    /// The same headroom on the script-runner path. This was covered by the theme step until theme
+    /// support was removed; media playback is the remaining single-call step that goes through
+    /// AppleScript rather than a plain process.
+    /// </summary>
     [Fact]
-    public async Task ExecuteAsyncSetThemeLeavesHeadroomToReportItsOwnFailure()
+    public async Task ExecuteAsyncControlMediaLeavesHeadroomToReportItsOwnFailure()
     {
         FakeScriptRunner scriptRunner = new();
         AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
 
-        AutomationStep step = new(
-            "SetTheme.work", AutomationStepType.SetTheme, "Set theme", false,
-            TimeSpan.FromSeconds(5), new Dictionary<string, string> { ["mode"] = "Dark" });
+        AutomationStep step = MediaStep(player: "AppleMusic", playlist: "Deep Focus", autoPlay: true, isCritical: false);
 
         await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -162,102 +165,6 @@ public sealed class AutomationStepExecutorTests
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
         Assert.Equal(AutomationResultStatus.Warning, result.Status);
-    }
-
-    [Fact]
-    public async Task ExecuteAsyncSetThemeRunsDarkModeScriptForDarkMode()
-    {
-        FakeScriptRunner scriptRunner = new();
-        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
-        AutomationStep step = new(
-            "SetTheme.work", AutomationStepType.SetTheme, "Set theme", false, TimeSpan.FromSeconds(5),
-            new Dictionary<string, string> { ["mode"] = "Dark" });
-
-        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
-
-        Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
-        Assert.Contains("dark mode to true", Assert.Single(scriptRunner.Scripts));
-    }
-
-    [Fact]
-    public async Task ExecuteAsyncSetWallpaperWarnsWithoutCallingScriptRunnerWhenFileMissing()
-    {
-        FakeScriptRunner scriptRunner = new();
-        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
-        AutomationStep step = new(
-            "SetWallpaper.work", AutomationStepType.SetWallpaper, "Set wallpaper", true, TimeSpan.FromSeconds(10),
-            new Dictionary<string, string> { ["path"] = "/definitely/missing/wallpaper.jpg", ["allSpaces"] = "True" });
-
-        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
-
-        Assert.Equal(AutomationResultStatus.Warning, result.Status);
-        Assert.Empty(scriptRunner.Scripts);
-    }
-
-    /// <summary>
-    /// System Events accepts any path, so pointing the wallpaper at a text file used to report
-    /// Succeeded and "Wallpaper updated." while the desktop referenced something undrawable.
-    /// </summary>
-    [Fact]
-    public async Task ExecuteAsyncSetWallpaperWarnsWithoutSettingWhenFileIsNotAnImage()
-    {
-        FakeProcessRunner processRunner = new();
-        // sips exits 0 even for a text file - only the reported width distinguishes them.
-        processRunner.Enqueue(new ProcessResult(0, "/tmp/x.txt\n  pixelWidth: <nil>", string.Empty, false));
-        FakeScriptRunner scriptRunner = new();
-
-        AutomationStepExecutor executor = CreateExecutor(processRunner, scriptRunner, new FakeClock());
-
-        string notAnImage = Path.Combine(Path.GetTempPath(), $"cs-not-an-image-{Guid.NewGuid():N}.txt");
-        await File.WriteAllTextAsync(notAnImage, "definitely not a picture");
-
-        try
-        {
-            AutomationStep step = new(
-                "SetWallpaper.work", AutomationStepType.SetWallpaper, "Set wallpaper", false, TimeSpan.FromSeconds(10),
-                new Dictionary<string, string> { ["path"] = notAnImage, ["allSpaces"] = "True" });
-
-            AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
-
-            Assert.Equal(AutomationResultStatus.Warning, result.Status);
-            Assert.Contains("not a readable image", result.Message, StringComparison.Ordinal);
-
-            // The wallpaper must not have been set at all.
-            Assert.Empty(scriptRunner.Scripts);
-        }
-        finally
-        {
-            File.Delete(notAnImage);
-        }
-    }
-
-    [Fact]
-    public async Task ExecuteAsyncSetWallpaperSetsItWhenTheFileIsARealImage()
-    {
-        FakeProcessRunner processRunner = new();
-        processRunner.Enqueue(new ProcessResult(0, "/tmp/x.jpg\n  pixelWidth: 1920", string.Empty, false));
-        FakeScriptRunner scriptRunner = new();
-
-        AutomationStepExecutor executor = CreateExecutor(processRunner, scriptRunner, new FakeClock());
-
-        string image = Path.Combine(Path.GetTempPath(), $"cs-image-{Guid.NewGuid():N}.jpg");
-        await File.WriteAllTextAsync(image, "pretend jpeg");
-
-        try
-        {
-            AutomationStep step = new(
-                "SetWallpaper.work", AutomationStepType.SetWallpaper, "Set wallpaper", false, TimeSpan.FromSeconds(10),
-                new Dictionary<string, string> { ["path"] = image, ["allSpaces"] = "True" });
-
-            AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
-
-            Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
-            Assert.Single(scriptRunner.Scripts);
-        }
-        finally
-        {
-            File.Delete(image);
-        }
     }
 
     [Fact]

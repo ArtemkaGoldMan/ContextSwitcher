@@ -13,8 +13,6 @@ public sealed class AutomationPlanBuilder
     private static readonly TimeSpan QuitAppTimeoutPerApp = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan LaunchAppTimeoutPerApp = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan BrowserContextTimeout = TimeSpan.FromSeconds(20);
-    private static readonly TimeSpan ThemeTimeout = TimeSpan.FromSeconds(5);
-    private static readonly TimeSpan WallpaperTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan FocusTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan MediaTimeout = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan DockerTimeout = TimeSpan.FromSeconds(45);
@@ -37,8 +35,6 @@ public sealed class AutomationPlanBuilder
             AddCloseApplications(steps, previous, criticalTypes);
         }
 
-        AddSetTheme(steps, target, criticalTypes);
-        AddSetWallpaper(steps, target, criticalTypes);
         AddSetFocusMode(steps, previous, target, criticalTypes);
         AddLaunchApplications(steps, target, criticalTypes);
         AddManageBrowserContext(steps, target, criticalTypes);
@@ -78,42 +74,6 @@ public sealed class AutomationPlanBuilder
             QuitAppTimeoutPerApp * previous.CloseApps.Count,
             criticalTypes,
             new Dictionary<string, string> { ["apps"] = string.Join(',', previous.CloseApps) }));
-    }
-
-    private static void AddSetTheme(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
-    {
-        if (target.Theme.Mode == ThemeMode.System)
-        {
-            return;
-        }
-
-        steps.Add(CreateStep(
-            AutomationStepType.SetTheme,
-            target.Id,
-            "Set theme",
-            ThemeTimeout,
-            criticalTypes,
-            new Dictionary<string, string> { ["mode"] = target.Theme.Mode.ToString() }));
-    }
-
-    private static void AddSetWallpaper(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
-    {
-        if (string.IsNullOrWhiteSpace(target.Wallpaper.Path))
-        {
-            return;
-        }
-
-        steps.Add(CreateStep(
-            AutomationStepType.SetWallpaper,
-            target.Id,
-            "Set wallpaper",
-            WallpaperTimeout,
-            criticalTypes,
-            new Dictionary<string, string>
-            {
-                ["path"] = target.Wallpaper.Path,
-                ["allSpaces"] = target.Wallpaper.AllSpaces.ToString()
-            }));
     }
 
     private static void AddSetFocusMode(

@@ -179,45 +179,6 @@
     <Setter Property="Background" Value="{DynamicResource CardHoverBrush}" />
   </Style>
 
-  <!-- Large gradient option card: a single-choice selector with icon + title + subtitle, used for
-       Theme mode. Built on RadioButton so mutual exclusivity is free; default chrome is stripped
-       via a custom template. -->
-  <Style Selector="RadioButton.optionCard">
-    <Setter Property="Padding" Value="0" />
-    <Setter Property="Margin" Value="0" />
-    <Setter Property="Cursor" Value="Hand" />
-    <Setter Property="Template">
-      <ControlTemplate>
-        <Border
-          x:Name="OptionBorder"
-          CornerRadius="12"
-          BorderThickness="2"
-          BorderBrush="Transparent"
-          Background="{TemplateBinding Background}"
-          Padding="14,12">
-          <ContentPresenter Content="{TemplateBinding Content}" />
-        </Border>
-      </ControlTemplate>
-    </Setter>
-  </Style>
-
-  <Style Selector="RadioButton.optionCard:checked /template/ Border#OptionBorder">
-    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-  </Style>
-
-  <!-- Section title stays as-is elsewhere; option-card labels/sublabels use White since the
-       card background is always a colored gradient regardless of app theme. -->
-  <Style Selector="RadioButton.optionCard TextBlock.optionTitle">
-    <Setter Property="Foreground" Value="White" />
-    <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="FontSize" Value="13" />
-  </Style>
-
-  <Style Selector="RadioButton.optionCard TextBlock.optionSubtitle">
-    <Setter Property="Foreground" Value="#D9FFFFFF" />
-    <Setter Property="FontSize" Value="11" />
-  </Style>
-
   <!-- Lucide icons are drawn on a 24x24 grid, stroked at 2px, never filled. The Path keeps that
        grid (Stretch=None at 24x24) and the Viewbox around it does the scaling, so every icon
        shrinks by the same factor and its stroke scales with it.

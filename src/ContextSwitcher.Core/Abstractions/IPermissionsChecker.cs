@@ -14,7 +14,7 @@ public interface IPermissionsChecker
 
     /// <summary>
     /// Probes whether macOS Automation access to System Events is granted, required for the
-    /// AppleScript-driven theme, wallpaper, app, and media steps (agent.md section 9). This runs a
+    /// AppleScript-driven app and media steps (agent.md section 9). This runs a
     /// harmless read-only script and inspects the result, since macOS exposes no direct query API.
     /// </summary>
     /// <param name="cancellationToken">A token that can cancel the probe.</param>

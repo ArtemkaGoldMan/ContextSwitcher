@@ -7,7 +7,7 @@ switch step failed.
 
 ## Automation permission (AppleScript / `osascript`)
 
-**What it's for:** every `SetTheme`, `SetWallpaper`, `CloseApplications`, `ManageBrowserContext`,
+**What it's for:** every `CloseApplications`, `ManageBrowserContext`,
 and media-control step runs through `osascript`, which drives other apps and `System Events` via
 AppleScript.
 
@@ -27,7 +27,7 @@ If you accidentally denied a prompt, the toggle for that specific app won't reap
 you have to switch it on manually here.
 
 **Symptom of a missing grant:** a switch step returns `Warning` or `Failed` with a message like
-*"Could not change theme. Check Automation permissions."* — the AppleScript ran, macOS silently
+*"Could not check Google Chrome for existing tabs, so URLs were opened without duplicate checking. Check Automation permissions."* — the AppleScript ran, macOS silently
 blocked it, and `osascript` returned a non-zero exit code.
 
 ## Accessibility permission (global hotkeys)
@@ -71,7 +71,6 @@ permission above — there's no separate music-specific toggle. If media control
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| Theme/wallpaper doesn't change | Automation permission denied for System Events | Grant it under Privacy & Security → Automation |
 | App doesn't quit/launch | Automation permission denied for that app, or app not installed | Check Automation settings; verify the app name matches exactly |
 | Hotkeys do nothing | Accessibility permission not granted | Grant it, then restart the app |
 | Focus mode doesn't change | Required Shortcut missing or Shortcuts automation blocked | See `docs/shortcuts-integration.md` |

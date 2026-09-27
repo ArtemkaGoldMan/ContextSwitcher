@@ -3,8 +3,6 @@
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
-  xmlns:conv="using:ContextSwitcher.App.Converters"
-  xmlns:config="using:ContextSwitcher.Core.Configuration"
   x:DataType="vm:ProfileSetupViewModel">
   <StackPanel Spacing="20">
     <!-- Header -->
@@ -272,70 +270,8 @@
     <!-- Everything below Browser is collapsed by default: a new profile only needs identity,
          apps and browser to be useful, and showing all 12 sections at once was the single
          biggest reason Profile Setup read as a config file (agent.md section 11.1.2). -->
-    <Expander Classes="section" Header="Appearance &amp; environment">
+    <Expander Classes="section" Header="Environment">
       <StackPanel Spacing="20">
-      <!-- Theme -->
-      <Border Classes="panel">
-        <StackPanel Spacing="10">
-          <TextBlock Text="THEME" Classes="sectionTitle" />
-          <UniformGrid Columns="3" Rows="1">
-            <RadioButton
-              Classes="optionCard"
-              GroupName="ThemeMode"
-              Margin="0,0,6,0"
-              Background="{DynamicResource BadgeBlueGradient}"
-              IsChecked="{Binding ThemeMode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static config:ThemeMode.Light}}">
-              <StackPanel Spacing="6">
-                <Ellipse Width="20" Height="20" Fill="White" />
-                <TextBlock Text="Light" Classes="optionTitle" />
-                <TextBlock Text="Always light" Classes="optionSubtitle" TextWrapping="Wrap" />
-              </StackPanel>
-            </RadioButton>
-
-            <RadioButton
-              Classes="optionCard"
-              GroupName="ThemeMode"
-              Margin="3,0"
-              Background="{DynamicResource BadgeBlueGradient}"
-              IsChecked="{Binding ThemeMode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static config:ThemeMode.Dark}}">
-              <StackPanel Spacing="6">
-                <Ellipse Width="20" Height="20" Fill="#1D1D1F" Stroke="White" StrokeThickness="1" />
-                <TextBlock Text="Dark" Classes="optionTitle" />
-                <TextBlock Text="Always dark" Classes="optionSubtitle" TextWrapping="Wrap" />
-              </StackPanel>
-            </RadioButton>
-
-            <RadioButton
-              Classes="optionCard"
-              GroupName="ThemeMode"
-              Margin="6,0,0,0"
-              Background="{DynamicResource BadgeBlueGradient}"
-              IsChecked="{Binding ThemeMode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static config:ThemeMode.System}}">
-              <StackPanel Spacing="6">
-                <Canvas Width="20" Height="20">
-                  <Path Data="M10,0 A10,10 0 0 1 10,20 Z" Fill="White" />
-                  <Path Data="M10,0 A10,10 0 0 0 10,20 Z" Fill="#1D1D1F" />
-                </Canvas>
-                <TextBlock Text="System" Classes="optionTitle" />
-                <TextBlock Text="Match macOS" Classes="optionSubtitle" TextWrapping="Wrap" />
-              </StackPanel>
-            </RadioButton>
-          </UniformGrid>
-        </StackPanel>
-      </Border>
-
-      <!-- Wallpaper -->
-      <Border Classes="panel">
-        <StackPanel Spacing="10">
-          <TextBlock Text="WALLPAPER" Classes="sectionTitle" />
-          <TextBox Text="{Binding WallpaperPath}" PlaceholderText="/Users/you/Pictures/wallpaper.jpg" />
-          <Grid ColumnDefinitions="*,Auto">
-            <TextBlock Grid.Column="0" Text="Apply to all spaces" Classes="body" VerticalAlignment="Center" />
-            <ToggleSwitch Grid.Column="1" IsChecked="{Binding WallpaperAllSpaces}" />
-          </Grid>
-        </StackPanel>
-      </Border>
-
       <!-- Focus -->
       <Border Classes="panel">
         <StackPanel Spacing="10">

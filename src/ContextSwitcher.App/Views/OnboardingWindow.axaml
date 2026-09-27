@@ -182,7 +182,7 @@
           <StackPanel Spacing="8">
             <TextBlock Text="NEXT" Classes="sectionTitle" />
             <TextBlock Text="• Switch anytime from the menu bar icon" Classes="body" />
-            <TextBlock Text="• Add browser tabs, wallpaper, Focus and Docker in Profile Setup" Classes="body" />
+            <TextBlock Text="• Add browser tabs, Focus and Docker in Profile Setup" Classes="body" />
             <TextBlock Text="• Assign a keyboard shortcut to each profile" Classes="body" />
           </StackPanel>
         </Border>

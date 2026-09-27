@@ -35,25 +35,6 @@ public static class AppleScriptBuilder
     }
 
     /// <summary>
-    /// Builds a script that toggles macOS dark mode via System Events (section 9.6).
-    /// </summary>
-    public static string SetDarkMode(bool enabled)
-    {
-        string value = enabled ? "true" : "false";
-        return $"tell application \"System Events\" to tell appearance preferences to set dark mode to {value}";
-    }
-
-    /// <summary>
-    /// Builds a script that sets the desktop wallpaper via System Events (section 9.7).
-    /// </summary>
-    public static string SetWallpaper(string path, bool allSpaces)
-    {
-        string escaped = EscapeStringLiteral(path);
-        string target = allSpaces ? "every desktop" : "desktop 1";
-        return $"tell application \"System Events\" to tell {target} to set picture to \"{escaped}\"";
-    }
-
-    /// <summary>
     /// Builds a script listing the URL of every open tab, one per line, so a whole context's worth
     /// of URLs can be checked for duplicates with a single Apple Event instead of one tab sweep per
     /// URL (section 9.3). Measured on Chrome, three per-URL probes cost roughly 490ms against about

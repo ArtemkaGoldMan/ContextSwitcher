@@ -34,7 +34,7 @@ public sealed class MacPermissionsChecker : IPermissionsChecker
     {
         // System Events is always running, so "count of processes" is a read-only call that only
         // succeeds if macOS has granted Automation access to it - the same access every
-        // AppleScript-driven step (theme, wallpaper, app quit/launch, media) relies on.
+        // AppleScript-driven step (app quit/launch, media) relies on.
         ProcessResult result = await this.scriptRunner
             .RunAsync("tell application \"System Events\" to return count of processes", ProbeTimeout, cancellationToken)
             .ConfigureAwait(false);
