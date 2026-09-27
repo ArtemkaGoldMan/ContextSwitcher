@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
 using ContextSwitcher.App.Services;
@@ -20,7 +21,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     private readonly ConfigurationStore configurationStore;
     private readonly string originalContextId;
 
-    private string id;
     private string displayName;
     private string menuBarLabel;
     private string accentColor;
@@ -58,7 +58,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         ContextDefinition source = existing ?? CreateDefaultContext(AppHost.Configuration.Contexts);
         this.originalContextId = source.Id;
 
-        this.id = source.Id;
         this.displayName = source.DisplayName;
         this.menuBarLabel = source.MenuBarLabel;
         this.accentColor = source.AccentColor;
@@ -145,16 +144,13 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     public string HeaderText => this.IsNew ? "New Profile" : $"Edit {this.displayName}";
 
     /// <summary>
-    /// The id is only editable for a brand-new profile; existing profiles keep a stable id since
-    /// hotkeys, analytics sessions, and <c>state.json</c> reference it (agent.md section 6.1).
+    /// The profile's id, which is no longer shown or edited. An existing profile keeps the id it
+    /// has - analytics sessions, <c>state.json</c>, the CLI and Shortcuts all refer to it, so a
+    /// rename must not move it. A new one takes a lowercase slug of its display name, made unique
+    /// against the other profiles, so <c>switch --context deep-work</c> reads the way the profile
+    /// is named instead of <c>profile-3</c>.
     /// </summary>
-    public bool IsIdEditable => this.IsNew;
-
-    public string Id
-    {
-        get => this.id;
-        set => this.SetProperty(ref this.id, value);
-    }
+    public string Id => this.IsNew ? UniqueSlug(this.DisplayName, AppHost.Configuration.Contexts) : this.originalContextId;
 
     public string DisplayName
     {
@@ -164,6 +160,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             if (this.SetProperty(ref this.displayName, value))
             {
                 this.OnPropertyChanged(nameof(this.HeaderText));
+                this.OnPropertyChanged(nameof(this.Id));
             }
         }
     }
@@ -527,6 +524,29 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 CriticalSteps = this.CriticalStepOptions.Where(o => o.IsSelected).Select(o => o.StepType.ToString()).ToList()
             }
         };
+    }
+
+    /// <summary>
+    /// Lowercases the name and joins its letters and digits with hyphens, which is exactly what the
+    /// id pattern accepts, then suffixes -2, -3... past any id already taken. A name with nothing
+    /// usable in it (all punctuation, or a non-Latin script) falls back to "profile".
+    /// </summary>
+    private static string UniqueSlug(string displayName, IReadOnlyList<ContextDefinition> existing)
+    {
+        string slug = Regex.Replace(displayName.Trim().ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+        if (slug.Length == 0)
+        {
+            slug = "profile";
+        }
+
+        HashSet<string> taken = existing.Select(c => c.Id).ToHashSet(StringComparer.Ordinal);
+        string candidate = slug;
+        for (int suffix = 2; taken.Contains(candidate); suffix++)
+        {
+            candidate = $"{slug}-{suffix}";
+        }
+
+        return candidate;
     }
 
     private static ContextDefinition CreateDefaultContext(IReadOnlyList<ContextDefinition> existing)

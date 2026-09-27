@@ -62,7 +62,9 @@ public sealed class ProfileSetupInteractionTests : UiTest
             (ProfileSetupViewModel viewModel, _) = CreateViewModel();
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel });
 
-            TextBox displayName = FindAll<TextBox>(window)[1];
+            // Found by content rather than position: removing the Id row shifted every field up
+            // one, and a positional lookup silently started typing into Menu bar label instead.
+            TextBox displayName = FindAll<TextBox>(window).First(t => t.Text == viewModel.DisplayName);
             displayName.Text = string.Empty;
             Type(window, displayName, "Deep Work");
 

@@ -30,12 +30,6 @@
         <TextBlock Text="IDENTITY" Classes="sectionTitle" />
 
         <Grid ColumnDefinitions="140,*">
-          <TextBlock Grid.Column="0" Text="Id" Classes="body" VerticalAlignment="Center" />
-          <TextBox Grid.Column="1" Text="{Binding Id}" IsEnabled="{Binding IsIdEditable}" />
-        </Grid>
-        <Border Classes="divider" />
-
-        <Grid ColumnDefinitions="140,*">
           <TextBlock Grid.Column="0" Text="Display name" Classes="body" VerticalAlignment="Center" />
           <TextBox Grid.Column="1" Text="{Binding DisplayName}" />
         </Grid>

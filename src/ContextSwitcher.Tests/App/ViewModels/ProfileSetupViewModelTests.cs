@@ -12,13 +12,17 @@ namespace ContextSwitcher.Tests.App.ViewModels;
 [Collection(AppHostTestCollection.Name)]
 public sealed class ProfileSetupViewModelTests
 {
+    /// <summary>
+    /// The id field is gone from the editor, so a new profile's id follows its name - which keeps
+    /// the id the CLI and Shortcuts use recognisable - and steps past ids already taken.
+    /// </summary>
     [Fact]
-    public void NewProfileGetsAUniqueEditableId()
+    public void NewProfileTakesItsIdFromItsNameAndAvoidsTakenOnes()
     {
         AppConfiguration configuration = new()
         {
-            ActiveContextId = "profile",
-            Contexts = [new ContextDefinition { Id = "profile", DisplayName = "Profile" }]
+            ActiveContextId = "deep-work",
+            Contexts = [new ContextDefinition { Id = "deep-work", DisplayName = "Deep Work" }]
         };
         AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
@@ -26,9 +30,36 @@ public sealed class ProfileSetupViewModelTests
         ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), existing: null);
 
         Assert.True(viewModel.IsNew);
-        Assert.True(viewModel.IsIdEditable);
-        Assert.Equal("profile-2", viewModel.Id);
+        Assert.Equal("new-profile", viewModel.Id);
         Assert.Equal("New Profile", viewModel.HeaderText);
+
+        viewModel.DisplayName = "Deep Work";
+        Assert.Equal("deep-work-2", viewModel.Id);
+
+        viewModel.DisplayName = "  Side Project #2!  ";
+        Assert.Equal("side-project-2", viewModel.Id);
+
+        viewModel.DisplayName = "Работа";
+        Assert.Equal("profile", viewModel.Id);
+    }
+
+    /// <summary>
+    /// Renaming an existing profile must not move its id: analytics, state.json, the CLI and any
+    /// Shortcut the user built all refer to it.
+    /// </summary>
+    [Fact]
+    public void RenamingAnExistingProfileKeepsItsId()
+    {
+        ContextDefinition context = new() { Id = "work", DisplayName = "Work" };
+        AppHost.UpdateConfiguration(
+            new AppConfiguration { ActiveContextId = "work", Contexts = [context] },
+            new ConfigurationValidationResult([]));
+        ConfigurationStore store = CreateStore(out _, out _);
+
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), context);
+        viewModel.DisplayName = "Office";
+
+        Assert.Equal("work", viewModel.Id);
     }
 
     [Fact]
@@ -48,7 +79,7 @@ public sealed class ProfileSetupViewModelTests
 
         ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), context);
 
-        Assert.False(viewModel.IsIdEditable);
+        Assert.Equal("work", viewModel.Id);
         Assert.Equal(3, viewModel.Apps.Count);
         AppRowViewModel both = Assert.Single(viewModel.Apps, a => a.Name == "Both App");
         Assert.True(both.LaunchOnEnter);
