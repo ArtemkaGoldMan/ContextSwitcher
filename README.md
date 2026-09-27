@@ -12,7 +12,7 @@ Opens the apps you need, closes the ones you don't, and keeps the two from bleed
 ![Apple silicon](https://img.shields.io/badge/Apple%20silicon-arm64-555555)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
 ![License MIT](https://img.shields.io/badge/license-MIT-2F6FED)
-![Tests 172](https://img.shields.io/badge/tests-172%20passing-20A67A)
+![Tests 207](https://img.shields.io/badge/tests-207%20passing-20A67A)
 
 <img src="docs/images/dashboard.png" width="330" alt="The ContextSwitcher menu bar popover">
 
@@ -27,12 +27,11 @@ Do Not Disturb is still on from this morning. Switching context by hand takes fi
 never do all of it.
 
 ContextSwitcher does it in one click. You define a **profile** — a set of apps to open, apps to quit,
-browser tabs, a theme, a wallpaper, a Focus mode, Docker containers — and switching to that profile
+browser tabs, a Focus mode, Docker containers — and switching to that profile
 applies all of it.
 
 - **Launch and quit apps** — graceful `Cmd+Q`-style quits, never force-kills
 - **Browser tabs** — open URLs, activate tab groups, or launch a whole Chrome/Brave profile
-- **Appearance** — light/dark theme and wallpaper per profile
 - **Focus mode** — via a Shortcut you create, since macOS has no Focus scripting API
 - **Docker** — start the containers this context needs, stop the ones it doesn't
 - **Media** — start an Apple Music or Spotify playlist
@@ -111,7 +110,7 @@ any of them — you just get warnings for the parts that need one.
 
 | Permission | Needed for | If you skip it |
 | --- | --- | --- |
-| **Automation** | Quitting apps, tabs, theme, wallpaper, media | Those steps report a warning |
+| **Automation** | Quitting apps, tabs, media | Those steps report a warning |
 | **Accessibility** | Global hotkeys only | Hotkeys silently never fire |
 
 Settings shows the live status of both, with a button that opens the right pane. See
@@ -170,7 +169,6 @@ and you can edit it directly if you prefer.
     "urls": ["https://mail.google.com/", "https://github.com/notifications"],
     "avoid_duplicate_tabs": true
   },
-  "theme": { "mode": "light" },
   "focus": { "enabled": true, "modeName": "Work" }
 }
 ```

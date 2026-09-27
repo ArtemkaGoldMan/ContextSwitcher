@@ -15,7 +15,7 @@ internal static class Program
         if (args.Length > 0 && CliCommandRouter.IsHeadlessCommand(args[0]))
         {
             CliCommandRouter router = AppHost.Services.GetRequiredService<CliCommandRouter>();
-            int exitCode = router.RunAsync(args, AppHost.Configuration, AppHost.ConfigurationValidation, AppHost.State, Console.Out, CancellationToken.None)
+            int exitCode = router.RunAsync(args, AppHost.Configuration, AppHost.ConfigurationValidation, AppHost.State, Console.Out, CancellationToken.None, AppHost.ConfigurationWasQuarantined)
                 .GetAwaiter()
                 .GetResult();
             Environment.Exit(exitCode);

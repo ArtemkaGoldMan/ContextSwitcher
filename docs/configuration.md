@@ -76,8 +76,6 @@ field has a sensible default, and an omitted section simply does nothing.
     "avoid_duplicate_tabs": true
   },
 
-  "theme": { "mode": "light" },
-  "wallpaper": { "path": "", "allSpaces": true },
   "focus": { "enabled": true, "modeName": "Work" },
   "media": { "player": "None", "playlist": "", "autoPlay": false },
   "docker": { "start": [], "stop": [] },
@@ -130,13 +128,7 @@ Chrome's scripting dictionary doesn't reliably expose tab groups, so `groups` mo
 generally falls back to opening `urls[]`. That's expected, and the fallback is why you should set
 `urls[]` even in `groups` mode.
 
-## Theme, wallpaper, Focus, media, Docker
-
-**`theme.mode`** is `light`, `dark` or `system`. `system` builds no step at all and leaves your
-appearance alone.
-
-**`wallpaper.path`** must be a real image. A missing file, or a file that isn't an image, is reported
-as a warning and your wallpaper is left untouched.
+## Focus, media, Docker
 
 **`focus`** runs a Shortcut you create, because macOS has no Focus scripting API. With
 `enabled: true` it runs `ContextSwitcher - Focus <modeName>`; leaving a profile that had Focus on
@@ -170,7 +162,7 @@ it can't register and hotkeys simply never fire.
 By default a failing step is a warning and the switch continues. Naming a step type in
 `criticalSteps` makes its failure stop the switch and report `Failed`. Valid values are the
 `AutomationStepType` names: `CloseApplications`, `LaunchApplications`, `ManageBrowserContext`,
-`SetTheme`, `SetWallpaper`, `SetFocusMode`, `ControlMedia`, `StartDockerResources`,
+`SetFocusMode`, `ControlMedia`, `StartDockerResources`,
 `StopDockerResources`.
 
 Criticality applies to the whole step, not to one app inside it.
@@ -200,7 +192,6 @@ Criticality applies to the whole step, not to one app inside it.
         "urls": ["https://mail.google.com/", "https://github.com/notifications"],
         "avoid_duplicate_tabs": true
       },
-      "theme": { "mode": "light" },
       "focus": { "enabled": true, "modeName": "Work" },
       "docker": { "start": ["postgres-work"], "stop": [] },
       "notes": ["Check the incident queue before opening the IDE."]
@@ -219,7 +210,6 @@ Criticality applies to the whole step, not to one app inside it.
         "urls": ["https://youtube.com/"],
         "avoid_duplicate_tabs": true
       },
-      "theme": { "mode": "dark" },
       "focus": { "enabled": false, "modeName": "" },
       "docker": { "start": [], "stop": ["postgres-work"] }
     }
@@ -227,8 +217,8 @@ Criticality applies to the whole step, not to one app inside it.
 }
 ```
 
-Switching **work → personal** here: Slack and VS Code quit, `postgres-work` stops, the theme goes
-dark, Focus turns off, Spotify opens and YouTube loads in Chrome.
+Switching **work → personal** here: Slack and VS Code quit, `postgres-work` stops,
+Focus turns off, Spotify opens and YouTube loads in Chrome.
 
 ## When something doesn't happen
 

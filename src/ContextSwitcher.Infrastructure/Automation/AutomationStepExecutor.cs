@@ -48,8 +48,6 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         {
             AutomationStepType.CloseApplications => this.CloseApplicationsAsync(step, cancellationToken),
             AutomationStepType.LaunchApplications => this.LaunchApplicationsAsync(step, cancellationToken),
-            AutomationStepType.SetTheme => this.SetThemeAsync(step, cancellationToken),
-            AutomationStepType.SetWallpaper => this.SetWallpaperAsync(step, cancellationToken),
             AutomationStepType.ManageBrowserContext => this.ManageBrowserContextAsync(step, cancellationToken),
             AutomationStepType.StartDockerResources => this.RunDockerCommandAsync(step, "start", cancellationToken),
             AutomationStepType.StopDockerResources => this.RunDockerCommandAsync(step, "stop", cancellationToken),
@@ -164,71 +162,6 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
             standardError.ToString(),
             startedAt,
             completedAt);
-    }
-
-    private async Task<AutomationResult> SetThemeAsync(AutomationStep step, CancellationToken cancellationToken)
-    {
-        DateTimeOffset startedAt = this.clock.UtcNow;
-        bool dark = step.Arguments.GetValueOrDefault("mode") == "Dark";
-
-        ProcessResult result = await this.scriptRunner
-            .RunAsync(AppleScriptBuilder.SetDarkMode(dark), WithReportingHeadroom(step.Timeout), cancellationToken)
-            .ConfigureAwait(false);
-        DateTimeOffset completedAt = this.clock.UtcNow;
-
-        if (result.ExitCode == 0)
-        {
-            return new AutomationResult(
-                step.Id, step.Type, AutomationResultStatus.Succeeded, "Theme updated.",
-                result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
-        }
-
-        AutomationResultStatus status = step.IsCritical ? AutomationResultStatus.Failed : AutomationResultStatus.Warning;
-        return new AutomationResult(
-            step.Id, step.Type, status, "Could not change theme. Check Automation permissions.",
-            result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
-    }
-
-    private async Task<AutomationResult> SetWallpaperAsync(AutomationStep step, CancellationToken cancellationToken)
-    {
-        DateTimeOffset startedAt = this.clock.UtcNow;
-        string path = step.Arguments.GetValueOrDefault("path", string.Empty);
-        bool allSpaces = step.Arguments.GetValueOrDefault("allSpaces") == "True";
-
-        if (!File.Exists(path))
-        {
-            DateTimeOffset missingCompletedAt = this.clock.UtcNow;
-            return new AutomationResult(
-                step.Id, step.Type, AutomationResultStatus.Warning, $"Wallpaper file not found: '{path}'.",
-                null, null, null, startedAt, missingCompletedAt);
-        }
-
-        // System Events accepts any path at all - point it at a text file and it reports success
-        // while the desktop is left referencing something that cannot be drawn. `sips` is already
-        // on the command allowlist for image work, and reading an image property is the cheapest
-        // way to ask "is this actually an image?" before committing to it.
-        ProcessResult imageProbe = await this.processRunner
-            .RunAsync(new ProcessStartOptions("sips", ["-g", "pixelWidth", path], WithReportingHeadroom(step.Timeout)), cancellationToken)
-            .ConfigureAwait(false);
-
-        if (imageProbe.ExitCode != 0 || !ReportsPixelWidth(imageProbe.StandardOutput))
-        {
-            return new AutomationResult(
-                step.Id, step.Type, AutomationResultStatus.Warning, $"Wallpaper file is not a readable image: '{path}'.",
-                imageProbe.ExitCode, imageProbe.StandardOutput, imageProbe.StandardError, startedAt, this.clock.UtcNow);
-        }
-
-        ProcessResult result = await this.scriptRunner
-            .RunAsync(AppleScriptBuilder.SetWallpaper(path, allSpaces), WithReportingHeadroom(step.Timeout), cancellationToken)
-            .ConfigureAwait(false);
-        DateTimeOffset completedAt = this.clock.UtcNow;
-
-        // Missing wallpaper is a warning regardless of step criticality (section 9.7); other
-        // failures still get here since the file-existence check above already short-circuited.
-        AutomationResultStatus status = result.ExitCode == 0 ? AutomationResultStatus.Succeeded : AutomationResultStatus.Warning;
-        string message = result.ExitCode == 0 ? "Wallpaper updated." : "Could not set wallpaper.";
-        return new AutomationResult(
-            step.Id, step.Type, status, message, result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
     }
 
     private async Task<AutomationResult> ManageBrowserContextAsync(AutomationStep step, CancellationToken cancellationToken)
@@ -364,32 +297,6 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
             step.Id, step.Type, status,
             $"Could not run Shortcut '{shortcutName}'. Create it in the Shortcuts app (see docs/shortcuts-integration.md) or check Shortcuts permissions.",
             result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
-    }
-
-    /// <summary>
-    /// Whether <c>sips -g pixelWidth</c> reported a real width. It exits 0 even for a text file,
-    /// printing <c>pixelWidth: &lt;nil&gt;</c>, so the exit code alone says nothing - only the value does.
-    /// </summary>
-    private static bool ReportsPixelWidth(string? sipsOutput)
-    {
-        const string Marker = "pixelWidth:";
-
-        if (string.IsNullOrWhiteSpace(sipsOutput))
-        {
-            return false;
-        }
-
-        int start = sipsOutput.IndexOf(Marker, StringComparison.Ordinal);
-        if (start < 0)
-        {
-            return false;
-        }
-
-        ReadOnlySpan<char> rest = sipsOutput.AsSpan(start + Marker.Length);
-        int lineEnd = rest.IndexOf('\n');
-        ReadOnlySpan<char> value = (lineEnd >= 0 ? rest[..lineEnd] : rest).Trim();
-
-        return int.TryParse(value, out int width) && width > 0;
     }
 
     /// <summary>

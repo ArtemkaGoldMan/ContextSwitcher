@@ -23,8 +23,6 @@ public sealed class AutomationPlanBuilderTests
             Id = "work",
             DisplayName = "Work",
             LaunchApps = ["Slack"],
-            Theme = new ThemeConfig { Mode = ThemeMode.Dark },
-            Wallpaper = new WallpaperConfig { Path = "/tmp/work.jpg" },
             Focus = new FocusConfig { Enabled = true, ModeName = "Work" },
             BrowserManagement = new BrowserManagementConfig
             {
@@ -41,8 +39,6 @@ public sealed class AutomationPlanBuilderTests
             [
                 AutomationStepType.StopDockerResources,
                 AutomationStepType.CloseApplications,
-                AutomationStepType.SetTheme,
-                AutomationStepType.SetWallpaper,
                 AutomationStepType.SetFocusMode,
                 AutomationStepType.LaunchApplications,
                 AutomationStepType.ManageBrowserContext,

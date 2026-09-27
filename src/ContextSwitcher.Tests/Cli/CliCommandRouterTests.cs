@@ -83,8 +83,8 @@ public sealed class CliCommandRouterTests
             StepResults =
             [
                 new ContextSwitcher.Core.Automation.AutomationResult(
-                    "SetTheme.work", ContextSwitcher.Core.Automation.AutomationStepType.SetTheme,
-                    ContextSwitcher.Core.Automation.AutomationResultStatus.Warning, "Could not change theme.",
+                    "SetFocusMode.work", ContextSwitcher.Core.Automation.AutomationStepType.SetFocusMode,
+                    ContextSwitcher.Core.Automation.AutomationResultStatus.Warning, "Could not run Shortcut 'ContextSwitcher - Focus Work'.",
                     null, null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
             ]
         };

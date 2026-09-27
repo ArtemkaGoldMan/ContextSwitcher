@@ -38,7 +38,7 @@
                       </Panel>
                       <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="body" VerticalAlignment="Center" />
                       <CheckBox Grid.Column="2" Content="Quit on leave" IsChecked="{Binding CloseOnLeave}" Margin="8,0" />
-                      <Button Grid.Column="3" Classes="rowAction" Command="{Binding RemoveCommand}">
+                      <Button Grid.Column="3" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
                         <Viewbox Classes="icon rowAction">
                           <Path Classes="glyph" Data="{StaticResource IconX}" />
                         </Viewbox>
@@ -182,7 +182,7 @@
           <StackPanel Spacing="8">
             <TextBlock Text="NEXT" Classes="sectionTitle" />
             <TextBlock Text="• Switch anytime from the menu bar icon" Classes="body" />
-            <TextBlock Text="• Add browser tabs, wallpaper, Focus and Docker in Profile Setup" Classes="body" />
+            <TextBlock Text="• Add browser tabs, Focus and Docker in Profile Setup" Classes="body" />
             <TextBlock Text="• Assign a keyboard shortcut to each profile" Classes="body" />
           </StackPanel>
         </Border>
@@ -208,7 +208,7 @@
         <Button Grid.Column="2" Classes="switchContext" Content="Back" Command="{Binding BackCommand}"
                 IsVisible="{Binding CanGoBack}" Margin="0,0,8,0" />
 
-        <Button Grid.Column="3" Classes="switchContext current" Content="Continue" Command="{Binding NextCommand}"
+        <Button Grid.Column="3" Classes="switchContext current" Content="Continue" Command="{Binding NextCommand}" IsDefault="True"
                 IsVisible="{Binding CanGoNext}" />
         <Button Grid.Column="3" Classes="switchContext current" Content="Finish &amp; switch to Work" Command="{Binding FinishCommand}"
                 IsVisible="{Binding IsDoneStep}" />

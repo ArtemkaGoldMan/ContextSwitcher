@@ -21,7 +21,19 @@ public sealed class ConfigurationValidator
 
         List<ConfigurationValidationError> errors = [];
 
-        if (configuration.SchemaVersion != 1)
+        // Older schemas are accepted and read as-is: every version so far is field-compatible, and
+        // rejecting them outright would have left the first schema change with no upgrade path at
+        // all - an existing config would simply stop being valid. Newer ones are refused, because a
+        // file written by a later build may hold fields this one would silently drop on the next
+        // save. Add a migration step here when a version stops being readable as-is.
+        if (configuration.SchemaVersion > AppConfiguration.CurrentSchemaVersion)
+        {
+            errors.Add(new ConfigurationValidationError(
+                "schemaVersion",
+                $"This configuration is version {configuration.SchemaVersion}, written by a newer version of "
+                + $"ContextSwitcher; this build understands up to {AppConfiguration.CurrentSchemaVersion}. Update the app."));
+        }
+        else if (configuration.SchemaVersion < 1)
         {
             errors.Add(new ConfigurationValidationError("schemaVersion", "Unsupported configuration schema version."));
         }

@@ -30,11 +30,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     private BrowserKind browserKind;
     private bool avoidDuplicateTabs;
 
-    private ThemeMode themeMode;
-
-    private string wallpaperPath;
-    private bool wallpaperAllSpaces;
-
     private bool focusEnabled;
     private string focusModeName;
 
@@ -94,11 +89,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.BrowserProfiles = new ObservableCollection<BrowserProfileRowViewModel>(
             source.BrowserManagement.Profiles.Select(profile => new BrowserProfileRowViewModel(
                 profile.Browser, profile.ProfileDirectory, profile.Urls, this.RemoveBrowserProfile)));
-
-        this.themeMode = source.Theme.Mode;
-
-        this.wallpaperPath = source.Wallpaper.Path;
-        this.wallpaperAllSpaces = source.Wallpaper.AllSpaces;
 
         this.focusEnabled = source.Focus.Enabled;
         this.focusModeName = source.Focus.ModeName;
@@ -271,26 +261,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     public ObservableCollection<EditableStringRowViewModel> TabGroups { get; }
 
     public ObservableCollection<BrowserProfileRowViewModel> BrowserProfiles { get; }
-
-    public IReadOnlyList<ThemeMode> ThemeModes { get; } = Enum.GetValues<ThemeMode>();
-
-    public ThemeMode ThemeMode
-    {
-        get => this.themeMode;
-        set => this.SetProperty(ref this.themeMode, value);
-    }
-
-    public string WallpaperPath
-    {
-        get => this.wallpaperPath;
-        set => this.SetProperty(ref this.wallpaperPath, value);
-    }
-
-    public bool WallpaperAllSpaces
-    {
-        get => this.wallpaperAllSpaces;
-        set => this.SetProperty(ref this.wallpaperAllSpaces, value);
-    }
 
     public bool FocusEnabled
     {
@@ -537,8 +507,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                     .ToList(),
                 AvoidDuplicateTabs = this.AvoidDuplicateTabs
             },
-            Theme = new ThemeConfig { Mode = this.ThemeMode },
-            Wallpaper = new WallpaperConfig { Path = this.WallpaperPath.Trim(), AllSpaces = this.WallpaperAllSpaces },
             Focus = new FocusConfig { Enabled = this.FocusEnabled, ModeName = this.FocusModeName.Trim() },
             Media = new MediaConfig { Player = this.MediaPlayer, Playlist = this.MediaPlaylist.Trim(), AutoPlay = this.MediaAutoPlay },
             Docker = new DockerResourceConfig

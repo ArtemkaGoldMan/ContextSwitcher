@@ -49,16 +49,6 @@ public sealed record ContextDefinition
     public BrowserManagementConfig BrowserManagement { get; init; } = new();
 
     /// <summary>
-    /// Gets or sets the theme configuration for the context.
-    /// </summary>
-    public ThemeConfig Theme { get; init; } = new();
-
-    /// <summary>
-    /// Gets or sets the wallpaper configuration for the context.
-    /// </summary>
-    public WallpaperConfig Wallpaper { get; init; } = new();
-
-    /// <summary>
     /// Gets or sets the focus mode configuration for the context.
     /// </summary>
     public FocusConfig Focus { get; init; } = new();

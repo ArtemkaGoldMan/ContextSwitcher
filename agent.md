@@ -9,7 +9,7 @@ Context Switcher V2 is an open-source, lightweight macOS menu bar utility for de
 The application must make switching contexts feel instant, reversible, and calm:
 
 - Close or freeze distracting and resource-heavy processes from the previous context.
-- Launch the correct applications, browser URLs, tab groups, optional browser profiles, Docker resources, music, wallpaper, theme, and Focus state for the new context.
+- Launch the correct applications, browser URLs, tab groups, optional browser profiles, Docker resources, music, and Focus state for the new context.
 - Preserve work-life boundaries by making the current mode obvious from the menu bar and dashboard.
 - Track local context time without cloud storage, telemetry, or account requirements.
 
@@ -134,8 +134,6 @@ ContextSwitcher/
         DockerResourceConfig.cs
         HotkeyConfig.cs
         MediaConfig.cs
-        ThemeConfig.cs
-        WallpaperConfig.cs
         QuickLinkConfig.cs
         Validation/
           ConfigurationValidator.cs
@@ -385,13 +383,6 @@ Schema versioned configuration:
                 ],
                 "avoid_duplicate_tabs": true
             },
-            "theme": {
-                "mode": "light"
-            },
-            "wallpaper": {
-                "path": "/Users/artem/Pictures/wallpapers/work.jpg",
-                "allSpaces": true
-            },
             "focus": {
                 "enabled": true,
                 "modeName": "Work"
@@ -433,13 +424,6 @@ Schema versioned configuration:
                 "tab_groups": [],
                 "profiles": [],
                 "avoid_duplicate_tabs": true
-            },
-            "theme": {
-                "mode": "dark"
-            },
-            "wallpaper": {
-                "path": "/Users/artem/Pictures/wallpapers/personal.jpg",
-                "allSpaces": true
             },
             "focus": {
                 "enabled": false,
@@ -492,7 +476,6 @@ Validation rules:
 - `browser_management.profiles[].browser` allowed values: `Chrome`, `Brave`.
 - `browser_management.profiles[].profile_directory` must be non-empty when profile mode is used.
 - `browser_management.avoid_duplicate_tabs` controls best-effort tab focusing before opening URLs.
-- `theme.mode` allowed values: `light`, `dark`, `system`.
 - `media.player` allowed values: `AppleMusic`, `Spotify`, `None`.
 - Paths may be missing at config time, but switching must report missing assets as warnings.
 - User-defined commands, when later supported, must be allowlisted and displayed for confirmation.
@@ -644,8 +627,6 @@ public enum AutomationStepType
     CloseApplications,
     LaunchApplications,
     ManageBrowserContext,
-    SetTheme,
-    SetWallpaper,
     SetFocusMode,
     ControlMedia,
     StartDockerResources,
@@ -735,8 +716,6 @@ The switch pipeline must execute in this order:
     - Close the previous context's `closeApps` (nothing is closed on the first switch, when there
       is no previous context).
 8. Execute environment steps:
-    - Theme.
-    - Wallpaper.
     - Focus mode.
 9. Execute activation steps:
     - Launch apps.
@@ -932,40 +911,13 @@ Rules:
 
 ### 9.6 Toggle macOS Theme
 
-Dark mode:
-
-```text
-osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to true'
-```
-
-Light mode:
-
-```text
-osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to false'
-```
-
-Rules:
-
-- `system` mode means skip and leave current OS setting untouched.
-- Failure usually indicates Automation permission problems; show a clear dashboard warning.
+Removed. Profiles no longer change the system appearance. The heading is kept so the
+section numbers cited throughout the code (9.8 onwards) stay correct.
 
 ### 9.7 Set Wallpaper
 
-AppleScript:
-
-```applescript
-tell application "System Events"
-  tell every desktop
-    set picture to "/Users/artem/Pictures/wallpapers/work.jpg"
-  end tell
-end tell
-```
-
-Rules:
-
-- Validate path exists before running.
-- If `allSpaces == false`, target only the current desktop if supported by implementation.
-- Missing wallpaper is a warning, not a failed switch.
+Removed. Profiles no longer change the desktop wallpaper. The heading is kept for the same
+reason as 9.6.
 
 ### 9.8 Focus Mode / Do Not Disturb
 
@@ -1200,7 +1152,7 @@ Opened from the Dashboard's **Open App** button. A normal resizable window (880 
   purely a friendlier editing surface over the same two flat lists.
 - Browser management: mode (URLs / tab groups / profiles / none), URLs, tab groups, browser
   profiles, avoid-duplicate-tabs toggle - matching `browser_management` exactly (section 6.1).
-- Theme, wallpaper, Focus mode, media (player, playlist, autoplay), Docker start/stop lists.
+- Focus mode, media (player, playlist, autoplay), Docker start/stop lists.
 - Quick links and notes editors (add/remove rows).
 - Switch policy: which step categories are critical for this profile, continue-on-non-critical-
   failure toggle.
@@ -1250,18 +1202,12 @@ Design language:
   the accent color's job now, not "used sparingly" - see Colors below.
 - Icons are hand-drawn from primitive shapes (`Rectangle`/`Ellipse`/`Path`/`Polygon`), not an icon
   font or SVG package: a 2x2 dot grid (Profiles), three horizontal sliders (Settings), three bars
-  (Stats), a rotated rounded rect + triangle (Profile Setup/pencil), and for the Theme option cards
-  a filled circle (Light), a bordered dark circle (Dark), and a two-`Path` split circle via
-  elliptical arcs (System). Only `⇄` (app logo) and the row-remove `✕` are text glyphs; both are
+  (Stats), and a rotated rounded rect + triangle (Profile Setup/pencil). Only `⇄` (app logo) and the row-remove `✕` are text glyphs; both are
   plain Unicode symbols confirmed not to render as color emoji on macOS. Adding an icon package was
   deliberately avoided to keep the dependency footprint unchanged (agent.md section 21).
 - List rows inside a card are separated by a 1 px `Border.divider` (`DividerBrush`), not nested
   boxes - "no decorative cards nested inside other cards" still holds; a divider is not a card.
   Label left, control right, per row.
-- A `RadioButton.optionCard` style (custom `ControlTemplate`, checked state gets an `AccentBrush`
-  ring) renders a single-choice control as 2-3 large gradient cards with icon + title + subtitle -
-  used for Theme mode, the one place in the app that maps cleanly onto the reference's flagship
-  "Break enforcement" 3-card selector.
 - Primary actions (Save, Add new profile, the active profile's row border, the active Dashboard
   switch button, the selected Week/Month segment) are filled solid with `AccentBrush` via
   `Classes="switchContext current"`; everything else is a neutral `CardHoverBrush` pill button.
@@ -1326,8 +1272,7 @@ Controls:
 - Use icon buttons for settings, quit, refresh, warning details, and link opening.
 - Use text buttons for context switches because labels matter.
 - Use toggles (`ToggleSwitch`) for binary settings.
-- Use the `RadioButton.optionCard` gradient selector for Theme mode; other multi-option pickers
-  (browser mode/kind, media player) use a restyled `ComboBox` (9 px radius, `CardHoverBrush` fill)
+- Multi-option pickers (browser mode/kind, media player) use a restyled `ComboBox` (9 px radius, `CardHoverBrush` fill)
   rather than every choice getting a bespoke control.
 - Use text fields for app names, paths, profile directories, and URLs.
 - Use list rows with add/remove buttons for app/browser/docker arrays.
@@ -1407,8 +1352,6 @@ Timeout defaults:
 | Quit app               | 10 seconds per app |
 | Launch app             | 15 seconds per app |
 | Browser profile launch | 20 seconds         |
-| Theme switch           | 5 seconds          |
-| Wallpaper switch       | 10 seconds         |
 | Focus shortcut         | 10 seconds         |
 | Media control          | 8 seconds          |
 | Docker stop/start      | 45 seconds         |
@@ -1504,14 +1447,11 @@ Deliverables:
 - `AppleScriptRunner`.
 - Graceful app quit.
 - App launch.
-- Theme switching.
-- Wallpaper switching.
 - Unit tests for argument generation and AppleScript escaping.
 
 Acceptance criteria:
 
 - App can close and launch configured apps.
-- Theme can toggle light/dark where permissions allow.
 - Missing app produces warning, not crash.
 
 ### Phase 4: Browser Management
@@ -1646,7 +1586,7 @@ Deliverables:
 - Profiles page: list, activate-on-click, per-row Edit action, Add new profile, delete/duplicate.
 - Profile Setup editor covering every `ContextDefinition` field: identity, apps (with the
   launch-on-enter/close-on-leave dual-toggle UI over the existing `launchApps`/`closeApps` lists),
-  browser management, theme, wallpaper, Focus, media, Docker, quick links, notes, switch policy,
+  browser management, Focus, media, Docker, quick links, notes, switch policy,
   and this profile's hotkey.
 - Settings page: default switch timeout, show-Dock-icon, automation permissions status with
   remediation links, analytics enabled/retention, support/cosmetic section, full cross-profile
@@ -1775,7 +1715,6 @@ Manual QA checklist:
 - Switch Personal from CLI.
 - Close app and relaunch.
 - Corrupt `settings.json`.
-- Remove wallpaper file.
 - Uninstall Docker or make Docker unavailable.
 - Deny Automation permission.
 - Run from unsigned `.dmg`.

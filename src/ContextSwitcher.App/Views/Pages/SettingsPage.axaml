@@ -13,7 +13,7 @@
         </Viewbox>
       </Border>
       <TextBlock Grid.Column="1" Text="Settings" Classes="header" VerticalAlignment="Center" />
-      <Button Grid.Column="2" Classes="switchContext current" Content="Save" Command="{Binding SaveCommand}" />
+      <Button Grid.Column="2" Classes="switchContext current" Content="Save" Command="{Binding SaveCommand}" IsDefault="True" />
     </Grid>
 
     <TextBlock
@@ -32,7 +32,7 @@
           <TextBlock Grid.Column="0" Text="Default switch timeout" Classes="body" VerticalAlignment="Center" />
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
             <TextBox Text="{Binding DefaultSwitchTimeoutSecondsText}" Width="70" HorizontalContentAlignment="Right" />
-            <TextBlock Text="seconds" Classes="caption" VerticalAlignment="Center" Width="50" />
+            <TextBlock Text="seconds" Classes="caption" VerticalAlignment="Center" Width="50" TextAlignment="Right" />
           </StackPanel>
         </Grid>
         <Border Classes="divider" />
@@ -91,7 +91,7 @@
           <TextBlock Grid.Column="0" Text="Retention" Classes="body" VerticalAlignment="Center" />
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
             <TextBox Text="{Binding AnalyticsRetentionDaysText}" Width="70" HorizontalContentAlignment="Right" />
-            <TextBlock Text="days" Classes="caption" VerticalAlignment="Center" Width="50" />
+            <TextBlock Text="days" Classes="caption" VerticalAlignment="Center" Width="50" TextAlignment="Right" />
           </StackPanel>
         </Grid>
       </StackPanel>

@@ -22,8 +22,6 @@ public sealed class CriticalStepOptionViewModel(AutomationStepType stepType, str
         AutomationStepType.CloseApplications,
         AutomationStepType.LaunchApplications,
         AutomationStepType.ManageBrowserContext,
-        AutomationStepType.SetTheme,
-        AutomationStepType.SetWallpaper,
         AutomationStepType.SetFocusMode,
         AutomationStepType.ControlMedia,
         AutomationStepType.StartDockerResources,

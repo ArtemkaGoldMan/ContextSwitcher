@@ -27,6 +27,10 @@ public sealed partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+            // Anything needing the dispatcher starts here rather than in AppHost.Initialize, which
+            // runs before the platform exists.
+            AppHost.StartRuntimeServices();
             desktop.Exit += (_, _) =>
             {
                 AppHost.ShutdownAsync().GetAwaiter().GetResult();
