@@ -80,6 +80,9 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     /// </summary>
     public event EventHandler? OpenAppRequested;
 
+    /// <summary>Raised when the popover has done its job and should get out of the way.</summary>
+    public event EventHandler? DismissRequested;
+
     public IReadOnlyList<SwitchButtonViewModel> SwitchButtons
     {
         get => this.switchButtons;
@@ -248,16 +251,17 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
                 .SwitchAsync(new ContextSwitchRequest(contextId, ContextSwitchSource.Dashboard), CancellationToken.None)
                 .ConfigureAwait(true);
 
-            this.LastSwitchStatusText = result.Status.ToString();
-            this.LastSwitchWarnings = result.StepResults
-                .Where(step => step.Status is AutomationResultStatus.Warning or AutomationResultStatus.Failed or AutomationResultStatus.TimedOut)
-                .Select(step => step.Message)
-                .ToList();
-
             CurrentContextState? state = await this.jsonStore
                 .ReadAsync<CurrentContextState>(this.configPaths.StatePath)
                 .ConfigureAwait(true);
             AppHost.UpdateState(state ?? new CurrentContextState());
+
+            // Behave like a menu: a clean switch closes the popover. Anything worth reading - a
+            // warning, a failure, a switch rejected because another was running - keeps it open.
+            if (result.Status is ContextSwitchStatus.Succeeded or ContextSwitchStatus.NoOp)
+            {
+                this.DismissRequested?.Invoke(this, EventArgs.Empty);
+            }
         }
         finally
         {
@@ -281,6 +285,11 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
             .FirstOrDefault(context => context.Id == state.CurrentContextId);
 
         this.ActiveContextDisplayName = active?.DisplayName ?? "(none)";
+
+        // Read the last outcome from state rather than from the popover's own switch result: the
+        // tray menu, the CLI and Shortcuts switch too, and their warnings belong here just as much.
+        this.LastSwitchStatusText = state.LastSwitchStatus;
+        this.LastSwitchWarnings = state.LastErrors.Select(error => error.Message).ToList();
         this.activeSince = state.LastSwitchCompletedAt;
         this.RefreshElapsedDisplay();
 

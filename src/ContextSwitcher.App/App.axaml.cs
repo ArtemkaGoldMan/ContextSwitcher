@@ -6,6 +6,10 @@ using Avalonia.Platform;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views;
+using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Core.Logging;
+using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.Core.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App;
@@ -38,6 +42,14 @@ public sealed partial class App : Application
             };
             this.trayIcon = CreateTrayIcon(desktop);
 
+            // Clicking the desktop or another app sends this app to the background, and the popover
+            // goes with it. The popover's own Deactivated only covers the case where it was the key
+            // window; this also covers the one where it never became key at all.
+            if (this.TryGetFeature<IActivatableLifetime>() is { } activatable)
+            {
+                activatable.Deactivated += (_, _) => this.dashboardWindow?.Hide();
+            }
+
             // A fresh install otherwise lands on one empty "Default" profile - a context switcher
             // with nothing to switch between. Run the wizard before anything else in that case.
             if (!AppHost.Configuration.OnboardingCompleted)
@@ -55,29 +67,25 @@ public sealed partial class App : Application
 
     private TrayIcon CreateTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)
     {
-        NativeMenuItem dashboardItem = new("Open Dashboard");
-        dashboardItem.Click += (_, _) => ShowDashboard();
-
-        NativeMenuItem quitItem = new("Quit");
-        quitItem.Click += (_, _) => desktop.Shutdown();
-
-        NativeMenu menu = new();
-        menu.Items.Add(new NativeMenuItem("Context Switcher")
-        {
-            IsEnabled = false
-        });
-        menu.Items.Add(new NativeMenuItemSeparator());
-        menu.Items.Add(dashboardItem);
-        menu.Items.Add(new NativeMenuItemSeparator());
-        menu.Items.Add(quitItem);
+        TrayMenu trayMenu = new(
+            contextId => _ = SwitchFromMenuAsync(contextId),
+            this.ShowDashboard,
+            () => desktop.Shutdown());
+        trayMenu.Update(AppHost.Configuration.Contexts, AppHost.State.CurrentContextId);
 
         TrayIcon trayIcon = new()
         {
             Icon = new WindowIcon(AssetLoader.Open(TrayIconUri)),
             ToolTipText = "Context Switcher",
-            Menu = menu,
+            Menu = trayMenu.Menu,
             IsVisible = true
         };
+
+        // The profile list and its tick follow the configuration and the active profile. Both events
+        // are raised on the UI thread, which a NativeMenu - an Avalonia object - requires. The menu is
+        // updated in place, never replaced; see TrayMenu for why.
+        AppHost.ConfigurationChanged += (_, _) => trayMenu.Update(AppHost.Configuration.Contexts, AppHost.State.CurrentContextId);
+        AppHost.StateChanged += (_, _) => trayMenu.Update(AppHost.Configuration.Contexts, AppHost.State.CurrentContextId);
 
         // Belt-and-suspenders: on platforms/cases where Clicked still fires despite Menu being
         // set, this gives instant popover behavior; the "Open Dashboard" menu item above is the
@@ -87,6 +95,44 @@ public sealed partial class App : Application
         MacOSProperties.SetIsTemplateIcon(trayIcon, true);
 
         return trayIcon;
+    }
+
+    /// <summary>
+    /// A switch picked straight from the menu bar. Fire-and-forget from the menu's point of view, so
+    /// this is a hard boundary: ContextSwitchService already logs its own failure paths, and anything
+    /// unexpected is logged here rather than left as an unobserved task exception.
+    /// </summary>
+    private static async Task SwitchFromMenuAsync(string contextId)
+    {
+        try
+        {
+            IContextSwitchService switchService = AppHost.Services.GetRequiredService<IContextSwitchService>();
+            await switchService
+                .SwitchAsync(new ContextSwitchRequest(contextId, ContextSwitchSource.MenuBar), CancellationToken.None)
+                .ConfigureAwait(true);
+
+            IJsonStore jsonStore = AppHost.Services.GetRequiredService<IJsonStore>();
+            ConfigPaths configPaths = AppHost.Services.GetRequiredService<ConfigPaths>();
+            CurrentContextState? state = await jsonStore.ReadAsync<CurrentContextState>(configPaths.StatePath)
+                .ConfigureAwait(true);
+            AppHost.UpdateState(state ?? new CurrentContextState());
+        }
+        catch (Exception ex)
+        {
+            ILogger logger = AppHost.Services.GetRequiredService<ILogger>();
+            IClock clock = AppHost.Services.GetRequiredService<IClock>();
+            await logger.LogAsync(
+                new LogEntry
+                {
+                    Timestamp = clock.UtcNow,
+                    Level = LogLevel.Error,
+                    Category = "MenuBar",
+                    EventId = "MenuSwitchFailed",
+                    Message = $"Unhandled error switching to '{contextId}' from the menu bar: {ex.Message}",
+                    ContextId = contextId
+                },
+                CancellationToken.None).ConfigureAwait(true);
+        }
     }
 
     private void ShowOnboarding()
