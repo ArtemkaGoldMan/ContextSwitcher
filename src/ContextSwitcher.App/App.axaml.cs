@@ -156,8 +156,7 @@ public sealed partial class App : Application
         }
 
         PositionNearMenuBar(this.dashboardWindow);
-        this.dashboardWindow.Show();
-        this.dashboardWindow.Activate();
+        this.dashboardWindow.ShowAsPopover();
     }
 
     private static void PositionNearMenuBar(Window window)

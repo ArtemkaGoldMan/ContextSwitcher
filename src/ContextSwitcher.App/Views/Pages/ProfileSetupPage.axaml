@@ -258,7 +258,7 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <Button Classes="linkButton" Content="+ Add URL" Command="{Binding AddBrowserUrlCommand}" />
+          <Button Classes="linkButton" HorizontalAlignment="Left" Content="+ Add URL" Command="{Binding AddBrowserUrlCommand}" />
         </StackPanel>
 
         <StackPanel Spacing="6" IsVisible="{Binding IsGroupsMode}" Margin="0,6,0,0">
@@ -282,7 +282,7 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <Button Classes="linkButton" Content="+ Add tab group" Command="{Binding AddTabGroupCommand}" />
+          <Button Classes="linkButton" HorizontalAlignment="Left" Content="+ Add tab group" Command="{Binding AddTabGroupCommand}" />
         </StackPanel>
 
         <StackPanel Spacing="6" IsVisible="{Binding IsProfilesMode}" Margin="0,6,0,0">
@@ -312,7 +312,7 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <Button Classes="linkButton" Content="+ Add browser profile" Command="{Binding AddBrowserProfileCommand}" />
+          <Button Classes="linkButton" HorizontalAlignment="Left" Content="+ Add browser profile" Command="{Binding AddBrowserProfileCommand}" />
         </StackPanel>
       </StackPanel>
     </Border>
@@ -383,7 +383,7 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <Button Classes="linkButton" Content="+ Add container" Command="{Binding AddDockerStartCommand}" />
+          <Button Classes="linkButton" HorizontalAlignment="Left" Content="+ Add container" Command="{Binding AddDockerStartCommand}" />
 
           <Border Classes="divider" Margin="0,6" />
 
@@ -407,7 +407,7 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <Button Classes="linkButton" Content="+ Add container" Command="{Binding AddDockerStopCommand}" />
+          <Button Classes="linkButton" HorizontalAlignment="Left" Content="+ Add container" Command="{Binding AddDockerStopCommand}" />
         </StackPanel>
       </Border>
 
@@ -438,7 +438,7 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <Button Classes="linkButton" Content="+ Add quick link" Command="{Binding AddQuickLinkCommand}" />
+          <Button Classes="linkButton" HorizontalAlignment="Left" Content="+ Add quick link" Command="{Binding AddQuickLinkCommand}" />
         </StackPanel>
       </Border>
 

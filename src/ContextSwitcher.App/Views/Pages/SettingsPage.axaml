@@ -92,7 +92,7 @@
     <Border Classes="panel">
       <StackPanel Spacing="10">
         <TextBlock Text="SUPPORT" Classes="sectionTitle" />
-        <Button Classes="linkButton" Content="Support the developer ↗" Command="{Binding SupportDeveloperCommand}" />
+        <Button Classes="linkButton" HorizontalAlignment="Left" Content="Support the developer ↗" Command="{Binding SupportDeveloperCommand}" />
       </StackPanel>
     </Border>
 

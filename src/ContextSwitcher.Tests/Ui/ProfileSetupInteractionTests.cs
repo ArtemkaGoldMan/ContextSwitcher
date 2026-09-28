@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
@@ -225,6 +226,36 @@ public sealed class ProfileSetupInteractionTests : UiTest
 
             Assert.Equal("music", viewModel.Icon);
             Assert.Contains("selected", music.Classes);
+        });
+    }
+
+    /// <summary>
+    /// Every "+ Add" button sits on the same left edge as the rest of its card. The link-styled ones
+    /// used to size to their text and float in the middle of the card - reported as the UI not being
+    /// straight - while "+ Add app" alone was left-aligned.
+    /// </summary>
+    [Theory]
+    [InlineData(BrowserManagementMode.Urls)]
+    [InlineData(BrowserManagementMode.Groups)]
+    [InlineData(BrowserManagementMode.Profiles)]
+    public async Task EveryAddButtonSharesTheSameLeftEdge(BrowserManagementMode mode)
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            viewModel.BrowserMode = mode;
+            Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
+            ExpandSections(window);
+
+            // A list, not a dictionary: Docker has two "+ Add container" buttons, one per direction.
+            List<(string Label, double Left)> lefts = FindAll<Button>(window)
+                .Where(b => (b.Content as string)?.StartsWith("+ Add", StringComparison.Ordinal) == true && IsClickable(b))
+                .Select(b => ((string)b.Content!, Math.Round(b.TranslatePoint(new Point(0, 0), window)!.Value.X)))
+                .ToList();
+
+            Assert.True(lefts.Count >= 5, $"expected the add buttons to be on screen, found {lefts.Count}");
+            double appLeft = lefts.Single(entry => entry.Label == "+ Add app").Left;
+            Assert.All(lefts, entry => Assert.True(entry.Left == appLeft, $"{entry.Label} is at x={entry.Left}, not {appLeft}"));
         });
     }
 
