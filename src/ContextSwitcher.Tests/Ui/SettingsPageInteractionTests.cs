@@ -1,8 +1,11 @@
+using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Styling;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views.Pages;
+using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Tests.App;
 
 namespace ContextSwitcher.Tests.Ui;
@@ -91,8 +94,38 @@ public sealed class SettingsPageInteractionTests : UiTest
 
             Assert.DoesNotContain(FindAll<TextBlock>(window), t => t.Text?.Contains("timeout", StringComparison.OrdinalIgnoreCase) == true);
             Assert.Equal(
-                ["Keep history for"],
+                ["Theme", "Keep history for"],
                 FindAll<ComboBox>(window).Where(IsClickable).Select(AutomationProperties.GetName));
+        });
+    }
+
+    /// <summary>
+    /// Choosing a theme recolors the app at once - no restart - and "Match macOS" hands it back to
+    /// the system's appearance.
+    /// </summary>
+    [Fact]
+    public async Task ChoosingAThemeAppliesItAtOnce()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            UiScenario scenario = UiScenario.WithTwoProfiles();
+            SettingsViewModel viewModel = scenario.Settings();
+            Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 1400);
+            Application app = Application.Current!;
+
+            Assert.Equal(ThemeVariant.Default, app.RequestedThemeVariant);
+
+            ChooseFromDropdown(window, Dropdown(window, "Theme"), "Dark");
+            PumpUntil(WaitUntil(() => app.RequestedThemeVariant == ThemeVariant.Dark));
+            Settle(window);
+
+            Assert.Equal(AppearanceMode.Dark, AppHost.Configuration.Appearance);
+            Assert.Equal(ThemeVariant.Dark, window.ActualThemeVariant);
+
+            ChooseFromDropdown(window, Dropdown(window, "Theme"), "Match macOS");
+            PumpUntil(WaitUntil(() => app.RequestedThemeVariant == ThemeVariant.Default));
+
+            Assert.Equal(AppearanceMode.System, AppHost.Configuration.Appearance);
         });
     }
 

@@ -32,6 +32,10 @@
     <Border Classes="panel">
       <StackPanel Spacing="10">
         <TextBlock Text="APPEARANCE" Classes="sectionTitle" />
+        <ctl:FormRow Title="Theme" Description="Match macOS follows the system's light or dark appearance as it changes.">
+          <ComboBox ItemsSource="{Binding AppearanceChoices}" SelectedItem="{Binding SelectedAppearance}" AutomationProperties.Name="Theme" />
+        </ctl:FormRow>
+        <Border Classes="divider" />
         <ctl:FormRow
           Title="Show in the Dock"
           Description="Off, Context Switcher lives only in the menu bar. On, it also appears in the Dock and in ⌘-Tab. Applies the next time the app starts.">

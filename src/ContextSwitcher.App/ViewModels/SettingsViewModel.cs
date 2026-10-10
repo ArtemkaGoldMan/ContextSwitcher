@@ -24,6 +24,7 @@ public sealed class SettingsViewModel : ViewModelBase
     private readonly IPermissionsChecker permissionsChecker;
     private readonly IProcessRunner processRunner;
 
+    private Choice<AppearanceMode> selectedAppearance;
     private bool showDockIcon;
     private bool checkForUpdates;
     private bool analyticsEnabled;
@@ -40,6 +41,7 @@ public sealed class SettingsViewModel : ViewModelBase
         this.processRunner = processRunner;
         this.Updates = updates;
 
+        this.selectedAppearance = this.AppearanceChoices.First(c => c.Value == AppHost.Configuration.Appearance);
         this.showDockIcon = AppHost.Configuration.ShowDockIcon;
         this.checkForUpdates = AppHost.Configuration.CheckForUpdates;
         this.analyticsEnabled = AppHost.Configuration.Analytics.Enabled;
@@ -51,6 +53,27 @@ public sealed class SettingsViewModel : ViewModelBase
         this.SupportDeveloperCommand = new RelayCommand(() => this.OpenUrl(AppLinks.Support));
 
         _ = this.RefreshPermissionsAsync();
+    }
+
+    /// <summary>Match macOS, light or dark - applied the moment it is saved.</summary>
+    public IReadOnlyList<Choice<AppearanceMode>> AppearanceChoices { get; } =
+    [
+        new(AppearanceMode.System, "Match macOS"),
+        new(AppearanceMode.Light, "Light"),
+        new(AppearanceMode.Dark, "Dark")
+    ];
+
+    public Choice<AppearanceMode> SelectedAppearance
+    {
+        get => this.selectedAppearance;
+        set
+        {
+            // A ComboBox writes null while its items are being swapped; that is not a choice.
+            if (value is not null && this.SetProperty(ref this.selectedAppearance, value))
+            {
+                this.QueueSave();
+            }
+        }
     }
 
     public bool ShowDockIcon
@@ -211,6 +234,7 @@ public sealed class SettingsViewModel : ViewModelBase
         // The switch timeout is carried over untouched: nothing reads it yet, so it is not offered.
         AppConfiguration updated = AppHost.Configuration with
         {
+            Appearance = this.SelectedAppearance.Value,
             ShowDockIcon = this.ShowDockIcon,
             CheckForUpdates = this.CheckForUpdates,
             Analytics = new AnalyticsConfiguration { Enabled = this.AnalyticsEnabled, RetentionDays = this.SelectedRetention.Value }

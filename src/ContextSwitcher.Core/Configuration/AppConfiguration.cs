@@ -32,6 +32,12 @@ public sealed record AppConfiguration
     public bool ShowDockIcon { get; init; }
 
     /// <summary>
+    /// Gets or sets whether the app's windows are light, dark, or follow macOS. A file written before
+    /// this setting existed reads as following macOS, which is what the app always did.
+    /// </summary>
+    public AppearanceMode Appearance { get; init; } = AppearanceMode.System;
+
+    /// <summary>
     /// Gets or sets a value indicating whether the app looks for a new version on GitHub once a day.
     /// It only ever offers one; installing is always the user's click. Defaults to on, which a file
     /// written before this setting existed also reads as.
