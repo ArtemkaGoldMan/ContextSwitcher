@@ -89,7 +89,7 @@ public sealed class AutomationPlanBuilder
         //
         // The previous context is what decides it: leaving a profile that enabled Focus still needs
         // clearing, even though the target doesn't want Focus itself.
-        if (!target.Focus.Enabled && previous?.Focus.Enabled != true)
+        if (!UsesFocus(target) && (previous is null || !UsesFocus(previous)))
         {
             return;
         }
@@ -102,10 +102,22 @@ public sealed class AutomationPlanBuilder
             criticalTypes,
             new Dictionary<string, string>
             {
-                ["enabled"] = target.Focus.Enabled.ToString(),
-                ["modeName"] = target.Focus.ModeName
+                ["enabled"] = UsesFocus(target).ToString(),
+                ["modeName"] = target.Focus.ModeName,
+
+                // What to turn off when the target wants no Focus: the mode the profile being left
+                // turned on, each having its own Off Shortcut.
+                ["previousModeName"] = previous is not null && UsesFocus(previous) ? previous.Focus.ModeName.Trim() : string.Empty
             }));
     }
+
+    /// <summary>
+    /// Whether a profile turns a Focus on. Enabled with no mode named turns nothing on - a config
+    /// left that way used to count as using Focus, so every switch to it ran the "Off" Shortcut and
+    /// warned that it was missing, for a profile that never had a Focus at all.
+    /// </summary>
+    private static bool UsesFocus(ContextDefinition context) =>
+        context.Focus.Enabled && !string.IsNullOrWhiteSpace(context.Focus.ModeName);
 
     private static void AddLaunchApplications(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
     {

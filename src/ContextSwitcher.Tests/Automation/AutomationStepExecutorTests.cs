@@ -54,6 +54,51 @@ public sealed class AutomationStepExecutorTests
     }
 
     /// <summary>
+    /// VS Code, Cursor and other Electron apps answer "quit" at once and are gone a second or two
+    /// later. Checking only once, straight after the quit, reported them as "Could not close" on
+    /// switch after switch while they were closing fine; the check now waits for them.
+    /// </summary>
+    [Fact]
+    public async Task AnAppThatTakesAMomentToQuitIsNotReportedAsStillRunning()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(0, string.Empty, string.Empty, false)); // quit
+        scriptRunner.Enqueue(new ProcessResult(0, "true", string.Empty, false));     // still closing
+        scriptRunner.Enqueue(new ProcessResult(0, "true", string.Empty, false));     // still closing
+        scriptRunner.Enqueue(new ProcessResult(0, "false", string.Empty, false));    // gone
+
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
+
+        AutomationResult result = await executor.ExecuteAsync(CloseApplicationsStep(["Visual Studio Code"], isCritical: false), CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
+        Assert.Equal(4, scriptRunner.Scripts.Count);
+    }
+
+    /// <summary>
+    /// An app that really does not quit - a "save changes?" sheet waiting on the user - is still
+    /// reported, after a bounded number of checks that all fit inside the app's share of the step.
+    /// A check that fails says nothing either way, so it does not count as "gone".
+    /// </summary>
+    [Fact]
+    public async Task AnAppThatNeverQuitsIsStillReportedWithinItsBudget()
+    {
+        FakeScriptRunner scriptRunner = new() { DefaultResult = new ProcessResult(0, "true", string.Empty, false) };
+        scriptRunner.Enqueue(new ProcessResult(0, string.Empty, string.Empty, false)); // quit
+        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "AppleEvent timed out", false)); // unknown
+
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
+        AutomationStep step = CloseApplicationsStep(["TextEdit"], isCritical: false);
+
+        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Warning, result.Status);
+        Assert.Equal("Could not close: TextEdit.", result.Message);
+        Assert.InRange(scriptRunner.Scripts.Count, 3, 16);
+        Assert.All(scriptRunner.Timeouts, timeout => Assert.True(timeout <= step.Timeout * 0.5));
+    }
+
+    /// <summary>
     /// A graceful quit can block indefinitely on a modal "save this document?" sheet. Every script
     /// used to get the whole step budget, so the first such app consumed all of it: the step-level
     /// timeout fired mid-quit, the "Could not close" warning never ran, and later apps in the list
@@ -359,6 +404,67 @@ public sealed class AutomationStepExecutorTests
         Assert.Equal(["run", "ContextSwitcher - Focus Off"], call.Arguments);
     }
 
+    /// <summary>Leaving a profile's Focus runs that mode's own Off Shortcut.</summary>
+    [Fact]
+    public async Task TurningFocusOffRunsTheLeftModesOwnOffShortcut()
+    {
+        FakeProcessRunner processRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+
+        AutomationResult result = await executor.ExecuteAsync(FocusStep(enabled: false, modeName: string.Empty, isCritical: false, previousModeName: "Do Not Disturb"), CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
+        Assert.Equal(["run", "ContextSwitcher - Focus Off - Do Not Disturb"], Assert.Single(processRunner.Calls).Arguments);
+    }
+
+    /// <summary>Without it, the original single "Focus Off" someone built by hand still works.</summary>
+    [Fact]
+    public async Task TurningFocusOffFallsBackToTheOriginalOffShortcut()
+    {
+        FakeProcessRunner processRunner = new();
+        processRunner.Enqueue(new ProcessResult(1, string.Empty, "Error: The operation couldn’t be completed. Couldn’t find shortcut", false));
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+
+        AutomationResult result = await executor.ExecuteAsync(FocusStep(enabled: false, modeName: string.Empty, isCritical: false, previousModeName: "Work"), CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
+        Assert.Equal(
+            [["run", "ContextSwitcher - Focus Off - Work"], ["run", "ContextSwitcher - Focus Off"]],
+            processRunner.Calls.Select(call => call.Arguments.ToArray()));
+    }
+
+    /// <summary>
+    /// A Shortcut that exists but fails says why - not "create it", which sent the user looking for
+    /// a Shortcut that was right there in their list.
+    /// </summary>
+    [Fact]
+    public async Task AShortcutThatRunsButFailsReportsMacOSsReason()
+    {
+        FakeProcessRunner processRunner = new();
+        processRunner.Enqueue(new ProcessResult(1, string.Empty, "Error: The action could not run because a Focus named “Reading” does not exist on this device.", false));
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+
+        AutomationResult result = await executor.ExecuteAsync(FocusStep(enabled: false, modeName: string.Empty, isCritical: false, previousModeName: "Reading"), CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Warning, result.Status);
+        Assert.Single(processRunner.Calls);
+        Assert.Equal(
+            "Shortcut 'ContextSwitcher - Focus Off - Reading' ran but failed: The action could not run because a Focus named “Reading” does not exist on this device.",
+            result.Message);
+    }
+
+    [Fact]
+    public async Task AMissingShortcutSaysHowToCreateIt()
+    {
+        FakeProcessRunner processRunner = new() { DefaultResult = new ProcessResult(1, string.Empty, "Error: Couldn’t find shortcut", false) };
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+
+        AutomationResult result = await executor.ExecuteAsync(FocusStep(enabled: true, modeName: "Work", isCritical: false), CancellationToken.None);
+
+        Assert.StartsWith("Shortcut 'ContextSwitcher - Focus Work' doesn't exist yet.", result.Message, StringComparison.Ordinal);
+        Assert.Contains("Create it", result.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task ExecuteAsyncSetFocusModeFailsWhenCriticalAndShortcutMissing()
     {
@@ -383,19 +489,22 @@ public sealed class AutomationStepExecutorTests
         return new AutomationStep("ControlMedia.work", AutomationStepType.ControlMedia, "Control media", isCritical, TimeSpan.FromSeconds(8), arguments);
     }
 
-    private static AutomationStep FocusStep(bool enabled, string modeName, bool isCritical)
+    private static AutomationStep FocusStep(bool enabled, string modeName, bool isCritical, string previousModeName = "")
     {
         Dictionary<string, string> arguments = new()
         {
             ["enabled"] = enabled ? "True" : "False",
-            ["modeName"] = modeName
+            ["modeName"] = modeName,
+            ["previousModeName"] = previousModeName
         };
         return new AutomationStep("SetFocusMode.work", AutomationStepType.SetFocusMode, "Set Focus mode", isCritical, TimeSpan.FromSeconds(10), arguments);
     }
 
     private static AutomationStepExecutor CreateExecutor(FakeProcessRunner processRunner, FakeScriptRunner scriptRunner, FakeClock clock)
     {
-        return new AutomationStepExecutor(processRunner, scriptRunner, new BrowserLauncher(processRunner, scriptRunner), clock);
+        // No wait between "is it still running?" checks, so a test of an app that never quits does
+        // not sit through the real interval.
+        return new AutomationStepExecutor(processRunner, scriptRunner, new BrowserLauncher(processRunner, scriptRunner), clock, quitConfirmInterval: TimeSpan.Zero);
     }
 
     private static AutomationStep CloseApplicationsStep(IReadOnlyList<string> apps, bool isCritical)

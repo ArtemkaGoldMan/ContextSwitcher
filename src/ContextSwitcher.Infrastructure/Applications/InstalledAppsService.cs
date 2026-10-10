@@ -19,7 +19,7 @@ public sealed class InstalledAppsService : IInstalledAppsService
     /// Where macOS keeps app bundles. <c>~/Applications</c> is per-user and often absent; a missing
     /// directory is skipped rather than treated as an error.
     /// </summary>
-    private static readonly string[] SearchDirectories =
+    private static readonly string[] DefaultSearchDirectories =
     [
         "/Applications",
         "/Applications/Utilities",
@@ -30,24 +30,27 @@ public sealed class InstalledAppsService : IInstalledAppsService
 
     private readonly IProcessRunner processRunner;
     private readonly ConfigPaths configPaths;
+    private readonly IReadOnlyList<string> searchDirectories;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="InstalledAppsService"/> class.
     /// </summary>
-    public InstalledAppsService(IProcessRunner processRunner, ConfigPaths configPaths)
+    /// <param name="searchDirectories">Overrides where apps are looked for, for tests.</param>
+    public InstalledAppsService(IProcessRunner processRunner, ConfigPaths configPaths, IReadOnlyList<string>? searchDirectories = null)
     {
         ArgumentNullException.ThrowIfNull(processRunner);
         ArgumentNullException.ThrowIfNull(configPaths);
 
         this.processRunner = processRunner;
         this.configPaths = configPaths;
+        this.searchDirectories = searchDirectories ?? DefaultSearchDirectories;
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<InstalledApp>> GetInstalledAppsAsync(CancellationToken cancellationToken)
     {
         List<string> bundlePaths = [];
-        foreach (string directory in SearchDirectories)
+        foreach (string directory in this.searchDirectories)
         {
             bundlePaths.AddRange(EnumerateBundles(directory));
         }
@@ -76,17 +79,51 @@ public sealed class InstalledAppsService : IInstalledAppsService
         return apps;
     }
 
+    /// <summary>
+    /// The bundles in <paramref name="directory"/>, and in its plain subfolders one level down.
+    /// Plenty of installers put their app in a folder of its own - "Adobe Photoshop 2025", "Setapp",
+    /// "Microsoft Office" - and an app the picker cannot see is one the user has to type by name.
+    /// Bundles are not opened: an .app's own Contents are no place to look for other apps.
+    /// </summary>
     private static IEnumerable<string> EnumerateBundles(string directory)
     {
         try
         {
-            return Directory.Exists(directory)
-                ? Directory.EnumerateDirectories(directory, "*.app", SearchOption.TopDirectoryOnly).ToList()
-                : [];
+            if (!Directory.Exists(directory))
+            {
+                return [];
+            }
+
+            List<string> bundles = [];
+            foreach (string entry in Directory.EnumerateDirectories(directory, "*", SearchOption.TopDirectoryOnly))
+            {
+                if (entry.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
+                {
+                    bundles.Add(entry);
+                }
+                else
+                {
+                    bundles.AddRange(EnumerateNestedBundles(entry));
+                }
+            }
+
+            return bundles;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             // A protected or transient directory must not break the whole picker.
+            return [];
+        }
+    }
+
+    private static IEnumerable<string> EnumerateNestedBundles(string folder)
+    {
+        try
+        {
+            return Directory.EnumerateDirectories(folder, "*.app", SearchOption.TopDirectoryOnly).ToList();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
             return [];
         }
     }

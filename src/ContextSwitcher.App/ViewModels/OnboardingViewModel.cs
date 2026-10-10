@@ -9,7 +9,7 @@ namespace ContextSwitcher.App.ViewModels;
 /// <summary>
 /// The first-run wizard. A fresh install otherwise lands on a single empty profile called
 /// "Default", which means a context <em>switcher</em> that cannot switch - the worst possible first
-/// impression for the product thesis in <c>docs/idea.md</c> (beat Bunch on approachability).
+/// impression for an app whose whole point is being easier to set up than hand-written configs.
 /// This walks the user to two working profiles and a successful switch.
 /// </summary>
 public sealed class OnboardingViewModel : ViewModelBase
@@ -45,11 +45,11 @@ public sealed class OnboardingViewModel : ViewModelBase
         this.switchService = switchService;
 
         this.Work = new OnboardingProfileViewModel(
-            "work", "Work", "WORK", "#2F6FED",
+            "work", "Work", "WORK", "#2F6FED", "briefcase",
             new AppPickerViewModel(installedAppsService, () => this.Work!.Apps.Select(a => a.Name), name => this.Work!.AddApp(name)));
 
         this.Personal = new OnboardingProfileViewModel(
-            "personal", "Personal", "HOME", "#20A67A",
+            "personal", "Personal", "HOME", "#20A67A", "house",
             new AppPickerViewModel(installedAppsService, () => this.Personal!.Apps.Select(a => a.Name), name => this.Personal!.AddApp(name)));
 
         this.NextCommand = new RelayCommand(this.GoNext, () => this.CanGoNext);

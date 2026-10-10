@@ -1,52 +1,294 @@
 <div align="center">
 
-<img src="docs/images/icon.png" width="128" alt="ContextSwitcher">
+<img src="docs/images/icon.png" width="112" alt="">
 
 # ContextSwitcher
 
-**One click flips your Mac between work and personal.**
+**Switch your Mac between work and personal in one click.**
 
-Opens the apps you need, closes the ones you don't, and keeps the two from bleeding into each other.
+It opens the apps you need, quits the ones you don't, opens your tabs, turns on Focus and starts
+your music — all from the menu bar.
 
+[![Latest release](https://img.shields.io/github/v/release/ArtemkaGoldMan/ContextSwitcher?label=download&color=0A84FF)](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/latest)
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-000000?logo=apple&logoColor=white)
-![Apple silicon](https://img.shields.io/badge/Apple%20silicon-arm64-555555)
-![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
-![License MIT](https://img.shields.io/badge/license-MIT-2F6FED)
-![Tests 207](https://img.shields.io/badge/tests-207%20passing-20A67A)
+![Apple silicon](https://img.shields.io/badge/Apple%20silicon-M1%20and%20later-555555)
+![Free and open source](https://img.shields.io/badge/free-MIT-20A67A)
 
-<img src="docs/images/dashboard.png" width="330" alt="The ContextSwitcher menu bar popover">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-dark.png">
+  <img src="docs/images/dashboard-light.png" width="360" alt="The ContextSwitcher dashboard under the menu bar: the active Work profile, buttons to switch to Personal or Study, quick links, notes and a chart of the last seven days">
+</picture>
+
+[Install](#install) · [Getting started](#getting-started) · [Updates](#updates) · [FAQ](#faq)
 
 </div>
 
 ---
 
-## What it does
+## Why
 
-You finish work. Slack is still pinging, your IDE is still open, four work tabs are still loaded, and
-Do Not Disturb is still on from this morning. Switching context by hand takes five minutes and you
-never do all of it.
+You finish work. Slack is still pinging, your editor is still open, a dozen work tabs are still
+loaded and Do Not Disturb is still on from the morning. Switching by hand takes five minutes, so
+you never do all of it — and work follows you into the evening.
 
-ContextSwitcher does it in one click. You define a **profile** — a set of apps to open, apps to quit,
-browser tabs, a Focus mode, Docker containers — and switching to that profile
-applies all of it.
+ContextSwitcher keeps a **profile** for each part of your day. Click one, and your Mac turns into it:
 
-- **Launch and quit apps** — graceful `Cmd+Q`-style quits, never force-kills
-- **Browser tabs** — open URLs, activate tab groups, or launch a whole Chrome/Brave profile
-- **Focus mode** — via a Shortcut you create, since macOS has no Focus scripting API
-- **Docker** — start the containers this context needs, stop the ones it doesn't
-- **Media** — start an Apple Music or Spotify playlist
-- **Global hotkeys** — bind a key to each profile
-- **Time tracking** — see the work/personal balance of your week, stored only on your Mac
+| | What a profile can do |
+| --- | --- |
+| **Apps** | Open apps when you switch in, and quit them when you switch out — the polite way, like ⌘Q, never force-quit |
+| **Browser** | Open web pages, Chrome tab groups or a whole browser profile, without duplicating tabs that are already open |
+| **Focus** | Turn on a macOS Focus — Do Not Disturb, Work, Sleep… — and turn it off again when you leave |
+| **Music** | Start an Apple Music or Spotify playlist |
+| **Docker** | Start the containers this profile needs, stop the ones it doesn't |
+| **Dashboard** | Keep a few links and notes for this profile one click away |
+| **Time** | See how your week splits between work and the rest of your life, stored only on your Mac |
 
-Everything is optional. A profile that only opens two apps is a perfectly good profile.
+Every part is optional. A profile that only opens two apps is a perfectly good profile.
 
 ## Install
 
-> **Prebuilt downloads aren't published yet.** The release workflow is still being built, so today
-> the way to run it is from source. The download instructions below are what they'll be, and are kept
-> here so the process is documented in one place.
+You need a Mac with **Apple silicon** (M1 or later) and **macOS 13 Ventura or later**.
 
-### From source
+> [!NOTE]
+> The first release is on its way. Until it is published, run ContextSwitcher [from source](#build-from-source).
+
+### Option 1 — one command (recommended)
+
+Open **Terminal** (press ⌘Space, type *Terminal*, press Return), paste this and press Return:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ArtemkaGoldMan/ContextSwitcher/main/install.sh | bash
+```
+
+It downloads the latest version, checks it isn't damaged, puts it in Applications and opens it.
+Nothing else to do: macOS doesn't ask you to approve it.
+
+### Option 2 — Homebrew
+
+If you use [Homebrew](https://brew.sh):
+
+```bash
+brew install --cask artemkagoldman/tap/contextswitcher
+```
+
+### Option 3 — download it yourself
+
+1. Download **ContextSwitcher-x.y.z.dmg** from the [latest release](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/latest).
+2. Open it and drag **ContextSwitcher** onto **Applications**.
+3. Allow it to open — once. macOS will say *"Apple could not verify ContextSwitcher is free of
+   malware"*. Either paste this into Terminal:
+
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
+   ```
+
+   or try to open the app, click **Done**, then go to **System Settings → Privacy & Security**,
+   scroll down to *"ContextSwitcher was blocked"* and click **Open Anyway**.
+
+<details>
+<summary><b>Why does macOS block it, and is that command safe?</b></summary>
+
+<br>
+
+macOS only opens downloaded apps without asking if the developer has paid Apple for a Developer
+ID ($99 a year) and had the app *notarised*. ContextSwitcher is a free hobby project, so it isn't.
+
+The command doesn't change any security settings. It removes the *"downloaded from the internet"*
+label from this one app, which has the same effect as **Open Anyway**. Options 1 and 2 take care of
+that label for you, so they skip this step.
+
+What you install is built by GitHub from the public source code in this repository, and every
+release is signed with the project's own certificate. The app checks that signature before it
+installs any update.
+
+</details>
+
+## Getting started
+
+### 1. A short setup
+
+The first time it opens, a three-step wizard creates a **Work** and a **Personal** profile. It
+suggests apps you actually have installed: tick **Launch** to open an app when you switch to that
+profile, and **Close** to quit it when you switch away. You can change everything later.
+
+<div align="center">
+<img src="docs/images/onboarding.png" width="560" alt="The setup wizard, choosing the apps for the Work profile">
+</div>
+
+### 2. Switch from the menu bar
+
+ContextSwitcher lives in the **menu bar** — look for the icon of two overlapping squares. It has no
+Dock icon (you can turn one on in Settings).
+
+- **Click the icon** and pick a profile to switch to it.
+- **Open Dashboard** shows the active profile, how long you've been in it, its quick links and notes,
+  and the last seven days. Click anywhere else to close it.
+- **Open App** opens the main window, where you set profiles up.
+
+### 3. Set up your profiles
+
+The **Profiles** page lists every profile: **Activate** switches to it, **Edit** changes what it does.
+
+<div align="center">
+<img src="docs/images/profiles.png" width="720" alt="The Profiles page with Work, Personal and Study">
+</div>
+
+Editing a profile is mostly picking from lists: apps from the apps you have installed, web pages
+from the tabs you have open, playlists from your library, containers from Docker.
+
+<div align="center">
+<img src="docs/images/profile-setup.png" width="720" alt="Editing the Work profile: its name, color and icon, its apps and its browser pages">
+</div>
+
+### 4. Turn on Focus (optional)
+
+macOS doesn't let other apps change Focus directly — only the **Shortcuts** app can. So for each
+Focus you use, ContextSwitcher needs two small shortcuts: one that turns it on and one that turns it
+off. You don't build them yourself:
+
+1. In **Focus & music**, choose a **Focus mode**.
+2. Click **Create it**. Shortcuts opens and asks to **Add Shortcut** — click it. The mode now shows
+   **Ready**.
+3. If a second **Create it** appears — for the shortcut that turns Focus off — do the same.
+
+<div align="center">
+<img src="docs/images/profile-setup-focus.png" width="720" alt="The Focus & music and Advanced sections of a profile, with Do Not Disturb ready">
+</div>
+
+A Focus you created yourself needs the two shortcuts made by hand — see
+[Focus and Siri](docs/shortcuts-integration.md).
+
+### 5. Allow ContextSwitcher to control other apps
+
+The first time a switch quits an app, reads your browser's tabs or starts music, macOS asks whether
+ContextSwitcher may control that app. Click **OK**. **Settings → Permission** shows whether it's
+allowed and opens the right page in System Settings if it isn't. More in
+[Permissions](docs/automation-permissions.md).
+
+<div align="center">
+<img src="docs/images/settings.png" width="720" alt="Settings: Dock icon, permission status, time tracking and updates">
+</div>
+
+### When something doesn't go to plan
+
+One step going wrong doesn't stop the rest of the switch. If an app refused to quit (it had unsaved
+work, say) or a shortcut is missing, a card at the bottom of the Profiles page says what happened
+and how to fix it. It stays until you close it or switch again.
+
+<div align="center">
+<img src="docs/images/switch-problems.png" width="720" alt="A card at the bottom of the window: Switched to Personal, with warnings — Visual Studio Code had unsaved changes">
+</div>
+
+### See where your time goes
+
+**Stats** shows how long you spent in each profile, per day, for the last week or month. It's
+recorded only on your Mac and you can turn it off in Settings.
+
+<div align="center">
+<img src="docs/images/stats.png" width="720" alt="The Stats page: a column per day split by profile">
+</div>
+
+## Updates
+
+ContextSwitcher checks for a new version once a day. When there is one, **Update to x.y.z…**
+appears in the menu bar menu and in **Settings → Updates**. Click **Install and restart**: it
+downloads the new version, checks it is signed with the same certificate as the one you have, and
+restarts into it.
+
+- Your profiles, settings and history are kept.
+- You don't need the Terminal command again, and macOS doesn't ask for permissions again.
+- Prefer to check yourself? Turn off **Check automatically** and use **Check now**.
+
+Running the one-command install again also updates, and so does `brew upgrade --greedy` if you
+installed with Homebrew.
+
+## Uninstall
+
+1. Click the menu bar icon → **Quit**.
+2. Drag **ContextSwitcher** from Applications to the Bin — or `brew uninstall --cask contextswitcher`.
+3. To remove your profiles and history too:
+
+   ```bash
+   rm -rf ~/.config/ContextSwitcher
+   ```
+
+4. If you created Focus shortcuts, delete the ones named *ContextSwitcher - Focus …* in Shortcuts.
+
+## Privacy
+
+- **No account, no tracking, no analytics sent anywhere.** Recorded time stays in
+  `~/.config/ContextSwitcher` on your Mac.
+- **One network request a day**, to GitHub, to see whether there is a new version. Turn it off in
+  **Settings → Updates**.
+- It never reads your browsing history. It only looks at open tabs to avoid opening a page twice,
+  or when you pick one in the profile editor.
+- It only uses a short, fixed set of macOS's own tools to do its job — AppleScript, `open`,
+  Shortcuts, and Docker if you use it.
+
+## FAQ
+
+<details>
+<summary><b>"ContextSwitcher can't be opened" / "Apple could not verify…"</b></summary>
+
+<br>
+
+You downloaded the `.dmg` in a browser. Allow it once — see [step 3 of Option 3](#option-3--download-it-yourself).
+</details>
+
+<details>
+<summary><b>An app didn't quit when I switched</b></summary>
+
+<br>
+
+ContextSwitcher asks apps to quit the way ⌘Q does, so an app with unsaved work shows its save
+dialog and stays open. The card on the Profiles page names it. Save your work and switch again, or
+untick **Close** for that app.
+</details>
+
+<details>
+<summary><b>Focus didn't change</b></summary>
+
+<br>
+
+Open the profile and check the Focus mode shows **Ready**. If it says a shortcut is missing, click
+**Create it** and add it in Shortcuts.
+</details>
+
+<details>
+<summary><b>Does it work on Intel Macs?</b></summary>
+
+<br>
+
+No — releases are built for Apple silicon (M1 and later) only.
+</details>
+
+<details>
+<summary><b>Can I switch with Siri, a keyboard shortcut or a script?</b></summary>
+
+<br>
+
+Yes. Every switch can be run from the command line, so a shortcut in the Shortcuts app can do it —
+and Siri or a keyboard shortcut can run that:
+
+```bash
+/Applications/ContextSwitcher.app/Contents/MacOS/ContextSwitcher switch --context work
+```
+
+See [Focus and Siri](docs/shortcuts-integration.md) for the commands and how to set it up.
+</details>
+
+<details>
+<summary><b>Where are my settings? Can I edit them by hand?</b></summary>
+
+<br>
+
+In `~/.config/ContextSwitcher/settings.json`. Yes — see [Configuration](docs/configuration.md).
+The app checks the file and keeps backups, so a typo can't lose your profiles.
+</details>
+
+## Build from source
+
+You need the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
 ```bash
 git clone https://github.com/ArtemkaGoldMan/ContextSwitcher.git
@@ -54,164 +296,24 @@ cd ContextSwitcher
 dotnet run --project src/ContextSwitcher.App/ContextSwitcher.App.csproj
 ```
 
-Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download). The app lives in the menu bar —
-look for the two-squares icon rather than a Dock icon or a window.
-
-To build a real `.app` and a `.dmg` instead of running from the project:
-
-```bash
-./scripts/build-dmg.sh      # dist/ContextSwitcher-0.1.0.dmg
-```
-
-### From a release
-
-Download the `.dmg` from [Releases](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases) and
-drag the app to `/Applications`.
-
-ContextSwitcher is **not notarised by Apple** — that needs a paid Developer ID, and this is a free
-MIT project. macOS will therefore refuse to open it on first launch. Clear the quarantine flag:
-
-```bash
-xattr -d com.apple.quarantine /Applications/ContextSwitcher.app
-```
-
-Or open it once via **System Settings → Privacy & Security → Open Anyway**. You only need to do this
-once per install.
-
-## First run
-
-A short wizard sets up two profiles and switches you into the first one, so you see the app do its
-job immediately. App suggestions are pre-filled from what's actually installed on your Mac.
-
-<div align="center">
-<img src="docs/images/onboarding-apps.png" width="560" alt="The first-run wizard, choosing work apps">
-</div>
-
-Each app has a **Quit on leave** toggle. Leave it on and the app closes when you switch away; untick
-it to keep the app running. You can change all of this later.
-
-## Using it
-
-Click the menu bar icon to switch, or press the hotkey you assigned. From the popover you can reach
-the main window, where profiles are created and edited.
-
-<div align="center">
-<img src="docs/images/profiles.png" width="700" alt="The Profiles page">
-</div>
-
-<div align="center">
-<img src="docs/images/stats.png" width="700" alt="The Stats page showing a work/personal balance chart">
-</div>
-
-## Permissions
-
-macOS gates the things ContextSwitcher does. It asks for the minimum, and every switch works without
-any of them — you just get warnings for the parts that need one.
-
-| Permission | Needed for | If you skip it |
-| --- | --- | --- |
-| **Automation** | Quitting apps, tabs, media | Those steps report a warning |
-| **Accessibility** | Global hotkeys only | Hotkeys silently never fire |
-
-Settings shows the live status of both, with a button that opens the right pane. See
-[docs/automation-permissions.md](docs/automation-permissions.md).
-
-<div align="center">
-<img src="docs/images/settings.png" width="700" alt="Settings, showing live Automation and Accessibility permission status">
-</div>
-
-> **Known limitation.** Because the app isn't signed with an Apple Developer ID, macOS ties the
-> Accessibility grant to the exact build. **After updating, you'll need to grant it again** or
-> hotkeys stop working. Settings will show it as "Not granted" when this happens.
-
-## Command line
-
-Every switch is scriptable, which is how the macOS Shortcuts and Siri integration works.
-
-```bash
-ContextSwitcher switch --context work      # switch profile
-ContextSwitcher switch --context work --dry-run   # show the steps, change nothing
-ContextSwitcher status                     # what's active now
-ContextSwitcher list-contexts              # every configured profile
-ContextSwitcher validate-config            # check settings.json
-```
-
-Add `--json` to any of them for machine-readable output.
-
-| Exit code | Meaning |
-| --- | --- |
-| `0` | Success |
-| `1` | General failure |
-| `2` | Invalid arguments |
-| `3` | Unknown context |
-| `4` | Configuration invalid |
-| `5` | Succeeded with warnings |
-| `6` | Another switch is already running |
-
-See [docs/shortcuts-integration.md](docs/shortcuts-integration.md) for Siri and Shortcuts setup.
-
-## Configuration
-
-Profiles live in `~/.config/ContextSwitcher/settings.json`. Everything in the UI writes to that file,
-and you can edit it directly if you prefer.
-
-```json
-{
-  "id": "work",
-  "displayName": "Work",
-  "menuBarLabel": "WORK",
-  "accentColor": "#2F6FED",
-  "launchApps": ["Slack", "Visual Studio Code"],
-  "closeApps": ["Slack", "Visual Studio Code"],
-  "browser_management": {
-    "mode": "urls",
-    "browser": "Chrome",
-    "urls": ["https://mail.google.com/", "https://github.com/notifications"],
-    "avoid_duplicate_tabs": true
-  },
-  "focus": { "enabled": true, "modeName": "Work" }
-}
-```
-
-`closeApps` lists what to quit **when you leave** this profile — see
-[docs/configuration.md](docs/configuration.md) for the full schema and why it works that way.
-
-## Privacy
-
-Everything stays on your Mac. There is no account, no telemetry, and no network call of any kind.
-
-- Time tracking is written to `~/.config/ContextSwitcher/analytics.jsonl` and never leaves the machine
-- The app never reads your browsing history — it only compares the startup URLs you configured
-- Logs contain app names and profile ids, never file contents or page contents
-- Every external command is checked against an allowlist before it runs
-
-## Building and contributing
-
-```bash
-dotnet build            # build
-dotnet test             # 166 tests
-./scripts/build-icons.sh   # regenerate the app icon (needs librsvg)
-```
-
-The architecture, config schema and macOS command templates are specified in
-[agent.md](agent.md) — start there before changing behaviour.
+`dotnet test` runs the tests. [Release process](docs/release-process.md) covers building the `.app`,
+signing and publishing; [agent.md](agent.md) is the engineering spec — read it before changing how
+the app behaves.
 
 ## Documentation
 
 | | |
 | --- | --- |
-| [Configuration](docs/configuration.md) | Full `settings.json` schema with examples |
-| [Automation permissions](docs/automation-permissions.md) | What macOS asks for and why |
-| [Shortcuts and Siri](docs/shortcuts-integration.md) | Focus modes, voice control, CLI triggers |
-| [Release process](docs/release-process.md) | Tagging, packaging, publishing |
+| [Permissions](docs/automation-permissions.md) | What macOS asks for, and what to do when a step is blocked |
+| [Focus and Siri](docs/shortcuts-integration.md) | Focus shortcuts, Siri, and the command line |
+| [Configuration](docs/configuration.md) | Every field in `settings.json`, with examples |
+| [Release process](docs/release-process.md) | Signing, publishing and how updates work |
 
 ## Support
 
-The app is free and always will be — every feature, no license, nothing gated. If it ever saves you
-time and you feel like it, there'll be a "buy me a beer" link here. That's the whole business model:
-no subscriptions, no paid tier, nothing behind a key.
+ContextSwitcher is free and always will be — every feature, no account, nothing locked. If it saves
+you time, **Support the developer** in the app is the way to say thanks.
 
 ## License
 
-[MIT](LICENSE). Icons from [Lucide](https://lucide.dev) (ISC) — see
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+[MIT](LICENSE). Icons from [Lucide](https://lucide.dev); see [third-party notices](THIRD-PARTY-NOTICES.md).

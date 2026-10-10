@@ -74,6 +74,47 @@ public abstract class UiTest
         Settle(window);
     }
 
+    /// <summary>
+    /// Clicks a control that lives in a popup - a dropdown's list, a flyout's contents - which is
+    /// its own top level, so the window's coordinates mean nothing to it. Then settles
+    /// <paramref name="window"/>, where the click's effects get drawn.
+    /// </summary>
+    protected static void ClickInPopup(Window window, Control control)
+    {
+        TopLevel? root = TopLevel.GetTopLevel(control);
+        Assert.NotNull(root);
+        Point? topLeft = control.TranslatePoint(new Point(0, 0), root!);
+        Assert.True(topLeft.HasValue, "control is not connected to its popup");
+        Assert.True(control.Bounds.Width > 0 && control.Bounds.Height > 0, "control has no hit area to click");
+
+        Point centre = topLeft.Value + new Point(control.Bounds.Width / 2, control.Bounds.Height / 2);
+        root!.MouseMove(centre, RawInputModifiers.None);
+        root.MouseDown(centre, MouseButton.Left, RawInputModifiers.None);
+        root.MouseUp(centre, MouseButton.Left, RawInputModifiers.None);
+        Settle(window);
+    }
+
+    /// <summary>
+    /// Opens a dropdown by clicking it and picks the entry whose text reads <paramref name="label"/>,
+    /// the way a person would - so the binding the choice goes through is the real one.
+    /// </summary>
+    protected static void ChooseFromDropdown(Window window, ComboBox comboBox, string label)
+    {
+        Click(window, comboBox);
+        Assert.True(comboBox.IsDropDownOpen, "the dropdown did not open");
+
+        int index = comboBox.Items.Cast<object?>().ToList().FindIndex(item => item?.ToString() == label);
+        Assert.True(index >= 0, $"the dropdown has no \"{label}\"; it has: {string.Join(", ", comboBox.Items.Cast<object?>())}");
+
+        // A long list only realises what is on screen; scroll to the entry the way a person would.
+        comboBox.ScrollIntoView(index);
+        Settle(window);
+        Control? container = comboBox.ContainerFromIndex(index);
+        Assert.NotNull(container);
+        ClickInPopup(window, container!);
+        Assert.False(comboBox.IsDropDownOpen, "choosing an entry did not close the dropdown");
+    }
+
     /// <summary>Types into a control after focusing it.</summary>
     protected static void Type(Window window, TextBox target, string text)
     {

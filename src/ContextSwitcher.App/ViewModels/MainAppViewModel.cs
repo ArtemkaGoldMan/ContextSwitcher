@@ -16,6 +16,9 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
 {
     private readonly ConfigurationStore configurationStore;
     private readonly IInstalledAppsService installedAppsService;
+    private readonly ISystemCatalog catalog;
+    private readonly IProcessRunner processRunner;
+    private readonly IFocusShortcutInstaller focusShortcuts;
 
     private object currentPage;
 
@@ -27,13 +30,20 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         IPermissionsChecker permissionsChecker,
         IProcessRunner processRunner,
         IAnalyticsService analyticsService,
-        IInstalledAppsService installedAppsService)
+        IInstalledAppsService installedAppsService,
+        ISystemCatalog catalog,
+        IFocusShortcutInstaller focusShortcuts,
+        SwitchNoticeViewModel switchNotice,
+        UpdatesViewModel updates)
     {
+        this.focusShortcuts = focusShortcuts;
         this.configurationStore = configurationStore;
         this.installedAppsService = installedAppsService;
+        this.catalog = catalog;
+        this.processRunner = processRunner;
 
-        this.Profiles = new ProfilesViewModel(switchService, configurationStore, jsonStore, configPaths);
-        this.Settings = new SettingsViewModel(configurationStore, permissionsChecker, processRunner);
+        this.Profiles = new ProfilesViewModel(switchService, configurationStore, jsonStore, configPaths, switchNotice);
+        this.Settings = new SettingsViewModel(configurationStore, permissionsChecker, processRunner, updates);
         this.Stats = new StatsViewModel(analyticsService);
 
         this.Profiles.EditRequested += this.OnEditRequested;
@@ -71,6 +81,9 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
 
     public bool IsStatsActive => ReferenceEquals(this.CurrentPage, this.Stats);
 
+    /// <summary>Opens the Settings page - for the menu bar's "Update to …", whose button is there.</summary>
+    public void ShowSettings() => this.CurrentPage = this.Settings;
+
     public RelayCommand NavigateToProfilesCommand { get; }
 
     public RelayCommand NavigateToSettingsCommand { get; }
@@ -81,13 +94,12 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
     {
         this.Profiles.EditRequested -= this.OnEditRequested;
         this.Profiles.Dispose();
-        this.Settings.Dispose();
         this.Stats.Dispose();
     }
 
     private void OnEditRequested(object? sender, ContextDefinition? context)
     {
-        ProfileSetupViewModel setup = new(this.configurationStore, this.installedAppsService, context);
+        ProfileSetupViewModel setup = new(this.configurationStore, this.installedAppsService, this.catalog, this.processRunner, this.focusShortcuts, context);
         setup.Saved += this.OnProfileSetupFinished;
         setup.CancelRequested += this.OnProfileSetupFinished;
         this.CurrentPage = setup;

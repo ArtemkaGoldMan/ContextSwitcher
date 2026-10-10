@@ -18,6 +18,7 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
     private readonly ConfigurationStore configurationStore;
     private readonly IJsonStore jsonStore;
     private readonly ConfigPaths configPaths;
+    private readonly bool ownsNotice;
 
     private IReadOnlyList<ProfileRowViewModel> rows = [];
     private string? errorMessage;
@@ -26,9 +27,12 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
         IContextSwitchService switchService,
         ConfigurationStore configurationStore,
         IJsonStore jsonStore,
-        ConfigPaths configPaths)
+        ConfigPaths configPaths,
+        SwitchNoticeViewModel? notice = null)
     {
         this.switchService = switchService;
+        this.Notice = notice ?? new SwitchNoticeViewModel(DateTimeOffset.UtcNow);
+        this.ownsNotice = notice is null;
         this.configurationStore = configurationStore;
         this.jsonStore = jsonStore;
         this.configPaths = configPaths;
@@ -66,12 +70,19 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
 
     public bool HasErrorMessage => !string.IsNullOrEmpty(this.ErrorMessage);
 
+    /// <summary>What went wrong in the last switch, shown at the bottom of the window.</summary>
+    public SwitchNoticeViewModel Notice { get; }
+
     public RelayCommand AddCommand { get; }
 
     public void Dispose()
     {
         AppHost.ConfigurationChanged -= this.OnConfigurationOrStateChanged;
         AppHost.StateChanged -= this.OnConfigurationOrStateChanged;
+        if (this.ownsNotice)
+        {
+            this.Notice.Dispose();
+        }
     }
 
     private void OnConfigurationOrStateChanged(object? sender, EventArgs e) => this.Refresh();
@@ -93,20 +104,27 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
     private async Task ActivateAsync(ContextDefinition context)
     {
         this.ErrorMessage = null;
+        DateTimeOffset? lastSwitchBefore = AppHost.State.LastSwitchCompletedAt;
 
         ContextSwitchResult result = await this.switchService
             .SwitchAsync(new ContextSwitchRequest(context.Id, ContextSwitchSource.Dashboard), CancellationToken.None)
             .ConfigureAwait(true);
 
-        if (result.Status is ContextSwitchStatus.Failed)
-        {
-            this.ErrorMessage = $"Could not switch to {context.DisplayName}: {result.Status}.";
-        }
-
         CurrentContextState? state = await this.jsonStore
             .ReadAsync<CurrentContextState>(this.configPaths.StatePath)
             .ConfigureAwait(true);
         AppHost.UpdateState(state ?? new CurrentContextState());
+
+        // A switch that ran shows its own warnings in the notice, from the state it wrote. These two
+        // never got that far, so the notice is told directly.
+        if (result.Status is ContextSwitchStatus.Cancelled)
+        {
+            this.Notice.ShowRejected($"Couldn't switch to {context.DisplayName}", "Another switch was still running. Try again once it has finished.", result.CompletedAt);
+        }
+        else if (result.Status is ContextSwitchStatus.Failed && AppHost.State.LastSwitchCompletedAt == lastSwitchBefore)
+        {
+            this.Notice.ShowRejected($"Couldn't switch to {context.DisplayName}", "The switch stopped before it could finish. The app log has the details.", result.CompletedAt);
+        }
     }
 
     private async Task DuplicateAsync(ContextDefinition context)
@@ -142,8 +160,7 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
 
         AppConfiguration updated = AppHost.Configuration with
         {
-            Contexts = AppHost.Configuration.Contexts.Where(c => c.Id != context.Id).ToList(),
-            Hotkeys = AppHost.Configuration.Hotkeys.Where(h => h.ContextId != context.Id).ToList()
+            Contexts = AppHost.Configuration.Contexts.Where(c => c.Id != context.Id).ToList()
         };
 
         await this.SaveAsync(updated).ConfigureAwait(true);

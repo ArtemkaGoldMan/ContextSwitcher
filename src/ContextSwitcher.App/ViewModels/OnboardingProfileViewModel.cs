@@ -19,12 +19,14 @@ public sealed class OnboardingProfileViewModel : ViewModelBase
         string displayName,
         string menuBarLabel,
         string accentColor,
+        string icon,
         AppPickerViewModel appPicker)
     {
         this.Id = id;
         this.displayName = displayName;
         this.MenuBarLabel = menuBarLabel;
         this.AccentColor = accentColor;
+        this.Icon = icon;
         this.AppPicker = appPicker;
         this.AccentBrush = AccentColorParser.ToBrush(accentColor);
         this.Apps = [];
@@ -35,6 +37,9 @@ public sealed class OnboardingProfileViewModel : ViewModelBase
     public string MenuBarLabel { get; }
 
     public string AccentColor { get; }
+
+    /// <summary>The same icon the wizard shows for this profile, so it carries over once saved.</summary>
+    public string Icon { get; }
 
     public IBrush AccentBrush { get; }
 
@@ -83,6 +88,7 @@ public sealed class OnboardingProfileViewModel : ViewModelBase
             DisplayName = string.IsNullOrWhiteSpace(this.DisplayName) ? this.Id : this.DisplayName.Trim(),
             MenuBarLabel = this.MenuBarLabel,
             AccentColor = this.AccentColor,
+            Icon = this.Icon,
             LaunchApps = this.Apps.Where(a => a.LaunchOnEnter).Select(a => a.Name).ToList(),
             CloseApps = this.Apps.Where(a => a.CloseOnLeave).Select(a => a.Name).ToList()
         };

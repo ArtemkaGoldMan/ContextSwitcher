@@ -1,5 +1,46 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctl="using:ContextSwitcher.App.Controls">
+  <Styles.Resources>
+    <!-- One width for every value control in a FormRow - dropdowns and text boxes alike - so the
+         right-hand column is a single straight edge on every page. Wide enough for the longest
+         Focus entry ("Reduce Interruptions  Needs Shortcut"). -->
+    <x:Double x:Key="FieldWidth">280</x:Double>
+
+    <!-- One width for every "add from a list" flyout: apps, open tabs, containers. -->
+    <x:Double x:Key="PickerWidth">340</x:Double>
+  </Styles.Resources>
+
+  <!-- A labelled setting: label (and optional explanation) left, control right. See FormRow.cs. -->
+  <Style Selector="ctl|FormRow">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid ColumnDefinitions="*,Auto" MinHeight="32">
+          <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center" Margin="0,0,16,0">
+            <TextBlock Text="{TemplateBinding Title}" Classes="body" TextWrapping="Wrap" />
+            <TextBlock
+              Text="{TemplateBinding Description}"
+              Classes="caption"
+              TextWrapping="Wrap"
+              IsVisible="{Binding Description, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          </StackPanel>
+          <ContentPresenter
+            Grid.Column="1"
+            Name="PART_ContentPresenter"
+            Content="{TemplateBinding Content}"
+            ContentTemplate="{TemplateBinding ContentTemplate}"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Right" />
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+
+  <!-- Every value control sitting directly in a row is the same width; the class covers the few
+       that need a wrapper (a dropdown with something revealed under it). -->
+  <Style Selector="ctl|FormRow > ComboBox, ctl|FormRow > TextBox, ComboBox.field, TextBox.field">
+    <Setter Property="Width" Value="{StaticResource FieldWidth}" />
+  </Style>
   <!-- Card surface: the base building block for every section on every page. -->
   <Style Selector="Border.panel">
     <Setter Property="Background" Value="{DynamicResource CardBrush}" />
@@ -18,6 +59,21 @@
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
   </Style>
 
+  <!-- The main window's notice about a switch that had problems: an ordinary card, lifted off the
+       page by a shadow because it sits over the bottom of the window rather than in the list. Its
+       badge carries the status colour - amber for warnings, red when the switch did not happen. -->
+  <Style Selector="Border.panel.notice">
+    <Setter Property="BoxShadow" Value="0 4 14 0 #1F000000" />
+  </Style>
+
+  <Style Selector="Border.panel.notice Border.noticeBadge">
+    <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
+  </Style>
+
+  <Style Selector="Border.panel.notice.failure Border.noticeBadge">
+    <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
+  </Style>
+
   <!-- Thin horizontal rule used to separate rows inside a card instead of nesting boxes. -->
   <Style Selector="Border.divider">
     <Setter Property="Height" Value="1" />
@@ -25,11 +81,21 @@
     <Setter Property="Margin" Value="0,4" />
   </Style>
 
-  <!-- Small status chip (permission granted/not granted). Background is set per-instance via
-       PermissionStatusBrushConverter. -->
+  <!-- Small status chip (permission allowed / not allowed / checking), tinted from the palette's soft
+       status colours by class rather than by colours written into code. -->
   <Style Selector="Border.statusPill">
     <Setter Property="CornerRadius" Value="6" />
     <Setter Property="Padding" Value="8,3" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Background" Value="{DynamicResource NeutralSoftBrush}" />
+  </Style>
+
+  <Style Selector="Border.statusPill.allowed">
+    <Setter Property="Background" Value="{DynamicResource SuccessSoftBrush}" />
+  </Style>
+
+  <Style Selector="Border.statusPill.denied">
+    <Setter Property="Background" Value="{DynamicResource ErrorSoftBrush}" />
   </Style>
 
   <!-- Collapsible group of cards (Profile Setup's Environment/Advanced tiers). Transparent so the
@@ -113,18 +179,78 @@
     <Setter Property="Background" Value="{DynamicResource SelectedNavBrush}" />
   </Style>
 
-  <!-- Text-only action; accent-colored so it reads as a link, matching macOS convention. -->
+  <!-- Text-only action; accent-colored so it reads as a link, matching macOS convention. Every
+       "+ Add …" in the app is one of these. A link is never stretched: one that was sat centred in
+       its row while every other link hugged the left edge. -->
   <Style Selector="Button.linkButton">
     <Setter Property="Padding" Value="0" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
     <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
     <Setter Property="Cursor" Value="Hand" />
   </Style>
 
+  <!-- Hover and press only dim the text. Semi gives every button a grey box on hover, which put a
+       box behind a link the moment the pointer passed over it. -->
   <Style Selector="Button.linkButton:pointerover /template/ ContentPresenter">
     <Setter Property="Opacity" Value="0.75" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+  <Style Selector="Button.linkButton:pressed /template/ ContentPresenter">
+    <Setter Property="Opacity" Value="0.6" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+  <!-- A link that should not compete with the main one beside it ("Skip setup", the dashboard's
+       "Support the developer"). -->
+  <Style Selector="Button.linkButton.secondary">
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+  </Style>
+
+  <!-- One row in any list of things a profile holds - apps, URLs, tab groups, containers, quick
+       links, browser profiles - in Profile Setup and in onboarding alike: a leading icon, the name,
+       any toggles, and the remove button, all inside the same card. -->
+  <Style Selector="Border.listRow">
+    <Setter Property="Background" Value="{DynamicResource CardHoverBrush}" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="MinHeight" Value="44" />
+  </Style>
+
+  <!-- Text typed inside a list row: no box of its own, since the row already is one. -->
+  <Style Selector="TextBox.inRow">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBox.inRow:pointerover /template/ Border#PART_ContentPresenterBorder, TextBox.inRow:focus /template/ Border#PART_ContentPresenterBorder">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+  <!-- An entry in an "add from a list" flyout. Drawn like a dropdown's entry - regular weight, the
+       same height and hover - so picking an app and picking a Focus mode feel like the same act. -->
+  <Style Selector="Button.pickerItem">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Padding" Value="8,6" />
+    <Setter Property="MinHeight" Value="34" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="Button.pickerItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource SelectedNavBrush}" />
   </Style>
 
   <!-- Main App window's left-hand page navigation (agent.md section 11.1.2). -->
@@ -214,9 +340,36 @@
     <Setter Property="Fill" Value="Transparent" />
   </Style>
 
+  <!-- An icon drawn on a neutral tile rather than a colored badge, e.g. the unselected icon choices. -->
+  <Style Selector="Viewbox.icon.muted Path.glyph">
+    <Setter Property="Stroke" Value="{DynamicResource TextSecondaryBrush}" />
+  </Style>
+
   <!-- Row actions sit on the page rather than inside a coloured badge, so the glyph takes the
        secondary text colour instead of white. -->
   <Style Selector="Viewbox.icon.rowAction Path.glyph">
+    <Setter Property="Stroke" Value="{DynamicResource TextSecondaryBrush}" />
+  </Style>
+
+  <!-- The leading icon of a list row, picker entry or dropdown entry: an app's own icon, a swatch,
+       or a glyph for the kind of thing it is. Always this slot, so names line up whatever the icon.
+       After Path.glyph on purpose: of two matching styles the later one wins, and Path.glyph's
+       white stroke - meant for colored badges - left these glyphs invisible on a light row. -->
+  <Style Selector="Panel.leadingIcon">
+    <Setter Property="Width" Value="22" />
+    <Setter Property="Height" Value="22" />
+    <Setter Property="Margin" Value="0,0,10,0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Panel.leadingIcon Viewbox.icon">
+    <Setter Property="Width" Value="16" />
+    <Setter Property="Height" Value="16" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Panel.leadingIcon Path.glyph">
     <Setter Property="Stroke" Value="{DynamicResource TextSecondaryBrush}" />
   </Style>
 

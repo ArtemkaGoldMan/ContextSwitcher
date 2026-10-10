@@ -1,0 +1,220 @@
+<!--
+  Templates shared by every screen that shows the same kind of thing, so the same thing always looks
+  the same: the "add from a list" pickers, and an app row. Profile Setup and onboarding both use
+  these rather than each keeping its own copy - two copies is how the onboarding picker ended up
+  narrower than Profile Setup's, and its rows with different checkboxes.
+-->
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:vm="using:ContextSwitcher.App.ViewModels"
+  xmlns:conv="using:ContextSwitcher.App.Converters">
+
+  <!-- The installed-apps picker: search, then apps with their own icons. -->
+  <DataTemplate x:Key="AppPickerContent" x:DataType="vm:AppPickerViewModel">
+    <StackPanel Spacing="8">
+      <TextBox Text="{Binding SearchText}" PlaceholderText="Search installed apps…" />
+      <TextBlock Text="Loading…" Classes="caption" IsVisible="{Binding IsLoading}" />
+      <ScrollViewer MaxHeight="280" IsVisible="{Binding !IsLoading}">
+        <ItemsControl ItemsSource="{Binding FilteredApps}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="1" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:InstalledAppViewModel">
+              <Button Classes="pickerItem" Command="{Binding PickCommand}">
+                <StackPanel Orientation="Horizontal">
+                  <Panel Classes="leadingIcon">
+                    <Border CornerRadius="5" Background="{DynamicResource BorderBrush}" IsVisible="{Binding !HasIcon}" />
+                    <Image Source="{Binding Icon}" IsVisible="{Binding HasIcon}" />
+                  </Panel>
+                  <TextBlock Text="{Binding Name}" Classes="body" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+      <TextBlock Text="No matching apps." Classes="caption" IsVisible="{Binding HasNoMatches}" />
+    </StackPanel>
+  </DataTemplate>
+
+  <!-- Every other picker - open tabs, Docker containers: the same search, entries and messages. -->
+  <DataTemplate x:Key="ChoicePickerContent" x:DataType="vm:ChoicePickerViewModel">
+    <StackPanel Spacing="8">
+      <TextBox Text="{Binding SearchText}" PlaceholderText="{Binding SearchPlaceholder}" />
+      <TextBlock Text="Loading…" Classes="caption" IsVisible="{Binding IsLoading}" />
+      <ScrollViewer MaxHeight="280" IsVisible="{Binding !IsLoading}">
+        <ItemsControl ItemsSource="{Binding Items}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="1" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:PickerItemViewModel">
+              <Button Classes="pickerItem" Command="{Binding PickCommand}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <Panel Grid.Column="0" Classes="leadingIcon">
+                    <Viewbox Classes="icon">
+                      <Path Classes="glyph" Data="{Binding GlyphKey, Converter={x:Static conv:GlyphResourceConverter.Instance}}" />
+                    </Viewbox>
+                  </Panel>
+                  <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Title}" Classes="body" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Detail}" Classes="caption" TextTrimming="CharacterEllipsis" IsVisible="{Binding HasDetail}" />
+                  </StackPanel>
+                </Grid>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+      <TextBlock Text="{Binding EmptyText}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding IsEmpty}" />
+      <TextBlock Text="{Binding UnavailableText}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding IsUnavailable}" />
+    </StackPanel>
+  </DataTemplate>
+
+  <!-- An app in a profile: its icon, its name (typed only when added by hand), Launch and Close. -->
+  <DataTemplate x:Key="AppRow" x:DataType="vm:AppRowViewModel">
+    <Border Classes="listRow">
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+        <Panel Grid.Column="0" Classes="leadingIcon">
+          <Border CornerRadius="5" Background="{DynamicResource BorderBrush}" IsVisible="{Binding !HasIcon}" />
+          <Image Source="{Binding Icon}" IsVisible="{Binding HasIcon}" />
+        </Panel>
+        <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="body" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,10,0" IsVisible="{Binding !IsEditable}" />
+        <TextBox Grid.Column="1" Classes="inRow" Text="{Binding Name}" PlaceholderText="App name, as in /Applications" Margin="0,0,10,0" IsVisible="{Binding IsEditable}" />
+        <CheckBox Grid.Column="2" Content="Launch" IsChecked="{Binding LaunchOnEnter}" Margin="8,0" VerticalAlignment="Center" />
+        <CheckBox Grid.Column="3" Content="Close" IsChecked="{Binding CloseOnLeave}" Margin="8,0" VerticalAlignment="Center" />
+        <Button Grid.Column="4" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
+          <Viewbox Classes="icon rowAction">
+            <Path Classes="glyph" Data="{DynamicResource IconX}" />
+          </Viewbox>
+        </Button>
+      </Grid>
+    </Border>
+  </DataTemplate>
+
+  <!-- A one-value row - a startup URL, a tab group, a Docker container - with the glyph for its kind.
+       Shown as text when it was picked from a list, as a box when it is being typed. -->
+  <DataTemplate x:Key="StringRow" x:DataType="vm:EditableStringRowViewModel">
+    <Border Classes="listRow">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <Panel Grid.Column="0" Classes="leadingIcon">
+          <Viewbox Classes="icon">
+            <Path Classes="glyph" Data="{Binding GlyphKey, Converter={x:Static conv:GlyphResourceConverter.Instance}}" />
+          </Viewbox>
+        </Panel>
+        <TextBlock Grid.Column="1" Text="{Binding Value}" Classes="body" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,10,0" IsVisible="{Binding !IsEditable}" />
+        <TextBox Grid.Column="1" Classes="inRow" Text="{Binding Value}" PlaceholderText="{Binding Placeholder}" Margin="0,0,10,0" IsVisible="{Binding IsEditable}" />
+        <Button Grid.Column="2" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
+          <Viewbox Classes="icon rowAction">
+            <Path Classes="glyph" Data="{DynamicResource IconX}" />
+          </Viewbox>
+        </Button>
+      </Grid>
+    </Border>
+  </DataTemplate>
+
+  <!-- A quick link: its title, then its URL. -->
+  <DataTemplate x:Key="QuickLinkRow" x:DataType="vm:QuickLinkRowViewModel">
+    <Border Classes="listRow">
+      <Grid ColumnDefinitions="Auto,160,*,Auto">
+        <Panel Grid.Column="0" Classes="leadingIcon">
+          <Viewbox Classes="icon">
+            <Path Classes="glyph" Data="{DynamicResource IconLink}" />
+          </Viewbox>
+        </Panel>
+        <TextBox Grid.Column="1" Classes="inRow" Text="{Binding Title}" PlaceholderText="Title (optional)" Margin="0,0,10,0" />
+        <TextBox Grid.Column="2" Classes="inRow" Text="{Binding Url}" PlaceholderText="https://…" Margin="0,0,10,0" />
+        <Button Grid.Column="3" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
+          <Viewbox Classes="icon rowAction">
+            <Path Classes="glyph" Data="{DynamicResource IconX}" />
+          </Viewbox>
+        </Button>
+      </Grid>
+    </Border>
+  </DataTemplate>
+
+  <!-- A browser profile: which browser and which of its profiles, then the pages to open in it. -->
+  <DataTemplate x:Key="BrowserProfileRow" x:DataType="vm:BrowserProfileRowViewModel">
+    <Border Classes="listRow">
+      <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+        <Panel Grid.Row="0" Grid.Column="0" Classes="leadingIcon">
+          <Viewbox Classes="icon">
+            <Path Classes="glyph" Data="{DynamicResource IconUser}" />
+          </Viewbox>
+        </Panel>
+        <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,*" Margin="0,0,10,0">
+          <ComboBox Grid.Column="0" ItemsSource="{x:Static vm:BrowserProfileRowViewModel.BrowserChoices}" SelectedItem="{Binding SelectedBrowser}" HorizontalAlignment="Stretch" Margin="0,0,8,0" AutomationProperties.Name="Browser" />
+          <ComboBox Grid.Column="1" ItemsSource="{Binding ProfileChoices}" SelectedItem="{Binding SelectedProfile}" HorizontalAlignment="Stretch" AutomationProperties.Name="Browser profile" />
+        </Grid>
+        <Button Grid.Row="0" Grid.Column="2" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
+          <Viewbox Classes="icon rowAction">
+            <Path Classes="glyph" Data="{DynamicResource IconX}" />
+          </Viewbox>
+        </Button>
+        <TextBox Grid.Row="1" Grid.Column="1" Classes="inRow" Text="{Binding UrlsText}" PlaceholderText="Pages to open in this profile, one URL per line" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="36" Margin="0,8,10,2" VerticalContentAlignment="Top" />
+      </Grid>
+    </Border>
+  </DataTemplate>
+
+  <!-- The balance chart, on the Dashboard and the Stats page alike: a rounded column per day,
+       stacked in each profile's accent, the last day's label in bold, and a legend of totals.
+       Hovering a day shows its exact hours. -->
+  <DataTemplate x:Key="BalanceChart" x:DataType="vm:BalanceChartViewModel">
+    <StackPanel Spacing="12">
+      <ItemsControl ItemsSource="{Binding Days}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <UniformGrid Rows="1" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:BalanceDayViewModel">
+            <StackPanel Spacing="6" Background="Transparent" ToolTip.Tip="{Binding Tooltip}">
+              <Panel Height="{Binding BarAreaHeight}">
+                <!-- A nothing-recorded day keeps a stub, so the row of days has no gaps. -->
+                <Border
+                  Width="{Binding BarWidth}"
+                  Height="3"
+                  CornerRadius="1.5"
+                  VerticalAlignment="Bottom"
+                  Background="{DynamicResource DividerBrush}"
+                  IsVisible="{Binding IsEmpty}" />
+                <ItemsControl ItemsSource="{Binding Segments}" Width="{Binding BarWidth}" VerticalAlignment="Bottom" IsVisible="{Binding !IsEmpty}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:BalanceSegmentViewModel">
+                      <Border Height="{Binding Height}" Background="{Binding Brush}" CornerRadius="{Binding CornerRadius}" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Panel>
+              <TextBlock Text="{Binding Label}" Classes="caption" Classes.today="{Binding IsToday}" HorizontalAlignment="Center" />
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <ItemsControl ItemsSource="{Binding Totals}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:ContextTotalViewModel">
+            <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,16,4">
+              <Ellipse Width="8" Height="8" Fill="{Binding AccentBrush}" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding DisplayName}" Classes="caption" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding TotalHoursDisplay}" Classes="caption today" VerticalAlignment="Center" />
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </DataTemplate>
+</ResourceDictionary>

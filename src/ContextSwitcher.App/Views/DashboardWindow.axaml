@@ -3,12 +3,11 @@
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
-  xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+  xmlns:conv="using:ContextSwitcher.App.Converters"
+  xmlns:local="using:ContextSwitcher.App.Views"
   x:DataType="vm:DashboardViewModel"
   Title="Context Switcher"
-  Width="360"
-  MinWidth="320"
-  MaxWidth="420"
+  Width="392"
   SizeToContent="Height"
   CanResize="False"
   WindowDecorations="None"
@@ -17,28 +16,43 @@
   Background="Transparent"
   TransparencyLevelHint="Transparent"
   WindowStartupLocation="Manual">
+  <!-- The card sits inside a transparent margin that is exactly its shadow's reach. The shadow used to
+       be clipped at the window's edges, so the corners outside the rounding were left faintly grey -
+       a square frame around a round card. Now everything outside the card fades out to nothing
+       before the window ends. -->
   <Border
+    Margin="{x:Static local:DashboardWindow.ShadowRoom}"
     Background="{DynamicResource SurfaceBrush}"
     BorderBrush="{DynamicResource BorderBrush}"
     BorderThickness="1"
     CornerRadius="16"
-    BoxShadow="0 12 40 0 #40000000">
-    <StackPanel Margin="16" Spacing="14">
-      <!-- Header -->
-      <Grid ColumnDefinitions="Auto,*">
-        <Border Grid.Column="0" Classes="badge" Width="34" Height="34" Background="{DynamicResource BadgeBlueGradient}" Margin="0,0,10,0">
-          <Viewbox Classes="icon">
-            <Path Classes="glyph" Data="{StaticResource IconArrowLeftRight}" />
+    BoxShadow="0 6 16 0 #2E000000">
+    <!-- Every section after the header starts with a hairline, and a section with nothing to show is
+         hidden together with its line - so lines only ever separate two things that are there. -->
+    <StackPanel Margin="16" Spacing="12">
+      <!-- Header: the active profile, drawn the way it is everywhere else - its icon on its color. -->
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <Border Grid.Column="0" Classes="badge" Width="34" Height="34" Background="{Binding ActiveAccentBrush}" Margin="0,0,10,0">
+          <Viewbox Classes="icon" Width="16" Height="16">
+            <Path Classes="glyph" Data="{Binding ActiveIcon, Converter={x:Static conv:ProfileIconConverter.Instance}}" />
           </Viewbox>
         </Border>
         <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-          <TextBlock Text="{Binding ActiveContextDisplayName}" Classes="body" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding ActiveContextDisplayName}" Classes="body" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
           <TextBlock Text="{Binding ElapsedDisplay}" Classes="caption" />
         </StackPanel>
+        <!-- A click anywhere outside or Escape closes it too; this is the one you can see. -->
+        <Button Grid.Column="2" Classes="rowAction" Command="{Binding CloseCommand}" VerticalAlignment="Top"
+                ToolTip.Tip="Close (Esc)" AutomationProperties.Name="Close">
+          <Viewbox Classes="icon rowAction">
+            <Path Classes="glyph" Data="{StaticResource IconX}" />
+          </Viewbox>
+        </Button>
       </Grid>
 
       <!-- Switch buttons -->
       <StackPanel Spacing="8">
+        <Border Classes="divider" />
         <TextBlock Text="SWITCH TO" Classes="sectionTitle" />
         <ItemsControl ItemsSource="{Binding SwitchButtons}">
           <ItemsControl.ItemsPanel>
@@ -53,11 +67,19 @@
                 Classes.current="{Binding IsCurrent}"
                 Command="{Binding SwitchCommand}"
                 HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left">
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                  <Border Width="10" Height="10" CornerRadius="3" Background="{Binding AccentBrush}" VerticalAlignment="Center" />
-                  <TextBlock Text="{Binding DisplayName}" Classes="body" VerticalAlignment="Center" />
-                </StackPanel>
+                HorizontalContentAlignment="Stretch">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <!-- The faint ring keeps the badge visible on the current profile, whose whole button is
+                       filled with the accent. -->
+                  <Border Grid.Column="0" Width="22" Height="22" CornerRadius="6" Background="{Binding AccentBrush}"
+                          BorderBrush="{DynamicResource OnAccentRingBrush}" BorderThickness="1" VerticalAlignment="Center" Margin="0,0,10,0">
+                    <Viewbox Classes="icon" Width="13" Height="13">
+                      <Path Classes="glyph" Data="{Binding Icon, Converter={x:Static conv:ProfileIconConverter.Instance}}" />
+                    </Viewbox>
+                  </Border>
+                  <TextBlock Grid.Column="1" Text="{Binding DisplayName}" Classes="body" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Grid.Column="2" Text="Active" Classes="caption" Foreground="White" VerticalAlignment="Center" IsVisible="{Binding IsCurrent}" />
+                </Grid>
               </Button>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
@@ -67,10 +89,16 @@
       </StackPanel>
 
       <!-- Last switch outcome -->
-      <StackPanel Spacing="4" IsVisible="{Binding HasLastSwitchWarnings}">
+      <StackPanel Spacing="6" IsVisible="{Binding HasLastSwitchWarnings}">
+        <Border Classes="divider" />
         <TextBlock Text="LAST SWITCH" Classes="sectionTitle" />
         <TextBlock Text="{Binding LastSwitchStatusText}" Classes="body" Foreground="{DynamicResource WarningBrush}" />
         <ItemsControl ItemsSource="{Binding LastSwitchWarnings}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="4" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="x:String">
               <TextBlock Text="{Binding}" Classes="caption" TextWrapping="Wrap" />
@@ -80,9 +108,15 @@
       </StackPanel>
 
       <!-- Config warnings -->
-      <StackPanel Spacing="4" IsVisible="{Binding HasConfigurationWarnings}">
+      <StackPanel Spacing="6" IsVisible="{Binding HasConfigurationWarnings}">
+        <Border Classes="divider" />
         <TextBlock Text="CONFIGURATION WARNINGS" Classes="sectionTitle" />
         <ItemsControl ItemsSource="{Binding ConfigurationWarnings}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="4" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="x:String">
               <TextBlock Text="{Binding}" Classes="caption" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" />
@@ -91,50 +125,71 @@
         </ItemsControl>
       </StackPanel>
 
-      <!-- Quick links -->
-      <StackPanel Spacing="4" IsVisible="{Binding HasQuickLinks}">
+      <!-- Quick links: a row each, like any list in the app - its glyph, its title, cut short with
+           an ellipsis when long; the full address shows on hover. -->
+      <StackPanel Spacing="6" IsVisible="{Binding HasQuickLinks}">
+        <Border Classes="divider" />
         <TextBlock Text="QUICK LINKS" Classes="sectionTitle" />
-        <ItemsControl ItemsSource="{Binding QuickLinks}">
+        <ItemsControl ItemsSource="{Binding QuickLinks}" Margin="-8,0">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="1" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:QuickLinkViewModel">
+              <Button Classes="pickerItem" HorizontalContentAlignment="Stretch" Command="{Binding OpenCommand}" ToolTip.Tip="{Binding Url}" AutomationProperties.Name="{Binding Title}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <Panel Grid.Column="0" Classes="leadingIcon">
+                    <Viewbox Classes="icon">
+                      <Path Classes="glyph" Data="{StaticResource IconLink}" />
+                    </Viewbox>
+                  </Panel>
+                  <TextBlock Grid.Column="1" Text="{Binding Title}" Classes="body" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Grid.Column="2" Text="↗" Classes="caption" VerticalAlignment="Center" Margin="8,0,0,0" />
+                </Grid>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <!-- Notes: one per line, each its own bullet, at reading size. -->
+      <StackPanel Spacing="6" IsVisible="{Binding HasNotes}">
+        <Border Classes="divider" />
+        <TextBlock Text="NOTES" Classes="sectionTitle" />
+        <ItemsControl ItemsSource="{Binding Notes}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
               <StackPanel Spacing="4" />
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="vm:QuickLinkViewModel">
-              <Button Classes="linkButton" Command="{Binding OpenCommand}" Content="{Binding Title}" />
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </StackPanel>
-
-      <!-- Notes -->
-      <StackPanel Spacing="4" IsVisible="{Binding HasNotes}">
-        <TextBlock Text="NOTES" Classes="sectionTitle" />
-        <ItemsControl ItemsSource="{Binding Notes}">
-          <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="x:String">
-              <TextBlock Text="{Binding}" Classes="caption" TextWrapping="Wrap" />
+              <Grid ColumnDefinitions="Auto,*">
+                <Ellipse Grid.Column="0" Width="4" Height="4" Fill="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Top" Margin="2,7,10,0" />
+                <TextBlock Grid.Column="1" Text="{Binding}" Classes="body" TextWrapping="Wrap" />
+              </Grid>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </StackPanel>
 
       <!-- Balance chart -->
-      <StackPanel Spacing="4" IsVisible="{Binding HasBalanceData}">
-        <TextBlock Text="BALANCE (7 DAYS)" Classes="sectionTitle" />
-        <lvc:CartesianChart
-          Series="{Binding BalanceSeries}"
-          XAxes="{Binding BalanceXAxes}"
-          Height="120" />
+      <StackPanel Spacing="8" IsVisible="{Binding HasBalanceData}">
+        <Border Classes="divider" />
+        <TextBlock Text="LAST 7 DAYS" Classes="sectionTitle" />
+        <ContentControl Content="{Binding BalanceChart}" ContentTemplate="{StaticResource BalanceChart}" />
       </StackPanel>
 
       <!-- Footer -->
-      <Border Classes="divider" />
-      <Grid ColumnDefinitions="*,Auto">
-        <Button Grid.Column="0" Classes="linkButton" Command="{Binding OpenAppCommand}" Content="Open App" HorizontalAlignment="Left" />
-        <Button Grid.Column="1" Classes="linkButton" Command="{Binding SupportDeveloperCommand}" Content="Support the developer" Foreground="{DynamicResource TextSecondaryBrush}" />
-      </Grid>
+      <StackPanel Spacing="10">
+        <Border Classes="divider" />
+        <Grid ColumnDefinitions="*,Auto">
+          <Button Grid.Column="0" Classes="linkButton" Command="{Binding OpenAppCommand}" Content="Open App" />
+          <Button Grid.Column="1" Classes="linkButton secondary" Command="{Binding SupportDeveloperCommand}" Content="Support the developer ↗" />
+        </Grid>
+      </StackPanel>
     </StackPanel>
   </Border>
 </Window>

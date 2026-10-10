@@ -12,8 +12,7 @@ namespace ContextSwitcher.App.Startup;
 /// Section 10 has Shortcuts, Siri and the CLI each switching in their own process, and
 /// <see cref="AppHost.State"/> was only ever updated in-process. A switch from any of those left the
 /// menu bar popover showing the previous profile and a stale elapsed timer until the app was
-/// restarted - the switch itself worked, the UI just never heard about it. Global hotkeys were
-/// unaffected, since those fire inside this process.
+/// restarted - the switch itself worked, the UI just never heard about it.
 /// </summary>
 public sealed class StateFileWatcher : IDisposable
 {

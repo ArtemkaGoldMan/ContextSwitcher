@@ -33,16 +33,15 @@ ContextSwitcher $version
    that needs a paid Developer ID, and this is a free MIT project. To allow it, run this once
    in Terminal:
 
-       xattr -d com.apple.quarantine /Applications/ContextSwitcher.app
+       xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
 
    Or open it once from System Settings > Privacy & Security > Open Anyway.
 
+   You only do this once: the app updates itself from Settings > Updates, and updates it
+   installs open without this step.
+
 3. The app lives in the menu bar. Look for the two-squares icon - there is no Dock icon and no
    window until you open one.
-
-Global hotkeys need Accessibility permission (System Settings > Privacy & Security >
-Accessibility). Because the app is not signed with a Developer ID, macOS drops that permission
-whenever the app is updated, so you will need to grant it again after installing a new version.
 
 Docs: https://github.com/ArtemkaGoldMan/ContextSwitcher
 TXT

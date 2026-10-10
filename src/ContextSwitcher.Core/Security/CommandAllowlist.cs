@@ -17,7 +17,13 @@ public static class CommandAllowlist
         // Built-in macOS image converter, used only to transcode an installed app's .icns bundle
         // icon into a cached PNG for the Profile Setup app picker. Read-only with respect to the
         // app bundle: it writes solely into ConfigPaths.IconCacheDirectory.
-        "sips"
+        "sips",
+
+        // The updater (AppBundleUpdater): ditto unpacks a downloaded release, plutil reads its
+        // version, and codesign checks it was signed with the same certificate as this copy.
+        "ditto",
+        "plutil",
+        "codesign"
     };
 
     /// <summary>

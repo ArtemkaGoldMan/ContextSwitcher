@@ -52,6 +52,25 @@ public sealed class ProfilesViewModelTests
         Assert.Equal("personal", AppHost.State.CurrentContextId);
     }
 
+    /// <summary>
+    /// A switch turned away because another was running wrote nothing to the state, so the page
+    /// tells the notice itself - otherwise clicking Activate would seem to do nothing at all.
+    /// </summary>
+    [Fact]
+    public void ARejectedSwitchIsReportedInTheNotice()
+    {
+        AppConfiguration configuration = TwoContexts();
+        (ProfilesViewModel viewModel, StubContextSwitchService switchService, InMemoryJsonStore jsonStore) = CreateViewModel(configuration);
+        jsonStore.Seed(new ConfigPaths("/tmp/context-switcher-tests").StatePath, new CurrentContextState { CurrentContextId = "work" });
+        switchService.Result = new ContextSwitchResult("personal", null, ContextSwitchStatus.Cancelled, [], DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, "corr");
+
+        viewModel.Rows[1].ActivateCommand.Execute(null);
+
+        Assert.True(viewModel.Notice.IsShown);
+        Assert.Equal("Couldn't switch to Personal", viewModel.Notice.Title);
+        Assert.False(viewModel.HasErrorMessage);
+    }
+
     [Fact]
     public void DuplicateCommandSavesCopyWithUniqueId()
     {

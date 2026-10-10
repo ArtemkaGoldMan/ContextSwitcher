@@ -25,6 +25,7 @@ public sealed class ProfileRowViewModel : ViewModelBase
         this.Context = context;
         this.IsActive = isActive;
         this.AccentBrush = AccentColorParser.ToBrush(context.AccentColor);
+        this.Icon = context.Icon;
 
         this.ActivateCommand = new AsyncRelayCommand(() => activate(context), () => !this.IsActive);
         this.EditCommand = new RelayCommand(() => edit(context));
@@ -47,6 +48,9 @@ public sealed class ProfileRowViewModel : ViewModelBase
     public ContextDefinition Context { get; }
 
     public string DisplayName => this.Context.DisplayName;
+
+    /// <summary>The stored icon name, drawn by ProfileIconConverter.</summary>
+    public string Icon { get; }
 
     public IBrush AccentBrush { get; }
 

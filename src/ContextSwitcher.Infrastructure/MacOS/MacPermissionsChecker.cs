@@ -1,12 +1,12 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.ProcessExecution;
-using SharpHook.Providers;
 
 namespace ContextSwitcher.Infrastructure.MacOS;
 
 /// <summary>
-/// Checks macOS Accessibility (via SharpHook's <see cref="UioHookProvider"/>) and Automation
-/// (via a harmless System Events probe script) permission grants.
+/// Checks the macOS Automation grant via a harmless System Events probe script. That is the only
+/// permission the app needs now that global hotkeys - the one thing that required Accessibility -
+/// are gone.
 /// </summary>
 public sealed class MacPermissionsChecker : IPermissionsChecker
 {
@@ -21,12 +21,6 @@ public sealed class MacPermissionsChecker : IPermissionsChecker
     {
         ArgumentNullException.ThrowIfNull(scriptRunner);
         this.scriptRunner = scriptRunner;
-    }
-
-    /// <inheritdoc />
-    public bool IsAccessibilityPermissionGranted()
-    {
-        return UioHookProvider.Instance.IsAxApiEnabled(promptUserIfDisabled: false);
     }
 
     /// <inheritdoc />

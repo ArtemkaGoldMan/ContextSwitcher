@@ -21,7 +21,7 @@ ContextSwitcher validate-config
 
 | File | Contents |
 | --- | --- |
-| `settings.json` | Profiles, hotkeys, app settings. The only file you'd edit. |
+| `settings.json` | Profiles and app settings. The only file you'd edit. |
 | `state.json` | Which profile is active, and how the last switch went. |
 | `analytics.jsonl` | Local time tracking, one line per session. |
 | `app.log.jsonl` | Structured log, one line per event. First place to look when something misbehaves. |
@@ -36,9 +36,9 @@ ContextSwitcher validate-config
   "activeContextId": "work",
   "defaultSwitchTimeoutSeconds": 45,
   "showDockIcon": false,
+  "checkForUpdates": true,
   "onboardingCompleted": true,
   "analytics": { "enabled": true, "retentionDays": 365 },
-  "hotkeys": [],
   "contexts": []
 }
 ```
@@ -48,6 +48,7 @@ ContextSwitcher validate-config
 | `schemaVersion` | Always `1` today. |
 | `activeContextId` | Must match a `contexts[].id`. |
 | `showDockIcon` | Read once at startup — changing it needs a restart, and the UI says so. |
+| `checkForUpdates` | Looks for a new release on GitHub once a day and offers it; never installs by itself. Absent means on. |
 | `onboardingCompleted` | Absent means "already onboarded", so upgrading never re-runs the wizard. |
 | `analytics.retentionDays` | Sessions older than this are pruned at startup. |
 
@@ -86,8 +87,14 @@ field has a sensible default, and an omitted section simply does nothing.
 }
 ```
 
-`id` must be lowercase and URL-safe, and it's permanent once saved — hotkeys, `state.json` and your
-recorded time all reference it.
+`icon` is one of `circle`, `briefcase`, `house`, `code`, `laptop`, `book`, `coffee`, `moon`, `sun`,
+`heart`, `music`, `gamepad`, `star`, `zap`, `leaf` or `target`; anything else shows as `circle`.
+`accentColor` is any `#RRGGBB`.
+
+`id` is generated from the profile's name when you create it (`Deep Work` becomes `deep-work`) and
+never changes after that — `state.json`, the CLI and your recorded time all reference it. If you
+edit the file by hand, keep it lowercase and URL-safe. `menuBarLabel` isn't edited in the app any
+more; Profile Setup writes the display name in capitals.
 
 ## Apps: launch on enter, quit on leave
 
@@ -132,7 +139,8 @@ generally falls back to opening `urls[]`. That's expected, and the fallback is w
 
 **`focus`** runs a Shortcut you create, because macOS has no Focus scripting API. With
 `enabled: true` it runs `ContextSwitcher - Focus <modeName>`; leaving a profile that had Focus on
-runs `ContextSwitcher - Focus Off`. If neither the profile you're leaving nor the one you're entering
+runs that mode's `ContextSwitcher - Focus Off - <modeName>` (or, failing that, the original
+`ContextSwitcher - Focus Off`). If neither the profile you're leaving nor the one you're entering
 uses Focus, no Focus step runs — so you never see a warning for a feature you're not using. Setup is
 in [shortcuts-integration.md](shortcuts-integration.md).
 
@@ -141,18 +149,6 @@ in [shortcuts-integration.md](shortcuts-integration.md).
 **`docker.start` / `docker.stop`** take container names. `start` runs on entering the profile,
 `stop` on leaving it — the same direction as the app lists.
 
-## Hotkeys
-
-```json
-"hotkeys": [
-  { "id": "switch-work", "contextId": "work", "accelerator": "Cmd+Alt+Ctrl+W", "enabled": true }
-]
-```
-
-Modifiers are `Cmd`, `Ctrl`, `Alt`, `Shift`, joined with `+`. Editing a hotkey takes effect
-immediately — no restart. Global hotkeys need Accessibility permission; without it the app logs that
-it can't register and hotkeys simply never fire.
-
 ## Switch policy
 
 ```json
@@ -160,7 +156,8 @@ it can't register and hotkeys simply never fire.
 ```
 
 By default a failing step is a warning and the switch continues. Naming a step type in
-`criticalSteps` makes its failure stop the switch and report `Failed`. Valid values are the
+`criticalSteps` makes its failure stop the switch and report `Failed`. Profile Setup sets both under
+**Advanced → If a step fails**. Valid values are the
 `AutomationStepType` names: `CloseApplications`, `LaunchApplications`, `ManageBrowserContext`,
 `SetFocusMode`, `ControlMedia`, `StartDockerResources`,
 `StopDockerResources`.
@@ -173,10 +170,6 @@ Criticality applies to the whole step, not to one app inside it.
 {
   "schemaVersion": 1,
   "activeContextId": "work",
-  "hotkeys": [
-    { "id": "switch-work", "contextId": "work", "accelerator": "Cmd+Alt+Ctrl+W", "enabled": true },
-    { "id": "switch-personal", "contextId": "personal", "accelerator": "Cmd+Alt+Ctrl+P", "enabled": true }
-  ],
   "contexts": [
     {
       "id": "work",
@@ -201,7 +194,7 @@ Criticality applies to the whole step, not to one app inside it.
       "displayName": "Personal",
       "menuBarLabel": "HOME",
       "accentColor": "#20A67A",
-      "icon": "home",
+      "icon": "house",
       "launchApps": ["Spotify"],
       "closeApps": ["Spotify"],
       "browser_management": {

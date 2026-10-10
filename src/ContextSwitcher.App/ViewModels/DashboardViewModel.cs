@@ -7,9 +7,6 @@ using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Files;
-using LiveChartsCore;
-using LiveChartsCore.Kernel.Sketches;
-using LiveChartsCore.SkiaSharpView;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -31,15 +28,16 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     private readonly DispatcherTimer elapsedTimer;
 
     private string activeContextDisplayName = "(none)";
-    private string elapsedDisplay = "—";
+    private string elapsedDisplay = "Current profile";
+    private Avalonia.Media.IBrush activeAccentBrush = AccentColorParser.ToBrush(string.Empty);
+    private string activeIcon = ProfileIcons.Fallback;
     private bool isSwitching;
     private string lastSwitchStatusText = string.Empty;
     private IReadOnlyList<string> lastSwitchWarnings = [];
     private IReadOnlyList<QuickLinkViewModel> quickLinks = [];
     private IReadOnlyList<string> notes = [];
     private DateTimeOffset? activeSince;
-    private IReadOnlyList<ISeries> balanceSeries = [];
-    private IReadOnlyList<ICartesianAxis> balanceXAxes = [new Axis()];
+    private BalanceChartViewModel balanceChart = BalanceChartViewModel.Empty;
     private IReadOnlyList<SwitchButtonViewModel> switchButtons = [];
     private IReadOnlyList<string> configurationWarnings = [];
 
@@ -60,6 +58,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
 
         this.SupportDeveloperCommand = new RelayCommand(() => this.OpenQuickLink(AppLinks.Support));
         this.OpenAppCommand = new RelayCommand(() => this.OpenAppRequested?.Invoke(this, EventArgs.Empty));
+        this.CloseCommand = new RelayCommand(() => this.DismissRequested?.Invoke(this, EventArgs.Empty));
 
         this.RefreshFromConfiguration();
         this.ApplyState(AppHost.State);
@@ -79,6 +78,9 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     /// window (agent.md section 11.1.2) to the Profiles page.
     /// </summary>
     public event EventHandler? OpenAppRequested;
+
+    /// <summary>Raised when the popover has done its job and should get out of the way.</summary>
+    public event EventHandler? DismissRequested;
 
     public IReadOnlyList<SwitchButtonViewModel> SwitchButtons
     {
@@ -104,16 +106,34 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
 
     public RelayCommand OpenAppCommand { get; }
 
+    /// <summary>The popover's own close button.</summary>
+    public RelayCommand CloseCommand { get; }
+
     public string ActiveContextDisplayName
     {
         get => this.activeContextDisplayName;
         private set => this.SetProperty(ref this.activeContextDisplayName, value);
     }
 
+    /// <summary>"Active for 1h 20m" under the profile's name, or "Current profile" when unknown.</summary>
     public string ElapsedDisplay
     {
         get => this.elapsedDisplay;
         private set => this.SetProperty(ref this.elapsedDisplay, value);
+    }
+
+    /// <summary>The active profile's color, for the header badge.</summary>
+    public Avalonia.Media.IBrush ActiveAccentBrush
+    {
+        get => this.activeAccentBrush;
+        private set => this.SetProperty(ref this.activeAccentBrush, value);
+    }
+
+    /// <summary>The active profile's icon, drawn on <see cref="ActiveAccentBrush"/>.</summary>
+    public string ActiveIcon
+    {
+        get => this.activeIcon;
+        private set => this.SetProperty(ref this.activeIcon, value);
     }
 
     public bool IsSwitching
@@ -179,25 +199,20 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
 
     public bool HasNotes => this.Notes.Count > 0;
 
-    public IReadOnlyList<ISeries> BalanceSeries
+    /// <summary>The last seven days, a column per day, drawn by the shared BalanceChart template.</summary>
+    public BalanceChartViewModel BalanceChart
     {
-        get => this.balanceSeries;
+        get => this.balanceChart;
         private set
         {
-            if (this.SetProperty(ref this.balanceSeries, value))
+            if (this.SetProperty(ref this.balanceChart, value))
             {
                 this.OnPropertyChanged(nameof(this.HasBalanceData));
             }
         }
     }
 
-    public IReadOnlyList<ICartesianAxis> BalanceXAxes
-    {
-        get => this.balanceXAxes;
-        private set => this.SetProperty(ref this.balanceXAxes, value);
-    }
-
-    public bool HasBalanceData => this.BalanceSeries.Count > 0;
+    public bool HasBalanceData => this.BalanceChart.HasData;
 
     public void Dispose()
     {
@@ -225,6 +240,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
                 context.Id,
                 context.DisplayName,
                 context.AccentColor,
+                context.Icon,
                 new AsyncRelayCommand(() => this.SwitchToAsync(context.Id), () => !this.IsSwitching)))
             .ToList();
 
@@ -247,16 +263,17 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
                 .SwitchAsync(new ContextSwitchRequest(contextId, ContextSwitchSource.Dashboard), CancellationToken.None)
                 .ConfigureAwait(true);
 
-            this.LastSwitchStatusText = result.Status.ToString();
-            this.LastSwitchWarnings = result.StepResults
-                .Where(step => step.Status is AutomationResultStatus.Warning or AutomationResultStatus.Failed or AutomationResultStatus.TimedOut)
-                .Select(step => step.Message)
-                .ToList();
-
             CurrentContextState? state = await this.jsonStore
                 .ReadAsync<CurrentContextState>(this.configPaths.StatePath)
                 .ConfigureAwait(true);
             AppHost.UpdateState(state ?? new CurrentContextState());
+
+            // Behave like a menu: a clean switch closes the popover. Anything worth reading - a
+            // warning, a failure, a switch rejected because another was running - keeps it open.
+            if (result.Status is ContextSwitchStatus.Succeeded or ContextSwitchStatus.NoOp)
+            {
+                this.DismissRequested?.Invoke(this, EventArgs.Empty);
+            }
         }
         finally
         {
@@ -270,8 +287,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
             .GetDailyBalanceAsync(BalanceChartDays, CancellationToken.None)
             .ConfigureAwait(true);
 
-        this.BalanceSeries = BalanceChartFactory.BuildSeries(summaries, AppHost.Configuration.Contexts);
-        this.BalanceXAxes = BalanceChartFactory.BuildXAxes(summaries);
+        this.BalanceChart = BalanceChartFactory.Build(summaries, AppHost.Configuration.Contexts, barAreaHeight: 56, labelFormat: "ddd");
     }
 
     private void ApplyState(CurrentContextState state)
@@ -280,6 +296,13 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
             .FirstOrDefault(context => context.Id == state.CurrentContextId);
 
         this.ActiveContextDisplayName = active?.DisplayName ?? "(none)";
+        this.ActiveAccentBrush = AccentColorParser.ToBrush(active?.AccentColor ?? string.Empty);
+        this.ActiveIcon = active?.Icon ?? ProfileIcons.Fallback;
+
+        // Read the last outcome from state rather than from the popover's own switch result: the
+        // tray menu, the CLI and Shortcuts switch too, and their warnings belong here just as much.
+        this.LastSwitchStatusText = DescribeStatus(state.LastSwitchStatus);
+        this.LastSwitchWarnings = state.LastErrors.Select(error => error.Message).ToList();
         this.activeSince = state.LastSwitchCompletedAt;
         this.RefreshElapsedDisplay();
 
@@ -295,6 +318,18 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         this.Notes = active?.Notes ?? [];
     }
 
+    /// <summary>The last switch's outcome in words; state.json keeps the enum name.</summary>
+    private static string DescribeStatus(string? status) => status switch
+    {
+        nameof(ContextSwitchStatus.Succeeded) => "Switched",
+        nameof(ContextSwitchStatus.SucceededWithWarnings) => "Switched, with warnings",
+        nameof(ContextSwitchStatus.Failed) => "Switch failed",
+        nameof(ContextSwitchStatus.Cancelled) => "Switch cancelled",
+        nameof(ContextSwitchStatus.NoOp) => "Already there",
+        null or "" => string.Empty,
+        _ => status
+    };
+
     private void OpenQuickLink(string url)
     {
         _ = this.processRunner.RunAsync(new ProcessStartOptions("open", [url], TimeSpan.FromSeconds(5)), CancellationToken.None);
@@ -303,8 +338,8 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     private void RefreshElapsedDisplay()
     {
         this.ElapsedDisplay = this.activeSince is { } since
-            ? FormatElapsed(this.clock.UtcNow - since)
-            : "—";
+            ? $"Active for {FormatElapsed(this.clock.UtcNow - since)}"
+            : "Current profile";
     }
 
     private static string FormatElapsed(TimeSpan elapsed)

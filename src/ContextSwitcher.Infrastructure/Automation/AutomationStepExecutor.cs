@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using ContextSwitcher.Core.Abstractions;
@@ -18,15 +19,35 @@ namespace ContextSwitcher.Infrastructure.Automation;
 /// </summary>
 public sealed class AutomationStepExecutor : IAutomationStepExecutor
 {
+    /// <summary>
+    /// How often to look again for an app that was asked to quit. Electron apps - VS Code, Cursor,
+    /// Slack - answer "quit" at once and then take a second or two to actually go, so a single check
+    /// straight after the quit reported them as "Could not close" while they were closing fine.
+    /// </summary>
+    private static readonly TimeSpan DefaultQuitConfirmInterval = TimeSpan.FromMilliseconds(300);
+
+    /// <summary>A bound on the checks for one app, whatever the interval.</summary>
+    private const int MaxQuitChecks = 15;
+
+    /// <summary>The longest one "is it running?" check may take; it normally takes about 0.1s.</summary>
+    private static readonly TimeSpan MaxCheckTimeout = TimeSpan.FromSeconds(2);
+
     private readonly IProcessRunner processRunner;
     private readonly IScriptRunner scriptRunner;
     private readonly BrowserLauncher browserLauncher;
     private readonly IClock clock;
+    private readonly TimeSpan quitConfirmInterval;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AutomationStepExecutor"/> class.
     /// </summary>
-    public AutomationStepExecutor(IProcessRunner processRunner, IScriptRunner scriptRunner, BrowserLauncher browserLauncher, IClock clock)
+    /// <param name="quitConfirmInterval">Overrides <see cref="DefaultQuitConfirmInterval"/>, for tests.</param>
+    public AutomationStepExecutor(
+        IProcessRunner processRunner,
+        IScriptRunner scriptRunner,
+        BrowserLauncher browserLauncher,
+        IClock clock,
+        TimeSpan? quitConfirmInterval = null)
     {
         ArgumentNullException.ThrowIfNull(processRunner);
         ArgumentNullException.ThrowIfNull(scriptRunner);
@@ -37,6 +58,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         this.scriptRunner = scriptRunner;
         this.browserLauncher = browserLauncher;
         this.clock = clock;
+        this.quitConfirmInterval = quitConfirmInterval ?? DefaultQuitConfirmInterval;
     }
 
     /// <inheritdoc />
@@ -69,9 +91,12 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         // modal "save this document?" sheet, and handing every script the whole step budget meant
         // one such app consumed all of it. The step-level timeout then fired mid-quit, so the
         // warning below never ran and every later app in the list was never even asked to quit.
+        //
+        // Half of an app's share goes to the quit itself, and most of the rest to confirming it went:
+        // together they stay inside the share, so the step's own timeout never cuts the report off.
         TimeSpan perApp = step.Timeout / Math.Max(apps.Length, 1);
-        TimeSpan checkTimeout = perApp / 5;
-        TimeSpan quitTimeout = perApp - (2 * checkTimeout);
+        TimeSpan quitTimeout = perApp * 0.5;
+        TimeSpan confirmWindow = perApp * 0.4;
 
         // The apps are quit concurrently. The budget above is already per app, so running them
         // together makes the step cost the slowest single quit instead of the sum of all of them -
@@ -87,12 +112,10 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
                     .RunAsync(AppleScriptBuilder.QuitApplicationIfRunning(app), quitTimeout, cancellationToken)
                     .ConfigureAwait(false);
 
-                ProcessResult checkResult = await this.scriptRunner
-                    .RunAsync(AppleScriptBuilder.IsApplicationRunning(app), checkTimeout, cancellationToken)
+                bool isStillRunning = await this.IsStillRunningAfterQuitAsync(app, confirmWindow, cancellationToken)
                     .ConfigureAwait(false);
 
-                return (app, quitResult.StandardError,
-                    checkResult.StandardOutput.Trim().Equals("true", StringComparison.OrdinalIgnoreCase));
+                return (app, quitResult.StandardError, isStillRunning);
             })).ConfigureAwait(false);
 
         foreach ((string app, string error, bool isStillRunning) in outcomes)
@@ -117,6 +140,43 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
             standardError.ToString(),
             startedAt,
             completedAt);
+    }
+
+    /// <summary>
+    /// Looks for <paramref name="app"/> again and again until it has gone or
+    /// <paramref name="window"/> is up, and says whether it is still running. Only a definite "not
+    /// running" ends the wait early: a check that timed out or failed says nothing either way.
+    /// </summary>
+    private async Task<bool> IsStillRunningAfterQuitAsync(string app, TimeSpan window, CancellationToken cancellationToken)
+    {
+        Stopwatch elapsed = Stopwatch.StartNew();
+        for (int attempt = 0; attempt < MaxQuitChecks; attempt++)
+        {
+            TimeSpan remaining = window - elapsed.Elapsed;
+            if (attempt > 0 && remaining <= TimeSpan.Zero)
+            {
+                break;
+            }
+
+            TimeSpan checkTimeout = remaining < MaxCheckTimeout && remaining > TimeSpan.Zero ? remaining : MaxCheckTimeout;
+            ProcessResult check = await this.scriptRunner
+                .RunAsync(AppleScriptBuilder.IsApplicationRunning(app), checkTimeout, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (check.ExitCode == 0 && check.StandardOutput.Trim().Equals("false", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (window - elapsed.Elapsed <= this.quitConfirmInterval)
+            {
+                break;
+            }
+
+            await Task.Delay(this.quitConfirmInterval, cancellationToken).ConfigureAwait(false);
+        }
+
+        return true;
     }
 
     private async Task<AutomationResult> LaunchApplicationsAsync(AutomationStep step, CancellationToken cancellationToken)
@@ -231,7 +291,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         return player switch
         {
             nameof(MediaPlayerKind.AppleMusic) => await this.PlayAppleMusicAsync(step, playlist, startedAt, cancellationToken).ConfigureAwait(false),
-            nameof(MediaPlayerKind.Spotify) => await this.PlaySpotifyAsync(step, playlist, startedAt, cancellationToken).ConfigureAwait(false),
+            nameof(MediaPlayerKind.Spotify) => await this.PlaySpotifyAsync(step, SpotifyLink.ToUri(playlist), startedAt, cancellationToken).ConfigureAwait(false),
             _ => Succeeded(step, "No media player configured.", startedAt, this.clock.UtcNow)
         };
     }
@@ -277,26 +337,65 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         DateTimeOffset startedAt = this.clock.UtcNow;
         bool enabled = step.Arguments.GetValueOrDefault("enabled") == "True";
         string modeName = step.Arguments.GetValueOrDefault("modeName", string.Empty);
+        string previousModeName = step.Arguments.GetValueOrDefault("previousModeName", string.Empty);
 
-        string shortcutName = enabled && !string.IsNullOrWhiteSpace(modeName)
-            ? $"ContextSwitcher - Focus {modeName}"
-            : "ContextSwitcher - Focus Off";
+        // Turning a mode on has one Shortcut. Turning one off prefers that mode's own Off Shortcut
+        // and falls back to the original single "Focus Off" - which people built by hand from the
+        // docs - only when the mode's own does not exist.
+        List<string> candidates = enabled && !string.IsNullOrWhiteSpace(modeName)
+            ? [FocusModes.ShortcutName(modeName)]
+            : string.IsNullOrWhiteSpace(previousModeName)
+                ? [FocusModes.LegacyOffShortcutName]
+                : [FocusModes.OffShortcutName(previousModeName), FocusModes.LegacyOffShortcutName];
 
-        ProcessResult result = await this.processRunner
-            .RunAsync(new ProcessStartOptions("shortcuts", ["run", shortcutName], WithReportingHeadroom(step.Timeout)), cancellationToken)
-            .ConfigureAwait(false);
+        TimeSpan budget = WithReportingHeadroom(step.Timeout) / candidates.Count;
+        string shortcutName = candidates[0];
+        ProcessResult result = new(-1, string.Empty, string.Empty, false);
+        foreach (string candidate in candidates)
+        {
+            shortcutName = candidate;
+            result = await this.processRunner
+                .RunAsync(new ProcessStartOptions("shortcuts", ["run", candidate], budget), cancellationToken)
+                .ConfigureAwait(false);
+
+            if (result.ExitCode == 0 || !IsMissingShortcut(result))
+            {
+                break;
+            }
+        }
+
         DateTimeOffset completedAt = this.clock.UtcNow;
-
         if (result.ExitCode == 0)
         {
             return Succeeded(step, $"Ran Shortcut '{shortcutName}'.", startedAt, completedAt);
         }
 
+        // Say what actually went wrong. This used to tell the user to create a Shortcut that was
+        // right there in their list, when it had run and failed - a Focus it names was never set up.
+        string message = IsMissingShortcut(result)
+            ? $"Shortcut '{candidates[0]}' doesn't exist yet. In Context Switcher, edit the profile and click \"Create it\" under Focus, or see docs/shortcuts-integration.md."
+            : $"Shortcut '{shortcutName}' ran but failed: {(FirstLine(result.StandardError) is { Length: > 0 } reason ? reason : $"exit code {result.ExitCode}")}";
+
         AutomationResultStatus status = step.IsCritical ? AutomationResultStatus.Failed : AutomationResultStatus.Warning;
         return new AutomationResult(
-            step.Id, step.Type, status,
-            $"Could not run Shortcut '{shortcutName}'. Create it in the Shortcuts app (see docs/shortcuts-integration.md) or check Shortcuts permissions.",
+            step.Id, step.Type, status, message,
             result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
+    }
+
+    /// <summary>What `shortcuts run` says, and exits 1 with, when no Shortcut has the name.</summary>
+    private static bool IsMissingShortcut(ProcessResult result) =>
+        result.ExitCode != 0 && result.StandardError.Contains("find shortcut", StringComparison.OrdinalIgnoreCase);
+
+    private static string FirstLine(string text)
+    {
+        string trimmed = text.Trim();
+        if (trimmed.StartsWith("Error: ", StringComparison.Ordinal))
+        {
+            trimmed = trimmed["Error: ".Length..];
+        }
+
+        int newline = trimmed.IndexOf('\n');
+        return newline < 0 ? trimmed : trimmed[..newline].TrimEnd();
     }
 
     /// <summary>

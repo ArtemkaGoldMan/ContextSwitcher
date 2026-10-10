@@ -36,4 +36,8 @@ iconutil -c icns "$iconset" -o "$out/AppIcon.icns"
 # and dark itself, so any colour here would be wrong rather than merely ignored.
 rsvg-convert -w 36 -h 36 "$src/menu-template.svg" -o "$out/Icons/menu-neutral.png"
 
-echo "wrote $out/AppIcon.icns and $out/Icons/menu-neutral.png"
+# The app's own mark inside its windows (the sidebar, onboarding's first step): the app icon itself,
+# so the app looks like one thing wherever it shows its name. 128px covers 56pt at 2x.
+rsvg-convert -w 128 -h 128 "$src/app-full.svg" -o "$out/Icons/app-mark.png"
+
+echo "wrote $out/AppIcon.icns, $out/Icons/menu-neutral.png and $out/Icons/app-mark.png"

@@ -8,18 +8,20 @@ using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Logging;
+using ContextSwitcher.Core.Updates;
 using ContextSwitcher.Infrastructure.AppleScript;
 using ContextSwitcher.Infrastructure.Applications;
 using ContextSwitcher.Infrastructure.Automation;
+using ContextSwitcher.Infrastructure.Catalog;
 using ContextSwitcher.Infrastructure.Analytics;
 using ContextSwitcher.Infrastructure.Browser;
 using ContextSwitcher.Infrastructure.Cli;
 using ContextSwitcher.Infrastructure.Files;
-using ContextSwitcher.Infrastructure.Hotkeys;
 using ContextSwitcher.Infrastructure.Logging;
 using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Infrastructure.ProcessExecution;
 using ContextSwitcher.Infrastructure.Time;
+using ContextSwitcher.Infrastructure.Updates;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App.Startup;
@@ -104,13 +106,29 @@ public static class AppHost
             provider.GetRequiredService<ConfigPaths>().SettingsPath,
             provider.GetRequiredService<ConfigPaths>().StatePath));
         services.AddSingleton<CliCommandRouter>();
-        services.AddSingleton<IHotkeyService, SharpHookHotkeyService>();
         services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
         services.AddSingleton<IInstalledAppsService, InstalledAppsService>();
+        services.AddSingleton<ISystemCatalog, SystemCatalog>();
+        services.AddSingleton<IFocusShortcutInstaller, FocusShortcutInstaller>();
         services.AddSingleton<ConfigurationStore>();
-        services.AddSingleton<HotkeySynchronizer>();
         services.AddSingleton<StateFileWatcher>();
 
+        // One for the whole run, created now: it remembers a closed notice across windows, and counts
+        // switches from the moment the app started rather than from when a window first asked.
+        services.AddSingleton(new SwitchNoticeViewModel(DateTimeOffset.UtcNow));
+
+        // Releases are about 50 MB, so the client's own timeout is generous; the API request has a
+        // short one of its own.
+        services.AddSingleton(_ => new HttpClient { Timeout = TimeSpan.FromMinutes(10) });
+        services.AddSingleton<IReleaseSource>(provider => new GitHubReleaseSource(
+            provider.GetRequiredService<HttpClient>(), ReleaseVersion.Format(UpdatesViewModel.RunningVersion)));
+        services.AddSingleton<IAppUpdater>(provider => new AppBundleUpdater(
+            provider.GetRequiredService<HttpClient>(), provider.GetRequiredService<IProcessRunner>()));
+        services.AddSingleton(provider => new UpdatesViewModel(
+            provider.GetRequiredService<IReleaseSource>(),
+            provider.GetRequiredService<IAppUpdater>(),
+            provider.GetRequiredService<IProcessRunner>(),
+            UpdatesViewModel.RunningVersion));
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<MainAppViewModel>();
         services.AddTransient<OnboardingViewModel>();
@@ -152,8 +170,8 @@ public static class AppHost
     }
 
     /// <summary>
-    /// Ends the current analytics session and unregisters hotkeys on app shutdown. Safe to call
-    /// even if neither was ever started (headless CLI runs never call this).
+    /// Ends the current analytics session on app shutdown. Safe to call even if none was ever
+    /// started (headless CLI runs never call this).
     /// </summary>
     public static async Task ShutdownAsync()
     {
@@ -163,9 +181,6 @@ public static class AppHost
         IAnalyticsService analyticsService = Services.GetRequiredService<IAnalyticsService>();
         await analyticsService.EndCurrentSessionAsync(SessionEndReason.AppShutdown, CancellationToken.None)
             .ConfigureAwait(false);
-
-        IHotkeyService hotkeyService = Services.GetRequiredService<IHotkeyService>();
-        await hotkeyService.UnregisterAllAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     private static async Task BootstrapAsync(bool isInteractive)
@@ -239,17 +254,6 @@ public static class AppHost
             await analyticsService.StartSessionAsync(activeContextId, CancellationToken.None).ConfigureAwait(false);
         }
 
-        IHotkeyService hotkeyService = Services.GetRequiredService<IHotkeyService>();
-        hotkeyService.HotkeyPressed += OnHotkeyPressed;
-
-        // Re-apply on every configuration change, not just at startup: accelerators are editable
-        // from Profile Setup, and registering only once left the live hook holding the old key while
-        // the UI showed the new one. Subscribed even when the current configuration is invalid, so
-        // fixing it in the UI registers hotkeys without a restart.
-        HotkeySynchronizer synchronizer = Services.GetRequiredService<HotkeySynchronizer>();
-        ConfigurationChanged += (_, _) => _ = synchronizer.ApplyAsync(Configuration, ConfigurationValidation.IsValid, CancellationToken.None);
-
-        await synchronizer.ApplyAsync(Configuration, ConfigurationValidation.IsValid, CancellationToken.None).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -277,6 +281,8 @@ public static class AppHost
         // Keeps the UI honest about switches made by Shortcuts, Siri or the CLI, each of which runs
         // in its own process and so cannot raise StateChanged here.
         stateWatcher ??= Services.GetRequiredService<StateFileWatcher>();
+
+        Services.GetRequiredService<UpdatesViewModel>().StartAutomaticChecks();
     }
 
     private static void StartPeriodicPruning(IAnalyticsService analyticsService)
@@ -296,42 +302,6 @@ public static class AppHost
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             // Nothing to do about it here; the next tick tries again.
-        }
-    }
-
-    private static void OnHotkeyPressed(object? sender, string contextId)
-    {
-        _ = HandleHotkeyPressedAsync(contextId);
-    }
-
-    private static async Task HandleHotkeyPressedAsync(string contextId)
-    {
-        try
-        {
-            IContextSwitchService switchService = Services.GetRequiredService<IContextSwitchService>();
-            await switchService
-                .SwitchAsync(new ContextSwitchRequest(contextId, ContextSwitchSource.GlobalHotkey), CancellationToken.None)
-                .ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            // A hard boundary: this runs on SharpHook's native callback thread via a fire-and-forget
-            // task, so an unhandled exception here would become an unobserved task exception instead
-            // of a normal call-stack failure. ContextSwitchService already logs its own failure paths;
-            // this only catches genuinely unexpected exceptions.
-            ILogger logger = Services.GetRequiredService<ILogger>();
-            IClock clock = Services.GetRequiredService<IClock>();
-            await logger.LogAsync(
-                new LogEntry
-                {
-                    Timestamp = clock.UtcNow,
-                    Level = LogLevel.Error,
-                    Category = "Hotkeys",
-                    EventId = "HotkeySwitchFailed",
-                    Message = $"Unhandled error switching to '{contextId}' from a hotkey: {ex.Message}",
-                    ContextId = contextId
-                },
-                CancellationToken.None).ConfigureAwait(false);
         }
     }
 

@@ -32,6 +32,13 @@ public sealed record AppConfiguration
     public bool ShowDockIcon { get; init; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the app looks for a new version on GitHub once a day.
+    /// It only ever offers one; installing is always the user's click. Defaults to on, which a file
+    /// written before this setting existed also reads as.
+    /// </summary>
+    public bool CheckForUpdates { get; init; } = true;
+
+    /// <summary>
     /// Gets or sets analytics configuration for the app.
     /// </summary>
     public AnalyticsConfiguration Analytics { get; init; } = new();
@@ -47,11 +54,6 @@ public sealed record AppConfiguration
     /// on a genuinely new install.
     /// </remarks>
     public bool OnboardingCompleted { get; init; } = true;
-
-    /// <summary>
-    /// Gets or sets the list of registered hotkeys for context switching.
-    /// </summary>
-    public IReadOnlyList<HotkeyConfig> Hotkeys { get; init; } = [];
 
     /// <summary>
     /// Gets or sets the collection of configured contexts.

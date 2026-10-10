@@ -198,6 +198,29 @@ public sealed class AutomationPlanBuilderTests
 
         AutomationStep focus = Assert.Single(plan.Steps, step => step.Type == AutomationStepType.SetFocusMode);
         Assert.Equal("False", focus.Arguments["enabled"]);
+
+        // The mode to turn off, which has its own Off Shortcut.
+        Assert.Equal("Work", focus.Arguments["previousModeName"]);
     }
 
+    /// <summary>
+    /// Found in a real settings file: Focus enabled with no mode named. That turns nothing on, so it
+    /// must not count as using Focus - it made every switch to the profile run the "Off" Shortcut and
+    /// warn that it was missing. Leaving such a profile has nothing to clear either.
+    /// </summary>
+    [Fact]
+    public void FocusEnabledWithNoModeNamedIsNotUsingFocus()
+    {
+        AutomationPlanBuilder builder = new();
+        ContextDefinition noMode = new() { Id = "test-work", DisplayName = "Work", Focus = new FocusConfig { Enabled = true, ModeName = "  " } };
+        ContextDefinition none = new() { Id = "personal", DisplayName = "Personal" };
+
+        Assert.DoesNotContain(builder.Build(none, noMode).Steps, step => step.Type == AutomationStepType.SetFocusMode);
+        Assert.DoesNotContain(builder.Build(noMode, none).Steps, step => step.Type == AutomationStepType.SetFocusMode);
+
+        // Coming back from a profile that did turn a Focus on still clears it.
+        ContextDefinition dnd = new() { Id = "home", DisplayName = "Home", Focus = new FocusConfig { Enabled = true, ModeName = "Do Not Disturb" } };
+        AutomationStep focus = Assert.Single(builder.Build(dnd, noMode).Steps, step => step.Type == AutomationStepType.SetFocusMode);
+        Assert.Equal("False", focus.Arguments["enabled"]);
+    }
 }

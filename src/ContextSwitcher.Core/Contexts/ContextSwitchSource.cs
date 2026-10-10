@@ -7,7 +7,6 @@ public enum ContextSwitchSource
 {
     MenuBar,
     Dashboard,
-    GlobalHotkey,
     Cli,
     Shortcut,
     StartupRecovery,
