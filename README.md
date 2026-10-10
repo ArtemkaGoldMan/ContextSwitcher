@@ -49,9 +49,6 @@ Every part is optional. A profile that only opens two apps is a perfectly good p
 
 You need a Mac with **Apple silicon** (M1 or later) and **macOS 13 Ventura or later**.
 
-> [!NOTE]
-> The first release is on its way. Until it is published, run ContextSwitcher [from source](#build-from-source).
-
 ### Option 1 — one command (recommended)
 
 Open **Terminal** (press ⌘Space, type *Terminal*, press Return), paste this and press Return:
