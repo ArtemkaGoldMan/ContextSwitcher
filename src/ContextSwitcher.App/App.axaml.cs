@@ -20,6 +20,7 @@ public sealed partial class App : Application
 
     private TrayIcon? trayIcon;
     private DashboardWindow? dashboardWindow;
+    private MainAppWindow? mainAppWindow;
 
     public override void Initialize()
     {
@@ -70,8 +71,22 @@ public sealed partial class App : Application
         TrayMenu trayMenu = new(
             contextId => _ = SwitchFromMenuAsync(contextId),
             this.ShowDashboard,
+            this.ShowMainApp,
+            this.ShowUpdates,
             () => desktop.Shutdown());
         trayMenu.Update(AppHost.Configuration.Contexts, AppHost.State.CurrentContextId);
+
+        // A waiting update shows in the menu; installing one quits this copy so the new one can take
+        // its place - the updater has already arranged for it to open.
+        UpdatesViewModel updates = AppHost.Services.GetRequiredService<UpdatesViewModel>();
+        updates.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(UpdatesViewModel.IsUpdateAvailable))
+            {
+                trayMenu.SetAvailableUpdate(updates.IsUpdateAvailable ? updates.AvailableVersionText : null);
+            }
+        };
+        updates.RestartRequested += (_, _) => desktop.Shutdown();
 
         TrayIcon trayIcon = new()
         {
@@ -84,6 +99,9 @@ public sealed partial class App : Application
         // The profile list and its tick follow the configuration and the active profile. Both events
         // are raised on the UI thread, which a NativeMenu - an Avalonia object - requires. The menu is
         // updated in place, never replaced; see TrayMenu for why.
+        // Opening the menu bar menu puts the popover away, the way opening one menu closes another.
+        trayMenu.Menu.Opening += (_, _) => this.dashboardWindow?.Hide();
+
         AppHost.ConfigurationChanged += (_, _) => trayMenu.Update(AppHost.Configuration.Contexts, AppHost.State.CurrentContextId);
         AppHost.StateChanged += (_, _) => trayMenu.Update(AppHost.Configuration.Contexts, AppHost.State.CurrentContextId);
 
@@ -151,12 +169,36 @@ public sealed partial class App : Application
         if (this.dashboardWindow is null)
         {
             DashboardViewModel viewModel = AppHost.Services.GetRequiredService<DashboardViewModel>();
-            this.dashboardWindow = new DashboardWindow(viewModel);
+            this.dashboardWindow = new DashboardWindow(viewModel, this.ShowMainApp);
             this.dashboardWindow.Closed += (_, _) => this.dashboardWindow = null;
         }
 
         PositionNearMenuBar(this.dashboardWindow);
         this.dashboardWindow.ShowAsPopover();
+    }
+
+    /// <summary>
+    /// Opens the main window, or brings it forward if it is already open. Both the menu bar's
+    /// "Open App" and the dashboard's go through here, so there is only ever one.
+    /// </summary>
+    private void ShowMainApp()
+    {
+        if (this.mainAppWindow is null)
+        {
+            MainAppViewModel viewModel = AppHost.Services.GetRequiredService<MainAppViewModel>();
+            this.mainAppWindow = new MainAppWindow(viewModel);
+            this.mainAppWindow.Closed += (_, _) => this.mainAppWindow = null;
+        }
+
+        this.mainAppWindow.Show();
+        this.mainAppWindow.Activate();
+    }
+
+    /// <summary>The menu bar's "Update to …": the main window, on Settings, where the update is.</summary>
+    private void ShowUpdates()
+    {
+        this.ShowMainApp();
+        (this.mainAppWindow?.DataContext as MainAppViewModel)?.ShowSettings();
     }
 
     private static void PositionNearMenuBar(Window window)
@@ -167,9 +209,13 @@ public sealed partial class App : Application
             return;
         }
 
+        // The card, not the window, goes 12 from the right edge and 4 under the menu bar: the window
+        // is wider and taller by the transparent room its shadow is drawn into. Same units as this
+        // has always used, which on macOS place the popover correctly.
         PixelRect area = screen.WorkingArea;
-        int x = area.Right - (int)window.Width - 12;
-        int y = area.Y + 4;
+        Thickness room = DashboardWindow.ShadowRoom;
+        int x = area.Right - (int)(window.Width - room.Right) - 12;
+        int y = area.Y + 4 - (int)room.Top;
         window.Position = new PixelPoint(x, y);
     }
 

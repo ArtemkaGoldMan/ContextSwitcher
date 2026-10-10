@@ -6,9 +6,18 @@
   RequestedThemeVariant="Default">
   <Application.Resources>
     <ResourceDictionary>
+      <!-- The font for the whole app. Semi's own list starts "Inter, -apple-system, …, PingFang SC,
+           …, Hiragino Sans GB": Inter isn't on a Mac and -apple-system is a CSS name macOS doesn't
+           know, so Latin came from PingFang and Cyrillic from Hiragino Sans GB - a Chinese font whose
+           Cyrillic letters are as wide as its ideographs, which spread every Ukrainian word out
+           ("Т е с т"). The system font has every Latin and Cyrillic letter; the CJK fonts stay last,
+           for Chinese and Japanese text only. -->
+      <FontFamily x:Key="DefaultFontFamily">.AppleSystemUIFont, Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB</FontFamily>
+
       <ResourceDictionary.MergedDictionaries>
         <ResourceInclude Source="avares://ContextSwitcher/Styles/Colors.axaml" />
         <ResourceInclude Source="avares://ContextSwitcher/Styles/Icons.axaml" />
+        <ResourceInclude Source="avares://ContextSwitcher/Styles/Templates.axaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Application.Resources>

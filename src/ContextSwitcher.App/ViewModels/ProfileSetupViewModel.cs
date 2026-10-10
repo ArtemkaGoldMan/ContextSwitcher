@@ -5,6 +5,7 @@ using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Applications;
+using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
 
 namespace ContextSwitcher.App.ViewModels;
@@ -19,21 +20,18 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     private readonly ConfigurationStore configurationStore;
     private readonly string originalContextId;
 
+    private readonly ISystemCatalog catalog;
+
+    private readonly AccentChoiceViewModel customAccent;
+
     private string displayName;
-    private string menuBarLabel;
     private string accentColor;
+    private bool customAccentChosen;
     private string icon;
 
     private BrowserManagementMode browserMode;
     private BrowserKind browserKind;
     private bool avoidDuplicateTabs;
-
-    private bool focusEnabled;
-    private string focusModeName;
-
-    private MediaPlayerKind mediaPlayer;
-    private string mediaPlaylist;
-    private bool mediaAutoPlay;
 
     private string notesText;
 
@@ -46,26 +44,24 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     public ProfileSetupViewModel(
         ConfigurationStore configurationStore,
         IInstalledAppsService installedAppsService,
+        ISystemCatalog catalog,
+        IProcessRunner processRunner,
+        IFocusShortcutInstaller focusShortcuts,
         ContextDefinition? existing)
     {
         this.configurationStore = configurationStore;
+        this.catalog = catalog;
         this.IsNew = existing is null;
 
         ContextDefinition source = existing ?? CreateDefaultContext(AppHost.Configuration.Contexts);
         this.originalContextId = source.Id;
 
         this.displayName = source.DisplayName;
-        this.menuBarLabel = source.MenuBarLabel;
         this.accentColor = source.AccentColor;
-        this.AccentPresets = AccentPalette
-            .Select(entry => new AccentSwatchViewModel(entry.Hex, entry.Name, hex => this.AccentColor = hex))
-            .ToList();
-        this.SyncAccentSelection();
+        this.customAccent = AccentChoiceViewModel.Custom(source.AccentColor);
+        this.AccentChoices = [.. AccentPalette.Select(entry => AccentChoiceViewModel.Preset(entry.Hex, entry.Name)), this.customAccent];
         this.icon = source.Icon;
-        this.IconChoices = ProfileIcons.All
-            .Select(icon => new IconChoiceViewModel(icon, name => this.Icon = name))
-            .ToList();
-        this.SyncIconSelection();
+        this.IconChoices = ProfileIcons.All.Select(icon => new IconChoiceViewModel(icon)).ToList();
 
         this.Apps = new ObservableCollection<AppRowViewModel>(
             source.LaunchApps.Concat(source.CloseApps)
@@ -86,45 +82,74 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.browserKind = source.BrowserManagement.Browser;
         this.avoidDuplicateTabs = source.BrowserManagement.AvoidDuplicateTabs;
         this.BrowserUrls = new ObservableCollection<EditableStringRowViewModel>(
-            source.BrowserManagement.Urls.Select(url => new EditableStringRowViewModel(url, this.RemoveBrowserUrl)));
+            source.BrowserManagement.Urls.Select(url => this.UrlRow(url)));
         this.TabGroups = new ObservableCollection<EditableStringRowViewModel>(
-            source.BrowserManagement.TabGroups.Select(group => new EditableStringRowViewModel(group, this.RemoveTabGroup)));
+            source.BrowserManagement.TabGroups.Select(group => this.TabGroupRow(group)));
         this.BrowserProfiles = new ObservableCollection<BrowserProfileRowViewModel>(
             source.BrowserManagement.Profiles.Select(profile => new BrowserProfileRowViewModel(
-                profile.Browser, profile.ProfileDirectory, profile.Urls, this.RemoveBrowserProfile)));
+                profile.Browser, profile.ProfileDirectory, profile.Urls, catalog.GetBrowserProfiles, this.RemoveBrowserProfile)));
+        this.UrlTabPicker = new ChoicePickerViewModel(
+            this.LoadOpenTabsAsync,
+            () => this.BrowserUrls.Select(row => row.Value.Trim()),
+            choice => this.BrowserUrls.Add(this.UrlRow(choice.Value)),
+            OpenTabsEmptyText,
+            OpenTabsUnavailableText,
+            "IconGlobe",
+            OpenTabsSearchText);
 
-        this.focusEnabled = source.Focus.Enabled;
-        this.focusModeName = source.Focus.ModeName;
+        this.Focus = new FocusSettingsViewModel(catalog, processRunner, focusShortcuts, source.Focus);
+        this.Media = new MediaSettingsViewModel(catalog, source.Media);
 
-        this.mediaPlayer = source.Media.Player;
-        this.mediaPlaylist = source.Media.Playlist;
-        this.mediaAutoPlay = source.Media.AutoPlay;
-
+        // Containers already in config are names Docker gave them; shown, not offered for editing.
         this.DockerStart = new ObservableCollection<EditableStringRowViewModel>(
-            source.Docker.Start.Select(name => new EditableStringRowViewModel(name, this.RemoveDockerStart)));
+            source.Docker.Start.Select(name => this.ContainerRow(name, this.RemoveDockerStart, isEditable: false)));
         this.DockerStop = new ObservableCollection<EditableStringRowViewModel>(
-            source.Docker.Stop.Select(name => new EditableStringRowViewModel(name, this.RemoveDockerStop)));
+            source.Docker.Stop.Select(name => this.ContainerRow(name, this.RemoveDockerStop, isEditable: false)));
+        this.DockerStartPicker = new ChoicePickerViewModel(
+            this.LoadContainersAsync,
+            () => this.DockerStart.Select(row => row.Value.Trim()),
+            choice => this.DockerStart.Add(this.ContainerRow(choice.Value, this.RemoveDockerStart, isEditable: false)),
+            ContainersEmptyText,
+            ContainersUnavailableText,
+            "IconBox",
+            ContainersSearchText);
+        this.DockerStopPicker = new ChoicePickerViewModel(
+            this.LoadContainersAsync,
+            () => this.DockerStop.Select(row => row.Value.Trim()),
+            choice => this.DockerStop.Add(this.ContainerRow(choice.Value, this.RemoveDockerStop, isEditable: false)),
+            ContainersEmptyText,
+            ContainersUnavailableText,
+            "IconBox",
+            ContainersSearchText);
 
         this.QuickLinks = new ObservableCollection<QuickLinkRowViewModel>(
             source.QuickLinks.Select(link => new QuickLinkRowViewModel(link.Title, link.Url, link.Icon, this.RemoveQuickLink)));
+        this.QuickLinkTabPicker = new ChoicePickerViewModel(
+            this.LoadOpenTabsAsync,
+            () => this.QuickLinks.Select(row => row.Url.Trim()),
+            choice => this.QuickLinks.Add(new QuickLinkRowViewModel(choice.Title, choice.Value, "link", this.RemoveQuickLink)),
+            OpenTabsEmptyText,
+            OpenTabsUnavailableText,
+            "IconGlobe",
+            OpenTabsSearchText);
 
         this.notesText = string.Join(Environment.NewLine, source.Notes);
 
         this.continueOnNonCriticalFailure = source.SwitchPolicy.ContinueOnNonCriticalFailure;
-        this.CriticalStepOptions = CriticalStepOptionViewModel.SelectableStepTypes
-            .Select(stepType => new CriticalStepOptionViewModel(
-                stepType,
-                FormatStepTypeName(stepType),
-                source.SwitchPolicy.CriticalSteps.Contains(stepType.ToString())))
+        this.CriticalStepOptions = CriticalStepOptionViewModel.SelectableSteps
+            .Select(step => new CriticalStepOptionViewModel(
+                step.Type,
+                step.Label,
+                source.SwitchPolicy.CriticalSteps.Contains(step.Type.ToString())))
             .ToList();
 
-        this.AddAppCommand = new RelayCommand(() => this.Apps.Add(new AppRowViewModel(string.Empty, true, true, this.RemoveApp)));
-        this.AddBrowserUrlCommand = new RelayCommand(() => this.BrowserUrls.Add(new EditableStringRowViewModel(string.Empty, this.RemoveBrowserUrl)));
-        this.AddTabGroupCommand = new RelayCommand(() => this.TabGroups.Add(new EditableStringRowViewModel(string.Empty, this.RemoveTabGroup)));
+        this.AddAppCommand = new RelayCommand(() => this.Apps.Add(new AppRowViewModel(string.Empty, true, true, this.RemoveApp, isEditable: true)));
+        this.AddBrowserUrlCommand = new RelayCommand(() => this.BrowserUrls.Add(this.UrlRow(string.Empty)));
+        this.AddTabGroupCommand = new RelayCommand(() => this.TabGroups.Add(this.TabGroupRow(string.Empty)));
         this.AddBrowserProfileCommand = new RelayCommand(() => this.BrowserProfiles.Add(
-            new BrowserProfileRowViewModel(BrowserKind.Chrome, string.Empty, [], this.RemoveBrowserProfile)));
-        this.AddDockerStartCommand = new RelayCommand(() => this.DockerStart.Add(new EditableStringRowViewModel(string.Empty, this.RemoveDockerStart)));
-        this.AddDockerStopCommand = new RelayCommand(() => this.DockerStop.Add(new EditableStringRowViewModel(string.Empty, this.RemoveDockerStop)));
+            new BrowserProfileRowViewModel(BrowserKind.Chrome, string.Empty, [], catalog.GetBrowserProfiles, this.RemoveBrowserProfile)));
+        this.AddDockerStartCommand = new RelayCommand(() => this.DockerStart.Add(this.ContainerRow(string.Empty, this.RemoveDockerStart, isEditable: true)));
+        this.AddDockerStopCommand = new RelayCommand(() => this.DockerStop.Add(this.ContainerRow(string.Empty, this.RemoveDockerStop, isEditable: true)));
         this.AddQuickLinkCommand = new RelayCommand(() => this.QuickLinks.Add(new QuickLinkRowViewModel(string.Empty, string.Empty, "link", this.RemoveQuickLink)));
 
         this.SaveCommand = new AsyncRelayCommand(this.SaveAsync, () => !this.isSaving);
@@ -165,12 +190,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         }
     }
 
-    public string MenuBarLabel
-    {
-        get => this.menuBarLabel;
-        set => this.SetProperty(ref this.menuBarLabel, value);
-    }
-
     public string AccentColor
     {
         get => this.accentColor;
@@ -178,10 +197,11 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         {
             if (this.SetProperty(ref this.accentColor, value))
             {
+                this.customAccent.Brush = this.AccentBrush;
                 this.OnPropertyChanged(nameof(this.AccentBrush));
                 this.OnPropertyChanged(nameof(this.AccentColorValue));
                 this.OnPropertyChanged(nameof(this.IsCustomAccent));
-                this.SyncAccentSelection();
+                this.OnPropertyChanged(nameof(this.SelectedAccent));
             }
         }
     }
@@ -189,13 +209,41 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     public Avalonia.Media.IBrush AccentBrush => AccentColorParser.ToBrush(this.AccentColor);
 
     /// <summary>
-    /// One-click presets. Chosen to stay legible under the white glyph drawn on top of them, which
-    /// rules out a yellow; the first and the green are the two colors onboarding gives its profiles.
+    /// The accent dropdown: the presets, then "Custom". The presets are chosen to stay legible under
+    /// the white glyph drawn on top of them, which rules out a yellow; the first and the green are
+    /// the two colors onboarding gives its profiles.
     /// </summary>
-    public IReadOnlyList<AccentSwatchViewModel> AccentPresets { get; }
+    public IReadOnlyList<AccentChoiceViewModel> AccentChoices { get; }
 
-    /// <summary>True when the current color is none of the presets - it came from the custom picker.</summary>
-    public bool IsCustomAccent => !this.AccentPresets.Any(p => p.IsSelected);
+    public AccentChoiceViewModel SelectedAccent
+    {
+        get => this.IsCustomAccent ? this.customAccent : this.MatchingPreset() ?? this.customAccent;
+        set
+        {
+            // A ComboBox writes null while its items are being swapped; that is not a choice.
+            if (value is null)
+            {
+                return;
+            }
+
+            this.customAccentChosen = value.IsCustom;
+            if (value.Hex is not null)
+            {
+                this.AccentColor = value.Hex;
+            }
+
+            this.OnPropertyChanged(nameof(this.IsCustomAccent));
+            this.OnPropertyChanged(nameof(this.SelectedAccent));
+        }
+    }
+
+    /// <summary>
+    /// The color is custom, so the color picker shows under the dropdown: either "Custom" was chosen,
+    /// or the color is none of the presets (a saved custom color, or one typed into the config). It
+    /// stays custom while the picker is dragged, even across a preset's exact color, so the picker
+    /// does not vanish from under the pointer.
+    /// </summary>
+    public bool IsCustomAccent => this.customAccentChosen || this.MatchingPreset() is null;
 
     /// <summary>
     /// The accent as a <see cref="Avalonia.Media.Color"/> for the custom color picker. Config keeps
@@ -218,13 +266,29 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         {
             if (this.SetProperty(ref this.icon, value))
             {
-                this.SyncIconSelection();
+                this.OnPropertyChanged(nameof(this.SelectedIcon));
             }
         }
     }
 
-    /// <summary>Every icon a profile can use, previewed in the picker.</summary>
+    /// <summary>Every icon a profile can use, each drawn beside its name in the dropdown.</summary>
     public IReadOnlyList<IconChoiceViewModel> IconChoices { get; }
+
+    /// <summary>
+    /// The dropdown's entry for <see cref="Icon"/>, or the fallback's for a name this build does not
+    /// know - which only shows it; the stored name changes only when another icon is picked.
+    /// </summary>
+    public IconChoiceViewModel SelectedIcon
+    {
+        get => this.IconChoices.First(choice => choice.Name == ProfileIcons.Find(this.Icon).Name);
+        set
+        {
+            if (value is not null)
+            {
+                this.Icon = value.Name;
+            }
+        }
+    }
 
     public ObservableCollection<AppRowViewModel> Apps { get; }
 
@@ -233,9 +297,21 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     /// </summary>
     public AppPickerViewModel AppPicker { get; }
 
-    public IReadOnlyList<BrowserManagementMode> BrowserModes { get; } = Enum.GetValues<BrowserManagementMode>();
+    public IReadOnlyList<Choice<BrowserManagementMode>> BrowserModeChoices { get; } =
+    [
+        new(BrowserManagementMode.None, "Don't open anything"),
+        new(BrowserManagementMode.Urls, "Open web pages"),
+        new(BrowserManagementMode.Groups, "Open tab groups"),
+        new(BrowserManagementMode.Profiles, "Open browser profiles")
+    ];
 
-    public IReadOnlyList<BrowserKind> BrowserKinds { get; } = Enum.GetValues<BrowserKind>();
+    public IReadOnlyList<Choice<BrowserKind>> BrowserKindChoices { get; } =
+    [
+        new(BrowserKind.Default, "Default browser"),
+        new(BrowserKind.Safari, "Safari"),
+        new(BrowserKind.Chrome, "Google Chrome"),
+        new(BrowserKind.Brave, "Brave")
+    ];
 
     public BrowserManagementMode BrowserMode
     {
@@ -244,12 +320,33 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         {
             if (this.SetProperty(ref this.browserMode, value))
             {
+                this.OnPropertyChanged(nameof(this.SelectedBrowserMode));
                 this.OnPropertyChanged(nameof(this.IsUrlsMode));
                 this.OnPropertyChanged(nameof(this.IsGroupsMode));
                 this.OnPropertyChanged(nameof(this.IsProfilesMode));
+                this.OnPropertyChanged(nameof(this.ShowsBrowserChoice));
             }
         }
     }
+
+    public Choice<BrowserManagementMode> SelectedBrowserMode
+    {
+        get => this.BrowserModeChoices.First(choice => choice.Value == this.BrowserMode);
+        set
+        {
+            // A ComboBox writes null while its items are being swapped; that is not a choice.
+            if (value is not null)
+            {
+                this.BrowserMode = value.Value;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Which browser only matters for opening pages and tab groups: profiles name their own browser
+    /// per row, and None opens nothing.
+    /// </summary>
+    public bool ShowsBrowserChoice => this.IsUrlsMode || this.IsGroupsMode;
 
     public bool IsUrlsMode => this.BrowserMode == BrowserManagementMode.Urls;
 
@@ -264,8 +361,21 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         {
             if (this.SetProperty(ref this.browserKind, value))
             {
+                this.OnPropertyChanged(nameof(this.SelectedBrowserKind));
                 this.OnPropertyChanged(nameof(this.CanAvoidDuplicateTabs));
                 this.OnPropertyChanged(nameof(this.AvoidDuplicateTabsHint));
+            }
+        }
+    }
+
+    public Choice<BrowserKind> SelectedBrowserKind
+    {
+        get => this.BrowserKindChoices.First(choice => choice.Value == this.BrowserKind);
+        set
+        {
+            if (value is not null)
+            {
+                this.BrowserKind = value.Value;
             }
         }
     }
@@ -294,43 +404,27 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     public ObservableCollection<BrowserProfileRowViewModel> BrowserProfiles { get; }
 
-    public bool FocusEnabled
-    {
-        get => this.focusEnabled;
-        set => this.SetProperty(ref this.focusEnabled, value);
-    }
+    /// <summary>"From open tabs" under Startup URLs: the pages open in the chosen browser right now.</summary>
+    public ChoicePickerViewModel UrlTabPicker { get; }
 
-    public string FocusModeName
-    {
-        get => this.focusModeName;
-        set => this.SetProperty(ref this.focusModeName, value);
-    }
+    public FocusSettingsViewModel Focus { get; }
 
-    public IReadOnlyList<MediaPlayerKind> MediaPlayers { get; } = Enum.GetValues<MediaPlayerKind>();
-
-    public MediaPlayerKind MediaPlayer
-    {
-        get => this.mediaPlayer;
-        set => this.SetProperty(ref this.mediaPlayer, value);
-    }
-
-    public string MediaPlaylist
-    {
-        get => this.mediaPlaylist;
-        set => this.SetProperty(ref this.mediaPlaylist, value);
-    }
-
-    public bool MediaAutoPlay
-    {
-        get => this.mediaAutoPlay;
-        set => this.SetProperty(ref this.mediaAutoPlay, value);
-    }
+    public MediaSettingsViewModel Media { get; }
 
     public ObservableCollection<EditableStringRowViewModel> DockerStart { get; }
 
     public ObservableCollection<EditableStringRowViewModel> DockerStop { get; }
 
+    /// <summary>"+ Add container" for Start: the containers Docker has, or a note that it isn't running.</summary>
+    public ChoicePickerViewModel DockerStartPicker { get; }
+
+    /// <summary>"+ Add container" for Stop.</summary>
+    public ChoicePickerViewModel DockerStopPicker { get; }
+
     public ObservableCollection<QuickLinkRowViewModel> QuickLinks { get; }
+
+    /// <summary>"From open tabs" under Quick links: picking a tab fills in both its title and URL.</summary>
+    public ChoicePickerViewModel QuickLinkTabPicker { get; }
 
     public string NotesText
     {
@@ -417,17 +511,57 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.AppPicker.Refresh();
     }
 
-    private void RemoveBrowserUrl(EditableStringRowViewModel row) => this.BrowserUrls.Remove(row);
+    private void RemoveBrowserUrl(EditableStringRowViewModel row)
+    {
+        this.BrowserUrls.Remove(row);
+        this.UrlTabPicker.Refresh();
+    }
 
     private void RemoveTabGroup(EditableStringRowViewModel row) => this.TabGroups.Remove(row);
 
     private void RemoveBrowserProfile(BrowserProfileRowViewModel row) => this.BrowserProfiles.Remove(row);
 
-    private void RemoveDockerStart(EditableStringRowViewModel row) => this.DockerStart.Remove(row);
+    private void RemoveDockerStart(EditableStringRowViewModel row)
+    {
+        this.DockerStart.Remove(row);
+        this.DockerStartPicker.Refresh();
+    }
 
-    private void RemoveDockerStop(EditableStringRowViewModel row) => this.DockerStop.Remove(row);
+    private void RemoveDockerStop(EditableStringRowViewModel row)
+    {
+        this.DockerStop.Remove(row);
+        this.DockerStopPicker.Refresh();
+    }
 
-    private void RemoveQuickLink(QuickLinkRowViewModel row) => this.QuickLinks.Remove(row);
+    private void RemoveQuickLink(QuickLinkRowViewModel row)
+    {
+        this.QuickLinks.Remove(row);
+        this.QuickLinkTabPicker.Refresh();
+    }
+
+    private EditableStringRowViewModel UrlRow(string url) =>
+        new(url, this.RemoveBrowserUrl, isEditable: true, "IconGlobe", "https://…");
+
+    private EditableStringRowViewModel TabGroupRow(string name) =>
+        new(name, this.RemoveTabGroup, isEditable: true, "IconLayers", "Tab group name");
+
+    private EditableStringRowViewModel ContainerRow(string name, Action<EditableStringRowViewModel> remove, bool isEditable) =>
+        new(name, remove, isEditable, "IconBox", "Container name");
+
+    private async Task<IReadOnlyList<PickerChoice>?> LoadOpenTabsAsync(CancellationToken cancellationToken)
+    {
+        IReadOnlyList<OpenTab> tabs = await this.catalog.GetOpenTabsAsync(this.BrowserKind, cancellationToken).ConfigureAwait(true);
+        return tabs.Select(tab => new PickerChoice(tab.Url, tab.Title, HostOf(tab.Url))).ToList();
+    }
+
+    private async Task<IReadOnlyList<PickerChoice>?> LoadContainersAsync(CancellationToken cancellationToken)
+    {
+        IReadOnlyList<string>? containers = await this.catalog.GetDockerContainersAsync(cancellationToken).ConfigureAwait(true);
+        return containers?.Select(name => new PickerChoice(name, name)).ToList();
+    }
+
+    private static string HostOf(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) ? uri.Host : string.Empty;
 
     private async Task SaveAsync()
     {
@@ -480,7 +614,10 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         {
             Id = this.Id.Trim(),
             DisplayName = this.DisplayName.Trim(),
-            MenuBarLabel = this.MenuBarLabel.Trim(),
+
+            // Not edited any more - nothing draws it. Kept in step with the name for the config
+            // file's readers, the way onboarding has always written it.
+            MenuBarLabel = this.DisplayName.Trim().ToUpperInvariant(),
             AccentColor = this.AccentColor.Trim(),
             Icon = this.Icon.Trim(),
             LaunchApps = this.Apps.Where(a => a.LaunchOnEnter && !string.IsNullOrWhiteSpace(a.Name)).Select(a => a.Name.Trim()).ToList(),
@@ -497,8 +634,8 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                     .ToList(),
                 AvoidDuplicateTabs = this.AvoidDuplicateTabs
             },
-            Focus = new FocusConfig { Enabled = this.FocusEnabled, ModeName = this.FocusModeName.Trim() },
-            Media = new MediaConfig { Player = this.MediaPlayer, Playlist = this.MediaPlaylist.Trim(), AutoPlay = this.MediaAutoPlay },
+            Focus = this.Focus.ToConfig(),
+            Media = this.Media.ToConfig(),
             Docker = new DockerResourceConfig
             {
                 Start = this.DockerStart.Where(d => !string.IsNullOrWhiteSpace(d.Value)).Select(d => d.Value.Trim()).ToList(),
@@ -506,7 +643,14 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             },
             QuickLinks = this.QuickLinks
                 .Where(q => !string.IsNullOrWhiteSpace(q.Url))
-                .Select(q => new QuickLinkConfig { Title = q.Title.Trim(), Url = q.Url.Trim(), Icon = string.IsNullOrWhiteSpace(q.Icon) ? "link" : q.Icon.Trim() })
+                .Select(q => new QuickLinkConfig
+                {
+                    // The dashboard shows a link by its title alone, so an untitled one would be a
+                    // blank button; the site's name is the obvious stand-in.
+                    Title = string.IsNullOrWhiteSpace(q.Title) ? HostOf(q.Url.Trim()) : q.Title.Trim(),
+                    Url = q.Url.Trim(),
+                    Icon = string.IsNullOrWhiteSpace(q.Icon) ? "link" : q.Icon.Trim()
+                })
                 .ToList(),
             Notes = this.NotesText
                 .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -518,6 +662,20 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             }
         };
     }
+
+    private const string OpenTabsEmptyText =
+        "No other web pages are open. Open the ones you want in your browser, then try again.";
+
+    private const string OpenTabsUnavailableText = "Couldn't read your browser's tabs.";
+
+    private const string ContainersEmptyText = "No other containers to add.";
+
+    private const string OpenTabsSearchText = "Search open tabs…";
+
+    private const string ContainersSearchText = "Search containers…";
+
+    private const string ContainersUnavailableText =
+        "Docker isn't running. Start Docker Desktop to choose a container, or type its name.";
 
     private static readonly (string Hex, string Name)[] AccentPalette =
     [
@@ -531,32 +689,8 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         ("#6E7781", "Graphite")
     ];
 
-    private void SyncIconSelection()
-    {
-        if (this.IconChoices is null)
-        {
-            return;
-        }
-
-        string shown = ProfileIcons.Find(this.Icon).Name;
-        foreach (IconChoiceViewModel choice in this.IconChoices)
-        {
-            choice.IsSelected = choice.Name == shown;
-        }
-    }
-
-    private void SyncAccentSelection()
-    {
-        if (this.AccentPresets is null)
-        {
-            return;
-        }
-
-        foreach (AccentSwatchViewModel preset in this.AccentPresets)
-        {
-            preset.IsSelected = string.Equals(preset.Hex, this.AccentColor?.Trim(), StringComparison.OrdinalIgnoreCase);
-        }
-    }
+    private AccentChoiceViewModel? MatchingPreset() =>
+        this.AccentChoices.FirstOrDefault(choice => string.Equals(choice.Hex, this.AccentColor?.Trim(), StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Lowercases the name and joins its letters and digits with hyphens, which is exactly what the
@@ -600,11 +734,5 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             AccentColor = "#2F6FED",
             Icon = "circle"
         };
-    }
-
-    private static string FormatStepTypeName(Core.Automation.AutomationStepType stepType)
-    {
-        // Insert a space before each interior capital: "CloseApplications" -> "Close Applications".
-        return string.Concat(stepType.ToString().Select((ch, i) => i > 0 && char.IsUpper(ch) ? " " + ch : ch.ToString()));
     }
 }

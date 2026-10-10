@@ -38,9 +38,10 @@ permission above — there's no separate music-specific toggle. If media control
 
 - Confirm the target app (Music or Spotify) is actually installed.
 - Confirm it's allowed under System Settings → Privacy & Security → Automation → ContextSwitcher.
-- For Spotify, prefer a `spotify:playlist:...` URI in your context's `media.playlist` setting over a
-  plain playlist name — Spotify's scripting dictionary plays URIs reliably; plain names are
-  best-effort and may not resolve to anything.
+- For Spotify, use a link or URI rather than a plain playlist name — Spotify's scripting dictionary
+  plays URIs reliably; plain names are best-effort and may not resolve to anything. Pasting the
+  link from Spotify's **Share → Copy link** into Profile Setup is enough: it's saved as the
+  `spotify:playlist:...` URI Spotify needs.
 - Media failures never fail a context switch outright unless you've explicitly marked
   `ControlMedia` as a critical step for that context (and Spotify failures are always treated as
   non-critical, regardless of that setting).

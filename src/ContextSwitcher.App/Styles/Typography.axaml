@@ -24,4 +24,16 @@
     <Setter Property="FontSize" Value="11" />
     <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
   </Style>
+
+  <!-- A caption that should stand out from the ones beside it: today's label under the balance
+       chart, the hours in its legend. -->
+  <Style Selector="TextBlock.caption.today">
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- A status that means "good to go", such as a Focus mode whose Shortcut exists. -->
+  <Style Selector="TextBlock.caption.ready">
+    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+  </Style>
 </Styles>

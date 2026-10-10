@@ -24,16 +24,16 @@ public sealed class TrayAndPopoverTests : UiTest
         new ContextDefinition { Id = "personal", DisplayName = "Personal" }
     ];
 
-    /// <summary>The menu bar menu lists every profile, ticks the active one, then Open Dashboard and Quit.</summary>
+    /// <summary>The menu bar menu lists every profile, ticks the active one, then Open Dashboard, Open App and Quit.</summary>
     [Fact]
     public async Task TheTrayMenuListsEveryProfileWithTheActiveOneTicked()
     {
         await OnUiThreadAsync(() =>
         {
-            TrayMenu tray = new(_ => { }, () => { }, () => { });
+            TrayMenu tray = new(_ => { }, () => { }, () => { }, () => { }, () => { });
             tray.Update(TwoProfiles, "personal");
 
-            Assert.Equal(["Work", "Personal", "---", TrayMenu.OpenDashboardLabel, "---", TrayMenu.QuitLabel], Shape(tray.Menu));
+            Assert.Equal(["Work", "Personal", "---", TrayMenu.OpenDashboardLabel, TrayMenu.OpenAppLabel, "---", TrayMenu.QuitLabel], Shape(tray.Menu));
             NativeMenuItem[] profiles = tray.Menu.Items.OfType<NativeMenuItem>().Take(2).ToArray();
             Assert.All(profiles, item => Assert.Equal(MenuItemToggleType.Radio, item.ToggleType));
             Assert.False(profiles[0].IsChecked);
@@ -47,18 +47,20 @@ public sealed class TrayAndPopoverTests : UiTest
         await OnUiThreadAsync(() =>
         {
             List<string> switched = [];
-            int dashboards = 0, quits = 0;
-            TrayMenu tray = new(switched.Add, () => dashboards++, () => quits++);
+            int dashboards = 0, apps = 0, quits = 0;
+            TrayMenu tray = new(switched.Add, () => dashboards++, () => apps++, () => { }, () => quits++);
             tray.Update(TwoProfiles, "work");
             NativeMenuItem Item(string header) => tray.Menu.Items.OfType<NativeMenuItem>().Single(i => i.Header == header);
 
             Item("Personal").Command!.Execute(null);
             Item("Work").Command!.Execute(null);
             Item(TrayMenu.OpenDashboardLabel).Command!.Execute(null);
+            Item(TrayMenu.OpenAppLabel).Command!.Execute(null);
             Item(TrayMenu.QuitLabel).Command!.Execute(null);
 
             Assert.Equal(["personal", "work"], switched);
             Assert.Equal(1, dashboards);
+            Assert.Equal(1, apps);
             Assert.Equal(1, quits);
         });
     }
@@ -73,7 +75,7 @@ public sealed class TrayAndPopoverTests : UiTest
     {
         await OnUiThreadAsync(() =>
         {
-            TrayMenu tray = new(_ => { }, () => { }, () => { });
+            TrayMenu tray = new(_ => { }, () => { }, () => { }, () => { }, () => { });
             tray.Update(TwoProfiles, "work");
             NativeMenu menu = tray.Menu;
             NativeMenuItem[] before = tray.Menu.Items.OfType<NativeMenuItem>().Take(2).ToArray();
@@ -97,18 +99,49 @@ public sealed class TrayAndPopoverTests : UiTest
     {
         await OnUiThreadAsync(() =>
         {
-            TrayMenu tray = new(_ => { }, () => { }, () => { });
+            TrayMenu tray = new(_ => { }, () => { }, () => { }, () => { }, () => { });
             NativeMenu menu = tray.Menu;
             tray.Update(TwoProfiles, "work");
 
             tray.Update([.. TwoProfiles, new ContextDefinition { Id = "study", DisplayName = "Study" }], "study");
-            Assert.Equal(["Work", "Personal", "Study [x]", "---", TrayMenu.OpenDashboardLabel, "---", TrayMenu.QuitLabel], Shape(menu, ticks: true));
+            Assert.Equal(["Work", "Personal", "Study [x]", "---", TrayMenu.OpenDashboardLabel, TrayMenu.OpenAppLabel, "---", TrayMenu.QuitLabel], Shape(menu, ticks: true));
 
             tray.Update([new ContextDefinition { Id = "work", DisplayName = "Office" }], "work");
-            Assert.Equal(["Office [x]", "---", TrayMenu.OpenDashboardLabel, "---", TrayMenu.QuitLabel], Shape(menu, ticks: true));
+            Assert.Equal(["Office [x]", "---", TrayMenu.OpenDashboardLabel, TrayMenu.OpenAppLabel, "---", TrayMenu.QuitLabel], Shape(menu, ticks: true));
 
             tray.Update([], null);
-            Assert.Equal([TrayMenu.OpenDashboardLabel, "---", TrayMenu.QuitLabel], Shape(menu));
+            Assert.Equal([TrayMenu.OpenDashboardLabel, TrayMenu.OpenAppLabel, "---", TrayMenu.QuitLabel], Shape(menu));
+            Assert.Same(menu, tray.Menu);
+        });
+    }
+
+    /// <summary>
+    /// A waiting update gets its own entry just above Quit, which leads to it, and the entry goes
+    /// once there is nothing waiting - in the same menu, like every other change to it.
+    /// </summary>
+    [Fact]
+    public async Task AWaitingUpdateAddsAnEntryAboveQuitThatLeadsToIt()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            int opened = 0;
+            TrayMenu tray = new(_ => { }, () => { }, () => { }, () => opened++, () => { });
+            tray.Update(TwoProfiles, "work");
+            NativeMenu menu = tray.Menu;
+
+            tray.SetAvailableUpdate("0.2.0");
+            tray.SetAvailableUpdate("0.2.0");
+
+            Assert.Equal(["Work", "Personal", "---", TrayMenu.OpenDashboardLabel, TrayMenu.OpenAppLabel, TrayMenu.UpdateLabel("0.2.0"), "---", TrayMenu.QuitLabel], Shape(menu));
+            menu.Items.OfType<NativeMenuItem>().Single(i => i.Header == TrayMenu.UpdateLabel("0.2.0")).Command!.Execute(null);
+            Assert.Equal(1, opened);
+
+            tray.SetAvailableUpdate("0.3.0");
+            Assert.Contains(TrayMenu.UpdateLabel("0.3.0"), Shape(menu));
+            Assert.DoesNotContain(TrayMenu.UpdateLabel("0.2.0"), Shape(menu));
+
+            tray.SetAvailableUpdate(null);
+            Assert.Equal(["Work", "Personal", "---", TrayMenu.OpenDashboardLabel, TrayMenu.OpenAppLabel, "---", TrayMenu.QuitLabel], Shape(menu));
             Assert.Same(menu, tray.Menu);
         });
     }
@@ -128,7 +161,7 @@ public sealed class TrayAndPopoverTests : UiTest
         await OnUiThreadAsync(() =>
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
-            DashboardWindow popover = new(scenario.Dashboard());
+            DashboardWindow popover = new(scenario.Dashboard(), () => { });
             popover.Show();
             Settle(popover);
 
@@ -147,7 +180,7 @@ public sealed class TrayAndPopoverTests : UiTest
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
             scenario.SwitchService.Result = scenario.SwitchService.Result with { Status = ContextSwitchStatus.SucceededWithWarnings };
-            DashboardWindow popover = new(scenario.Dashboard());
+            DashboardWindow popover = new(scenario.Dashboard(), () => { });
             popover.Show();
             Settle(popover);
 

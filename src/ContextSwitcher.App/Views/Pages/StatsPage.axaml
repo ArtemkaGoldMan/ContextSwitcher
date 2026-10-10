@@ -3,11 +3,10 @@
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
-  xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
   x:DataType="vm:StatsViewModel">
   <StackPanel Spacing="20">
     <Grid ColumnDefinitions="Auto,*,Auto">
-      <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{DynamicResource BadgeGreenGradient}" Margin="0,0,12,0">
+      <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{DynamicResource AccentBrush}" Margin="0,0,12,0">
         <Viewbox Classes="icon" Width="18" Height="18">
           <Path Classes="glyph" Data="{StaticResource IconChartColumn}" />
         </Viewbox>
@@ -21,10 +20,11 @@
       </Border>
     </Grid>
 
+    <!-- The same chart as the Dashboard's, bigger; its legend carries the totals per profile. -->
     <Border Classes="panel" IsVisible="{Binding HasBalanceData}">
       <StackPanel Spacing="10">
-        <TextBlock Text="BALANCE" Classes="sectionTitle" />
-        <lvc:CartesianChart Series="{Binding BalanceSeries}" XAxes="{Binding BalanceXAxes}" Height="280" />
+        <TextBlock Text="TIME PER DAY" Classes="sectionTitle" />
+        <ContentControl Content="{Binding BalanceChart}" ContentTemplate="{StaticResource BalanceChart}" />
       </StackPanel>
     </Border>
 
@@ -36,21 +36,5 @@
         Margin="0,24" />
     </Border>
 
-    <Border Classes="panel">
-      <StackPanel Spacing="4">
-        <TextBlock Text="TOTALS BY PROFILE" Classes="sectionTitle" Margin="0,0,0,6" />
-        <ItemsControl ItemsSource="{Binding ContextTotals}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="vm:ContextTotalViewModel">
-              <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,6">
-                <Ellipse Grid.Column="0" Width="10" Height="10" Fill="{Binding AccentBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
-                <TextBlock Grid.Column="1" Text="{Binding DisplayName}" Classes="body" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="2" Text="{Binding TotalHoursDisplay}" Classes="body" FontWeight="Medium" VerticalAlignment="Center" />
-              </Grid>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </StackPanel>
-    </Border>
   </StackPanel>
 </UserControl>

@@ -36,6 +36,7 @@ ContextSwitcher validate-config
   "activeContextId": "work",
   "defaultSwitchTimeoutSeconds": 45,
   "showDockIcon": false,
+  "checkForUpdates": true,
   "onboardingCompleted": true,
   "analytics": { "enabled": true, "retentionDays": 365 },
   "contexts": []
@@ -47,6 +48,7 @@ ContextSwitcher validate-config
 | `schemaVersion` | Always `1` today. |
 | `activeContextId` | Must match a `contexts[].id`. |
 | `showDockIcon` | Read once at startup — changing it needs a restart, and the UI says so. |
+| `checkForUpdates` | Looks for a new release on GitHub once a day and offers it; never installs by itself. Absent means on. |
 | `onboardingCompleted` | Absent means "already onboarded", so upgrading never re-runs the wizard. |
 | `analytics.retentionDays` | Sessions older than this are pruned at startup. |
 
@@ -87,7 +89,8 @@ field has a sensible default, and an omitted section simply does nothing.
 
 `id` is generated from the profile's name when you create it (`Deep Work` becomes `deep-work`) and
 never changes after that — `state.json`, the CLI and your recorded time all reference it. If you
-edit the file by hand, keep it lowercase and URL-safe.
+edit the file by hand, keep it lowercase and URL-safe. `menuBarLabel` isn't edited in the app any
+more; Profile Setup writes the display name in capitals.
 
 ## Apps: launch on enter, quit on leave
 
@@ -132,7 +135,8 @@ generally falls back to opening `urls[]`. That's expected, and the fallback is w
 
 **`focus`** runs a Shortcut you create, because macOS has no Focus scripting API. With
 `enabled: true` it runs `ContextSwitcher - Focus <modeName>`; leaving a profile that had Focus on
-runs `ContextSwitcher - Focus Off`. If neither the profile you're leaving nor the one you're entering
+runs that mode's `ContextSwitcher - Focus Off - <modeName>` (or, failing that, the original
+`ContextSwitcher - Focus Off`). If neither the profile you're leaving nor the one you're entering
 uses Focus, no Focus step runs — so you never see a warning for a feature you're not using. Setup is
 in [shortcuts-integration.md](shortcuts-integration.md).
 

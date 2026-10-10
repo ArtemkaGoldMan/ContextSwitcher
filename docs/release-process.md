@@ -1,71 +1,109 @@
 # Release process
 
-> **Status: packaging works, publishing doesn't.** `scripts/build-app.sh` and
-> `scripts/build-dmg.sh` both run today and produce a working, verified `.dmg`. What's missing is
-> the automation around them: there is no `.github/` directory, no CI, and no published release, so
-> the tagging and workflow steps below are still a plan.
+Pushing a version tag builds, signs and publishes a release through
+[`.github/workflows/release.yml`](../.github/workflows/release.yml). Installed copies find it within
+a day and offer it in Settings → Updates.
 
 ## What a release contains
 
-A GitHub Release for tag `vX.Y.Z`, containing `ContextSwitcher-X.Y.Z.dmg` — an Apple silicon
-(`osx-arm64`) build of the app.
+A GitHub Release for tag `vX.Y.Z` with three files, all an Apple silicon (`osx-arm64`) build:
 
-## Signing: what we can and can't do
+| File | For |
+| --- | --- |
+| `ContextSwitcher-X.Y.Z.dmg` | People downloading by hand: the app and a link to Applications. |
+| `ContextSwitcher.zip` | The in-app updater and `install.sh`. No version in the name, so `releases/latest/download/ContextSwitcher.zip` always points at the newest. |
+| `SHA256SUMS.txt` | Checksums of the two. |
 
-There is **no Apple Developer ID certificate**, and buying one is not currently planned. That has two
-consequences, and both need to be honest in the release notes rather than discovered by users.
+## Signing
 
-**Gatekeeper will block the download.** Without notarisation macOS refuses to open the app on first
-launch. Users clear it once:
+There is **no Apple Developer ID**, and buying one is not currently planned. Two things follow.
+
+**Gatekeeper blocks a downloaded copy.** Without notarisation macOS refuses to open an app a browser
+downloaded until the user allows it, once:
 
 ```bash
-xattr -d com.apple.quarantine /Applications/ContextSwitcher.app
+xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
 ```
 
-or use **System Settings → Privacy & Security → Open Anyway**. This is normal for unsigned
-open-source Mac apps, but it must be in the README and in every release note.
+or **System Settings → Privacy & Security → Open Anyway**. `install.sh` avoids this: curl's downloads
+are not quarantined. So does the in-app updater, for the same reason. Only a paid Developer ID removes
+it for the `.dmg`.
 
-A paid Developer ID is the only thing that fixes this.
+**Every release is signed with the project's own certificate.** It is self-signed, created once with
+`scripts/create-signing-identity.sh`, and it matters for two reasons:
+
+- macOS remembers permissions (controlling other apps) against the app's signature. An ad-hoc
+  signature is a hash of one build, so every update looked like a different app and every permission
+  was asked for again. With the same certificate each release is the same app to macOS.
+- The updater installs a download only if it satisfies the running copy's designated requirement:
+  `identifier "com.artem.contextswitcher" and certificate leaf = H"…"`. A tampered file, or a build
+  signed by anyone else, is refused.
+
+The certificate and its password live in `~/.contextswitcher-signing/` on the release Mac and in two
+repository secrets. **Losing it means installed copies can no longer update themselves** — keep a
+backup. Never commit it; `.gitignore` excludes `*.p12`.
+
+### Setting up signing, once
+
+```bash
+./scripts/create-signing-identity.sh
+base64 -i ~/.contextswitcher-signing/signing.p12 | gh secret set CS_SIGNING_P12_BASE64
+gh secret set CS_SIGNING_PASSWORD < ~/.contextswitcher-signing/signing-password.txt
+```
 
 ## Building locally
 
-Two scripts, both of which work today:
-
 ```bash
 ./scripts/build-app.sh      # dist/ContextSwitcher.app   (~115 MB)
-./scripts/build-dmg.sh      # dist/ContextSwitcher-X.Y.Z.dmg  (~49 MB)
+./scripts/build-dmg.sh      # dist/ContextSwitcher-X.Y.Z.dmg
+./scripts/build-zip.sh      # dist/ContextSwitcher.zip   (~46 MB)
 ```
 
-`build-dmg.sh` builds the app first if it isn't there, so the second command alone is enough.
+`build-dmg.sh` and `build-zip.sh` build the app first if it isn't there. `build-app.sh` signs with the
+certificate from the environment (`CS_SIGNING_P12_BASE64` + `CS_SIGNING_PASSWORD`, as in CI) or from
+`~/.contextswitcher-signing/`, and falls back to ad-hoc with a warning when neither is there; with
+`CS_REQUIRE_SIGNING=1`, as the workflow sets, that is an error instead. Signing uses a throwaway
+keychain that is on the search list only while codesign runs, so the login keychain is not touched.
 
 The build is **self-contained**: a framework-dependent one would make every user install the .NET
-runtime first, which is a worse first experience than a bigger download. That is where most of the
-115 MB goes; the compressed image is well under half that.
+runtime first, which is a worse first experience than a bigger download.
 
 Three details in the bundle are load-bearing:
 
-- `CFBundleIdentifier` is `com.artem.contextswitcher`, fixed. Without a stable identifier macOS has
-  nothing to attach permissions to.
+- `CFBundleIdentifier` is `com.artem.contextswitcher`, fixed. It is part of the designated
+  requirement, and without a stable identifier macOS has nothing to attach permissions to.
 - `LSUIElement` is `true`, so this is a menu bar app. Without it macOS briefly shows a Dock icon and
   an app menu at launch before Avalonia switches to accessory mode. The `showDockIcon` setting still
   works — Avalonia raises the activation policy at startup when it's on.
 - `AppIcon.icns` is copied from `src/ContextSwitcher.App/Assets/`, and regenerated by
   `scripts/build-icons.sh`.
 
-The version comes from `<Version>` in `ContextSwitcher.App.csproj` — the script reads it, so the
-bundle, the `Info.plist` and the `.dmg` filename can't drift apart.
-
-The image contains the app, a symlink to `/Applications`, and a `READ ME FIRST.txt` carrying the
-quarantine command — a user who hits Gatekeeper with no explanation just deletes the download.
+The version comes from `<Version>` in `ContextSwitcher.App.csproj` — the scripts read it, so the
+bundle, the `Info.plist`, the `.dmg` filename and the version the updater compares can't drift apart.
 
 ## Cutting a release
 
-1. Bump `<Version>` in `src/ContextSwitcher.App/ContextSwitcher.App.csproj`. That is the only
-   place — the bundle and the image take it from there.
-2. Confirm `dotnet build` is warning-free and `dotnet test` is green.
-3. Tag: `git tag vX.Y.Z && git push --tags`.
-4. The release workflow builds, packages the `.dmg`, and creates the GitHub Release.
-5. Write release notes including the quarantine command.
+1. Bump `<Version>` in `src/ContextSwitcher.App/ContextSwitcher.App.csproj`. That is the only place.
+2. Merge to `main`.
+3. Tag it: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+4. The workflow checks the tag matches `<Version>`, builds with warnings as errors, runs the tests,
+   builds and signs the app, packages it and publishes the release with install notes
+   (`.github/release-notes.md`) followed by the generated changelog.
+
+A release marked as a pre-release on GitHub is not offered as an update.
+
+## How updating works
+
+- **Checking.** About 30 seconds after launch and then daily, the app asks GitHub's API for the
+  latest release (`UpdatesViewModel`, `GitHubReleaseSource`). A newer version shows as "Update to …"
+  in the menu bar menu and in Settings → Updates. A failed automatic check says nothing; "Check now"
+  says why.
+- **Installing** (`AppBundleUpdater`), only on "Install and restart": download the zip, unpack it with
+  `ditto`, check its version, check it against the running copy's designated requirement, then start a
+  small script and quit. The script waits for the app to exit, swaps the new copy in (putting the old
+  one back if that fails) and opens it.
+- **When it can't.** A copy run from source, signed ad-hoc, or in a folder it can't write to still
+  hears about updates, and offers the release page instead of installing.
 
 ## Versioning
 
@@ -75,10 +113,10 @@ release note, not just a new field.
 
 ## Checklist before tagging
 
-- [ ] `dotnet build` — no warnings
+- [ ] `dotnet build -c Release -warnaserror` — no warnings
 - [ ] `dotnet test` — all green
+- [ ] The secrets `CS_SIGNING_P12_BASE64` and `CS_SIGNING_PASSWORD` are set
 - [ ] App launches and survives; the menu bar icon appears
 - [ ] A switch completes and `state.json` updates
-- [ ] Bundle opens on a machine that has never run it, after the quarantine command
-- [ ] README install steps followed literally on that machine
-- [ ] Release notes mention quarantine
+- [ ] After publishing: `install.sh` installs it on a Mac that has never run it
+- [ ] After publishing: an installed older version offers the update and installs it

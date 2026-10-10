@@ -41,9 +41,41 @@ Everything is optional. A profile that only opens two apps is a perfectly good p
 
 ## Install
 
-> **Prebuilt downloads aren't published yet.** The release workflow is still being built, so today
-> the way to run it is from source. The download instructions below are what they'll be, and are kept
-> here so the process is documented in one place.
+Requires an Apple silicon Mac (M1 or later) and macOS 13 or later.
+
+> **The first release hasn't been published yet.** These are the steps from the first tagged release
+> on; until then, run it [from source](#from-source).
+
+### One command
+
+Paste this into Terminal. It downloads the latest release, puts it in Applications and opens it:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ArtemkaGoldMan/ContextSwitcher/main/install.sh | bash
+```
+
+### Or download it
+
+Download the `.dmg` from [Releases](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases) and
+drag the app to Applications.
+
+ContextSwitcher is **not notarised by Apple** — that needs a paid Developer ID, and this is a free
+MIT project — so macOS refuses to open a downloaded copy the first time. Allow it once:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
+```
+
+or open it from **System Settings → Privacy & Security → Open Anyway**. The one-command install
+doesn't need this step.
+
+### Updates
+
+ContextSwitcher checks GitHub for a new version once a day (you can turn that off) and shows it in
+the menu bar menu and in **Settings → Updates**. **Install and restart** downloads it, checks it is
+signed with the same certificate as the copy you have, and swaps it in; profiles and settings are
+kept, and the quarantine step is not needed again. Running the one-command install again also
+updates.
 
 ### From source
 
@@ -54,28 +86,8 @@ dotnet run --project src/ContextSwitcher.App/ContextSwitcher.App.csproj
 ```
 
 Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download). The app lives in the menu bar —
-look for the two-squares icon rather than a Dock icon or a window.
-
-To build a real `.app` and a `.dmg` instead of running from the project:
-
-```bash
-./scripts/build-dmg.sh      # dist/ContextSwitcher-0.1.0.dmg
-```
-
-### From a release
-
-Download the `.dmg` from [Releases](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases) and
-drag the app to `/Applications`.
-
-ContextSwitcher is **not notarised by Apple** — that needs a paid Developer ID, and this is a free
-MIT project. macOS will therefore refuse to open it on first launch. Clear the quarantine flag:
-
-```bash
-xattr -d com.apple.quarantine /Applications/ContextSwitcher.app
-```
-
-Or open it once via **System Settings → Privacy & Security → Open Anyway**. You only need to do this
-once per install.
+look for the two-squares icon rather than a Dock icon or a window. To build the `.app`, `.dmg` and
+`.zip` yourself, see [docs/release-process.md](docs/release-process.md).
 
 ## First run
 

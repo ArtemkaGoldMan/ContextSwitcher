@@ -8,9 +8,11 @@ using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Logging;
+using ContextSwitcher.Core.Updates;
 using ContextSwitcher.Infrastructure.AppleScript;
 using ContextSwitcher.Infrastructure.Applications;
 using ContextSwitcher.Infrastructure.Automation;
+using ContextSwitcher.Infrastructure.Catalog;
 using ContextSwitcher.Infrastructure.Analytics;
 using ContextSwitcher.Infrastructure.Browser;
 using ContextSwitcher.Infrastructure.Cli;
@@ -19,6 +21,7 @@ using ContextSwitcher.Infrastructure.Logging;
 using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Infrastructure.ProcessExecution;
 using ContextSwitcher.Infrastructure.Time;
+using ContextSwitcher.Infrastructure.Updates;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App.Startup;
@@ -105,9 +108,27 @@ public static class AppHost
         services.AddSingleton<CliCommandRouter>();
         services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
         services.AddSingleton<IInstalledAppsService, InstalledAppsService>();
+        services.AddSingleton<ISystemCatalog, SystemCatalog>();
+        services.AddSingleton<IFocusShortcutInstaller, FocusShortcutInstaller>();
         services.AddSingleton<ConfigurationStore>();
         services.AddSingleton<StateFileWatcher>();
 
+        // One for the whole run, created now: it remembers a closed notice across windows, and counts
+        // switches from the moment the app started rather than from when a window first asked.
+        services.AddSingleton(new SwitchNoticeViewModel(DateTimeOffset.UtcNow));
+
+        // Releases are about 50 MB, so the client's own timeout is generous; the API request has a
+        // short one of its own.
+        services.AddSingleton(_ => new HttpClient { Timeout = TimeSpan.FromMinutes(10) });
+        services.AddSingleton<IReleaseSource>(provider => new GitHubReleaseSource(
+            provider.GetRequiredService<HttpClient>(), ReleaseVersion.Format(UpdatesViewModel.RunningVersion)));
+        services.AddSingleton<IAppUpdater>(provider => new AppBundleUpdater(
+            provider.GetRequiredService<HttpClient>(), provider.GetRequiredService<IProcessRunner>()));
+        services.AddSingleton(provider => new UpdatesViewModel(
+            provider.GetRequiredService<IReleaseSource>(),
+            provider.GetRequiredService<IAppUpdater>(),
+            provider.GetRequiredService<IProcessRunner>(),
+            UpdatesViewModel.RunningVersion));
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<MainAppViewModel>();
         services.AddTransient<OnboardingViewModel>();
@@ -260,6 +281,8 @@ public static class AppHost
         // Keeps the UI honest about switches made by Shortcuts, Siri or the CLI, each of which runs
         // in its own process and so cannot raise StateChanged here.
         stateWatcher ??= Services.GetRequiredService<StateFileWatcher>();
+
+        Services.GetRequiredService<UpdatesViewModel>().StartAutomaticChecks();
     }
 
     private static void StartPeriodicPruning(IAnalyticsService analyticsService)

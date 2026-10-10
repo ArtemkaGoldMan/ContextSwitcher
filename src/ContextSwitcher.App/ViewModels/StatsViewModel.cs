@@ -1,9 +1,6 @@
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Analytics;
-using LiveChartsCore;
-using LiveChartsCore.Kernel.Sketches;
-using LiveChartsCore.SkiaSharpView;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -20,9 +17,7 @@ public sealed class StatsViewModel : ViewModelBase, IDisposable
     private readonly IAnalyticsService analyticsService;
 
     private int selectedRangeDays = WeekDays;
-    private IReadOnlyList<ISeries> balanceSeries = [];
-    private IReadOnlyList<ICartesianAxis> balanceXAxes = [new Axis()];
-    private IReadOnlyList<ContextTotalViewModel> contextTotals = [];
+    private BalanceChartViewModel balanceChart = BalanceChartViewModel.Empty;
 
     public StatsViewModel(IAnalyticsService analyticsService)
     {
@@ -54,31 +49,20 @@ public sealed class StatsViewModel : ViewModelBase, IDisposable
 
     public bool IsMonthSelected => this.SelectedRangeDays == MonthDays;
 
-    public IReadOnlyList<ISeries> BalanceSeries
+    /// <summary>The chosen range, drawn by the same BalanceChart template as the Dashboard's.</summary>
+    public BalanceChartViewModel BalanceChart
     {
-        get => this.balanceSeries;
+        get => this.balanceChart;
         private set
         {
-            if (this.SetProperty(ref this.balanceSeries, value))
+            if (this.SetProperty(ref this.balanceChart, value))
             {
                 this.OnPropertyChanged(nameof(this.HasBalanceData));
             }
         }
     }
 
-    public IReadOnlyList<ICartesianAxis> BalanceXAxes
-    {
-        get => this.balanceXAxes;
-        private set => this.SetProperty(ref this.balanceXAxes, value);
-    }
-
-    public bool HasBalanceData => this.BalanceSeries.Count > 0;
-
-    public IReadOnlyList<ContextTotalViewModel> ContextTotals
-    {
-        get => this.contextTotals;
-        private set => this.SetProperty(ref this.contextTotals, value);
-    }
+    public bool HasBalanceData => this.BalanceChart.HasData;
 
     public RelayCommand SelectWeekCommand { get; }
 
@@ -97,9 +81,8 @@ public sealed class StatsViewModel : ViewModelBase, IDisposable
             .GetDailyBalanceAsync(this.SelectedRangeDays, CancellationToken.None)
             .ConfigureAwait(true);
 
-        string dateFormat = this.SelectedRangeDays > WeekDays ? "M/d" : "ddd";
-        this.BalanceSeries = BalanceChartFactory.BuildSeries(summaries, AppHost.Configuration.Contexts);
-        this.BalanceXAxes = BalanceChartFactory.BuildXAxes(summaries, dateFormat);
-        this.ContextTotals = BalanceChartFactory.BuildContextTotals(summaries, AppHost.Configuration.Contexts);
+        // A month's thirty columns are labelled by day of month; a week's seven by weekday.
+        string labelFormat = this.SelectedRangeDays > WeekDays ? "%d" : "ddd";
+        this.BalanceChart = BalanceChartFactory.Build(summaries, AppHost.Configuration.Contexts, barAreaHeight: 200, labelFormat);
     }
 }

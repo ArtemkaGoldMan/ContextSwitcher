@@ -1,0 +1,69 @@
+name: Release
+
+# Builds, signs and publishes a release when a version tag is pushed:
+#
+#   git tag v0.2.0 && git push origin v0.2.0
+#
+# The tag has to match <Version> in ContextSwitcher.App.csproj. Needs the repository secrets
+# CS_SIGNING_P12_BASE64 and CS_SIGNING_PASSWORD - see scripts/create-signing-identity.sh and
+# docs/release-process.md. Without them the build stops rather than publish an ad-hoc build, which
+# could not update itself.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # Apple silicon, which is what the app is built for.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Check the tag matches the version
+        run: |
+          version="$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' src/ContextSwitcher.App/ContextSwitcher.App.csproj | head -1)"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::The tag $GITHUB_REF_NAME doesn't match <Version>$version</Version> in ContextSwitcher.App.csproj."
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: dotnet build --configuration Release -warnaserror
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build
+
+      - name: Build the signed app
+        env:
+          CS_SIGNING_P12_BASE64: ${{ secrets.CS_SIGNING_P12_BASE64 }}
+          CS_SIGNING_PASSWORD: ${{ secrets.CS_SIGNING_PASSWORD }}
+          CS_REQUIRE_SIGNING: "1"
+        run: ./scripts/build-app.sh
+
+      - name: Package
+        run: |
+          ./scripts/build-dmg.sh
+          ./scripts/build-zip.sh
+          cd dist
+          shasum -a 256 "ContextSwitcher-$VERSION.dmg" ContextSwitcher.zip > SHA256SUMS.txt
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/ContextSwitcher-$VERSION.dmg" \
+            dist/ContextSwitcher.zip \
+            dist/SHA256SUMS.txt \
+            --title "ContextSwitcher $VERSION" \
+            --notes-file .github/release-notes.md \
+            --generate-notes

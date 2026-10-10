@@ -31,7 +31,7 @@ Non-negotiable product qualities:
 | UI                   | Avalonia UI with Metal/Skia rendering                                     |
 | App Model            | Menu bar app with dropdown dashboard and optional settings windows        |
 | Menu Bar Integration | Avalonia's built-in `TrayIcon` (native `NSStatusBar` on macOS)           |
-| Charts               | `LiveChartsCore.SkiaSharpView.Avalonia`, pinned to `2.1.0-dev-798` (see note below) |
+| Charts               | Drawn with the app's own Avalonia controls (see note below)               |
 | DI                   | `Microsoft.Extensions.DependencyInjection`                                |
 | Persistence          | Local JSON under `~/.config/ContextSwitcher/`                             |
 | Scripts              | `osascript`, `open`, `shortcuts`, `docker`, app-specific CLIs             |
@@ -43,7 +43,7 @@ Do not introduce a database, web server, telemetry platform, Electron shell, clo
 
 `H.NotifyIcon.Avalonia` is a WPF/Windows-oriented package and is not used; Avalonia's built-in `TrayIcon` already covers the menu bar icon cross-platform, including macOS's `NSStatusBar`.
 
-`LiveChartsCore.SkiaSharpView.Avalonia`'s latest stable release (`2.0.5`) targets Avalonia 11 and throws `MissingFieldException` at runtime (`Avalonia.Input.Gestures.PinchEvent`) when loaded against Avalonia 12 — a real binary-compat break, confirmed by actually running the app, not just a compile-time check. The `2.1.0-dev-798` prerelease targets `Avalonia 12.0.0` and resolves this. It is a dev/CI build, not a tagged stable release, so re-check for a stable Avalonia-12-compatible release before every LiveCharts2 or Avalonia upgrade, and re-verify by actually launching the dashboard (not just building) after any package bump in this area.
+The balance chart (Dashboard and Stats) is a column per day built from ordinary Avalonia controls - `BalanceChartFactory` and the `BalanceChart` template in `Styles/Templates.axaml` - not a charting library. It used to be LiveCharts2, which needed a `2.1.0-dev` prerelease to run on Avalonia 12 at all (its stable `2.0.5` throws `MissingFieldException` against Avalonia 12) and drew axes, fonts and columns that matched nothing else in the app. A stacked column per day needs neither.
 
 ## 3. Repository Layout
 
@@ -179,19 +179,23 @@ ContextSwitcher/
       Automation/
       Analytics/
       TestDoubles/
+  install.sh                       one-command install/update from the latest release
   scripts/
-    package-dmg.sh
-    install-local.sh
-    clear-quarantine.sh
+    build-app.sh                   signed .app (self-signed certificate, ad-hoc fallback)
+    build-dmg.sh
+    build-zip.sh                   ContextSwitcher.zip for the updater and install.sh
+    build-icons.sh
+    create-signing-identity.sh     run once; the certificate lives outside the repo
   docs/
     configuration.md
     automation-permissions.md
     shortcuts-integration.md
     release-process.md
   .github/
+    release-notes.md               install notes put at the top of every release
     workflows/
       release.yml
-      ci.yml
+      ci.yml                       (planned)
 ```
 
 Project references:
@@ -1119,6 +1123,10 @@ Opened from the Dashboard's **Open App** button. A normal resizable window (880 
 - **Add new profile** button - creates a new context with sensible defaults and opens its Setup
   immediately so it's never left half-configured.
 - Delete/duplicate profile actions (secondary, e.g. behind a row context menu).
+- When the last switch had problems - from any source: this page, the tray, the dashboard, the
+  CLI - a card pinned to the bottom of the window lists them (amber badge for warnings, red when
+  the switch failed or was turned away). It stays until its × is clicked or the next switch
+  replaces it, never on a timer; switches from before the app started are not shown there.
 
 **Profile Setup** (editor for one profile, reachable only from the Profiles page):
 
@@ -1167,11 +1175,12 @@ Design language:
 - Card-based, not flat-neutral: every section is a `Border.panel` card (`CardBrush`, 14 px corner
   radius, 1 px `BorderBrush`) sitting on an `AppBackgroundBrush` page and a slightly-different
   `SidebarBrush` nav rail - a real surface hierarchy (app bg < sidebar < card), not one flat plane.
-- Colored icon badges: a 26-36 px rounded-square (`Border.badge`, `CornerRadius="9"`) filled with a
-  category-specific `LinearGradientBrush` (`BadgeBlueGradient` = Profiles/app logo,
-  `BadgePurpleGradient` = Settings, `BadgeGreenGradient` = Stats, `BadgeOrangeGradient` = Profile
-  Setup) containing a small white glyph, on every sidebar nav row and every page header. This is
-  the accent color's job now, not "used sparingly" - see Colors below.
+- Icon badges: a 26-36 px rounded-square (`Border.badge`, `CornerRadius="9"`) filled with
+  `AccentBrush` and holding a small white glyph, on every sidebar nav row and every page header.
+  Every badge is the one accent; they used to carry five different gradients, one per page, which
+  made the app read as a patchwork. A profile's own badge uses that profile's colour instead. The
+  app's mark (sidebar header, onboarding's first step) is the app icon itself
+  (`Assets/Icons/app-mark.png`, rendered from `assets-src/icons/app-full.svg`).
 - Icons are hand-drawn from primitive shapes (`Rectangle`/`Ellipse`/`Path`/`Polygon`), not an icon
   font or SVG package: a 2x2 dot grid (Profiles), three horizontal sliders (Settings), three bars
   (Stats), and a rotated rounded rect + triangle (Profile Setup/pencil). Only `⇄` (app logo) and the row-remove `✕` are text glyphs; both are
@@ -1229,10 +1238,13 @@ Typography:
 
 Colors:
 
-- Respect macOS light/dark appearance (unchanged) - `Colors.axaml` defines a full surface ramp
-  (`AppBackgroundBrush`, `SidebarBrush`, `CardBrush`, `CardHoverBrush`, `SelectedNavBrush`,
-  `DividerBrush`) per theme, plus a theme-invariant badge palette (`BadgeBlueGradient` etc.) that
-  stays vivid on both light and dark cards.
+- Respect macOS light/dark appearance (unchanged) - `Colors.axaml` is the whole palette, and keeps it
+  small: neutrals for surfaces, text and lines (`AppBackgroundBrush`, `SidebarBrush`, `CardBrush`,
+  `CardHoverBrush`, `SelectedNavBrush`, `BorderBrush`, `DividerBrush`, `TextPrimaryBrush`,
+  `TextSecondaryBrush`) per theme; one accent; and three status colours (`SuccessBrush`,
+  `WarningBrush`, `ErrorBrush`) with soft tints for backgrounds (`SuccessSoftBrush`,
+  `ErrorSoftBrush`, `NeutralSoftBrush`). Anything new picks from these. Profile colours are the
+  user's choice and sit outside the palette.
 - `AccentBrush` (`#0A84FF`, macOS system blue) drives primary buttons, the active profile's card
   border, selected nav/segment state, and link-styled text - a real accent color used deliberately
   and often, not sparingly. `FluentTheme.Palettes` is set to the same blue in `App.axaml` so
@@ -1249,9 +1261,9 @@ Controls:
 - Use text fields for app names, paths, profile directories, and URLs.
 - Use list rows with add/remove buttons for app/browser/docker arrays.
 - Use tooltips for icons.
-- A small status pill (`Border.statusPill` + `PermissionStatusBrushConverter`/
-  `PermissionStatusTextConverter` in `ContextSwitcher.App.Converters`) renders a soft green/red/gray
-  chip for the Settings page's Automation permission state.
+- A small status pill (`Border.statusPill`, with `allowed`/`denied` classes tinting it from the soft
+  status colours, and `PermissionStatusTextConverter` for its label) shows the Settings page's
+  permission state.
 
 States:
 
@@ -1579,54 +1591,44 @@ Acceptance criteria:
 
 ### 15.2 Release Workflow
 
-`.github/workflows/release.yml`:
+`.github/workflows/release.yml` (docs/release-process.md has the full procedure):
 
-- Trigger on tags matching `v*.*.*`.
-- Runner: `macos-latest`.
-- Steps:
-    1. Checkout.
-    2. Setup .NET 10.
-    3. Restore.
-    4. Test.
-    5. Publish:
+- Trigger on tags matching `v*`; the tag must equal `<Version>` in `ContextSwitcher.App.csproj`.
+- Runner: `macos-15` (Apple silicon).
+- Steps: checkout, set up .NET from `global.json`, build Release with `-warnaserror`, test,
+  `scripts/build-app.sh` with `CS_REQUIRE_SIGNING=1` and the signing secrets, `scripts/build-dmg.sh`,
+  `scripts/build-zip.sh`, `SHA256SUMS.txt`, then `gh release create` with
+  `.github/release-notes.md` plus generated notes.
 
-```text
-dotnet publish src/ContextSwitcher.App/ContextSwitcher.App.csproj \
-  -c Release \
-  -r osx-arm64 \
-  --self-contained true \
-  -p:PublishSingleFile=false \
-  -p:UseAppHost=true
-```
-
-6. Build `.app` bundle.
-7. Codesign the `.app` bundle with the project's self-signed code-signing identity (see below).
-8. Create `.dmg`.
-9. Upload release asset.
-
-DMG naming:
+Release assets:
 
 ```text
-ContextSwitcher-VERSION-osx-arm64.dmg
+ContextSwitcher-VERSION.dmg     people downloading by hand
+ContextSwitcher.zip             the in-app updater and install.sh (unversioned name, so
+                                releases/latest/download/ContextSwitcher.zip is always the newest)
+SHA256SUMS.txt
 ```
 
-Quarantine documentation:
+Installing: `install.sh` at the repository root, run as
+`curl -fsSL https://raw.githubusercontent.com/ArtemkaGoldMan/ContextSwitcher/main/install.sh | bash`,
+needs no quarantine step because curl does not quarantine. A `.dmg` downloaded in a browser does:
 
 ```text
-xattr -cr /Applications/ContextSwitcher.app
+xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
 ```
 
-README must include a prominent unsigned-app section:
-
-1. Drag `ContextSwitcher.app` to `/Applications`.
-2. Run `xattr -cr /Applications/ContextSwitcher.app`.
-3. Open the app from Finder or Spotlight.
+Updating: the app checks GitHub's latest release ~30 s after launch and daily (`checkForUpdates`,
+on by default), offers a newer one in the menu bar menu and Settings → Updates, and installs only
+on the user's click. `AppBundleUpdater` downloads the zip, verifies it against the running copy's
+designated requirement (same identifier, same certificate), and a helper script swaps it in after
+the app quits and reopens it. Copies run from source or signed ad-hoc offer the release page
+instead.
 
 #### Why a self-signed certificate, even without a paid Developer ID
 
 Apple Silicon requires every executable to carry at least an ad-hoc signature to launch at all, and `dotnet publish` applies one automatically. The problem: macOS's permission system (TCC) keys Automation grants to the app's code signature. An ad-hoc signature's identity hash changes on every rebuild, so a plain `dotnet publish` output would force every user to re-grant every permission (needed for AppleScript automation) after every single app update — an unacceptable experience for a project this dependent on automation permissions.
 
-The fix costs nothing: generate a self-signed code-signing certificate once (Keychain Access → Certificate Assistant → "Code Signing Certificate", or `security create-certificate`), export it, and store it as a GitHub Actions secret (base64-encoded `.p12` + password). In `release.yml`, import it into a temporary CI keychain and run `codesign --force --deep --sign "<self-signed identity>" ContextSwitcher.app` before packaging. This keeps the signing identity — and therefore the user's granted permissions — stable across releases, without paying for or requiring an Apple Developer Program membership. It does not satisfy Gatekeeper/notarization, so the `xattr -cr` quarantine-removal step is still required on first launch.
+The fix costs nothing: `scripts/create-signing-identity.sh` generates a self-signed code-signing certificate once, into `~/.contextswitcher-signing/`, and it is stored as two GitHub Actions secrets (base64-encoded `.p12` + password). `scripts/build-app.sh` imports it into a throwaway keychain and signs with it by hash. The same stable identity is what lets the updater refuse a download not signed by it. This keeps the signing identity — and therefore the user's granted permissions — stable across releases, without paying for or requiring an Apple Developer Program membership. It does not satisfy Gatekeeper/notarization, so the quarantine-removal step is still required on first launch of a browser-downloaded copy.
 
 ## 16. Testing Strategy
 

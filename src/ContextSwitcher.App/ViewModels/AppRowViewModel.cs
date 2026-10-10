@@ -14,9 +14,15 @@ public sealed class AppRowViewModel : ViewModelBase
     private bool closeOnLeave;
     private Bitmap? icon;
 
-    public AppRowViewModel(string name, bool launchOnEnter, bool closeOnLeave, Action<AppRowViewModel> remove)
+    /// <param name="isEditable">
+    /// True only for a row added with "Add manually…". An app chosen from the picker or loaded from
+    /// config is shown by name, not as a text box - its name is exactly what <c>open -a</c> needs,
+    /// and the only edit to make to it is a typo.
+    /// </param>
+    public AppRowViewModel(string name, bool launchOnEnter, bool closeOnLeave, Action<AppRowViewModel> remove, bool isEditable = false)
     {
         this.name = name;
+        this.IsEditable = isEditable;
         this.launchOnEnter = launchOnEnter;
         this.closeOnLeave = closeOnLeave;
         this.RemoveCommand = new RelayCommand(() => remove(this));
@@ -27,6 +33,8 @@ public sealed class AppRowViewModel : ViewModelBase
         get => this.name;
         set => this.SetProperty(ref this.name, value);
     }
+
+    public bool IsEditable { get; }
 
     public bool LaunchOnEnter
     {

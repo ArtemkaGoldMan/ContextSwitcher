@@ -5,10 +5,16 @@
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
   xmlns:conv="using:ContextSwitcher.App.Converters"
   x:DataType="vm:ProfilesViewModel">
-  <StackPanel Spacing="16">
-    <Grid ColumnDefinitions="*,Auto">
-      <TextBlock Grid.Column="0" Text="Profiles" Classes="header" VerticalAlignment="Center" />
-      <Button Grid.Column="1" Classes="switchContext current" Content="+ Add new profile" Command="{Binding AddCommand}" />
+  <StackPanel Spacing="20">
+    <!-- Same header as every page: its badge, its title, its action. -->
+    <Grid ColumnDefinitions="Auto,*,Auto">
+      <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{DynamicResource AccentBrush}" Margin="0,0,12,0">
+        <Viewbox Classes="icon" Width="18" Height="18">
+          <Path Classes="glyph" Data="{StaticResource IconLayoutGrid}" />
+        </Viewbox>
+      </Border>
+      <TextBlock Grid.Column="1" Text="Profiles" Classes="header" VerticalAlignment="Center" />
+      <Button Grid.Column="2" Classes="switchContext current" Content="+ Add new profile" Command="{Binding AddCommand}" />
     </Grid>
 
     <TextBlock

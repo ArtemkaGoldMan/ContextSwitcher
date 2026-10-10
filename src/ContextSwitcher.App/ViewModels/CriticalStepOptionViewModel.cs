@@ -13,20 +13,19 @@ public sealed class CriticalStepOptionViewModel(AutomationStepType stepType, str
     private bool isSelected = isSelected;
 
     /// <summary>
-    /// The step types a user can meaningfully mark critical. <c>WriteState</c> and
-    /// <c>AnalyticsBoundary</c> are internal pipeline bookkeeping steps, not user-facing
-    /// automation, so they are omitted here.
+    /// The steps a switch actually runs, in the order it runs them, each named for what it does.
+    /// <c>WriteState</c> and <c>AnalyticsBoundary</c> are internal bookkeeping, and <c>OpenUrls</c>
+    /// never runs - opening pages is part of <c>ManageBrowserContext</c> - so marking it did nothing.
     /// </summary>
-    public static IReadOnlyList<AutomationStepType> SelectableStepTypes { get; } =
+    public static IReadOnlyList<(AutomationStepType Type, string Label)> SelectableSteps { get; } =
     [
-        AutomationStepType.CloseApplications,
-        AutomationStepType.LaunchApplications,
-        AutomationStepType.ManageBrowserContext,
-        AutomationStepType.SetFocusMode,
-        AutomationStepType.ControlMedia,
-        AutomationStepType.StartDockerResources,
-        AutomationStepType.StopDockerResources,
-        AutomationStepType.OpenUrls
+        (AutomationStepType.StopDockerResources, "Stopping containers"),
+        (AutomationStepType.CloseApplications, "Quitting apps"),
+        (AutomationStepType.SetFocusMode, "Changing Focus"),
+        (AutomationStepType.LaunchApplications, "Opening apps"),
+        (AutomationStepType.ManageBrowserContext, "Opening the browser"),
+        (AutomationStepType.StartDockerResources, "Starting containers"),
+        (AutomationStepType.ControlMedia, "Starting music")
     ];
 
     public AutomationStepType StepType { get; } = stepType;

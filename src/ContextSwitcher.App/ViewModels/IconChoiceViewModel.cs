@@ -1,29 +1,14 @@
 namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
-/// One tile in Profile Setup's icon picker.
+/// One entry in Profile Setup's icon dropdown, drawn as its glyph beside its label.
 /// </summary>
-public sealed class IconChoiceViewModel : ViewModelBase
+public sealed class IconChoiceViewModel(ProfileIcon icon)
 {
-    private bool isSelected;
+    /// <summary>The stored icon name; the glyph is drawn from it by ProfileIconConverter.</summary>
+    public string Name { get; } = icon.Name;
 
-    public IconChoiceViewModel(ProfileIcon icon, Action<string> select)
-    {
-        this.Name = icon.Name;
-        this.Label = icon.Label;
-        this.SelectCommand = new RelayCommand(() => select(icon.Name));
-    }
+    public string Label { get; } = icon.Label;
 
-    /// <summary>The stored icon name; the tile's glyph is drawn from it by ProfileIconConverter.</summary>
-    public string Name { get; }
-
-    public string Label { get; }
-
-    public bool IsSelected
-    {
-        get => this.isSelected;
-        set => this.SetProperty(ref this.isSelected, value);
-    }
-
-    public RelayCommand SelectCommand { get; }
+    public override string ToString() => this.Label;
 }

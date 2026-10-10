@@ -27,7 +27,7 @@ public sealed class ProfileSetupViewModelTests
         AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
 
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), existing: null);
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
 
         Assert.True(viewModel.IsNew);
         Assert.Equal("new-profile", viewModel.Id);
@@ -56,7 +56,7 @@ public sealed class ProfileSetupViewModelTests
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
 
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), context);
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
         viewModel.DisplayName = "Office";
 
         Assert.Equal("work", viewModel.Id);
@@ -77,7 +77,7 @@ public sealed class ProfileSetupViewModelTests
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
 
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), context);
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
 
         Assert.Equal("work", viewModel.Id);
         Assert.Equal(3, viewModel.Apps.Count);
@@ -98,7 +98,7 @@ public sealed class ProfileSetupViewModelTests
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
 
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), context)
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context)
         {
             DisplayName = "Work Renamed"
         };
@@ -118,15 +118,14 @@ public sealed class ProfileSetupViewModelTests
     }
 
     [Fact]
-    public void PickingAPresetSetsTheAccentAndMarksOnlyThatSwatch()
+    public void PickingAPresetFromTheDropdownSetsTheAccent()
     {
         ProfileSetupViewModel viewModel = NewProfile();
 
-        AccentSwatchViewModel teal = viewModel.AccentPresets.Single(p => p.Name == "Teal");
-        teal.SelectCommand.Execute(null);
+        viewModel.SelectedAccent = viewModel.AccentChoices.Single(c => c.Name == "Teal");
 
         Assert.Equal("#0FA3B1", viewModel.AccentColor);
-        Assert.Equal([teal], viewModel.AccentPresets.Where(p => p.IsSelected));
+        Assert.Equal("Teal", viewModel.SelectedAccent.Name);
         Assert.False(viewModel.IsCustomAccent);
     }
 
@@ -135,7 +134,7 @@ public sealed class ProfileSetupViewModelTests
     /// picker's alpha must not leak into it.
     /// </summary>
     [Fact]
-    public void ACustomColorIsStoredAsPlainHexAndSelectsNoPreset()
+    public void ACustomColorIsStoredAsPlainHexAndShownAsCustom()
     {
         ProfileSetupViewModel viewModel = NewProfile();
 
@@ -143,35 +142,59 @@ public sealed class ProfileSetupViewModelTests
 
         Assert.Equal("#12ABEF", viewModel.AccentColor);
         Assert.True(viewModel.IsCustomAccent);
-        Assert.DoesNotContain(viewModel.AccentPresets, p => p.IsSelected);
+        Assert.True(viewModel.SelectedAccent.IsCustom);
     }
 
-    /// <summary>Hand-edited configs may use lowercase hex; the matching swatch still lights up.</summary>
+    /// <summary>
+    /// Choosing "Custom" reveals the picker without changing the color, and the picker stays put
+    /// while it is dragged - even onto a preset's exact color - until a preset is chosen again.
+    /// </summary>
+    [Fact]
+    public void CustomStaysChosenUntilAPresetIsPicked()
+    {
+        ProfileSetupViewModel viewModel = NewProfile();
+        string before = viewModel.AccentColor;
+
+        viewModel.SelectedAccent = viewModel.AccentChoices.Single(c => c.IsCustom);
+        Assert.True(viewModel.IsCustomAccent);
+        Assert.Equal(before, viewModel.AccentColor);
+
+        viewModel.AccentColor = "#20A67A";
+        Assert.True(viewModel.IsCustomAccent);
+        Assert.True(viewModel.SelectedAccent.IsCustom);
+
+        viewModel.SelectedAccent = viewModel.AccentChoices.Single(c => c.Name == "Violet");
+        Assert.False(viewModel.IsCustomAccent);
+        Assert.Equal("#7B61FF", viewModel.AccentColor);
+    }
+
+    /// <summary>Hand-edited configs may use lowercase hex; the matching preset is still the one shown.</summary>
     [Fact]
     public void AnExistingLowercaseAccentStillMatchesItsPreset()
     {
         ContextDefinition context = new() { Id = "work", DisplayName = "Work", AccentColor = "#2f6fed" };
         AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
 
-        ProfileSetupViewModel viewModel = new(CreateStore(out _, out _), new FakeInstalledAppsService(), context);
+        ProfileSetupViewModel viewModel = new(CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
 
-        Assert.True(viewModel.AccentPresets.Single(p => p.Name == "Blue").IsSelected);
+        Assert.Equal("Blue", viewModel.SelectedAccent.Name);
+        Assert.False(viewModel.IsCustomAccent);
     }
 
     [Fact]
-    public void PickingAnIconStoresItsNameAndSelectsOnlyThatTile()
+    public void PickingAnIconFromTheDropdownStoresItsName()
     {
         ProfileSetupViewModel viewModel = NewProfile();
 
-        viewModel.IconChoices.Single(c => c.Name == "coffee").SelectCommand.Execute(null);
+        viewModel.SelectedIcon = viewModel.IconChoices.Single(c => c.Name == "coffee");
 
         Assert.Equal("coffee", viewModel.Icon);
-        Assert.Equal(["coffee"], viewModel.IconChoices.Where(c => c.IsSelected).Select(c => c.Name));
+        Assert.Equal("coffee", viewModel.SelectedIcon.Name);
     }
 
     /// <summary>
     /// An icon name this build does not know is kept, not silently rewritten, until the user picks
-    /// something else; meanwhile the circle it is drawn as is the tile that shows selected.
+    /// something else; meanwhile the dropdown shows the circle it is drawn as.
     /// </summary>
     [Fact]
     public void AnUnknownStoredIconIsKeptAndShownAsTheCircle()
@@ -179,10 +202,10 @@ public sealed class ProfileSetupViewModelTests
         ContextDefinition context = new() { Id = "work", DisplayName = "Work", Icon = "rocket" };
         AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
 
-        ProfileSetupViewModel viewModel = new(CreateStore(out _, out _), new FakeInstalledAppsService(), context);
+        ProfileSetupViewModel viewModel = new(CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
 
         Assert.Equal("rocket", viewModel.Icon);
-        Assert.Equal(["circle"], viewModel.IconChoices.Where(c => c.IsSelected).Select(c => c.Name));
+        Assert.Equal("circle", viewModel.SelectedIcon.Name);
     }
 
     private static ProfileSetupViewModel NewProfile()
@@ -190,7 +213,7 @@ public sealed class ProfileSetupViewModelTests
         AppHost.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] },
             new ConfigurationValidationResult([]));
-        return new ProfileSetupViewModel(CreateStore(out _, out _), new FakeInstalledAppsService(), existing: null);
+        return new ProfileSetupViewModel(CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
     }
 
     [Fact]
@@ -202,7 +225,7 @@ public sealed class ProfileSetupViewModelTests
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
 
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), existing: null) { DisplayName = "Should not persist" };
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null) { DisplayName = "Should not persist" };
         bool cancelled = false;
         viewModel.CancelRequested += (_, _) => cancelled = true;
 
@@ -226,7 +249,7 @@ public sealed class ProfileSetupViewModelTests
         installed.Apps.Add(new InstalledApp("Discord", null));
         installed.Apps.Add(new InstalledApp("Docker", null));
 
-        ProfileSetupViewModel viewModel = new(store, installed, context);
+        ProfileSetupViewModel viewModel = new(store, installed, new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
 
         // Slack is already on the profile, so the picker must not offer it again.
         Assert.DoesNotContain(viewModel.AppPicker.FilteredApps, app => app.Name == "Slack");
@@ -249,7 +272,7 @@ public sealed class ProfileSetupViewModelTests
         FakeInstalledAppsService installed = new();
         installed.Apps.Add(new InstalledApp("Discord", null));
 
-        ProfileSetupViewModel viewModel = new(store, installed, context);
+        ProfileSetupViewModel viewModel = new(store, installed, new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
         InstalledAppViewModel discord = Assert.Single(viewModel.AppPicker.FilteredApps);
 
         discord.PickCommand.Execute(null);
@@ -311,7 +334,7 @@ public sealed class ProfileSetupViewModelTests
             },
             new ConfigurationValidationResult([]));
 
-        return new ProfileSetupViewModel(CreateStore(out _, out _), new FakeInstalledAppsService(), existing: null);
+        return new ProfileSetupViewModel(CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
     }
 
 }

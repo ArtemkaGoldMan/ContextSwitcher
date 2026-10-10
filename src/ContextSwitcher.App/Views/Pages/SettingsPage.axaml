@@ -4,16 +4,21 @@
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
   xmlns:conv="using:ContextSwitcher.App.Converters"
+  xmlns:ctl="using:ContextSwitcher.App.Controls"
   x:DataType="vm:SettingsViewModel">
+  <!-- Every change applies straight away - there is no Save button - and every section says in a
+       line what it is for, so nothing here needs the docs to make sense. -->
   <StackPanel Spacing="20">
-    <Grid ColumnDefinitions="Auto,*,Auto">
-      <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{DynamicResource BadgePurpleGradient}" Margin="0,0,12,0">
+    <Grid ColumnDefinitions="Auto,*">
+      <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{DynamicResource AccentBrush}" Margin="0,0,12,0">
         <Viewbox Classes="icon" Width="18" Height="18">
           <Path Classes="glyph" Data="{StaticResource IconSliders}" />
         </Viewbox>
       </Border>
-      <TextBlock Grid.Column="1" Text="Settings" Classes="header" VerticalAlignment="Center" />
-      <Button Grid.Column="2" Classes="switchContext current" Content="Save" Command="{Binding SaveCommand}" IsDefault="True" />
+      <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+        <TextBlock Text="Settings" Classes="header" />
+        <TextBlock Text="Changes are saved as you make them." Classes="caption" />
+      </StackPanel>
     </Grid>
 
     <TextBlock
@@ -23,78 +28,87 @@
       TextWrapping="Wrap"
       IsVisible="{Binding HasErrorMessage}" />
 
-    <!-- General -->
+    <!-- Appearance -->
     <Border Classes="panel">
       <StackPanel Spacing="10">
-        <TextBlock Text="GENERAL" Classes="sectionTitle" />
-
-        <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Grid.Column="0" Text="Default switch timeout" Classes="body" VerticalAlignment="Center" />
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-            <TextBox Text="{Binding DefaultSwitchTimeoutSecondsText}" Width="70" HorizontalContentAlignment="Right" />
-            <TextBlock Text="seconds" Classes="caption" VerticalAlignment="Center" Width="50" TextAlignment="Right" />
-          </StackPanel>
-        </Grid>
-        <Border Classes="divider" />
-
-        <Grid ColumnDefinitions="*,Auto">
-          <StackPanel Grid.Column="0" Spacing="2">
-            <TextBlock Text="Show Dock icon" Classes="body" VerticalAlignment="Center" />
-            <TextBlock Text="Takes effect the next time Context Switcher starts." Classes="caption" />
-          </StackPanel>
-          <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowDockIcon}" />
-        </Grid>
+        <TextBlock Text="APPEARANCE" Classes="sectionTitle" />
+        <ctl:FormRow
+          Title="Show in the Dock"
+          Description="Off, Context Switcher lives only in the menu bar. On, it also appears in the Dock and in ⌘-Tab. Applies the next time the app starts.">
+          <ToggleSwitch IsChecked="{Binding ShowDockIcon}" AutomationProperties.Name="Show in the Dock" />
+        </ctl:FormRow>
       </StackPanel>
     </Border>
 
-    <!-- Permissions -->
+    <!-- Permission -->
     <Border Classes="panel">
       <StackPanel Spacing="10">
-        <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Grid.Column="0" Text="AUTOMATION PERMISSIONS" Classes="sectionTitle" VerticalAlignment="Center" />
-          <Button Grid.Column="1" Classes="linkButton" Content="Refresh" Command="{Binding RefreshPermissionsCommand}" />
-        </Grid>
-
-        <Grid ColumnDefinitions="*,Auto,Auto">
-          <TextBlock Grid.Column="0" Text="Automation (AppleScript)" Classes="body" VerticalAlignment="Center" />
-          <Border Grid.Column="1" Classes="statusPill" Background="{Binding AutomationGranted, Converter={x:Static conv:PermissionStatusBrushConverter.Instance}}" Margin="0,0,10,0">
+        <TextBlock Text="PERMISSION" Classes="sectionTitle" />
+        <TextBlock
+          Text="To quit apps, read your browser's tabs and start music, Context Switcher needs your permission to control other apps. macOS asks the first time a switch needs it."
+          Classes="caption"
+          TextWrapping="Wrap" />
+        <ctl:FormRow Title="Control other apps" Description="{Binding AutomationStatusText}">
+          <Border Classes="statusPill" Classes.allowed="{Binding IsAutomationAllowed}" Classes.denied="{Binding IsAutomationDenied}">
             <TextBlock Text="{Binding AutomationGranted, Converter={x:Static conv:PermissionStatusTextConverter.Instance}}" Classes="caption" FontWeight="SemiBold" />
           </Border>
-          <Button Grid.Column="2" Classes="linkButton" Content="Open System Settings" Command="{Binding OpenAutomationSettingsCommand}" />
-        </Grid>
-
-        <TextBlock Text="See docs/automation-permissions.md for what each permission is used for." Classes="caption" Margin="0,4,0,0" />
+        </ctl:FormRow>
+        <StackPanel Orientation="Horizontal" Spacing="18">
+          <Button Classes="linkButton" Content="Open System Settings ↗" Command="{Binding OpenAutomationSettingsCommand}" />
+          <Button Classes="linkButton secondary" Content="Check again" Command="{Binding RefreshPermissionsCommand}" />
+        </StackPanel>
       </StackPanel>
     </Border>
 
-    <!-- Analytics -->
+    <!-- Time tracking -->
     <Border Classes="panel">
       <StackPanel Spacing="10">
-        <TextBlock Text="ANALYTICS" Classes="sectionTitle" />
-
-        <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Grid.Column="0" Text="Track context time locally" Classes="body" VerticalAlignment="Center" />
-          <ToggleSwitch Grid.Column="1" IsChecked="{Binding AnalyticsEnabled}" />
-        </Grid>
+        <TextBlock Text="TIME TRACKING" Classes="sectionTitle" />
+        <TextBlock
+          Text="Records how long you spend in each profile, for the Stats page and the chart in the menu bar dashboard. It stays on this Mac."
+          Classes="caption"
+          TextWrapping="Wrap" />
+        <ctl:FormRow Title="Record time per profile">
+          <ToggleSwitch IsChecked="{Binding AnalyticsEnabled}" AutomationProperties.Name="Record time per profile" />
+        </ctl:FormRow>
         <Border Classes="divider" />
-
-        <Grid ColumnDefinitions="*,Auto" IsEnabled="{Binding AnalyticsEnabled}">
-          <TextBlock Grid.Column="0" Text="Retention" Classes="body" VerticalAlignment="Center" />
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-            <TextBox Text="{Binding AnalyticsRetentionDaysText}" Width="70" HorizontalContentAlignment="Right" />
-            <TextBlock Text="days" Classes="caption" VerticalAlignment="Center" Width="50" TextAlignment="Right" />
-          </StackPanel>
-        </Grid>
+        <ctl:FormRow Title="Keep history for" Description="Older days are deleted automatically." IsEnabled="{Binding AnalyticsEnabled}">
+          <ComboBox ItemsSource="{Binding RetentionChoices}" SelectedItem="{Binding SelectedRetention}" AutomationProperties.Name="Keep history for" />
+        </ctl:FormRow>
       </StackPanel>
     </Border>
 
-    <!-- Support -->
+    <!-- Updates -->
     <Border Classes="panel">
       <StackPanel Spacing="10">
-        <TextBlock Text="SUPPORT" Classes="sectionTitle" />
-        <Button Classes="linkButton" HorizontalAlignment="Left" Content="Support the developer ↗" Command="{Binding SupportDeveloperCommand}" />
+        <TextBlock Text="UPDATES" Classes="sectionTitle" />
+        <TextBlock
+          Text="New versions come from the project's GitHub page. Nothing is installed until you click Install, and your profiles and settings stay as they are."
+          Classes="caption"
+          TextWrapping="Wrap" />
+        <ctl:FormRow Title="Check automatically" Description="Once a day. Turned off, Context Switcher only checks when you click Check now.">
+          <ToggleSwitch IsChecked="{Binding CheckForUpdates}" AutomationProperties.Name="Check for updates automatically" />
+        </ctl:FormRow>
+        <Border Classes="divider" />
+        <ctl:FormRow Title="{Binding Updates.CurrentVersionText}" Description="{Binding Updates.StatusText}">
+          <Panel>
+            <Button Classes="switchContext" Content="Check now" Command="{Binding Updates.CheckNowCommand}" IsVisible="{Binding !Updates.CanInstall}" />
+            <Button Classes="switchContext current" Content="Install and restart" Command="{Binding Updates.InstallCommand}" IsVisible="{Binding Updates.CanInstall}" />
+          </Panel>
+        </ctl:FormRow>
+        <TextBlock Text="{Binding Updates.InstallBlocker}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding Updates.HasInstallBlocker}" />
+        <Button Classes="linkButton" Content="{Binding Updates.ReleasePageLinkText}" Command="{Binding Updates.OpenReleasePageCommand}" IsVisible="{Binding Updates.IsUpdateAvailable}" />
       </StackPanel>
     </Border>
 
+    <!-- About -->
+    <Border Classes="panel">
+      <StackPanel Spacing="10">
+        <TextBlock Text="ABOUT" Classes="sectionTitle" />
+        <ctl:FormRow Title="Context Switcher" Description="Free and open source, under the MIT licence.">
+          <Button Classes="linkButton" Content="Support the developer ↗" Command="{Binding SupportDeveloperCommand}" />
+        </ctl:FormRow>
+      </StackPanel>
+    </Border>
   </StackPanel>
 </UserControl>

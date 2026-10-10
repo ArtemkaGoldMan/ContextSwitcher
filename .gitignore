@@ -36,3 +36,7 @@ TestResults/
 
 # Local packaging output
 dist/
+
+# Signing identity - never commit it (scripts/create-signing-identity.sh keeps it outside the repo)
+*.p12
+signing-password.txt

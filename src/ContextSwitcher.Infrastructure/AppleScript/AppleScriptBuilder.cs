@@ -57,6 +57,68 @@ public static class AppleScriptBuilder
     }
 
     /// <summary>
+    /// Separates a tab's URL from its title in <see cref="ListOpenTabs"/>' output. A unit separator
+    /// rather than a tab character, which a page title can contain - and "tab" is a class in every
+    /// browser's dictionary, so that constant cannot be named in the script anyway.
+    /// </summary>
+    public const char OpenTabFieldSeparator = (char)31;
+
+    /// <summary>
+    /// Builds a script listing every tab open in a browser as <c>url, separator, title</c> per line,
+    /// for Profile Setup's "From open tabs" picker. Returns nothing when the browser is not running:
+    /// scripting an app starts it, and opening a picker should not launch the user's browser.
+    /// Safari calls a tab's title its <c>name</c>; the Chromium browsers call it <c>title</c>.
+    /// </summary>
+    public static string ListOpenTabs(string appName, bool isSafari)
+    {
+        string escapedApp = EscapeStringLiteral(appName);
+        string titleProperty = isSafari ? "name" : "title";
+        return string.Join(
+            '\n',
+            $"if application \"{escapedApp}\" is not running then return \"\"",
+            $"set separator to character id {(int)OpenTabFieldSeparator}",
+            "set collected to \"\"",
+            $"tell application \"{escapedApp}\"",
+            "    repeat with w in windows",
+            "        try",
+            "            repeat with t in tabs of w",
+            $"                set collected to collected & (URL of t) & separator & ({titleProperty} of t) & linefeed",
+            "            end repeat",
+            "        end try",
+            "    end repeat",
+            "end tell",
+            "return collected");
+    }
+
+    /// <summary>
+    /// Builds a script listing Apple Music's playlists, one per line. Unless
+    /// <paramref name="startMusicIfNeeded"/> is set it prints <see cref="MusicNotRunningMarker"/>
+    /// instead of starting Music, since scripting an app launches it.
+    /// </summary>
+    public static string ListMusicPlaylists(bool startMusicIfNeeded)
+    {
+        List<string> lines = [];
+        if (!startMusicIfNeeded)
+        {
+            lines.Add($"if application \"Music\" is not running then return \"{MusicNotRunningMarker}\"");
+        }
+
+        lines.AddRange(
+        [
+            "tell application \"Music\"",
+            "    set playlistNames to name of every user playlist",
+            "end tell",
+            "set AppleScript's text item delimiters to linefeed",
+            "return playlistNames as text"
+        ]);
+
+        return string.Join('\n', lines);
+    }
+
+    /// <summary>What <see cref="ListMusicPlaylists"/> prints when Music is not running.</summary>
+    public const string MusicNotRunningMarker = "<music-not-running>";
+
+    /// <summary>
     /// Builds a script that finds a Safari tab whose URL matches exactly and brings it to the
     /// front, for best-effort duplicate-tab avoidance (section 9.3). Returns <c>true</c>/<c>false</c>.
     /// Deliberately does not <c>activate</c> the browser: pulling the app to the foreground measured

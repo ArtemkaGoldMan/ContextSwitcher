@@ -34,8 +34,15 @@ public sealed class UiScenario
         this.ProcessRunner = new FakeProcessRunner();
         this.Permissions = new FakePermissionsChecker();
         this.InstalledApps = new FakeInstalledAppsService();
+        this.Catalog = new FakeSystemCatalog();
+        this.FocusShortcuts = new FakeFocusShortcutInstaller { AddsTo = this.Catalog };
         this.Clock = new FakeClock();
-        this.Analytics = new AnalyticsService(this.Clock, new InMemoryAnalyticsSessionStore());
+        this.Sessions = new InMemoryAnalyticsSessionStore();
+        this.Analytics = new AnalyticsService(this.Clock, this.Sessions);
+        this.Notice = new SwitchNoticeViewModel(DateTimeOffset.UtcNow);
+        this.Releases = new FakeReleaseSource();
+        this.Updater = new FakeAppUpdater();
+        this.Updates = new UpdatesViewModel(this.Releases, this.Updater, this.ProcessRunner, new Version(0, 1, 0), () => new DateTimeOffset(2026, 10, 10, 14, 32, 0, TimeSpan.Zero));
     }
 
     public ConfigPaths Paths { get; }
@@ -52,9 +59,27 @@ public sealed class UiScenario
 
     public FakeInstalledAppsService InstalledApps { get; }
 
+    public FakeSystemCatalog Catalog { get; }
+
+    public FakeFocusShortcutInstaller FocusShortcuts { get; }
+
     public FakeClock Clock { get; }
 
     public AnalyticsService Analytics { get; }
+
+    /// <summary>Recorded context time, for seeding the balance chart.</summary>
+    public InMemoryAnalyticsSessionStore Sessions { get; }
+
+    /// <summary>The main window's switch-problems card; counts switches from when the scenario began.</summary>
+    public SwitchNoticeViewModel Notice { get; }
+
+    /// <summary>What GitHub says the latest release is.</summary>
+    public FakeReleaseSource Releases { get; }
+
+    public FakeAppUpdater Updater { get; }
+
+    /// <summary>The update state, for a build that is version 0.1.0.</summary>
+    public UpdatesViewModel Updates { get; }
 
     /// <summary>Two profiles, the first active - the shape the app ships after onboarding.</summary>
     public static UiScenario WithTwoProfiles() => new(new AppConfiguration
@@ -71,13 +96,13 @@ public sealed class UiScenario
 
     public MainAppViewModel MainApp() => new(
         this.SwitchService, this.ConfigurationStore, this.JsonStore, this.Paths,
-        this.Permissions, this.ProcessRunner, this.Analytics, this.InstalledApps);
+        this.Permissions, this.ProcessRunner, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates);
 
     public ProfilesViewModel Profiles() =>
         new(this.SwitchService, this.ConfigurationStore, this.JsonStore, this.Paths);
 
     public SettingsViewModel Settings() =>
-        new(this.ConfigurationStore, this.Permissions, this.ProcessRunner);
+        new(this.ConfigurationStore, this.Permissions, this.ProcessRunner, this.Updates);
 
     public StatsViewModel Stats() => new(this.Analytics);
 
@@ -88,5 +113,5 @@ public sealed class UiScenario
         new(this.ConfigurationStore, this.InstalledApps, this.SwitchService);
 
     public ProfileSetupViewModel ProfileSetup(ContextDefinition? existing = null) =>
-        new(this.ConfigurationStore, this.InstalledApps, existing);
+        new(this.ConfigurationStore, this.InstalledApps, this.Catalog, this.ProcessRunner, this.FocusShortcuts, existing);
 }

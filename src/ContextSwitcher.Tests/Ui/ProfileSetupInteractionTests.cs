@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.VisualTree;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
@@ -123,12 +124,17 @@ public sealed class ProfileSetupInteractionTests : UiTest
     /// Each "+ Add" row button is bound to a different collection, and each lives behind two gates:
     /// a collapsed tier, and - for the browser rows - the browser mode that section belongs to.
     /// </summary>
+    /// <remarks>
+    /// Lists with something to pick from open a picker first, and adding by hand is its footer -
+    /// the same for every such list - so for those this clicks through to the footer.
+    /// </remarks>
     [Theory]
-    [InlineData("+ Add URL", BrowserManagementMode.Urls)]
-    [InlineData("+ Add tab group", BrowserManagementMode.Groups)]
-    [InlineData("+ Add browser profile", BrowserManagementMode.Profiles)]
-    [InlineData("+ Add quick link", BrowserManagementMode.None)]
-    public async Task EachAddRowButtonAddsToItsOwnSection(string label, BrowserManagementMode mode)
+    [InlineData("+ Add URL", "Type a URL…", BrowserManagementMode.Urls)]
+    [InlineData("+ Add tab group", null, BrowserManagementMode.Groups)]
+    [InlineData("+ Add browser profile", null, BrowserManagementMode.Profiles)]
+    [InlineData("+ Add quick link", "Type a URL…", BrowserManagementMode.None)]
+    [InlineData("+ Add container", "Type a name…", BrowserManagementMode.None)]
+    public async Task EachAddRowButtonAddsToItsOwnSection(string label, string? footer, BrowserManagementMode mode)
     {
         await OnUiThreadAsync(() =>
         {
@@ -138,9 +144,18 @@ public sealed class ProfileSetupInteractionTests : UiTest
             ExpandSections(window);
 
             int before = CountRows(viewModel);
-            Click(window, FindVisibleButton(window, label));
-            Settle(window);
+            Button add = FindAll<Button>(window).First(b => b.Content as string == label && IsClickable(b));
+            Click(window, add);
 
+            if (footer is not null)
+            {
+                Control flyout = Assert.IsAssignableFrom<Control>(((Flyout)add.Flyout!).Content);
+                ClickInPopup(window, flyout.GetVisualDescendants().OfType<Button>().Single(b => b.Content as string == footer));
+                PumpUntil(WaitUntil(() => !add.Flyout.IsOpen));
+                Assert.False(add.Flyout.IsOpen, "typing by hand left the picker covering the new row");
+            }
+
+            Settle(window);
             Assert.Equal(before + 1, CountRows(viewModel));
         });
     }
@@ -198,36 +213,61 @@ public sealed class ProfileSetupInteractionTests : UiTest
     }
 
     [Fact]
-    public async Task ClickingASwatchChangesTheAccentColor()
+    public async Task ChoosingAnAccentFromItsDropdownRecolorsThePreview()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel });
+            Border preview = FindControl<Border>(window, b => Avalonia.Automation.AutomationProperties.GetName(b) == "Profile preview");
+
+            ChooseFromDropdown(window, Dropdown(window, "Accent color"), "Violet");
+
+            Assert.Equal("#7B61FF", viewModel.AccentColor);
+            Assert.Equal(Avalonia.Media.Color.Parse("#7B61FF"), Assert.IsAssignableFrom<Avalonia.Media.ISolidColorBrush>(preview.Background).Color);
+            Assert.False(IsClickable(FindControl<ColorView>(window, _ => true)), "the custom color picker shows for a preset");
+        });
+    }
+
+    /// <summary>
+    /// "Custom" is an entry in the same dropdown, and choosing it reveals the full color picker under
+    /// it - the way choosing Apple Music reveals a playlist.
+    /// </summary>
+    [Fact]
+    public async Task ChoosingCustomRevealsTheColorPicker()
     {
         await OnUiThreadAsync(() =>
         {
             (ProfileSetupViewModel viewModel, _) = CreateViewModel();
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel });
 
-            Button violet = FindControl<Button>(window, b => b.Classes.Contains("swatch") && ToolTip.GetTip(b) as string == "Violet");
-            Click(window, violet);
+            ChooseFromDropdown(window, Dropdown(window, "Accent color"), "Custom");
 
-            Assert.Equal("#7B61FF", viewModel.AccentColor);
-            Assert.Contains("selected", violet.Classes);
+            Assert.True(viewModel.IsCustomAccent);
+            Assert.True(IsClickable(FindControl<ColorView>(window, _ => true)), "the custom color picker did not appear");
         });
     }
 
     [Fact]
-    public async Task ClickingAnIconTileChoosesItAndUpdatesThePreview()
+    public async Task ChoosingAnIconFromItsDropdownRedrawsThePreview()
     {
         await OnUiThreadAsync(() =>
         {
             (ProfileSetupViewModel viewModel, _) = CreateViewModel();
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel });
+            Border preview = FindControl<Border>(window, b => Avalonia.Automation.AutomationProperties.GetName(b) == "Profile preview");
+            Avalonia.Controls.Shapes.Path glyph = preview.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>().Single();
+            object? before = glyph.Data;
 
-            Button music = FindControl<Button>(window, b => b.Classes.Contains("iconChoice") && ToolTip.GetTip(b) as string == "Music");
-            Click(window, music);
+            ChooseFromDropdown(window, Dropdown(window, "Icon"), "Music");
 
             Assert.Equal("music", viewModel.Icon);
-            Assert.Contains("selected", music.Classes);
+            Assert.NotSame(before, glyph.Data);
         });
     }
+
+    private static ComboBox Dropdown(Window window, string name) =>
+        FindControl<ComboBox>(window, c => Avalonia.Automation.AutomationProperties.GetName(c) == name);
 
     /// <summary>
     /// Every "+ Add" button sits on the same left edge as the rest of its card. The link-styled ones
@@ -330,6 +370,6 @@ public sealed class ProfileSetupInteractionTests : UiTest
         // that resumes on the wrong thread would look identical to one that does not.
         ConfigurationStore store = new(new YieldingJsonStore(jsonStore), paths, validator);
 
-        return (new ProfileSetupViewModel(store, new FakeInstalledAppsService(), configuration.Contexts[0]), store);
+        return (new ProfileSetupViewModel(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), configuration.Contexts[0]), store);
     }
 }
