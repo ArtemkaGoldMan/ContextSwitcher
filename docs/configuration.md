@@ -87,6 +87,10 @@ field has a sensible default, and an omitted section simply does nothing.
 }
 ```
 
+`icon` is one of `circle`, `briefcase`, `house`, `code`, `laptop`, `book`, `coffee`, `moon`, `sun`,
+`heart`, `music`, `gamepad`, `star`, `zap`, `leaf` or `target`; anything else shows as `circle`.
+`accentColor` is any `#RRGGBB`.
+
 `id` is generated from the profile's name when you create it (`Deep Work` becomes `deep-work`) and
 never changes after that — `state.json`, the CLI and your recorded time all reference it. If you
 edit the file by hand, keep it lowercase and URL-safe. `menuBarLabel` isn't edited in the app any
@@ -152,7 +156,8 @@ in [shortcuts-integration.md](shortcuts-integration.md).
 ```
 
 By default a failing step is a warning and the switch continues. Naming a step type in
-`criticalSteps` makes its failure stop the switch and report `Failed`. Valid values are the
+`criticalSteps` makes its failure stop the switch and report `Failed`. Profile Setup sets both under
+**Advanced → If a step fails**. Valid values are the
 `AutomationStepType` names: `CloseApplications`, `LaunchApplications`, `ManageBrowserContext`,
 `SetFocusMode`, `ControlMedia`, `StartDockerResources`,
 `StopDockerResources`.
@@ -189,7 +194,7 @@ Criticality applies to the whole step, not to one app inside it.
       "displayName": "Personal",
       "menuBarLabel": "HOME",
       "accentColor": "#20A67A",
-      "icon": "home",
+      "icon": "house",
       "launchApps": ["Spotify"],
       "closeApps": ["Spotify"],
       "browser_management": {

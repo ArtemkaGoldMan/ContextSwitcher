@@ -1,14 +1,13 @@
-# Shortcuts and Siri Integration
+# Focus and Siri
 
-There are two independent integrations with the macOS Shortcuts app, in opposite directions:
+ContextSwitcher works with the macOS **Shortcuts** app in two directions:
 
-1. **ContextSwitcher → Shortcuts**: during a switch, the app runs a Shortcut you create to change
-   macOS Focus mode (Focus mode has no direct AppleScript API, so Shortcuts is the bridge).
-2. **Shortcuts/Siri → ContextSwitcher**: you create a Shortcut that runs ContextSwitcher's CLI, so
-   you can trigger a context switch by voice ("Hey Siri, switch to work") or from the Shortcuts app,
-   menu bar, or Spotlight.
+1. **Focus.** A switch runs a shortcut to turn a Focus on or off, because macOS lets no other app
+   change Focus directly.
+2. **Siri and keyboard shortcuts.** A shortcut you make can run a switch, so you can say "Hey Siri,
+   switch to work" or press a key.
 
-## 1. Focus mode shortcuts (ContextSwitcher runs these)
+## 1. Focus shortcuts
 
 macOS gives other apps no way to switch Focus; the Shortcuts "Set Focus" action is the only
 supported route. So a switch runs a Shortcut.
@@ -38,7 +37,8 @@ For the Focus modes macOS ships with - Do Not Disturb, Work, Personal, Sleep, Re
 Reading, Fitness, Gaming, Mindfulness - you don't build anything by hand. In Profile Setup, choose
 the **Focus mode**; under it, each missing Shortcut has a **Create it** button. It writes the
 Shortcut, signs it with the system's `shortcuts sign`, and opens it, and Shortcuts asks you to
-**Add Shortcut**. The profile notices once it's added and the mode turns **Ready**.
+**Add Shortcut**. The profile notices once it's added and the mode turns **Ready**. If a second
+**Create it** appears, for the shortcut that turns Focus off, add that one too.
 
 Each mode gets its own Off Shortcut on purpose. A single Off Shortcut that turned off every built-in
 mode was tried first, and failed: turning off a Focus the Mac has never had set up (here,
@@ -57,7 +57,7 @@ A Focus you created has an identifier other apps can't see, so it can't be writt
 If a Shortcut is missing, the switch's warning says which one and how to create it. If it exists but
 fails, the warning gives macOS's own reason - for example a Focus that doesn't exist on this Mac.
 
-## 2. Triggering ContextSwitcher from Shortcuts or Siri
+## 2. Switching from Siri, a keyboard shortcut or a script
 
 Add a **Run Shell Script** action to any shortcut, pointing at the installed binary:
 
@@ -71,10 +71,10 @@ phrases:
 - "Switch to work" → `ContextSwitcher switch --context work`
 - "Switch to personal" → `ContextSwitcher switch --context personal`
 
-Because these commands run headlessly (no window opens, no Dock icon appears — see agent.md
-section 5), they're fast and unobtrusive to trigger from Siri or a keyboard shortcut manager.
+These commands run without opening a window, so they're quick to trigger from Siri, a keyboard
+shortcut (in Shortcuts: the shortcut's **ⓘ → Add Keyboard Shortcut**) or any script.
 
-## CLI command reference
+## Command reference
 
 All CLI commands exit without starting the GUI (except `open-dashboard`, which opens it):
 

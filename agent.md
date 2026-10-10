@@ -1346,7 +1346,7 @@ Timeout defaults:
 Privacy guarantees:
 
 - No telemetry.
-- No background network calls except user-configured URLs and optional donation/license validation if implemented.
+- No background network calls except user-configured URLs, the daily update check against GitHub's latest-release API (`checkForUpdates`, can be turned off in Settings), and optional donation/license validation if implemented.
 - No collection of browser history, active windows, keystrokes, clipboard, screenshots, or file contents.
 - Analytics track only selected context and time interval.
 
@@ -1616,6 +1616,10 @@ needs no quarantine step because curl does not quarantine. A `.dmg` downloaded i
 ```text
 xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
 ```
+
+Homebrew: `brew install --cask artemkagoldman/tap/contextswitcher`, from the separate repository
+ArtemkaGoldMan/homebrew-tap - `version :latest` on the same zip, clearing the quarantine flag in
+`postflight_steps`, so it needs no change per release.
 
 Updating: the app checks GitHub's latest release ~30 s after launch and daily (`checkForUpdates`,
 on by default), offers a newer one in the menu bar menu and Settings → Updates, and installs only

@@ -1,5 +1,19 @@
 # Third-party notices
 
+The prebuilt app bundles the libraries below, each under its own license. Their source and full
+license texts are at the links.
+
+| Library | Used for | License |
+| --- | --- | --- |
+| [.NET runtime](https://github.com/dotnet/runtime) | Runs the app; bundled so nothing else needs installing | [MIT](https://github.com/dotnet/runtime/blob/main/LICENSE.TXT) |
+| [Avalonia](https://github.com/AvaloniaUI/Avalonia) | The user interface | [MIT](https://github.com/AvaloniaUI/Avalonia/blob/main/licence.md) |
+| [Semi.Avalonia](https://github.com/irihitech/Semi.Avalonia) | The look of the standard controls | [MIT](https://github.com/irihitech/Semi.Avalonia/blob/main/LICENSE) |
+| [SkiaSharp](https://github.com/mono/SkiaSharp) | Drawing, through Google's Skia | [MIT](https://github.com/mono/SkiaSharp/blob/main/LICENSE.md); Skia itself [BSD-3-Clause](https://github.com/google/skia/blob/main/LICENSE) |
+| [HarfBuzzSharp](https://github.com/mono/SkiaSharp) | Text shaping, through HarfBuzz | [MIT](https://github.com/mono/SkiaSharp/blob/main/LICENSE.md); HarfBuzz itself [Old MIT](https://github.com/harfbuzz/harfbuzz/blob/main/COPYING) |
+| [MicroCom](https://github.com/kekekeks/MicroCom) | Avalonia's bridge to macOS | [MIT](https://github.com/kekekeks/MicroCom/blob/master/LICENSE) |
+| [Tmds.DBus](https://github.com/tmds/Tmds.DBus) | Part of Avalonia; unused on macOS | [MIT](https://github.com/tmds/Tmds.DBus/blob/main/COPYING) |
+| [Microsoft.Extensions.DependencyInjection](https://github.com/dotnet/runtime) | Wiring the app together | [MIT](https://github.com/dotnet/runtime/blob/main/LICENSE.TXT) |
+
 ## Lucide
 
 Icon geometry in `src/ContextSwitcher.App/Styles/Icons.axaml` is derived from

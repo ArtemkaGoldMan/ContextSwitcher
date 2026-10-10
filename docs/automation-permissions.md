@@ -1,60 +1,64 @@
-# Automation Permissions
+# Permissions
 
-Context Switcher controls other apps through AppleScript, which macOS gates behind an explicit
-Automation permission. This page explains what that permission is for,
-how to grant it, and how to tell when a missing permission — rather than a bug — is the reason a
-switch step failed.
+ContextSwitcher needs one macOS permission: to **control other apps**. Opening apps, web pages and
+Docker containers needs nothing. Quitting apps, reading your browser's tabs and starting music do —
+macOS calls this *Automation*.
 
-## Automation permission (AppleScript / `osascript`)
+## Allowing it
 
-**What it's for:** every `CloseApplications`, `ManageBrowserContext`,
-and media-control step runs through `osascript`, which drives other apps and `System Events` via
-AppleScript.
+You don't need to do anything in advance. The first time a switch needs to control an app — Slack
+to quit it, Chrome to see its tabs, Music to start a playlist, *System Events* to see what's
+running — macOS asks:
 
-**First-run prompt:** the first time Context Switcher scripts a given app (e.g. Slack, Safari,
-System Events, Music, Spotify), macOS shows a one-time dialog: *"ContextSwitcher" wants access to
-control "System Events"*. Click **OK**. You'll see one prompt per target app the first time it's
-automated, not one prompt total.
+> "ContextSwitcher" wants access to control "System Events".
 
-**Checking or fixing it manually:**
+Click **OK**. macOS asks once **per app**, the first time that app is controlled, not once overall.
+
+**Settings → Permission** in ContextSwitcher shows whether it's allowed:
+
+- **Allowed** — all good.
+- **Not allowed** — click **Open System Settings ↗**, find **ContextSwitcher** and switch on the apps
+  it should control. Then click **Check again**.
+
+## If you clicked "Don't Allow"
+
+macOS doesn't ask a second time. Turn it on yourself:
 
 1. Open **System Settings → Privacy & Security → Automation**.
-2. Find **ContextSwitcher** in the list.
-3. Make sure the apps you use it with (System Events, Music, Spotify, Safari, Chrome, Brave, etc.)
-   are toggled on.
+2. Find **ContextSwitcher**.
+3. Switch on the app you blocked — **System Events**, your browser, **Music**, **Spotify**…
 
-If you accidentally denied a prompt, the toggle for that specific app won't reappear on its own —
-you have to switch it on manually here.
+## After an update
 
-**Symptom of a missing grant:** a switch step returns `Warning` or `Failed` with a message like
-*"Could not check Google Chrome for existing tabs, so URLs were opened without duplicate checking. Check Automation permissions."* — the AppleScript ran, macOS silently
-blocked it, and `osascript` returned a non-zero exit code.
+Nothing to redo. Every release is signed with the same certificate, so macOS knows it's the same
+app and keeps what you allowed. (A copy you build yourself is signed differently, and macOS will ask
+again for it.)
 
-## Music and Spotify automation
+## Telling a missing permission from a bug
 
-Apple Music and Spotify are each controlled via their own AppleScript dictionary (`tell application
-"Music" ...` / `tell application "Spotify" ...`). Both fall under the general **Automation**
-permission above — there's no separate music-specific toggle. If media control isn't working:
+A step that macOS blocked doesn't stop the switch. It shows up in the card at the bottom of the
+Profiles page and in the dashboard's **Last switch** section, with a message such as:
 
-- Confirm the target app (Music or Spotify) is actually installed.
-- Confirm it's allowed under System Settings → Privacy & Security → Automation → ContextSwitcher.
-- For Spotify, use a link or URI rather than a plain playlist name — Spotify's scripting dictionary
-  plays URIs reliably; plain names are best-effort and may not resolve to anything. Pasting the
-  link from Spotify's **Share → Copy link** into Profile Setup is enough: it's saved as the
-  `spotify:playlist:...` URI Spotify needs.
-- Media failures never fail a context switch outright unless you've explicitly marked
-  `ControlMedia` as a critical step for that context (and Spotify failures are always treated as
-  non-critical, regardless of that setting).
+> Could not check Google Chrome for existing tabs, so URLs were opened without duplicate checking.
+> Check Automation permissions.
 
-## Troubleshooting checklist
-
-| Symptom | Likely cause | Fix |
+| What happened | Likely reason | What to do |
 | --- | --- | --- |
-| App doesn't quit/launch | Automation permission denied for that app, or app not installed | Check Automation settings; verify the app name matches exactly |
-| Focus mode doesn't change | Required Shortcut missing or Shortcuts automation blocked | See `docs/shortcuts-integration.md` |
-| Docker steps fail | Docker CLI not installed or daemon not running | Install Docker Desktop / start the daemon |
-| A step reports `Skipped` | That automation isn't implemented yet in this phase | Check agent.md's roadmap for the target phase |
+| An app didn't quit | It had unsaved work, or quitting it isn't allowed | Save and switch again; check Automation for that app |
+| Pages opened twice | Reading the browser's tabs isn't allowed | Allow your browser under Automation |
+| Music didn't start | Music or Spotify isn't allowed, or isn't installed | Allow it under Automation |
+| Focus didn't change | The Focus shortcut is missing | Edit the profile and click **Create it** — see [Focus and Siri](shortcuts-integration.md) |
+| Docker containers didn't start or stop | Docker Desktop isn't running | Start Docker Desktop |
 
-Every step's outcome (`Succeeded`, `Warning`, `Failed`, `Skipped`, `TimedOut`) and message are
-recorded in the switch result and in `~/.config/ContextSwitcher/app.log.jsonl` — that log is always
-the fastest way to find out exactly what happened and why.
+For the full story of a switch — every step, how long it took, and what the system said — look at
+the log:
+
+```bash
+tail -20 ~/.config/ContextSwitcher/app.log.jsonl
+```
+
+## Music and Spotify
+
+Both are controlled through Automation; there's no separate setting. For Spotify, paste the
+playlist's link (**Share → Copy link**) into the profile — Spotify only plays reliably from a link,
+not a name.

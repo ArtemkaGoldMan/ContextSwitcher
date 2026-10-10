@@ -105,6 +105,23 @@ A release marked as a pre-release on GitHub is not offered as an update.
 - **When it can't.** A copy run from source, signed ad-hoc, or in a folder it can't write to still
   hears about updates, and offers the release page instead of installing.
 
+## Homebrew
+
+`brew install --cask artemkagoldman/tap/contextswitcher` comes from a separate repository,
+[ArtemkaGoldMan/homebrew-tap](https://github.com/ArtemkaGoldMan/homebrew-tap), holding one file:
+`Casks/contextswitcher.rb`. **It needs nothing per release**: it is `version :latest` and downloads
+`releases/latest/download/ContextSwitcher.zip`, so it always installs the newest release, and the app
+updates itself after that.
+
+Homebrew quarantines everything it downloads, and since Homebrew 5 there is no `--no-quarantine`, so
+the cask clears the flag itself in `postflight_steps` (Homebrew 7's replacement for `postflight`
+blocks) with `xattr -dr com.apple.quarantine`. Homebrew only allows that in third-party taps, which is
+why this isn't in `homebrew/cask`. Tested on Homebrew 7.0.4: the download is quarantined, the step
+clears every file, and the signature still verifies.
+
+`brew style` flags the url with "use GitHub tarballs rather than zipballs". That rule is about source
+zipballs; this is a release asset, and the in-app updater uses the same zip.
+
 ## Versioning
 
 Semantic versioning. The one project-specific rule: **treat a change to `settings.json`'s schema as
