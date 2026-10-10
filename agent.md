@@ -1110,7 +1110,10 @@ Contents, top to bottom:
 
 #### 11.1.2 Main App window (multi-page)
 
-Opened from the Dashboard's **Open App** button. A normal resizable window (880 x 640 default, see
+Opened from the Dashboard's **Open App** button, the menu bar menu's **Open App**, or by opening the
+app again while it runs (Applications, Spotlight, its Dock icon) - `ActivationKind.Reopen`, which
+shows the setup wizard instead while that is still open. The last route matters: macOS hides menu
+bar icons that don't fit beside a MacBook's notch, and the icon was otherwise the only way in. A normal resizable window (880 x 640 default, see
 11.2) with a persistent left-hand page navigation: **Profiles**, **Settings**, **Stats**.
 
 **Profiles page** (default page on open):
