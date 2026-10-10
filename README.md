@@ -127,7 +127,10 @@ Dock icon (you can turn one on in Settings).
 The **Profiles** page lists every profile: **Activate** switches to it, **Edit** changes what it does.
 
 <div align="center">
-<img src="docs/images/profiles.png" width="720" alt="The Profiles page with Work, Personal and Study">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/profiles-dark.png">
+  <img src="docs/images/profiles.png" width="720" alt="The Profiles page with Work, Personal and Study">
+</picture>
 </div>
 
 Editing a profile is mostly picking from lists: apps from the apps you have installed, web pages
@@ -162,8 +165,16 @@ ContextSwitcher may control that app. Click **OK**. **Settings → Permission** 
 allowed and opens the right page in System Settings if it isn't. More in
 [Permissions](docs/automation-permissions.md).
 
+### 6. Make it yours
+
+**Settings** has the rest: a light or dark **Theme** (or *Match macOS*, the default), whether the
+app shows in the Dock, how long to keep your history, and updates.
+
 <div align="center">
-<img src="docs/images/settings.png" width="720" alt="Settings: Dock icon, permission status, time tracking and updates">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/settings-dark.png">
+  <img src="docs/images/settings.png" width="720" alt="Settings: theme, Dock icon, permission status, time tracking and updates">
+</picture>
 </div>
 
 ### When something doesn't go to plan

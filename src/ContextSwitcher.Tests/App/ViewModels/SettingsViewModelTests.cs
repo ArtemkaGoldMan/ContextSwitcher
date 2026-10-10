@@ -39,6 +39,7 @@ public sealed class SettingsViewModelTests
 
         viewModel.AnalyticsEnabled = false;
         viewModel.CheckForUpdates = false;
+        viewModel.SelectedAppearance = viewModel.AppearanceChoices.Single(choice => choice.Value == AppearanceMode.Dark);
         viewModel.SelectedRetention = viewModel.RetentionChoices.Single(choice => choice.Value == 30);
         await viewModel.Saving;
 
@@ -46,6 +47,7 @@ public sealed class SettingsViewModelTests
         Assert.True(persisted.ShowDockIcon);
         Assert.False(persisted.Analytics.Enabled);
         Assert.False(persisted.CheckForUpdates);
+        Assert.Equal(AppearanceMode.Dark, persisted.Appearance);
         Assert.Equal(30, persisted.Analytics.RetentionDays);
         Assert.Equal(37, persisted.DefaultSwitchTimeoutSeconds);
         Assert.False(viewModel.HasErrorMessage);

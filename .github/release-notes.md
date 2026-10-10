@@ -6,6 +6,12 @@ Paste this into Terminal - it downloads the app, puts it in Applications and ope
 curl -fsSL https://raw.githubusercontent.com/ArtemkaGoldMan/ContextSwitcher/main/install.sh | bash
 ```
 
+Or with [Homebrew](https://brew.sh):
+
+```bash
+brew install --cask artemkagoldman/tap/contextswitcher
+```
+
 Or download `ContextSwitcher-*.dmg` below and drag the app to Applications. ContextSwitcher isn't
 notarised by Apple (that needs a paid developer account), so macOS refuses to open it the first time.
 Allow it once with:

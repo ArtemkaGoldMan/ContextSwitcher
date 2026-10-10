@@ -1238,7 +1238,9 @@ Typography:
 
 Colors:
 
-- Respect macOS light/dark appearance (unchanged) - `Colors.axaml` is the whole palette, and keeps it
+- Respect macOS light/dark appearance by default; Settings → Theme (`appearance`: `system`, `light`,
+  `dark`) pins one, applied at once by `App.ApplyAppearance` setting `RequestedThemeVariant`. Every
+  colour therefore needs a Light and a Dark value - `Colors.axaml` is the whole palette, and keeps it
   small: neutrals for surfaces, text and lines (`AppBackgroundBrush`, `SidebarBrush`, `CardBrush`,
   `CardHoverBrush`, `SelectedNavBrush`, `BorderBrush`, `DividerBrush`, `TextPrimaryBrush`,
   `TextSecondaryBrush`) per theme; one accent; and three status colours (`SuccessBrush`,

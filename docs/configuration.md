@@ -35,6 +35,7 @@ ContextSwitcher validate-config
   "schemaVersion": 1,
   "activeContextId": "work",
   "defaultSwitchTimeoutSeconds": 45,
+  "appearance": "system",
   "showDockIcon": false,
   "checkForUpdates": true,
   "onboardingCompleted": true,
@@ -47,6 +48,7 @@ ContextSwitcher validate-config
 | --- | --- |
 | `schemaVersion` | Always `1` today. |
 | `activeContextId` | Must match a `contexts[].id`. |
+| `appearance` | `system` (follow macOS, the default), `light` or `dark`. Applies at once. |
 | `showDockIcon` | Read once at startup — changing it needs a restart, and the UI says so. |
 | `checkForUpdates` | Looks for a new release on GitHub once a day and offers it; never installs by itself. Absent means on. |
 | `onboardingCompleted` | Absent means "already onboarded", so upgrading never re-runs the wizard. |

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
+using Avalonia.Styling;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views;
@@ -10,6 +11,7 @@ using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Abstractions;
+using ContextSwitcher.Core.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App;
@@ -29,6 +31,23 @@ public sealed partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        // The theme follows the setting from the first window on, and changes the moment the setting
+        // does: Settings saves the choice, the save publishes the configuration, and this applies it.
+        // The theme is a UI-thread property; a configuration published from any other thread is
+        // applied there rather than throwing.
+        this.ApplyAppearance();
+        AppHost.ConfigurationChanged += (_, _) =>
+        {
+            if (this.CheckAccess())
+            {
+                this.ApplyAppearance();
+            }
+            else
+            {
+                this.Dispatcher.Post(this.ApplyAppearance);
+            }
+        };
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -64,6 +83,26 @@ public sealed partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>
+    /// "Match macOS" is Avalonia's default variant, which tracks the system's appearance live; light
+    /// and dark pin it. The menu bar icon is a template image, so macOS draws that either way.
+    /// </summary>
+    public static ThemeVariant ThemeFor(AppearanceMode appearance) => appearance switch
+    {
+        AppearanceMode.Light => ThemeVariant.Light,
+        AppearanceMode.Dark => ThemeVariant.Dark,
+        _ => ThemeVariant.Default
+    };
+
+    private void ApplyAppearance()
+    {
+        // Null only before AppHost has loaded a configuration, as in the headless test host.
+        if (AppHost.Configuration is { } configuration)
+        {
+            this.RequestedThemeVariant = ThemeFor(configuration.Appearance);
+        }
     }
 
     private TrayIcon CreateTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)
