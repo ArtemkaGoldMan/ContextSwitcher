@@ -19,7 +19,7 @@ your music — all from the menu bar.
   <img src="docs/images/dashboard-light.png" width="360" alt="The ContextSwitcher dashboard under the menu bar: the active Work profile, buttons to switch to Personal or Study, quick links, notes and a chart of the last seven days">
 </picture>
 
-[Install](#install) · [Getting started](#getting-started) · [Updates](#updates) · [FAQ](#faq)
+[Install](#install) · [Getting started](#getting-started) · [Updates](#updates) · [FAQ](#faq) · [Report a bug](#found-a-bug)
 
 </div>
 
@@ -108,8 +108,16 @@ The first time it opens, a three-step wizard creates a **Work** and a **Personal
 suggests apps you actually have installed: tick **Launch** to open an app when you switch to that
 profile, and **Close** to quit it when you switch away. You can change everything later.
 
+> [!IMPORTANT]
+> **Close** starts ticked for the apps it suggests, and finishing the wizard switches you into Work
+> straight away. Switching to another profile later quits those apps — politely, like ⌘Q, so
+> anything unsaved asks first. Untick **Close** for any app you want left alone.
+
 <div align="center">
-<img src="docs/images/onboarding.png" width="560" alt="The setup wizard, choosing the apps for the Work profile">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/onboarding-dark.png">
+  <img src="docs/images/onboarding-light.png" width="560" alt="The setup wizard, choosing the apps for the Work profile">
+</picture>
 </div>
 
 ### 2. Switch from the menu bar
@@ -122,6 +130,10 @@ Dock icon (you can turn one on in Settings).
   and the last seven days. Click anywhere else to close it.
 - **Open App** opens the main window, where you set profiles up.
 
+Can't see the icon? On a MacBook with a notch, macOS hides menu bar icons that don't fit. Open
+ContextSwitcher again from Applications or Spotlight and its window opens — see the
+[FAQ](#faq) for keeping the icon in view.
+
 ### 3. Set up your profiles
 
 The **Profiles** page lists every profile: **Activate** switches to it, **Edit** changes what it does.
@@ -129,7 +141,7 @@ The **Profiles** page lists every profile: **Activate** switches to it, **Edit**
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/profiles-dark.png">
-  <img src="docs/images/profiles.png" width="720" alt="The Profiles page with Work, Personal and Study">
+  <img src="docs/images/profiles-light.png" width="720" alt="The Profiles page with Work, Personal and Study">
 </picture>
 </div>
 
@@ -137,7 +149,10 @@ Editing a profile is mostly picking from lists: apps from the apps you have inst
 from the tabs you have open, playlists from your library, containers from Docker.
 
 <div align="center">
-<img src="docs/images/profile-setup.png" width="720" alt="Editing the Work profile: its name, color and icon, its apps and its browser pages">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/profile-setup-dark.png">
+  <img src="docs/images/profile-setup-light.png" width="720" alt="Editing the Work profile: its name, color and icon, its apps and its browser pages">
+</picture>
 </div>
 
 ### 4. Turn on Focus (optional)
@@ -152,7 +167,10 @@ off. You don't build them yourself:
 3. If a second **Create it** appears — for the shortcut that turns Focus off — do the same.
 
 <div align="center">
-<img src="docs/images/profile-setup-focus.png" width="720" alt="The Focus & music and Advanced sections of a profile, with Do Not Disturb ready">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/profile-setup-focus-dark.png">
+  <img src="docs/images/profile-setup-focus-light.png" width="720" alt="The Focus & music and Advanced sections of a profile, with Do Not Disturb ready">
+</picture>
 </div>
 
 A Focus you created yourself needs the two shortcuts made by hand — see
@@ -173,7 +191,7 @@ app shows in the Dock, how long to keep your history, and updates.
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/settings-dark.png">
-  <img src="docs/images/settings.png" width="720" alt="Settings: theme, Dock icon, permission status, time tracking and updates">
+  <img src="docs/images/settings-light.png" width="720" alt="Settings: theme, Dock icon, permission status, time tracking and updates">
 </picture>
 </div>
 
@@ -184,7 +202,10 @@ work, say) or a shortcut is missing, a card at the bottom of the Profiles page s
 and how to fix it. It stays until you close it or switch again.
 
 <div align="center">
-<img src="docs/images/switch-problems.png" width="720" alt="A card at the bottom of the window: Switched to Personal, with warnings — Visual Studio Code had unsaved changes">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/switch-problems-dark.png">
+  <img src="docs/images/switch-problems-light.png" width="720" alt="A card at the bottom of the window: Switched to Personal, with warnings — Visual Studio Code had unsaved changes">
+</picture>
 </div>
 
 ### See where your time goes
@@ -193,7 +214,10 @@ and how to fix it. It stays until you close it or switch again.
 recorded only on your Mac and you can turn it off in Settings.
 
 <div align="center">
-<img src="docs/images/stats.png" width="720" alt="The Stats page: a column per day split by profile">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/stats-dark.png">
+  <img src="docs/images/stats-light.png" width="720" alt="The Stats page: a column per day split by profile">
+</picture>
 </div>
 
 ## Updates
@@ -234,6 +258,18 @@ installed with Homebrew.
   Shortcuts, and Docker if you use it.
 
 ## FAQ
+
+<details>
+<summary><b>I can't find the menu bar icon</b></summary>
+
+<br>
+
+On a MacBook with a notch, macOS hides menu bar icons that don't fit beside it. Open
+ContextSwitcher again from Applications or Spotlight (⌘Space, *ContextSwitcher*) and its window
+opens. To keep it reachable, turn on **Settings → Show in the Dock**, or make room in the menu bar:
+hold ⌘ and drag system icons you don't need (Wi-Fi, battery…) out of it, or quit apps whose icons
+you don't use.
+</details>
 
 <details>
 <summary><b>"ContextSwitcher can't be opened" / "Apple could not verify…"</b></summary>
@@ -293,6 +329,21 @@ See [Focus and Siri](docs/shortcuts-integration.md) for the commands and how to 
 In `~/.config/ContextSwitcher/settings.json`. Yes — see [Configuration](docs/configuration.md).
 The app checks the file and keeps backups, so a typo can't lose your profiles.
 </details>
+
+## Found a bug?
+
+Please [open an issue](https://github.com/ArtemkaGoldMan/ContextSwitcher/issues/new). It helps to
+include:
+
+- the version, from **Settings → Updates**, and your macOS version;
+- what you did, what you expected, and what happened instead;
+- for a switch that went wrong, the end of the log:
+
+  ```bash
+  tail -50 ~/.config/ContextSwitcher/app.log.jsonl
+  ```
+
+  It lists app and profile names, not anything inside them — glance over it before posting.
 
 ## Build from source
 
