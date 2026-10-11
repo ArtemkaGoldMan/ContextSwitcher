@@ -9,7 +9,8 @@
 It opens the apps you need, quits the ones you don't, opens your tabs, turns on Focus and starts
 your music — all from the menu bar.
 
-[![Latest release](https://img.shields.io/github/v/release/ArtemkaGoldMan/ContextSwitcher?label=download&color=0A84FF)](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/latest)
+[![Download for macOS](https://img.shields.io/badge/Download-for%20macOS-0A84FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/latest)
+
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-000000?logo=apple&logoColor=white)
 ![Apple silicon](https://img.shields.io/badge/Apple%20silicon-M1%20and%20later-555555)
 ![Free and open source](https://img.shields.io/badge/free-MIT-20A67A)
