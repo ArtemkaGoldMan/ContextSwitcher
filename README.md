@@ -13,6 +13,7 @@ your music — all from the menu bar.
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-000000?logo=apple&logoColor=white)
 ![Apple silicon](https://img.shields.io/badge/Apple%20silicon-M1%20and%20later-555555)
 ![Free and open source](https://img.shields.io/badge/free-MIT-20A67A)
+![English · Українська](https://img.shields.io/badge/languages-English%20%C2%B7%20%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-555555)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-dark.png">
@@ -185,8 +186,9 @@ allowed and opens the right page in System Settings if it isn't. More in
 
 ### 6. Make it yours
 
-**Settings** has the rest: a light or dark **Theme** (or *Match macOS*, the default), whether the
-app shows in the Dock, how long to keep your history, and updates.
+**Settings** has the rest: the **Language** — English or Ukrainian, or whichever of them your Mac
+uses — a light or dark **Theme** (or *Match macOS*, the default), whether the app shows in the
+Dock, how long to keep your history, and updates.
 
 <div align="center">
 <picture>

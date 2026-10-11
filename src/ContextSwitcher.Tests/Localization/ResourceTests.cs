@@ -1,5 +1,7 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.Tests.Localization;
 
@@ -18,7 +20,7 @@ public sealed partial class ResourceTests
     [Fact]
     public void NoViewHasTextWrittenIntoIt()
     {
-        string[] attributes = ["Text", "Content", "Title", "Description", "Header", "ToolTip.Tip", "Watermark", "PlaceholderText", "AutomationProperties.Name"];
+        string[] attributes = ["Text", "Content", "Title", "Description", "Header", "ToolTip.Tip", "Watermark", "PlaceholderText", "AutomationProperties.Name", "OnContent", "OffContent"];
         Regex literal = new($"(?<![\\w.:])({string.Join("|", attributes.Select(Regex.Escape))})=\"([^\"{{][^\"]*)\"");
 
         List<string> found = Directory.EnumerateFiles(Path.Combine(Repository, "src", "ContextSwitcher.App"), "*.axaml", SearchOption.AllDirectories)
@@ -83,6 +85,47 @@ public sealed partial class ResourceTests
             Assert.True(english.ContainsKey(phrase + "_One"), $"{phrase}_One is missing");
             Assert.True(english.ContainsKey(phrase + "_Other"), $"{phrase}_Other is missing");
         });
+    }
+
+    /// <summary>
+    /// A language offered in Settings is translated in full - every text, and every form its counted
+    /// phrases take - so choosing it never shows a mix. (A partial translation can still be added as a
+    /// file; it just isn't offered until it is complete.)
+    /// </summary>
+    [Fact]
+    public void EveryOfferedLanguageIsCompletelyTranslated()
+    {
+        Dictionary<string, string> english = Entries(Neutral());
+        List<string> problems = [];
+
+        foreach (AppLanguage language in AppLanguages.Supported.Skip(1))
+        {
+            string file = Path.Combine(ResourcesFolder, $"Strings.{language.Code}.resx");
+            Dictionary<string, string> translated = Entries(file);
+            CultureInfo culture = CultureInfo.GetCultureInfo(language.Code);
+            HashSet<string> forms = Enumerable.Range(0, 200).Select(n => Plurals.Category(n, culture)).ToHashSet();
+
+            foreach (string key in english.Keys.Where(k => !PluralForm().IsMatch(k)).Where(k => !translated.ContainsKey(k)))
+            {
+                problems.Add($"{language.Code}: {key} is not translated");
+            }
+
+            foreach (string phrase in english.Keys.Where(k => k.EndsWith("_Other", StringComparison.Ordinal)).Select(k => k[..^"_Other".Length]))
+            {
+                problems.AddRange(forms.Where(form => !translated.ContainsKey($"{phrase}_{form}")).Select(form => $"{language.Code}: {phrase}_{form} is missing"));
+            }
+        }
+
+        Assert.True(problems.Count == 0, string.Join("\n", problems));
+    }
+
+    /// <summary>The list Settings offers and the translation files are the same set of languages.</summary>
+    [Fact]
+    public void TheOfferedLanguagesAreTheTranslationFiles()
+    {
+        IEnumerable<string> files = Translations().Select(file => Path.GetFileNameWithoutExtension(file).Split('.')[^1]).Order();
+
+        Assert.Equal(AppLanguages.Supported.Skip(1).Select(language => language.Code).Order(), files);
     }
 
     private static string Neutral() => Path.Combine(ResourcesFolder, "Strings.resx");

@@ -1,6 +1,8 @@
 using Avalonia;
+using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.Infrastructure.Cli;
+using ContextSwitcher.Infrastructure.MacOS;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App;
@@ -21,6 +23,10 @@ internal static class Program
             Environment.Exit(exitCode);
             return;
         }
+
+        // Before any window, so every text is read in it. The command line above stays English: scripts
+        // read it.
+        AppLanguages.Apply(AppLanguages.Resolve(AppHost.Configuration?.Language, PreferredLanguages.Get()));
 
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);

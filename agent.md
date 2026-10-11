@@ -1694,8 +1694,11 @@ Text (docs/translating.md):
   view. Keys are `Area_What` with a `<comment>` for translators.
 - Placeholders through `Localized.Format`, counted phrases through `Plurals.Format` (CLDR one/few/
   many/other, so Ukrainian and Polish get their three forms).
-- The language is read once at startup; the log, CLI output and identifiers (Focus Shortcut names)
-  stay English.
+- The language is chosen once at startup (Program.Main, before any window) by `AppLanguages`: the
+  `language` setting, or the first of the Mac's preferred languages (`PreferredLanguages`, via
+  NSLocale) that has a translation. A language in `AppLanguages.Supported` must be translated in
+  full - `ResourceTests` checks. The log, CLI output and identifiers (Focus Shortcut names) stay
+  English.
 
 C#:
 

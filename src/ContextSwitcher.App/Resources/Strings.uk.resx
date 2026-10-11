@@ -1,0 +1,853 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Common_SearchInstalledApps" xml:space="preserve">
+    <value>Пошук серед встановлених програм…</value>
+  </data>
+  <data name="Common_Loading" xml:space="preserve">
+    <value>Завантаження…</value>
+  </data>
+  <data name="Common_NoMatchingApps" xml:space="preserve">
+    <value>Немає відповідних програм.</value>
+  </data>
+  <data name="Common_AppNameAsInApplications" xml:space="preserve">
+    <value>Назва програми, як у теці «Програми»</value>
+  </data>
+  <data name="Common_Launch" xml:space="preserve">
+    <value>Відкривати</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Закривати</value>
+  </data>
+  <data name="Common_Remove" xml:space="preserve">
+    <value>Вилучити</value>
+  </data>
+  <data name="Common_TitleOptional" xml:space="preserve">
+    <value>Назва (необов'язково)</value>
+  </data>
+  <data name="Common_Https" xml:space="preserve">
+    <value>https://…</value>
+  </data>
+  <data name="Common_Browser" xml:space="preserve">
+    <value>Браузер</value>
+  </data>
+  <data name="Common_BrowserProfile" xml:space="preserve">
+    <value>Профіль браузера</value>
+  </data>
+  <data name="Common_PagesToOpenInThis" xml:space="preserve">
+    <value>Сторінки, які відкриває цей профіль, по одній URL-адресі в рядку</value>
+  </data>
+  <data name="Dashboard_CloseEsc" xml:space="preserve">
+    <value>Закрити (Esc)</value>
+  </data>
+  <data name="Dashboard_Close" xml:space="preserve">
+    <value>Закрити</value>
+  </data>
+  <data name="Dashboard_SwitchTo_Section" xml:space="preserve">
+    <value>ПЕРЕМКНУТИ НА</value>
+  </data>
+  <data name="Dashboard_Active" xml:space="preserve">
+    <value>Активний</value>
+  </data>
+  <data name="Dashboard_Switching" xml:space="preserve">
+    <value>Перемикання…</value>
+  </data>
+  <data name="Dashboard_LastSwitch_Section" xml:space="preserve">
+    <value>ОСТАННЄ ПЕРЕМИКАННЯ</value>
+  </data>
+  <data name="Dashboard_ConfigurationWarnings_Section" xml:space="preserve">
+    <value>ПОПЕРЕДЖЕННЯ КОНФІГУРАЦІЇ</value>
+  </data>
+  <data name="Dashboard_QuickLinks_Section" xml:space="preserve">
+    <value>ШВИДКІ ПОСИЛАННЯ</value>
+  </data>
+  <data name="Dashboard_Notes_Section" xml:space="preserve">
+    <value>НОТАТКИ</value>
+  </data>
+  <data name="Dashboard_Last7Days_Section" xml:space="preserve">
+    <value>ОСТАННІ 7 ДНІВ</value>
+  </data>
+  <data name="Dashboard_OpenApp" xml:space="preserve">
+    <value>Відкрити програму</value>
+  </data>
+  <data name="Dashboard_SupportTheDeveloper" xml:space="preserve">
+    <value>Підтримати розробника ↗</value>
+  </data>
+  <data name="MainWindow_Profiles" xml:space="preserve">
+    <value>Профілі</value>
+  </data>
+  <data name="MainWindow_Settings" xml:space="preserve">
+    <value>Параметри</value>
+  </data>
+  <data name="MainWindow_Stats" xml:space="preserve">
+    <value>Статистика</value>
+  </data>
+  <data name="MainWindow_SwitchProblems" xml:space="preserve">
+    <value>Проблеми перемикання</value>
+  </data>
+  <data name="MainWindow_Close" xml:space="preserve">
+    <value>Закрити</value>
+  </data>
+  <data name="MainWindow_CloseNotice" xml:space="preserve">
+    <value>Закрити повідомлення</value>
+  </data>
+  <data name="Onboarding_WelcomeToContextSwitcher" xml:space="preserve">
+    <value>Вітаємо в Context Switcher</value>
+  </data>
+  <data name="Onboarding_ProfileName" xml:space="preserve">
+    <value>Назва профілю</value>
+  </data>
+  <data name="Onboarding_Apps_Section" xml:space="preserve">
+    <value>ПРОГРАМИ</value>
+  </data>
+  <data name="Onboarding_WevePreFilledAFew" xml:space="preserve">
+    <value>Ми додали кілька програм, які знайшли на цьому Mac. «Відкривати» відкриває програму, коли ви переходите в цей профіль; «Закривати» закриває її, коли ви з нього виходите.</value>
+  </data>
+  <data name="Onboarding_NoAppsChosenYet" xml:space="preserve">
+    <value>Програм ще не вибрано.</value>
+  </data>
+  <data name="Onboarding_AddApp" xml:space="preserve">
+    <value>+ Додати програму</value>
+  </data>
+  <data name="Onboarding_OneClickFlipsYourMac" xml:space="preserve">
+    <value>Один клік перемикає ваш Mac між роботою та особистим — відкриває потрібні програми, закриває зайві й не дає одному змішуватися з іншим.</value>
+  </data>
+  <data name="Onboarding_LetsSetUpTwoProfiles" xml:space="preserve">
+    <value>Налаштуймо два профілі. Це займе близько хвилини, а змінити все можна будь-коли.</value>
+  </data>
+  <data name="Onboarding_YourWorkProfile" xml:space="preserve">
+    <value>Ваш робочий профіль</value>
+  </data>
+  <data name="Onboarding_AppsToOpenWhenYou" xml:space="preserve">
+    <value>Програми, які відкриваються, коли ви починаєте працювати, і закриваються, коли закінчуєте.</value>
+  </data>
+  <data name="Onboarding_YourPersonalProfile" xml:space="preserve">
+    <value>Ваш особистий профіль</value>
+  </data>
+  <data name="Onboarding_AppsForYourOwnTime" xml:space="preserve">
+    <value>Програми для вашого вільного часу — і робочі, які мають зникнути.</value>
+  </data>
+  <data name="Onboarding_YoureSet" xml:space="preserve">
+    <value>Усе готово</value>
+  </data>
+  <data name="Onboarding_FinishingWillSaveBothProfiles" xml:space="preserve">
+    <value>Після завершення обидва профілі збережуться, і ви перемкнетеся в «Роботу», щоб одразу побачити, як це працює.</value>
+  </data>
+  <data name="Onboarding_Next_Section" xml:space="preserve">
+    <value>ДАЛІ</value>
+  </data>
+  <data name="Onboarding_SwitchAnytimeFromTheMenu" xml:space="preserve">
+    <value>• Перемикайтеся будь-коли через значок у смузі меню</value>
+  </data>
+  <data name="Onboarding_AddBrowserTabsFocusAnd" xml:space="preserve">
+    <value>• Додавайте вкладки браузера, зосередження й Docker у налаштуваннях профілю</value>
+  </data>
+  <data name="Onboarding_ChangeAProfilesColorIcon" xml:space="preserve">
+    <value>• Змінюйте колір, значок і програми профілю через «Відкрити програму»</value>
+  </data>
+  <data name="Onboarding_SkipSetup" xml:space="preserve">
+    <value>Пропустити</value>
+  </data>
+  <data name="Onboarding_Back" xml:space="preserve">
+    <value>Назад</value>
+  </data>
+  <data name="Onboarding_Continue" xml:space="preserve">
+    <value>Продовжити</value>
+  </data>
+  <data name="Onboarding_FinishSwitchToWork" xml:space="preserve">
+    <value>Завершити й перемкнути на «Роботу»</value>
+  </data>
+  <data name="ProfileSetup_Preview" xml:space="preserve">
+    <value>Попередній перегляд</value>
+  </data>
+  <data name="ProfileSetup_ProfilePreview" xml:space="preserve">
+    <value>Попередній перегляд профілю</value>
+  </data>
+  <data name="ProfileSetup_Cancel" xml:space="preserve">
+    <value>Скасувати</value>
+  </data>
+  <data name="ProfileSetup_Save" xml:space="preserve">
+    <value>Зберегти</value>
+  </data>
+  <data name="ProfileSetup_Identity_Section" xml:space="preserve">
+    <value>ПРОФІЛЬ</value>
+  </data>
+  <data name="ProfileSetup_DisplayName" xml:space="preserve">
+    <value>Назва</value>
+  </data>
+  <data name="ProfileSetup_AccentColor" xml:space="preserve">
+    <value>Колір</value>
+  </data>
+  <data name="ProfileSetup_CustomColor" xml:space="preserve">
+    <value>Власний колір</value>
+  </data>
+  <data name="ProfileSetup_Icon" xml:space="preserve">
+    <value>Значок</value>
+  </data>
+  <data name="ProfileSetup_Apps_Section" xml:space="preserve">
+    <value>ПРОГРАМИ</value>
+  </data>
+  <data name="ProfileSetup_LaunchOpensTheAppWhen" xml:space="preserve">
+    <value>«Відкривати» відкриває програму, коли ви переходите в цей профіль. «Закривати» закриває її, коли ви з нього виходите.</value>
+  </data>
+  <data name="ProfileSetup_NoAppsYetAddThe" xml:space="preserve">
+    <value>Програм ще немає — додайте ті, які цей профіль має відкривати чи закривати.</value>
+  </data>
+  <data name="ProfileSetup_AddApp" xml:space="preserve">
+    <value>+ Додати програму</value>
+  </data>
+  <data name="ProfileSetup_TypeAName" xml:space="preserve">
+    <value>Введіть назву…</value>
+  </data>
+  <data name="ProfileSetup_ForAnAppThatIsnt" xml:space="preserve">
+    <value>Для програми, якої немає в теці «Програми»</value>
+  </data>
+  <data name="ProfileSetup_BrowserManagement_Section" xml:space="preserve">
+    <value>БРАУЗЕР</value>
+  </data>
+  <data name="ProfileSetup_OnSwitch" xml:space="preserve">
+    <value>Під час перемикання</value>
+  </data>
+  <data name="ProfileSetup_Browser" xml:space="preserve">
+    <value>Браузер</value>
+  </data>
+  <data name="ProfileSetup_AvoidDuplicateTabs" xml:space="preserve">
+    <value>Без повторних вкладок</value>
+  </data>
+  <data name="ProfileSetup_StartupURLs" xml:space="preserve">
+    <value>Сторінки</value>
+  </data>
+  <data name="ProfileSetup_AddUrl" xml:space="preserve">
+    <value>+ Додати сторінку</value>
+  </data>
+  <data name="ProfileSetup_TypeAUrl" xml:space="preserve">
+    <value>Введіть URL-адресу…</value>
+  </data>
+  <data name="ProfileSetup_TabGroups" xml:space="preserve">
+    <value>Групи вкладок</value>
+  </data>
+  <data name="ProfileSetup_AddTabGroup" xml:space="preserve">
+    <value>+ Додати групу вкладок</value>
+  </data>
+  <data name="ProfileSetup_BrowserProfiles" xml:space="preserve">
+    <value>Профілі браузера</value>
+  </data>
+  <data name="ProfileSetup_AddBrowserProfile" xml:space="preserve">
+    <value>+ Додати профіль браузера</value>
+  </data>
+  <data name="ProfileSetup_FocusAndMusic" xml:space="preserve">
+    <value>Зосередження й музика</value>
+  </data>
+  <data name="ProfileSetup_FocusMusic" xml:space="preserve">
+    <value>Зосередження й музика</value>
+  </data>
+  <data name="ProfileSetup_TurnOnAMacOSFocus" xml:space="preserve">
+    <value>Вмикайте режим зосередження macOS і запускайте плейлист, коли перемикаєтеся в цей профіль.</value>
+  </data>
+  <data name="ProfileSetup_Focus_Section" xml:space="preserve">
+    <value>ЗОСЕРЕДЖЕННЯ</value>
+  </data>
+  <data name="ProfileSetup_SwitchesMacOSFocusDoNot" xml:space="preserve">
+    <value>Вмикає режим зосередження macOS — «Не турбувати», «Робота», «Сон»… — коли ви перемикаєтеся в цей профіль, щоб проходили лише потрібні сповіщення. Перемикання в профіль без нього вимикає зосередження.</value>
+  </data>
+  <data name="ProfileSetup_FocusMode" xml:space="preserve">
+    <value>Режим зосередження</value>
+  </data>
+  <data name="ProfileSetup_CreateIt" xml:space="preserve">
+    <value>Створити</value>
+  </data>
+  <data name="ProfileSetup_OpenShortcuts" xml:space="preserve">
+    <value>Відкрити «Швидкі команди» ↗</value>
+  </data>
+  <data name="ProfileSetup_CheckAgain" xml:space="preserve">
+    <value>Перевірити ще раз</value>
+  </data>
+  <data name="ProfileSetup_Media_Section" xml:space="preserve">
+    <value>МУЗИКА</value>
+  </data>
+  <data name="ProfileSetup_StartsAPlaylistWhenYou" xml:space="preserve">
+    <value>Запускає плейлист, коли ви перемикаєтеся в цей профіль.</value>
+  </data>
+  <data name="ProfileSetup_Player" xml:space="preserve">
+    <value>Програвач</value>
+  </data>
+  <data name="ProfileSetup_Playlist" xml:space="preserve">
+    <value>Плейлист</value>
+  </data>
+  <data name="ProfileSetup_ChooseAPlaylist" xml:space="preserve">
+    <value>Виберіть плейлист</value>
+  </data>
+  <data name="ProfileSetup_LoadPlaylistsFromMusic" xml:space="preserve">
+    <value>Завантажити плейлисти з «Музики»</value>
+  </data>
+  <data name="ProfileSetup_OpensMusicToReadYour" xml:space="preserve">
+    <value>Відкриває «Музику», щоб прочитати ваші плейлисти</value>
+  </data>
+  <data name="ProfileSetup_ReadingPlaylistsFromMusic" xml:space="preserve">
+    <value>Читаю плейлисти з «Музики»…</value>
+  </data>
+  <data name="ProfileSetup_InSpotifyShareCopyLink" xml:space="preserve">
+    <value>У Spotify: «Поділитися» → «Копіювати посилання на плейлист», потім вставте його сюди.</value>
+  </data>
+  <data name="ProfileSetup_HttpsOpenSpotifyCom" xml:space="preserve">
+    <value>https://open.spotify.com/…</value>
+  </data>
+  <data name="ProfileSetup_SpotifyLink" xml:space="preserve">
+    <value>Посилання Spotify</value>
+  </data>
+  <data name="ProfileSetup_PlayWhenSwitchingIn" xml:space="preserve">
+    <value>Вмикати під час перемикання</value>
+  </data>
+  <data name="ProfileSetup_Advanced" xml:space="preserve">
+    <value>Додатково</value>
+  </data>
+  <data name="ProfileSetup_DockerContainersLinksAndNotes" xml:space="preserve">
+    <value>Контейнери Docker, посилання й нотатки для панелі, а також що робити, коли крок не вдається.</value>
+  </data>
+  <data name="ProfileSetup_Docker_Section" xml:space="preserve">
+    <value>DOCKER</value>
+  </data>
+  <data name="ProfileSetup_StartsTheContainersThisProfile" xml:space="preserve">
+    <value>Запускає контейнери, потрібні цьому профілю (наприклад, локальну базу даних), коли ви в нього перемикаєтеся, і зупиняє вказані, коли ви з нього виходите.</value>
+  </data>
+  <data name="ProfileSetup_StartWhenEntering" xml:space="preserve">
+    <value>Запускати під час входу</value>
+  </data>
+  <data name="ProfileSetup_AddContainer" xml:space="preserve">
+    <value>+ Додати контейнер</value>
+  </data>
+  <data name="ProfileSetup_StopWhenLeaving" xml:space="preserve">
+    <value>Зупиняти під час виходу</value>
+  </data>
+  <data name="ProfileSetup_QuickLinks_Section" xml:space="preserve">
+    <value>ШВИДКІ ПОСИЛАННЯ</value>
+  </data>
+  <data name="ProfileSetup_ShownInTheMenuBar" xml:space="preserve">
+    <value>Показуються на панелі в смузі меню, поки цей профіль активний, і відкриваються одним кліком — дошка команди, дашборд, пошта.</value>
+  </data>
+  <data name="ProfileSetup_AddQuickLink" xml:space="preserve">
+    <value>+ Додати посилання</value>
+  </data>
+  <data name="ProfileSetup_Notes_Section" xml:space="preserve">
+    <value>НОТАТКИ</value>
+  </data>
+  <data name="ProfileSetup_RemindersShownInTheMenu" xml:space="preserve">
+    <value>Нагадування на панелі в смузі меню, поки цей профіль активний: час стендапу, план на сьогодні. По одному в рядку.</value>
+  </data>
+  <data name="ProfileSetup_Notes" xml:space="preserve">
+    <value>Нотатки</value>
+  </data>
+  <data name="ProfileSetup_IfAStepFails_Section" xml:space="preserve">
+    <value>ЯКЩО КРОК НЕ ВДАЄТЬСЯ</value>
+  </data>
+  <data name="ProfileSetup_ASwitchRunsInSteps" xml:space="preserve">
+    <value>Перемикання йде кроками: спершу зупиняються контейнери й закриваються програми профілю, з якого ви виходите, потім змінюється зосередження й відкриваються програми, браузер, контейнери й музика цього профілю.</value>
+  </data>
+  <data name="ProfileSetup_KeepGoingAfterAFailed" xml:space="preserve">
+    <value>Продовжувати після невдалого кроку</value>
+  </data>
+  <data name="ProfileSetup_OnAStepThatFails" xml:space="preserve">
+    <value>Увімкнено: невдалий крок — програма, що не закривається, відсутня швидка команда — показується як попередження, а решта виконується. Вимкнено: перемикання зупиняється на першій помилці.</value>
+  </data>
+  <data name="ProfileSetup_StepsThatMustWork" xml:space="preserve">
+    <value>Кроки, які мають спрацювати</value>
+  </data>
+  <data name="ProfileSetup_IfAStepTickedHere" xml:space="preserve">
+    <value>Якщо позначений тут крок не вдається, перемикання зупиняється на ньому й вважається невдалим, незалежно від параметра вище.</value>
+  </data>
+  <data name="Profiles_Profiles" xml:space="preserve">
+    <value>Профілі</value>
+  </data>
+  <data name="Profiles_AddNewProfile" xml:space="preserve">
+    <value>+ Новий профіль</value>
+  </data>
+  <data name="Profiles_ActiveNow" xml:space="preserve">
+    <value>Активний зараз</value>
+  </data>
+  <data name="Profiles_Activate" xml:space="preserve">
+    <value>Активувати</value>
+  </data>
+  <data name="Profiles_Edit" xml:space="preserve">
+    <value>Змінити</value>
+  </data>
+  <data name="Profiles_Duplicate" xml:space="preserve">
+    <value>Дублювати</value>
+  </data>
+  <data name="Profiles_Delete" xml:space="preserve">
+    <value>Видалити</value>
+  </data>
+  <data name="Profiles_Delete2" xml:space="preserve">
+    <value>Видалити?</value>
+  </data>
+  <data name="Profiles_Yes" xml:space="preserve">
+    <value>Так</value>
+  </data>
+  <data name="Profiles_No" xml:space="preserve">
+    <value>Ні</value>
+  </data>
+  <data name="Settings_Settings" xml:space="preserve">
+    <value>Параметри</value>
+  </data>
+  <data name="Settings_ChangesAreSavedAsYou" xml:space="preserve">
+    <value>Зміни зберігаються одразу.</value>
+  </data>
+  <data name="Settings_Appearance_Section" xml:space="preserve">
+    <value>ВИГЛЯД</value>
+  </data>
+  <data name="Settings_Theme" xml:space="preserve">
+    <value>Тема</value>
+  </data>
+  <data name="Settings_MatchMacOSFollowsTheSystems" xml:space="preserve">
+    <value>«Як у macOS» повторює світлий чи темний вигляд системи, коли він змінюється.</value>
+  </data>
+  <data name="Settings_ShowInTheDock" xml:space="preserve">
+    <value>Показувати в Dock</value>
+  </data>
+  <data name="Settings_OffContextSwitcherLivesOnly" xml:space="preserve">
+    <value>Вимкнено: Context Switcher живе лише в смузі меню. Увімкнено: він також є в Dock і в ⌘-Tab. Діє після наступного запуску.</value>
+  </data>
+  <data name="Settings_Permission_Section" xml:space="preserve">
+    <value>ДОЗВІЛ</value>
+  </data>
+  <data name="Settings_ToQuitAppsReadYour" xml:space="preserve">
+    <value>Щоб закривати програми, читати вкладки браузера й запускати музику, Context Switcher потрібен дозвіл керувати іншими програмами. macOS попросить його, коли перемикання вперше цього потребуватиме.</value>
+  </data>
+  <data name="Settings_ControlOtherApps" xml:space="preserve">
+    <value>Керування іншими програмами</value>
+  </data>
+  <data name="Settings_OpenSystemSettings" xml:space="preserve">
+    <value>Відкрити Системні параметри ↗</value>
+  </data>
+  <data name="Settings_CheckAgain" xml:space="preserve">
+    <value>Перевірити ще раз</value>
+  </data>
+  <data name="Settings_TimeTracking_Section" xml:space="preserve">
+    <value>ОБЛІК ЧАСУ</value>
+  </data>
+  <data name="Settings_RecordsHowLongYouSpend" xml:space="preserve">
+    <value>Записує, скільки часу ви проводите в кожному профілі, для сторінки «Статистика» й графіка на панелі. Дані лишаються на цьому Mac.</value>
+  </data>
+  <data name="Settings_RecordTimePerProfile" xml:space="preserve">
+    <value>Записувати час у профілях</value>
+  </data>
+  <data name="Settings_KeepHistoryFor" xml:space="preserve">
+    <value>Зберігати історію</value>
+  </data>
+  <data name="Settings_OlderDaysAreDeletedAutomatically" xml:space="preserve">
+    <value>Старіші дні видаляються автоматично.</value>
+  </data>
+  <data name="Settings_Updates_Section" xml:space="preserve">
+    <value>ОНОВЛЕННЯ</value>
+  </data>
+  <data name="Settings_NewVersionsComeFromThe" xml:space="preserve">
+    <value>Нові версії надходять зі сторінки проєкту на GitHub. Нічого не встановлюється, поки ви не натиснете «Встановити», а ваші профілі й параметри лишаються як є.</value>
+  </data>
+  <data name="Settings_CheckAutomatically" xml:space="preserve">
+    <value>Перевіряти автоматично</value>
+  </data>
+  <data name="Settings_OnceADayTurnedOff" xml:space="preserve">
+    <value>Раз на день. Якщо вимкнено, Context Switcher перевіряє лише тоді, коли ви натискаєте «Перевірити зараз».</value>
+  </data>
+  <data name="Settings_CheckForUpdatesAutomatically" xml:space="preserve">
+    <value>Автоматично перевіряти оновлення</value>
+  </data>
+  <data name="Settings_CheckNow" xml:space="preserve">
+    <value>Перевірити зараз</value>
+  </data>
+  <data name="Settings_InstallAndRestart" xml:space="preserve">
+    <value>Встановити й перезапустити</value>
+  </data>
+  <data name="Settings_About_Section" xml:space="preserve">
+    <value>ПРО ПРОГРАМУ</value>
+  </data>
+  <data name="Settings_FreeAndOpenSourceUnder" xml:space="preserve">
+    <value>Безкоштовний і з відкритим кодом, за ліцензією MIT.</value>
+  </data>
+  <data name="Settings_SupportTheDeveloper" xml:space="preserve">
+    <value>Підтримати розробника ↗</value>
+  </data>
+  <data name="Stats_Stats" xml:space="preserve">
+    <value>Статистика</value>
+  </data>
+  <data name="Stats_Week" xml:space="preserve">
+    <value>Тиждень</value>
+  </data>
+  <data name="Stats_Month" xml:space="preserve">
+    <value>Місяць</value>
+  </data>
+  <data name="Stats_TimePerDay_Section" xml:space="preserve">
+    <value>ЧАС ЗА ДЕНЬ</value>
+  </data>
+  <data name="Stats_NoContextTimeRecordedFor" xml:space="preserve">
+    <value>За цей період ще нічого не записано.</value>
+  </data>
+  <data name="Permission_Allowed" xml:space="preserve">
+    <value>Дозволено</value>
+  </data>
+  <data name="Permission_NotAllowed" xml:space="preserve">
+    <value>Не дозволено</value>
+  </data>
+  <data name="Common_Checking" xml:space="preserve">
+    <value>Перевірка…</value>
+  </data>
+  <data name="Tray_OpenDashboard" xml:space="preserve">
+    <value>Відкрити панель</value>
+  </data>
+  <data name="Tray_OpenApp" xml:space="preserve">
+    <value>Відкрити програму</value>
+  </data>
+  <data name="Tray_Quit" xml:space="preserve">
+    <value>Вийти</value>
+  </data>
+  <data name="Tray_UpdateTo" xml:space="preserve">
+    <value>Оновити до {0}…</value>
+  </data>
+  <data name="Accent_Custom" xml:space="preserve">
+    <value>Власний</value>
+  </data>
+  <data name="Accent_Blue" xml:space="preserve">
+    <value>Синій</value>
+  </data>
+  <data name="Accent_Violet" xml:space="preserve">
+    <value>Фіолетовий</value>
+  </data>
+  <data name="Accent_Pink" xml:space="preserve">
+    <value>Рожевий</value>
+  </data>
+  <data name="Accent_Red" xml:space="preserve">
+    <value>Червоний</value>
+  </data>
+  <data name="Accent_Orange" xml:space="preserve">
+    <value>Помаранчевий</value>
+  </data>
+  <data name="Accent_Green" xml:space="preserve">
+    <value>Зелений</value>
+  </data>
+  <data name="Accent_Teal" xml:space="preserve">
+    <value>Бірюзовий</value>
+  </data>
+  <data name="Accent_Graphite" xml:space="preserve">
+    <value>Графітовий</value>
+  </data>
+  <data name="Icon_Circle" xml:space="preserve">
+    <value>Коло</value>
+  </data>
+  <data name="Icon_Briefcase" xml:space="preserve">
+    <value>Робота</value>
+  </data>
+  <data name="Icon_House" xml:space="preserve">
+    <value>Дім</value>
+  </data>
+  <data name="Icon_Code" xml:space="preserve">
+    <value>Код</value>
+  </data>
+  <data name="Icon_Laptop" xml:space="preserve">
+    <value>Ноутбук</value>
+  </data>
+  <data name="Icon_Book" xml:space="preserve">
+    <value>Навчання</value>
+  </data>
+  <data name="Icon_Coffee" xml:space="preserve">
+    <value>Перерва</value>
+  </data>
+  <data name="Icon_Moon" xml:space="preserve">
+    <value>Вечір</value>
+  </data>
+  <data name="Icon_Sun" xml:space="preserve">
+    <value>Ранок</value>
+  </data>
+  <data name="Icon_Heart" xml:space="preserve">
+    <value>Особисте</value>
+  </data>
+  <data name="Icon_Music" xml:space="preserve">
+    <value>Музика</value>
+  </data>
+  <data name="Icon_Gamepad" xml:space="preserve">
+    <value>Ігри</value>
+  </data>
+  <data name="Icon_Star" xml:space="preserve">
+    <value>Улюблене</value>
+  </data>
+  <data name="Icon_Zap" xml:space="preserve">
+    <value>Зосередження</value>
+  </data>
+  <data name="Icon_Leaf" xml:space="preserve">
+    <value>Спокій</value>
+  </data>
+  <data name="Icon_Target" xml:space="preserve">
+    <value>Цілі</value>
+  </data>
+  <data name="Step_StopDockerResources" xml:space="preserve">
+    <value>Зупинка контейнерів</value>
+  </data>
+  <data name="Step_CloseApplications" xml:space="preserve">
+    <value>Закриття програм</value>
+  </data>
+  <data name="Step_SetFocusMode" xml:space="preserve">
+    <value>Зміна зосередження</value>
+  </data>
+  <data name="Step_LaunchApplications" xml:space="preserve">
+    <value>Відкриття програм</value>
+  </data>
+  <data name="Step_ManageBrowserContext" xml:space="preserve">
+    <value>Відкриття браузера</value>
+  </data>
+  <data name="Step_StartDockerResources" xml:space="preserve">
+    <value>Запуск контейнерів</value>
+  </data>
+  <data name="Step_ControlMedia" xml:space="preserve">
+    <value>Запуск музики</value>
+  </data>
+  <data name="Settings_Theme_MatchMacOS" xml:space="preserve">
+    <value>Як у macOS</value>
+  </data>
+  <data name="Settings_Theme_Light" xml:space="preserve">
+    <value>Світла</value>
+  </data>
+  <data name="Settings_Theme_Dark" xml:space="preserve">
+    <value>Темна</value>
+  </data>
+  <data name="Settings_Automation_AllowedDetail" xml:space="preserve">
+    <value>Дозволено. macOS може ще раз запитати для кожної програми, коли перемикання вперше нею керуватиме.</value>
+  </data>
+  <data name="Settings_Automation_NotAllowedDetail" xml:space="preserve">
+    <value>Не дозволено. Увімкніть Context Switcher у Системні параметри → Приватність і безпека → Автоматизація.</value>
+  </data>
+  <data name="Settings_CouldNotSave" xml:space="preserve">
+    <value>Не вдалося зберегти: {0}</value>
+  </data>
+  <data name="Duration_Days_One" xml:space="preserve">
+    <value>{0} день</value>
+  </data>
+  <data name="Duration_Weeks_One" xml:space="preserve">
+    <value>{0} тиждень</value>
+  </data>
+  <data name="Duration_Months_One" xml:space="preserve">
+    <value>{0} місяць</value>
+  </data>
+  <data name="Duration_Years_One" xml:space="preserve">
+    <value>{0} рік</value>
+  </data>
+  <data name="Updates_NotCheckedYet" xml:space="preserve">
+    <value>Ще не перевірялося.</value>
+  </data>
+  <data name="Updates_Version" xml:space="preserve">
+    <value>Версія {0}</value>
+  </data>
+  <data name="Updates_WhatsNewIn" xml:space="preserve">
+    <value>Що нового у версії {0} ↗</value>
+  </data>
+  <data name="Updates_DownloadFromGitHub" xml:space="preserve">
+    <value>Завантажити {0} з GitHub ↗</value>
+  </data>
+  <data name="Updates_UpToDate" xml:space="preserve">
+    <value>Версія найновіша. Перевірено о {0:HH:mm}.</value>
+  </data>
+  <data name="Updates_Available" xml:space="preserve">
+    <value>Доступна версія {0}.</value>
+  </data>
+  <data name="Updates_CouldNotCheck" xml:space="preserve">
+    <value>Не вдалося перевірити оновлення. {0}</value>
+  </data>
+  <data name="Updates_Downloading" xml:space="preserve">
+    <value>Завантаження версії {0}…</value>
+  </data>
+  <data name="Updates_Restarting" xml:space="preserve">
+    <value>Перезапуск…</value>
+  </data>
+  <data name="Updates_CouldNotInstall" xml:space="preserve">
+    <value>Не вдалося встановити оновлення. {0}</value>
+  </data>
+  <data name="Notice_CouldNotSwitchTo" xml:space="preserve">
+    <value>Не вдалося перемкнути на «{0}»</value>
+  </data>
+  <data name="Notice_SwitchedWithWarnings" xml:space="preserve">
+    <value>Перемкнено на «{0}», з попередженнями</value>
+  </data>
+  <data name="Notice_At" xml:space="preserve">
+    <value>о {0:HH:mm}</value>
+  </data>
+  <data name="Notice_AnotherSwitchRunning" xml:space="preserve">
+    <value>Ще тривало інше перемикання. Спробуйте, коли воно завершиться.</value>
+  </data>
+  <data name="Notice_SwitchStopped" xml:space="preserve">
+    <value>Перемикання зупинилося, не завершившись. Подробиці — у журналі програми.</value>
+  </data>
+  <data name="Profiles_CopyName" xml:space="preserve">
+    <value>{0} (копія)</value>
+  </data>
+  <data name="Profiles_CannotDeleteActive" xml:space="preserve">
+    <value>Не можна видалити «{0}» — це активний профіль. Спершу перемкніться на інший.</value>
+  </data>
+  <data name="Profiles_AtLeastOne" xml:space="preserve">
+    <value>Потрібен принаймні один профіль.</value>
+  </data>
+  <data name="Dashboard_NoProfile" xml:space="preserve">
+    <value>(немає)</value>
+  </data>
+  <data name="Dashboard_CurrentProfile" xml:space="preserve">
+    <value>Поточний профіль</value>
+  </data>
+  <data name="Dashboard_ActiveFor" xml:space="preserve">
+    <value>Активний {0}</value>
+  </data>
+  <data name="Units_HoursMinutes" xml:space="preserve">
+    <value>{0} год {1} хв</value>
+  </data>
+  <data name="Units_Minutes" xml:space="preserve">
+    <value>{0} хв</value>
+  </data>
+  <data name="Units_Seconds" xml:space="preserve">
+    <value>{0} с</value>
+  </data>
+  <data name="Units_Hours" xml:space="preserve">
+    <value>{0:0.#} год</value>
+  </data>
+  <data name="Chart_NothingRecorded" xml:space="preserve">
+    <value>{0}: нічого не записано</value>
+  </data>
+  <data name="Chart_ProfileTime" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="Focus_NeedsShortcut" xml:space="preserve">
+    <value>Потрібна швидка команда «{0}» з дією «Задати зосередження», що вмикає цей режим.</value>
+  </data>
+  <data name="Focus_AlsoAddOffShortcut" xml:space="preserve">
+    <value>Додайте також «{0}», щоб режим «{1}» вимикався, коли ви перемикаєтеся в профіль без зосередження.</value>
+  </data>
+  <data name="Focus_ClickAddShortcut" xml:space="preserve">
+    <value>Натисніть «Додати швидку команду» у вікні «Швидких команд», що відкрилося.</value>
+  </data>
+  <data name="Focus_ShortcutNotAdded" xml:space="preserve">
+    <value>Швидку команду не додано. Спробуйте ще раз або перевірте програму «Швидкі команди».</value>
+  </data>
+  <data name="Focus_CouldNotCreate" xml:space="preserve">
+    <value>Не вдалося створити швидку команду: {0}</value>
+  </data>
+  <data name="Focus_Ready" xml:space="preserve">
+    <value>Готово</value>
+  </data>
+  <data name="Focus_NeedsShortcutStatus" xml:space="preserve">
+    <value>Потрібна швидка команда</value>
+  </data>
+  <data name="Focus_DontUse" xml:space="preserve">
+    <value>Без зосередження</value>
+  </data>
+  <data name="Media_None" xml:space="preserve">
+    <value>Немає</value>
+  </data>
+  <data name="Media_NoPlaylists" xml:space="preserve">
+    <value>У «Музиці» ще немає плейлистів.</value>
+  </data>
+  <data name="Media_CouldNotReadPlaylists" xml:space="preserve">
+    <value>Не вдалося прочитати плейлисти з «Музики». Дозвольте Context Switcher керувати «Музикою» в Системні параметри → Приватність і безпека → Автоматизація.</value>
+  </data>
+  <data name="Onboarding_WorkName" xml:space="preserve">
+    <value>Робота</value>
+  </data>
+  <data name="Onboarding_PersonalName" xml:space="preserve">
+    <value>Особисте</value>
+  </data>
+  <data name="Onboarding_StepOf" xml:space="preserve">
+    <value>Крок {0} з {1}</value>
+  </data>
+  <data name="ProfileSetup_NewProfileHeader" xml:space="preserve">
+    <value>Новий профіль</value>
+  </data>
+  <data name="ProfileSetup_EditHeader" xml:space="preserve">
+    <value>Зміна профілю «{0}»</value>
+  </data>
+  <data name="ProfileSetup_NewProfileName" xml:space="preserve">
+    <value>Новий профіль</value>
+  </data>
+  <data name="Browser_Mode_None" xml:space="preserve">
+    <value>Нічого не відкривати</value>
+  </data>
+  <data name="Browser_Mode_Urls" xml:space="preserve">
+    <value>Відкривати сторінки</value>
+  </data>
+  <data name="Browser_Mode_Groups" xml:space="preserve">
+    <value>Відкривати групи вкладок</value>
+  </data>
+  <data name="Browser_Mode_Profiles" xml:space="preserve">
+    <value>Відкривати профілі браузера</value>
+  </data>
+  <data name="Browser_Default" xml:space="preserve">
+    <value>Браузер за замовчуванням</value>
+  </data>
+  <data name="Browser_AvoidDuplicates_On" xml:space="preserve">
+    <value>Переходить на вже відкриту вкладку замість того, щоб відкривати ще одну.</value>
+  </data>
+  <data name="Browser_AvoidDuplicates_NeedsBrowser" xml:space="preserve">
+    <value>Потрібен конкретний браузер — у браузері за замовчуванням не можна перевірити відкриті вкладки.</value>
+  </data>
+  <data name="Picker_OpenTabsEmpty" xml:space="preserve">
+    <value>Інших сторінок не відкрито. Відкрийте потрібні в браузері й спробуйте ще раз.</value>
+  </data>
+  <data name="Picker_OpenTabsUnavailable" xml:space="preserve">
+    <value>Не вдалося прочитати вкладки браузера.</value>
+  </data>
+  <data name="Picker_ContainersEmpty" xml:space="preserve">
+    <value>Інших контейнерів немає.</value>
+  </data>
+  <data name="Picker_SearchOpenTabs" xml:space="preserve">
+    <value>Пошук серед відкритих вкладок…</value>
+  </data>
+  <data name="Picker_SearchContainers" xml:space="preserve">
+    <value>Пошук контейнерів…</value>
+  </data>
+  <data name="Picker_DockerNotRunning" xml:space="preserve">
+    <value>Docker не запущено. Запустіть Docker Desktop, щоб вибрати контейнер, або введіть його назву.</value>
+  </data>
+  <data name="Browser_ProfileNotFound" xml:space="preserve">
+    <value>{0} (не знайдено)</value>
+  </data>
+  <data name="Settings_Language" xml:space="preserve">
+    <value>Мова</value>
+  </data>
+  <data name="Settings_Language_Description" xml:space="preserve">
+    <value>Діє після наступного запуску Context Switcher.</value>
+  </data>
+  <data name="Settings_Language_MatchMacOS" xml:space="preserve">
+    <value>Як у macOS</value>
+  </data>
+  <data name="Settings_Language_RestartHint" xml:space="preserve">
+    <value>Закрийте Context Switcher через значок у смузі меню й відкрийте знову, щоб побачити його мовою: {0}.</value>
+  </data>
+  <data name="InfoPlist_AppleEventsUsage" xml:space="preserve">
+    <value>Context Switcher закриває й відкриває програми, відкриває вкладки браузера й запускає музику, коли ви перемикаєте профілі.</value>
+  </data>
+  <data name="Duration_Days_Few" xml:space="preserve">
+    <value>{0} дні</value>
+  </data>
+  <data name="Duration_Days_Many" xml:space="preserve">
+    <value>{0} днів</value>
+  </data>
+  <data name="Duration_Weeks_Few" xml:space="preserve">
+    <value>{0} тижні</value>
+  </data>
+  <data name="Duration_Weeks_Many" xml:space="preserve">
+    <value>{0} тижнів</value>
+  </data>
+  <data name="Duration_Months_Few" xml:space="preserve">
+    <value>{0} місяці</value>
+  </data>
+  <data name="Duration_Months_Many" xml:space="preserve">
+    <value>{0} місяців</value>
+  </data>
+  <data name="Duration_Years_Few" xml:space="preserve">
+    <value>{0} роки</value>
+  </data>
+  <data name="Duration_Years_Many" xml:space="preserve">
+    <value>{0} років</value>
+  </data>
+  <data name="Common_On" xml:space="preserve">
+    <value>Увімк.</value>
+  </data>
+  <data name="Common_Off" xml:space="preserve">
+    <value>Вимк.</value>
+  </data>
+</root>

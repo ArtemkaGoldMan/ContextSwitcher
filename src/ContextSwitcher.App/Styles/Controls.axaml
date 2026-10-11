@@ -1,6 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:ctl="using:ContextSwitcher.App.Controls">
+        xmlns:ctl="using:ContextSwitcher.App.Controls"
+        xmlns:r="using:ContextSwitcher.App.Resources">
   <Styles.Resources>
     <!-- One width for every value control in a FormRow - dropdowns and text boxes alike - so the
          right-hand column is a single straight edge on every page. Wide enough for the longest
@@ -10,6 +11,12 @@
     <!-- One width for every "add from a list" flyout: apps, open tabs, containers. -->
     <x:Double x:Key="PickerWidth">340</x:Double>
   </Styles.Resources>
+
+  <!-- A switch's On/Off label in the app's language: Avalonia's own is always English. -->
+  <Style Selector="ToggleSwitch">
+    <Setter Property="OnContent" Value="{x:Static r:Strings.Common_On}" />
+    <Setter Property="OffContent" Value="{x:Static r:Strings.Common_Off}" />
+  </Style>
 
   <!-- A labelled setting: label (and optional explanation) left, control right. See FormRow.cs. -->
   <Style Selector="ctl|FormRow">

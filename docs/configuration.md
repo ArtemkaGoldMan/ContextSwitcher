@@ -35,6 +35,7 @@ ContextSwitcher validate-config
   "schemaVersion": 1,
   "activeContextId": "work",
   "defaultSwitchTimeoutSeconds": 45,
+  "language": "system",
   "appearance": "system",
   "showDockIcon": false,
   "checkForUpdates": true,
@@ -48,6 +49,7 @@ ContextSwitcher validate-config
 | --- | --- |
 | `schemaVersion` | Always `1` today. |
 | `activeContextId` | Must match a `contexts[].id`. |
+| `language` | `system` (the first of the Mac's languages the app has, the default), or a language code: `en`, `uk`. Read at startup. |
 | `appearance` | `system` (follow macOS, the default), `light` or `dark`. Applies at once. |
 | `showDockIcon` | Read once at startup — changing it needs a restart, and the UI says so. |
 | `checkForUpdates` | Looks for a new release on GitHub once a day and offers it; never installs by itself. Absent means on. |

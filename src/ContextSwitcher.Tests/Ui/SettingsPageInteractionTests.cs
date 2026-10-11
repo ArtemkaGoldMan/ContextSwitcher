@@ -94,7 +94,7 @@ public sealed class SettingsPageInteractionTests : UiTest
 
             Assert.DoesNotContain(FindAll<TextBlock>(window), t => t.Text?.Contains("timeout", StringComparison.OrdinalIgnoreCase) == true);
             Assert.Equal(
-                ["Theme", "Keep history for"],
+                ["Language", "Theme", "Keep history for"],
                 FindAll<ComboBox>(window).Where(IsClickable).Select(AutomationProperties.GetName));
         });
     }
@@ -126,6 +126,35 @@ public sealed class SettingsPageInteractionTests : UiTest
             PumpUntil(WaitUntil(() => app.RequestedThemeVariant == ThemeVariant.Default));
 
             Assert.Equal(AppearanceMode.System, AppHost.Configuration.Appearance);
+        });
+    }
+
+    /// <summary>
+    /// Choosing a language saves it, and since it applies at the next start, the page says so - rather
+    /// than the choice looking ignored. Going back to the language showing takes the note away.
+    /// </summary>
+    [Fact]
+    public async Task ChoosingALanguageSavesItAndSaysWhenItApplies()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            UiScenario scenario = UiScenario.WithTwoProfiles();
+            SettingsViewModel viewModel = scenario.Settings();
+            Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 1400);
+
+            Assert.Equal(["Match macOS", "English", "Українська"], viewModel.LanguageChoices.Select(c => c.Label));
+
+            ChooseFromDropdown(window, Dropdown(window, "Language"), "Українська");
+            PumpUntil(WaitUntil(() => AppHost.Configuration.Language == "uk"));
+            Settle(window);
+
+            Assert.True(IsClickable(FindControl<TextBlock>(window, t => t.Text == "Quit Context Switcher from its menu bar icon and open it again to see it in Українська.")));
+
+            ChooseFromDropdown(window, Dropdown(window, "Language"), "English");
+            PumpUntil(WaitUntil(() => AppHost.Configuration.Language == "en"));
+            Settle(window);
+
+            Assert.False(viewModel.IsLanguagePending);
         });
     }
 
