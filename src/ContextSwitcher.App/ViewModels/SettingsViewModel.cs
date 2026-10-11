@@ -4,6 +4,7 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.App.Resources;
+using ContextSwitcher.Infrastructure.MacOS;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -25,7 +26,9 @@ public sealed class SettingsViewModel : ViewModelBase
     private readonly IPermissionsChecker permissionsChecker;
     private readonly IProcessRunner processRunner;
 
+    private readonly Func<IReadOnlyList<string>> preferredLanguages;
     private Choice<AppearanceMode> selectedAppearance;
+    private Choice<string> selectedLanguage;
     private bool showDockIcon;
     private bool checkForUpdates;
     private bool analyticsEnabled;
@@ -35,14 +38,27 @@ public sealed class SettingsViewModel : ViewModelBase
     private string? errorMessage;
     private Task saving = Task.CompletedTask;
 
-    public SettingsViewModel(ConfigurationStore configurationStore, IPermissionsChecker permissionsChecker, IProcessRunner processRunner, UpdatesViewModel updates)
+    public SettingsViewModel(
+        ConfigurationStore configurationStore,
+        IPermissionsChecker permissionsChecker,
+        IProcessRunner processRunner,
+        UpdatesViewModel updates,
+        Func<IReadOnlyList<string>>? preferredLanguages = null)
     {
+        this.preferredLanguages = preferredLanguages ?? PreferredLanguages.Get;
         this.configurationStore = configurationStore;
         this.permissionsChecker = permissionsChecker;
         this.processRunner = processRunner;
         this.Updates = updates;
 
         this.selectedAppearance = this.AppearanceChoices.First(c => c.Value == AppHost.Configuration.Appearance);
+        this.LanguageChoices =
+        [
+            new(AppLanguages.System, Strings.Settings_Language_MatchMacOS),
+            .. AppLanguages.Supported.Select(language => new Choice<string>(language.Code, language.NativeName))
+        ];
+        this.selectedLanguage = this.LanguageChoices.FirstOrDefault(c => string.Equals(c.Value, AppHost.Configuration.Language, StringComparison.OrdinalIgnoreCase))
+            ?? this.LanguageChoices[0];
         this.showDockIcon = AppHost.Configuration.ShowDockIcon;
         this.checkForUpdates = AppHost.Configuration.CheckForUpdates;
         this.analyticsEnabled = AppHost.Configuration.Analytics.Enabled;
@@ -76,6 +92,35 @@ public sealed class SettingsViewModel : ViewModelBase
             }
         }
     }
+
+    /// <summary>Match macOS, then each translation named in its own language.</summary>
+    public IReadOnlyList<Choice<string>> LanguageChoices { get; }
+
+    public Choice<string> SelectedLanguage
+    {
+        get => this.selectedLanguage;
+        set
+        {
+            if (value is not null && this.SetProperty(ref this.selectedLanguage, value))
+            {
+                this.OnPropertyChanged(nameof(this.IsLanguagePending));
+                this.OnPropertyChanged(nameof(this.LanguagePendingText));
+                this.QueueSave();
+            }
+        }
+    }
+
+    /// <summary>
+    /// The chosen language is not the one showing: it takes effect the next time the app starts, which
+    /// the page says rather than leaving the choice looking ignored.
+    /// </summary>
+    public bool IsLanguagePending =>
+        !string.Equals(AppLanguages.Resolve(this.SelectedLanguage.Value, this.preferredLanguages()), AppLanguages.Current, StringComparison.OrdinalIgnoreCase);
+
+    public string LanguagePendingText =>
+        Localized.Format(
+            Strings.Settings_Language_RestartHint,
+            AppLanguages.Supported.First(l => l.Code == AppLanguages.Resolve(this.SelectedLanguage.Value, this.preferredLanguages())).NativeName);
 
     public bool ShowDockIcon
     {
@@ -236,6 +281,7 @@ public sealed class SettingsViewModel : ViewModelBase
         AppConfiguration updated = AppHost.Configuration with
         {
             Appearance = this.SelectedAppearance.Value,
+            Language = this.SelectedLanguage.Value,
             ShowDockIcon = this.ShowDockIcon,
             CheckForUpdates = this.CheckForUpdates,
             Analytics = new AnalyticsConfiguration { Enabled = this.AnalyticsEnabled, RetentionDays = this.SelectedRetention.Value }

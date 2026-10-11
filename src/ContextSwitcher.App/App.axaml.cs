@@ -4,6 +4,8 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
 using Avalonia.Styling;
+using System.Globalization;
+using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views;
@@ -27,6 +29,12 @@ public sealed partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+
+        // The theme's own texts - the few its controls carry - in the app's language too.
+        if (this.Styles.OfType<Semi.Avalonia.SemiTheme>().FirstOrDefault() is { } semi && AppLanguages.Current == "uk")
+        {
+            semi.Locale = CultureInfo.GetCultureInfo("uk-UA");
+        }
     }
 
     public override void OnFrameworkInitializationCompleted()

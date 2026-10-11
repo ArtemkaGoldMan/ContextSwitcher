@@ -46,9 +46,34 @@ cp -R "$publish"/. "$app/Contents/MacOS"/
 cp "$root/src/ContextSwitcher.App/Assets/AppIcon.icns" "$app/Contents/Resources/AppIcon.icns"
 chmod +x "$app/Contents/MacOS/ContextSwitcher"
 
-# LSUIElement keeps this a menu bar app: without it macOS shows a Dock icon and an app menu for a
-# moment at launch before Avalonia switches to accessory mode. The showDockIcon setting still works
-# - Avalonia raises the activation policy at startup when it is on.
+# The app's languages, from its translation files: Strings.resx is English, Strings.<code>.resx each
+# other language. Declaring them puts the app under System Settings > Language & Region >
+# Applications, and macOS shows the Automation prompt's text in the user's language, from a
+# <code>.lproj/InfoPlist.strings per language.
+resources="$root/src/ContextSwitcher.App/Resources"
+usage_of() {
+  xmllint --xpath 'string(//data[@name="InfoPlist_AppleEventsUsage"]/value)' "$1"
+}
+languages=(en)
+for file in "$resources"/Strings.*.resx; do
+  [ -e "$file" ] || continue
+  code="${file##*/Strings.}"
+  languages+=("${code%.resx}")
+done
+localizations=""
+for code in "${languages[@]}"; do
+  localizations+="<string>$code</string>"
+  source="$resources/Strings.$code.resx"
+  [ "$code" = en ] && source="$resources/Strings.resx"
+  mkdir -p "$app/Contents/Resources/$code.lproj"
+  usage="$(usage_of "$source" | sed 's/"/\\"/g')"
+  printf '"NSAppleEventsUsageDescription" = "%s";\n' "$usage" > "$app/Contents/Resources/$code.lproj/InfoPlist.strings"
+done
+english_usage="$(usage_of "$resources/Strings.resx")"
+
+# LSUIElement keeps this a menu bar app: without it macOS shows a Dock icon and an app menu for a moment
+# at launch before Avalonia switches to accessory mode. The showDockIcon setting still works - Avalonia
+# raises the activation policy at startup when it is on.
 cat > "$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -62,11 +87,13 @@ cat > "$app/Contents/Info.plist" <<PLIST
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleVersion</key><string>$version</string>
   <key>CFBundleShortVersionString</key><string>$version</string>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
+  <key>CFBundleLocalizations</key><array>$localizations</array>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSAppleEventsUsageDescription</key>
-  <string>ContextSwitcher quits and launches apps, opens browser tabs, and changes appearance when you switch profiles.</string>
+  <string>$english_usage</string>
 </dict>
 </plist>
 PLIST

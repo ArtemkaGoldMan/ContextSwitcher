@@ -32,6 +32,13 @@ public sealed record AppConfiguration
     public bool ShowDockIcon { get; init; }
 
     /// <summary>
+    /// Gets or sets the language the app shows: <c>system</c> for the first of the Mac's preferred
+    /// languages the app has, or a language code such as <c>en</c> or <c>uk</c>. A string rather than
+    /// an enum, so a new translation needs no change here. Read at startup.
+    /// </summary>
+    public string Language { get; init; } = "system";
+
+    /// <summary>
     /// Gets or sets whether the app's windows are light, dark, or follow macOS. A file written before
     /// this setting existed reads as following macOS, which is what the app always did.
     /// </summary>

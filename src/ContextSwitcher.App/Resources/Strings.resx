@@ -1088,4 +1088,32 @@
     <value>{0} (not found)</value>
     <comment>A browser profile in the config that isn't on this Mac. {0} = its folder name.</comment>
   </data>
+  <data name="Settings_Language" xml:space="preserve">
+    <value>Language</value>
+    <comment>Settings → Appearance: the app's language.</comment>
+  </data>
+  <data name="Settings_Language_Description" xml:space="preserve">
+    <value>Applies the next time Context Switcher starts.</value>
+    <comment>Settings → Appearance → Language.</comment>
+  </data>
+  <data name="Settings_Language_MatchMacOS" xml:space="preserve">
+    <value>Match macOS</value>
+    <comment>Settings → Language dropdown: the first of the Mac's languages the app is translated into.</comment>
+  </data>
+  <data name="Settings_Language_RestartHint" xml:space="preserve">
+    <value>Quit Context Switcher from its menu bar icon and open it again to see it in {0}.</value>
+    <comment>Settings → Language, after choosing a language other than the one showing. {0} = the language's own name, e.g. Українська.</comment>
+  </data>
+  <data name="InfoPlist_AppleEventsUsage" xml:space="preserve">
+    <value>Context Switcher quits and opens apps, opens browser tabs and starts music when you switch profiles.</value>
+    <comment>macOS shows this in the permission prompt the first time the app controls another app. scripts/build-app.sh copies it into the bundle.</comment>
+  </data>
+  <data name="Common_On" xml:space="preserve">
+    <value>On</value>
+    <comment>The label beside a switch that is on. Keep it short.</comment>
+  </data>
+  <data name="Common_Off" xml:space="preserve">
+    <value>Off</value>
+    <comment>The label beside a switch that is off. Keep it short.</comment>
+  </data>
 </root>

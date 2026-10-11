@@ -33,6 +33,11 @@
     <Border Classes="panel">
       <StackPanel Spacing="10">
         <TextBlock Text="{x:Static r:Strings.Settings_Appearance_Section}" Classes="sectionTitle" />
+        <ctl:FormRow Title="{x:Static r:Strings.Settings_Language}" Description="{x:Static r:Strings.Settings_Language_Description}">
+          <ComboBox ItemsSource="{Binding LanguageChoices}" SelectedItem="{Binding SelectedLanguage}" AutomationProperties.Name="{x:Static r:Strings.Settings_Language}" />
+        </ctl:FormRow>
+        <TextBlock Text="{Binding LanguagePendingText}" Classes="caption" Foreground="{DynamicResource AccentBrush}" TextWrapping="Wrap" IsVisible="{Binding IsLanguagePending}" />
+        <Border Classes="divider" />
         <ctl:FormRow Title="{x:Static r:Strings.Settings_Theme}" Description="{x:Static r:Strings.Settings_MatchMacOSFollowsTheSystems}">
           <ComboBox ItemsSource="{Binding AppearanceChoices}" SelectedItem="{Binding SelectedAppearance}" AutomationProperties.Name="{x:Static r:Strings.Settings_Theme}" />
         </ctl:FormRow>
