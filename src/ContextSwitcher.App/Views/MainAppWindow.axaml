@@ -2,6 +2,7 @@
   x:Class="ContextSwitcher.App.Views.MainAppWindow"
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:r="using:ContextSwitcher.App.Resources"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
   xmlns:pages="using:ContextSwitcher.App.Views.Pages"
   x:DataType="vm:MainAppViewModel"
@@ -43,7 +44,7 @@
                   <Path Classes="glyph" Data="{StaticResource IconLayoutGrid}" />
                 </Viewbox>
               </Border>
-              <TextBlock Text="Profiles" Classes="body" VerticalAlignment="Center" />
+              <TextBlock Text="{x:Static r:Strings.MainWindow_Profiles}" Classes="body" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
 
@@ -54,7 +55,7 @@
                   <Path Classes="glyph" Data="{StaticResource IconSliders}" />
                 </Viewbox>
               </Border>
-              <TextBlock Text="Settings" Classes="body" VerticalAlignment="Center" />
+              <TextBlock Text="{x:Static r:Strings.MainWindow_Settings}" Classes="body" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
 
@@ -65,7 +66,7 @@
                   <Path Classes="glyph" Data="{StaticResource IconChartColumn}" />
                 </Viewbox>
               </Border>
-              <TextBlock Text="Stats" Classes="body" VerticalAlignment="Center" />
+              <TextBlock Text="{x:Static r:Strings.MainWindow_Stats}" Classes="body" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
         </StackPanel>
@@ -87,7 +88,7 @@
            covers a row. Only on Profiles: editing a profile or reading stats is not the moment. -->
       <Panel Grid.Row="1" IsVisible="{Binding IsProfilesActive}" Margin="28,0,28,20" MaxWidth="1100">
         <Border Classes="panel notice" Classes.failure="{Binding Profiles.Notice.IsFailure}"
-                IsVisible="{Binding Profiles.Notice.IsShown}" AutomationProperties.Name="Switch problems">
+                IsVisible="{Binding Profiles.Notice.IsShown}" AutomationProperties.Name="{x:Static r:Strings.MainWindow_SwitchProblems}">
           <Grid ColumnDefinitions="Auto,*,Auto">
             <Border Grid.Column="0" Classes="badge noticeBadge" Width="28" Height="28" VerticalAlignment="Top" Margin="0,0,12,0">
               <Viewbox Classes="icon">
@@ -122,7 +123,7 @@
             </StackPanel>
 
             <Button Grid.Column="2" Classes="rowAction" Command="{Binding Profiles.Notice.DismissCommand}" VerticalAlignment="Top" Margin="8,0,0,0"
-                    ToolTip.Tip="Close" AutomationProperties.Name="Close notice">
+                    ToolTip.Tip="{x:Static r:Strings.MainWindow_Close}" AutomationProperties.Name="{x:Static r:Strings.MainWindow_CloseNotice}">
               <Viewbox Classes="icon rowAction">
                 <Path Classes="glyph" Data="{StaticResource IconX}" />
               </Viewbox>

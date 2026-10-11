@@ -34,4 +34,14 @@
     <AvaloniaResource Include="Assets/**" Exclude="Assets/AppIcon.icns" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Update="Resources/Strings.resx">
+      <StronglyTypedFileName>$(IntermediateOutputPath)Strings.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>ContextSwitcher.App.Resources</StronglyTypedNamespace>
+      <StronglyTypedClassName>Strings</StronglyTypedClassName>
+      <PublicClass>true</PublicClass>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>

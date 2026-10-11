@@ -3,6 +3,7 @@ using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -58,9 +59,9 @@ public sealed class SettingsViewModel : ViewModelBase
     /// <summary>Match macOS, light or dark - applied the moment it is saved.</summary>
     public IReadOnlyList<Choice<AppearanceMode>> AppearanceChoices { get; } =
     [
-        new(AppearanceMode.System, "Match macOS"),
-        new(AppearanceMode.Light, "Light"),
-        new(AppearanceMode.Dark, "Dark")
+        new(AppearanceMode.System, Strings.Settings_Theme_MatchMacOS),
+        new(AppearanceMode.Light, Strings.Settings_Theme_Light),
+        new(AppearanceMode.Dark, Strings.Settings_Theme_Dark)
     ];
 
     public Choice<AppearanceMode> SelectedAppearance
@@ -152,9 +153,9 @@ public sealed class SettingsViewModel : ViewModelBase
     /// </summary>
     public string AutomationStatusText => this.AutomationGranted switch
     {
-        true => "Allowed. macOS may still ask once for each app, the first time a switch controls it.",
-        false => "Not allowed. Turn on Context Switcher in System Settings → Privacy & Security → Automation.",
-        _ => "Checking…"
+        true => Strings.Settings_Automation_AllowedDetail,
+        false => Strings.Settings_Automation_NotAllowedDetail,
+        _ => Strings.Common_Checking
     };
 
     public bool IsAutomationAllowed => this.AutomationGranted == true;
@@ -245,12 +246,12 @@ public sealed class SettingsViewModel : ViewModelBase
             ConfigurationSaveResult result = await this.configurationStore.SaveAsync(updated, CancellationToken.None).ConfigureAwait(true);
             if (!result.Succeeded)
             {
-                this.ErrorMessage = "Couldn't save: " + string.Join(" ", result.Errors);
+                this.ErrorMessage = Localized.Format(Strings.Settings_CouldNotSave, string.Join(" ", result.Errors));
             }
         }
         catch (Exception ex)
         {
-            this.ErrorMessage = $"Couldn't save: {ex.Message}";
+            this.ErrorMessage = Localized.Format(Strings.Settings_CouldNotSave, ex.Message);
         }
     }
 
@@ -263,11 +264,9 @@ public sealed class SettingsViewModel : ViewModelBase
 
     private static string FormatDays(int days) => days switch
     {
-        7 => "1 week",
-        180 => "6 months",
-        365 => "1 year",
-        >= 730 when days % 365 == 0 => $"{days / 365} years",
-        1 => "1 day",
-        _ => $"{days} days"
+        7 => Plurals.Format("Duration_Weeks", 1),
+        180 => Plurals.Format("Duration_Months", 6),
+        >= 365 when days % 365 == 0 => Plurals.Format("Duration_Years", days / 365),
+        _ => Plurals.Format("Duration_Days", days)
     };
 }

@@ -3,6 +3,8 @@ using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.App.Resources;
+using System.Globalization;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -45,11 +47,11 @@ public sealed class OnboardingViewModel : ViewModelBase
         this.switchService = switchService;
 
         this.Work = new OnboardingProfileViewModel(
-            "work", "Work", "WORK", "#2F6FED", "briefcase",
+            "work", Strings.Onboarding_WorkName, Strings.Onboarding_WorkName.ToUpper(CultureInfo.CurrentCulture), "#2F6FED", "briefcase",
             new AppPickerViewModel(installedAppsService, () => this.Work!.Apps.Select(a => a.Name), name => this.Work!.AddApp(name)));
 
         this.Personal = new OnboardingProfileViewModel(
-            "personal", "Personal", "HOME", "#20A67A", "house",
+            "personal", Strings.Onboarding_PersonalName, Strings.Onboarding_PersonalName.ToUpper(CultureInfo.CurrentCulture), "#20A67A", "house",
             new AppPickerViewModel(installedAppsService, () => this.Personal!.Apps.Select(a => a.Name), name => this.Personal!.AddApp(name)));
 
         this.NextCommand = new RelayCommand(this.GoNext, () => this.CanGoNext);
@@ -95,7 +97,7 @@ public sealed class OnboardingViewModel : ViewModelBase
 
     public bool IsDoneStep => this.StepIndex == 3;
 
-    public string StepLabel => this.IsWelcomeStep ? string.Empty : $"Step {this.StepIndex} of 3";
+    public string StepLabel => this.IsWelcomeStep ? string.Empty : Localized.Format(Strings.Onboarding_StepOf, this.StepIndex, 3);
 
     public bool CanGoNext => this.StepIndex < 3;
 

@@ -1,4 +1,5 @@
 using Avalonia.Media;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -32,7 +33,7 @@ public sealed class AccentChoiceViewModel : ViewModelBase
 
     public static AccentChoiceViewModel Preset(string hex, string name) => new(hex, name, AccentColorParser.ToBrush(hex));
 
-    public static AccentChoiceViewModel Custom(string hex) => new(null, "Custom", AccentColorParser.ToBrush(hex));
+    public static AccentChoiceViewModel Custom(string hex) => new(null, Strings.Accent_Custom, AccentColorParser.ToBrush(hex));
 
     public override string ToString() => this.Name;
 }

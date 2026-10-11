@@ -2,6 +2,7 @@
   x:Class="ContextSwitcher.App.Views.Pages.StatsPage"
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:r="using:ContextSwitcher.App.Resources"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
   x:DataType="vm:StatsViewModel">
   <StackPanel Spacing="20">
@@ -11,11 +12,11 @@
           <Path Classes="glyph" Data="{StaticResource IconChartColumn}" />
         </Viewbox>
       </Border>
-      <TextBlock Grid.Column="1" Text="Stats" Classes="header" VerticalAlignment="Center" />
+      <TextBlock Grid.Column="1" Text="{x:Static r:Strings.Stats_Stats}" Classes="header" VerticalAlignment="Center" />
       <Border Grid.Column="2" CornerRadius="10" Background="{DynamicResource CardHoverBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="3">
         <StackPanel Orientation="Horizontal" Spacing="2">
-          <Button Classes="switchContext" Classes.current="{Binding IsWeekSelected}" Content="Week" Command="{Binding SelectWeekCommand}" Padding="12,6" BorderThickness="0" />
-          <Button Classes="switchContext" Classes.current="{Binding IsMonthSelected}" Content="Month" Command="{Binding SelectMonthCommand}" Padding="12,6" BorderThickness="0" />
+          <Button Classes="switchContext" Classes.current="{Binding IsWeekSelected}" Content="{x:Static r:Strings.Stats_Week}" Command="{Binding SelectWeekCommand}" Padding="12,6" BorderThickness="0" />
+          <Button Classes="switchContext" Classes.current="{Binding IsMonthSelected}" Content="{x:Static r:Strings.Stats_Month}" Command="{Binding SelectMonthCommand}" Padding="12,6" BorderThickness="0" />
         </StackPanel>
       </Border>
     </Grid>
@@ -23,14 +24,14 @@
     <!-- The same chart as the Dashboard's, bigger; its legend carries the totals per profile. -->
     <Border Classes="panel" IsVisible="{Binding HasBalanceData}">
       <StackPanel Spacing="10">
-        <TextBlock Text="TIME PER DAY" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.Stats_TimePerDay_Section}" Classes="sectionTitle" />
         <ContentControl Content="{Binding BalanceChart}" ContentTemplate="{StaticResource BalanceChart}" />
       </StackPanel>
     </Border>
 
     <Border Classes="panel" IsVisible="{Binding !HasBalanceData}">
       <TextBlock
-        Text="No context time recorded for this range yet."
+        Text="{x:Static r:Strings.Stats_NoContextTimeRecordedFor}"
         Classes="caption"
         HorizontalAlignment="Center"
         Margin="0,24" />

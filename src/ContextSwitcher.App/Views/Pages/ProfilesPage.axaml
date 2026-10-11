@@ -2,6 +2,7 @@
   x:Class="ContextSwitcher.App.Views.Pages.ProfilesPage"
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:r="using:ContextSwitcher.App.Resources"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
   xmlns:conv="using:ContextSwitcher.App.Converters"
   x:DataType="vm:ProfilesViewModel">
@@ -13,8 +14,8 @@
           <Path Classes="glyph" Data="{StaticResource IconLayoutGrid}" />
         </Viewbox>
       </Border>
-      <TextBlock Grid.Column="1" Text="Profiles" Classes="header" VerticalAlignment="Center" />
-      <Button Grid.Column="2" Classes="switchContext current" Content="+ Add new profile" Command="{Binding AddCommand}" />
+      <TextBlock Grid.Column="1" Text="{x:Static r:Strings.Profiles_Profiles}" Classes="header" VerticalAlignment="Center" />
+      <Button Grid.Column="2" Classes="switchContext current" Content="{x:Static r:Strings.Profiles_AddNewProfile}" Command="{Binding AddCommand}" />
     </Grid>
 
     <TextBlock
@@ -42,28 +43,28 @@
 
               <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
                 <TextBlock Text="{Binding DisplayName}" Classes="body" FontWeight="Medium" />
-                <TextBlock Text="Active now" Classes="caption" Foreground="{DynamicResource AccentBrush}" IsVisible="{Binding IsActive}" />
+                <TextBlock Text="{x:Static r:Strings.Profiles_ActiveNow}" Classes="caption" Foreground="{DynamicResource AccentBrush}" IsVisible="{Binding IsActive}" />
               </StackPanel>
 
               <Button
                 Grid.Column="2"
                 Classes="switchContext"
                 Command="{Binding ActivateCommand}"
-                Content="Activate"
+                Content="{x:Static r:Strings.Profiles_Activate}"
                 IsEnabled="{Binding !IsActive}"
                 Margin="6,0" />
 
-              <Button Grid.Column="3" Classes="rowAction" Command="{Binding EditCommand}" ToolTip.Tip="Edit" Content="Edit" Margin="4,0,0,0" />
+              <Button Grid.Column="3" Classes="rowAction" Command="{Binding EditCommand}" ToolTip.Tip="{x:Static r:Strings.Profiles_Edit}" Content="{x:Static r:Strings.Profiles_Edit}" Margin="4,0,0,0" />
 
-              <Button Grid.Column="4" Classes="rowAction" Command="{Binding DuplicateCommand}" ToolTip.Tip="Duplicate" Content="Duplicate" Margin="4,0,0,0" />
+              <Button Grid.Column="4" Classes="rowAction" Command="{Binding DuplicateCommand}" ToolTip.Tip="{x:Static r:Strings.Profiles_Duplicate}" Content="{x:Static r:Strings.Profiles_Duplicate}" Margin="4,0,0,0" />
 
               <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="4" Margin="4,0,0,0" IsVisible="{Binding !IsConfirmingDelete}">
-                <Button Classes="rowAction danger" Command="{Binding DeleteCommand}" ToolTip.Tip="Delete" Content="Delete" />
+                <Button Classes="rowAction danger" Command="{Binding DeleteCommand}" ToolTip.Tip="{x:Static r:Strings.Profiles_Delete}" Content="{x:Static r:Strings.Profiles_Delete}" />
               </StackPanel>
               <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="4" Margin="4,0,0,0" IsVisible="{Binding IsConfirmingDelete}">
-                <TextBlock Text="Delete?" Classes="caption" VerticalAlignment="Center" />
-                <Button Classes="rowAction danger" Command="{Binding DeleteCommand}" Content="Yes" />
-                <Button Classes="rowAction" Command="{Binding CancelDeleteCommand}" Content="No" />
+                <TextBlock Text="{x:Static r:Strings.Profiles_Delete2}" Classes="caption" VerticalAlignment="Center" />
+                <Button Classes="rowAction danger" Command="{Binding DeleteCommand}" Content="{x:Static r:Strings.Profiles_Yes}" />
+                <Button Classes="rowAction" Command="{Binding CancelDeleteCommand}" Content="{x:Static r:Strings.Profiles_No}" />
               </StackPanel>
             </Grid>
           </Border>

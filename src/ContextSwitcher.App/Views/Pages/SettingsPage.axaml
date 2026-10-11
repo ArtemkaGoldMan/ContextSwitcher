@@ -2,6 +2,7 @@
   x:Class="ContextSwitcher.App.Views.Pages.SettingsPage"
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:r="using:ContextSwitcher.App.Resources"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
   xmlns:conv="using:ContextSwitcher.App.Converters"
   xmlns:ctl="using:ContextSwitcher.App.Controls"
@@ -16,8 +17,8 @@
         </Viewbox>
       </Border>
       <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-        <TextBlock Text="Settings" Classes="header" />
-        <TextBlock Text="Changes are saved as you make them." Classes="caption" />
+        <TextBlock Text="{x:Static r:Strings.Settings_Settings}" Classes="header" />
+        <TextBlock Text="{x:Static r:Strings.Settings_ChangesAreSavedAsYou}" Classes="caption" />
       </StackPanel>
     </Grid>
 
@@ -31,15 +32,15 @@
     <!-- Appearance -->
     <Border Classes="panel">
       <StackPanel Spacing="10">
-        <TextBlock Text="APPEARANCE" Classes="sectionTitle" />
-        <ctl:FormRow Title="Theme" Description="Match macOS follows the system's light or dark appearance as it changes.">
-          <ComboBox ItemsSource="{Binding AppearanceChoices}" SelectedItem="{Binding SelectedAppearance}" AutomationProperties.Name="Theme" />
+        <TextBlock Text="{x:Static r:Strings.Settings_Appearance_Section}" Classes="sectionTitle" />
+        <ctl:FormRow Title="{x:Static r:Strings.Settings_Theme}" Description="{x:Static r:Strings.Settings_MatchMacOSFollowsTheSystems}">
+          <ComboBox ItemsSource="{Binding AppearanceChoices}" SelectedItem="{Binding SelectedAppearance}" AutomationProperties.Name="{x:Static r:Strings.Settings_Theme}" />
         </ctl:FormRow>
         <Border Classes="divider" />
         <ctl:FormRow
-          Title="Show in the Dock"
-          Description="Off, Context Switcher lives only in the menu bar. On, it also appears in the Dock and in ⌘-Tab. Applies the next time the app starts.">
-          <ToggleSwitch IsChecked="{Binding ShowDockIcon}" AutomationProperties.Name="Show in the Dock" />
+          Title="{x:Static r:Strings.Settings_ShowInTheDock}"
+          Description="{x:Static r:Strings.Settings_OffContextSwitcherLivesOnly}">
+          <ToggleSwitch IsChecked="{Binding ShowDockIcon}" AutomationProperties.Name="{x:Static r:Strings.Settings_ShowInTheDock}" />
         </ctl:FormRow>
       </StackPanel>
     </Border>
@@ -47,19 +48,19 @@
     <!-- Permission -->
     <Border Classes="panel">
       <StackPanel Spacing="10">
-        <TextBlock Text="PERMISSION" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.Settings_Permission_Section}" Classes="sectionTitle" />
         <TextBlock
-          Text="To quit apps, read your browser's tabs and start music, Context Switcher needs your permission to control other apps. macOS asks the first time a switch needs it."
+          Text="{x:Static r:Strings.Settings_ToQuitAppsReadYour}"
           Classes="caption"
           TextWrapping="Wrap" />
-        <ctl:FormRow Title="Control other apps" Description="{Binding AutomationStatusText}">
+        <ctl:FormRow Title="{x:Static r:Strings.Settings_ControlOtherApps}" Description="{Binding AutomationStatusText}">
           <Border Classes="statusPill" Classes.allowed="{Binding IsAutomationAllowed}" Classes.denied="{Binding IsAutomationDenied}">
             <TextBlock Text="{Binding AutomationGranted, Converter={x:Static conv:PermissionStatusTextConverter.Instance}}" Classes="caption" FontWeight="SemiBold" />
           </Border>
         </ctl:FormRow>
         <StackPanel Orientation="Horizontal" Spacing="18">
-          <Button Classes="linkButton" Content="Open System Settings ↗" Command="{Binding OpenAutomationSettingsCommand}" />
-          <Button Classes="linkButton secondary" Content="Check again" Command="{Binding RefreshPermissionsCommand}" />
+          <Button Classes="linkButton" Content="{x:Static r:Strings.Settings_OpenSystemSettings}" Command="{Binding OpenAutomationSettingsCommand}" />
+          <Button Classes="linkButton secondary" Content="{x:Static r:Strings.Settings_CheckAgain}" Command="{Binding RefreshPermissionsCommand}" />
         </StackPanel>
       </StackPanel>
     </Border>
@@ -67,17 +68,17 @@
     <!-- Time tracking -->
     <Border Classes="panel">
       <StackPanel Spacing="10">
-        <TextBlock Text="TIME TRACKING" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.Settings_TimeTracking_Section}" Classes="sectionTitle" />
         <TextBlock
-          Text="Records how long you spend in each profile, for the Stats page and the chart in the menu bar dashboard. It stays on this Mac."
+          Text="{x:Static r:Strings.Settings_RecordsHowLongYouSpend}"
           Classes="caption"
           TextWrapping="Wrap" />
-        <ctl:FormRow Title="Record time per profile">
-          <ToggleSwitch IsChecked="{Binding AnalyticsEnabled}" AutomationProperties.Name="Record time per profile" />
+        <ctl:FormRow Title="{x:Static r:Strings.Settings_RecordTimePerProfile}">
+          <ToggleSwitch IsChecked="{Binding AnalyticsEnabled}" AutomationProperties.Name="{x:Static r:Strings.Settings_RecordTimePerProfile}" />
         </ctl:FormRow>
         <Border Classes="divider" />
-        <ctl:FormRow Title="Keep history for" Description="Older days are deleted automatically." IsEnabled="{Binding AnalyticsEnabled}">
-          <ComboBox ItemsSource="{Binding RetentionChoices}" SelectedItem="{Binding SelectedRetention}" AutomationProperties.Name="Keep history for" />
+        <ctl:FormRow Title="{x:Static r:Strings.Settings_KeepHistoryFor}" Description="{x:Static r:Strings.Settings_OlderDaysAreDeletedAutomatically}" IsEnabled="{Binding AnalyticsEnabled}">
+          <ComboBox ItemsSource="{Binding RetentionChoices}" SelectedItem="{Binding SelectedRetention}" AutomationProperties.Name="{x:Static r:Strings.Settings_KeepHistoryFor}" />
         </ctl:FormRow>
       </StackPanel>
     </Border>
@@ -85,19 +86,19 @@
     <!-- Updates -->
     <Border Classes="panel">
       <StackPanel Spacing="10">
-        <TextBlock Text="UPDATES" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.Settings_Updates_Section}" Classes="sectionTitle" />
         <TextBlock
-          Text="New versions come from the project's GitHub page. Nothing is installed until you click Install, and your profiles and settings stay as they are."
+          Text="{x:Static r:Strings.Settings_NewVersionsComeFromThe}"
           Classes="caption"
           TextWrapping="Wrap" />
-        <ctl:FormRow Title="Check automatically" Description="Once a day. Turned off, Context Switcher only checks when you click Check now.">
-          <ToggleSwitch IsChecked="{Binding CheckForUpdates}" AutomationProperties.Name="Check for updates automatically" />
+        <ctl:FormRow Title="{x:Static r:Strings.Settings_CheckAutomatically}" Description="{x:Static r:Strings.Settings_OnceADayTurnedOff}">
+          <ToggleSwitch IsChecked="{Binding CheckForUpdates}" AutomationProperties.Name="{x:Static r:Strings.Settings_CheckForUpdatesAutomatically}" />
         </ctl:FormRow>
         <Border Classes="divider" />
         <ctl:FormRow Title="{Binding Updates.CurrentVersionText}" Description="{Binding Updates.StatusText}">
           <Panel>
-            <Button Classes="switchContext" Content="Check now" Command="{Binding Updates.CheckNowCommand}" IsVisible="{Binding !Updates.CanInstall}" />
-            <Button Classes="switchContext current" Content="Install and restart" Command="{Binding Updates.InstallCommand}" IsVisible="{Binding Updates.CanInstall}" />
+            <Button Classes="switchContext" Content="{x:Static r:Strings.Settings_CheckNow}" Command="{Binding Updates.CheckNowCommand}" IsVisible="{Binding !Updates.CanInstall}" />
+            <Button Classes="switchContext current" Content="{x:Static r:Strings.Settings_InstallAndRestart}" Command="{Binding Updates.InstallCommand}" IsVisible="{Binding Updates.CanInstall}" />
           </Panel>
         </ctl:FormRow>
         <TextBlock Text="{Binding Updates.InstallBlocker}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding Updates.HasInstallBlocker}" />
@@ -108,9 +109,9 @@
     <!-- About -->
     <Border Classes="panel">
       <StackPanel Spacing="10">
-        <TextBlock Text="ABOUT" Classes="sectionTitle" />
-        <ctl:FormRow Title="Context Switcher" Description="Free and open source, under the MIT licence.">
-          <Button Classes="linkButton" Content="Support the developer ↗" Command="{Binding SupportDeveloperCommand}" />
+        <TextBlock Text="{x:Static r:Strings.Settings_About_Section}" Classes="sectionTitle" />
+        <ctl:FormRow Title="Context Switcher" Description="{x:Static r:Strings.Settings_FreeAndOpenSourceUnder}">
+          <Button Classes="linkButton" Content="{x:Static r:Strings.Settings_SupportTheDeveloper}" Command="{Binding SupportDeveloperCommand}" />
         </ctl:FormRow>
       </StackPanel>
     </Border>

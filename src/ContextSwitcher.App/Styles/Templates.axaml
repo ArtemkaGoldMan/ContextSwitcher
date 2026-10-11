@@ -7,14 +7,15 @@
 <ResourceDictionary
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:r="using:ContextSwitcher.App.Resources"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
   xmlns:conv="using:ContextSwitcher.App.Converters">
 
   <!-- The installed-apps picker: search, then apps with their own icons. -->
   <DataTemplate x:Key="AppPickerContent" x:DataType="vm:AppPickerViewModel">
     <StackPanel Spacing="8">
-      <TextBox Text="{Binding SearchText}" PlaceholderText="Search installed apps…" />
-      <TextBlock Text="Loading…" Classes="caption" IsVisible="{Binding IsLoading}" />
+      <TextBox Text="{Binding SearchText}" PlaceholderText="{x:Static r:Strings.Common_SearchInstalledApps}" />
+      <TextBlock Text="{x:Static r:Strings.Common_Loading}" Classes="caption" IsVisible="{Binding IsLoading}" />
       <ScrollViewer MaxHeight="280" IsVisible="{Binding !IsLoading}">
         <ItemsControl ItemsSource="{Binding FilteredApps}">
           <ItemsControl.ItemsPanel>
@@ -37,7 +38,7 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </ScrollViewer>
-      <TextBlock Text="No matching apps." Classes="caption" IsVisible="{Binding HasNoMatches}" />
+      <TextBlock Text="{x:Static r:Strings.Common_NoMatchingApps}" Classes="caption" IsVisible="{Binding HasNoMatches}" />
     </StackPanel>
   </DataTemplate>
 
@@ -45,7 +46,7 @@
   <DataTemplate x:Key="ChoicePickerContent" x:DataType="vm:ChoicePickerViewModel">
     <StackPanel Spacing="8">
       <TextBox Text="{Binding SearchText}" PlaceholderText="{Binding SearchPlaceholder}" />
-      <TextBlock Text="Loading…" Classes="caption" IsVisible="{Binding IsLoading}" />
+      <TextBlock Text="{x:Static r:Strings.Common_Loading}" Classes="caption" IsVisible="{Binding IsLoading}" />
       <ScrollViewer MaxHeight="280" IsVisible="{Binding !IsLoading}">
         <ItemsControl ItemsSource="{Binding Items}">
           <ItemsControl.ItemsPanel>
@@ -86,10 +87,10 @@
           <Image Source="{Binding Icon}" IsVisible="{Binding HasIcon}" />
         </Panel>
         <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="body" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,10,0" IsVisible="{Binding !IsEditable}" />
-        <TextBox Grid.Column="1" Classes="inRow" Text="{Binding Name}" PlaceholderText="App name, as in /Applications" Margin="0,0,10,0" IsVisible="{Binding IsEditable}" />
-        <CheckBox Grid.Column="2" Content="Launch" IsChecked="{Binding LaunchOnEnter}" Margin="8,0" VerticalAlignment="Center" />
-        <CheckBox Grid.Column="3" Content="Close" IsChecked="{Binding CloseOnLeave}" Margin="8,0" VerticalAlignment="Center" />
-        <Button Grid.Column="4" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
+        <TextBox Grid.Column="1" Classes="inRow" Text="{Binding Name}" PlaceholderText="{x:Static r:Strings.Common_AppNameAsInApplications}" Margin="0,0,10,0" IsVisible="{Binding IsEditable}" />
+        <CheckBox Grid.Column="2" Content="{x:Static r:Strings.Common_Launch}" IsChecked="{Binding LaunchOnEnter}" Margin="8,0" VerticalAlignment="Center" />
+        <CheckBox Grid.Column="3" Content="{x:Static r:Strings.Common_Close}" IsChecked="{Binding CloseOnLeave}" Margin="8,0" VerticalAlignment="Center" />
+        <Button Grid.Column="4" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="{x:Static r:Strings.Common_Remove}" AutomationProperties.Name="{x:Static r:Strings.Common_Remove}">
           <Viewbox Classes="icon rowAction">
             <Path Classes="glyph" Data="{DynamicResource IconX}" />
           </Viewbox>
@@ -110,7 +111,7 @@
         </Panel>
         <TextBlock Grid.Column="1" Text="{Binding Value}" Classes="body" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,10,0" IsVisible="{Binding !IsEditable}" />
         <TextBox Grid.Column="1" Classes="inRow" Text="{Binding Value}" PlaceholderText="{Binding Placeholder}" Margin="0,0,10,0" IsVisible="{Binding IsEditable}" />
-        <Button Grid.Column="2" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
+        <Button Grid.Column="2" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="{x:Static r:Strings.Common_Remove}" AutomationProperties.Name="{x:Static r:Strings.Common_Remove}">
           <Viewbox Classes="icon rowAction">
             <Path Classes="glyph" Data="{DynamicResource IconX}" />
           </Viewbox>
@@ -128,9 +129,9 @@
             <Path Classes="glyph" Data="{DynamicResource IconLink}" />
           </Viewbox>
         </Panel>
-        <TextBox Grid.Column="1" Classes="inRow" Text="{Binding Title}" PlaceholderText="Title (optional)" Margin="0,0,10,0" />
-        <TextBox Grid.Column="2" Classes="inRow" Text="{Binding Url}" PlaceholderText="https://…" Margin="0,0,10,0" />
-        <Button Grid.Column="3" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
+        <TextBox Grid.Column="1" Classes="inRow" Text="{Binding Title}" PlaceholderText="{x:Static r:Strings.Common_TitleOptional}" Margin="0,0,10,0" />
+        <TextBox Grid.Column="2" Classes="inRow" Text="{Binding Url}" PlaceholderText="{x:Static r:Strings.Common_Https}" Margin="0,0,10,0" />
+        <Button Grid.Column="3" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="{x:Static r:Strings.Common_Remove}" AutomationProperties.Name="{x:Static r:Strings.Common_Remove}">
           <Viewbox Classes="icon rowAction">
             <Path Classes="glyph" Data="{DynamicResource IconX}" />
           </Viewbox>
@@ -149,15 +150,15 @@
           </Viewbox>
         </Panel>
         <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,*" Margin="0,0,10,0">
-          <ComboBox Grid.Column="0" ItemsSource="{x:Static vm:BrowserProfileRowViewModel.BrowserChoices}" SelectedItem="{Binding SelectedBrowser}" HorizontalAlignment="Stretch" Margin="0,0,8,0" AutomationProperties.Name="Browser" />
-          <ComboBox Grid.Column="1" ItemsSource="{Binding ProfileChoices}" SelectedItem="{Binding SelectedProfile}" HorizontalAlignment="Stretch" AutomationProperties.Name="Browser profile" />
+          <ComboBox Grid.Column="0" ItemsSource="{x:Static vm:BrowserProfileRowViewModel.BrowserChoices}" SelectedItem="{Binding SelectedBrowser}" HorizontalAlignment="Stretch" Margin="0,0,8,0" AutomationProperties.Name="{x:Static r:Strings.Common_Browser}" />
+          <ComboBox Grid.Column="1" ItemsSource="{Binding ProfileChoices}" SelectedItem="{Binding SelectedProfile}" HorizontalAlignment="Stretch" AutomationProperties.Name="{x:Static r:Strings.Common_BrowserProfile}" />
         </Grid>
-        <Button Grid.Row="0" Grid.Column="2" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove" AutomationProperties.Name="Remove">
+        <Button Grid.Row="0" Grid.Column="2" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="{x:Static r:Strings.Common_Remove}" AutomationProperties.Name="{x:Static r:Strings.Common_Remove}">
           <Viewbox Classes="icon rowAction">
             <Path Classes="glyph" Data="{DynamicResource IconX}" />
           </Viewbox>
         </Button>
-        <TextBox Grid.Row="1" Grid.Column="1" Classes="inRow" Text="{Binding UrlsText}" PlaceholderText="Pages to open in this profile, one URL per line" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="36" Margin="0,8,10,2" VerticalContentAlignment="Top" />
+        <TextBox Grid.Row="1" Grid.Column="1" Classes="inRow" Text="{Binding UrlsText}" PlaceholderText="{x:Static r:Strings.Common_PagesToOpenInThis}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="36" Margin="0,8,10,2" VerticalContentAlignment="Top" />
       </Grid>
     </Border>
   </DataTemplate>
