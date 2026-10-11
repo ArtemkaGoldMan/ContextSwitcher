@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Core.Messages;
 
 namespace ContextSwitcher.Tests.TestDoubles;
 
@@ -13,11 +14,11 @@ public sealed class FakeFocusShortcutInstaller : IFocusShortcutInstaller
     public List<string> Offered { get; } = [];
 
     /// <summary>Returned instead of success, when a test wants the offer to fail.</summary>
-    public string? Problem { get; set; }
+    public UserMessage? Problem { get; set; }
 
     public FakeSystemCatalog? AddsTo { get; set; }
 
-    public Task<string?> OfferAsync(string modeName, bool turnOff, CancellationToken cancellationToken)
+    public Task<UserMessage?> OfferAsync(string modeName, bool turnOff, CancellationToken cancellationToken)
     {
         string name = turnOff ? FocusModes.OffShortcutName(modeName) : FocusModes.ShortcutName(modeName);
         this.Offered.Add(name);

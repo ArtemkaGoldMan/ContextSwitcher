@@ -1,3 +1,5 @@
+using ContextSwitcher.Core.Messages;
+
 namespace ContextSwitcher.Core.Updates;
 
 /// <summary>
@@ -6,13 +8,18 @@ namespace ContextSwitcher.Core.Updates;
 /// </summary>
 public sealed class UpdateException : Exception
 {
-    public UpdateException(string message)
-        : base(message)
+    public UpdateException(UserMessage detail)
+        : base(detail?.English)
     {
+        this.Detail = detail!;
     }
 
-    public UpdateException(string message, Exception innerException)
-        : base(message, innerException)
+    public UpdateException(UserMessage detail, Exception innerException)
+        : base(detail?.English, innerException)
     {
+        this.Detail = detail!;
     }
+
+    /// <summary>The message, in a form the app's window can translate.</summary>
+    public UserMessage Detail { get; }
 }

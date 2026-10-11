@@ -4,6 +4,7 @@ using System.Xml;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
+using ContextSwitcher.Core.Messages;
 
 namespace ContextSwitcher.Infrastructure.MacOS;
 
@@ -38,11 +39,11 @@ public sealed class FocusShortcutInstaller : IFocusShortcutInstaller
     }
 
     /// <inheritdoc />
-    public async Task<string?> OfferAsync(string modeName, bool turnOff, CancellationToken cancellationToken)
+    public async Task<UserMessage?> OfferAsync(string modeName, bool turnOff, CancellationToken cancellationToken)
     {
         if (FocusModes.Find(modeName) is not { } mode)
         {
-            return $"“{modeName}” is a Focus you made yourself, so it has to be picked in the Shortcut by hand.";
+            return FocusMessages.CustomFocus.With(modeName);
         }
 
         // Named exactly as the profile spells the mode, since that is the name a switch will run.
@@ -64,11 +65,11 @@ public sealed class FocusShortcutInstaller : IFocusShortcutInstaller
             .ConfigureAwait(false);
         if (sign is not { ExitCode: 0, TimedOut: false } || !File.Exists(signed))
         {
-            return "Couldn't prepare the Shortcut" + (string.IsNullOrWhiteSpace(sign?.StandardError) ? "." : $": {sign.StandardError.Trim()}");
+            return string.IsNullOrWhiteSpace(sign?.StandardError) ? FocusMessages.CouldNotPrepare.With() : FocusMessages.CouldNotPrepareBecause.With(sign.StandardError.Trim());
         }
 
         ProcessResult? open = await this.TryRunAsync("open", [signed], OpenTimeout, cancellationToken).ConfigureAwait(false);
-        return open is { ExitCode: 0 } ? null : "Couldn't open the Shortcuts app.";
+        return open is { ExitCode: 0 } ? null : FocusMessages.CouldNotOpenShortcuts.With();
     }
 
     /// <summary>The Shortcut as an XML property list: a "Set Focus" action per mode.</summary>

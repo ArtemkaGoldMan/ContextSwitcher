@@ -7,6 +7,7 @@ using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Tests.TestDoubles;
+using ContextSwitcher.Core.Messages;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
 
@@ -138,7 +139,7 @@ public sealed class EnvironmentChoicesTests
     [Fact]
     public async Task AFailedOfferSaysWhy()
     {
-        FakeFocusShortcutInstaller installer = new() { Problem = "Couldn't prepare the Shortcut." };
+        FakeFocusShortcutInstaller installer = new() { Problem = FocusMessages.CouldNotPrepare.With() };
         FocusSettingsViewModel focus = new(new FakeSystemCatalog(), new FakeProcessRunner(), installer, new FocusConfig { Enabled = true, ModeName = "Work" });
 
         await focus.OfferShortcutAsync("Work", turnOff: false);

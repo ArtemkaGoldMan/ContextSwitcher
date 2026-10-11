@@ -2,6 +2,7 @@ using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Core.Updates;
 using ContextSwitcher.Tests.TestDoubles;
+using ContextSwitcher.Core.Messages;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
 
@@ -63,7 +64,7 @@ public sealed class UpdatesViewModelTests
     public async Task AnUpdateThisCopyCannotInstallIsOfferedAsADownload()
     {
         this.releases.Latest = NewRelease;
-        this.updater.Blocker = "This copy runs from source rather than as an installed app, so it can't update itself.";
+        this.updater.Blocker = UpdateMessages.RunsFromSource.With();
         UpdatesViewModel updates = this.Create();
 
         await updates.CheckAsync(userAsked: true);
@@ -96,7 +97,7 @@ public sealed class UpdatesViewModelTests
     [Fact]
     public async Task OnlyACheckSomeoneAskedForReportsAFailure()
     {
-        this.releases.Failure = new UpdateException("Couldn't reach GitHub. Check the internet connection.");
+        this.releases.Failure = new UpdateException(UpdateMessages.GitHubUnreachable.With());
         UpdatesViewModel updates = this.Create();
 
         await updates.CheckAsync(userAsked: false);
@@ -125,7 +126,7 @@ public sealed class UpdatesViewModelTests
     public async Task AFailedInstallSaysWhyAndKeepsRunning()
     {
         this.releases.Latest = NewRelease;
-        this.updater.StageFailure = new UpdateException("The download isn't signed with Context Switcher's certificate, so it wasn't installed.");
+        this.updater.StageFailure = new UpdateException(UpdateMessages.NotSigned.With());
         UpdatesViewModel updates = this.Create();
         bool restartRequested = false;
         updates.RestartRequested += (_, _) => restartRequested = true;

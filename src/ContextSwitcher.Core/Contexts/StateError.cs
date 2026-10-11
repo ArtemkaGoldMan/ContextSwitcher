@@ -16,6 +16,17 @@ public sealed record StateError
     public string Message { get; init; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the message's key, for the app to show it translated; null for one recorded before
+    /// messages had keys, which is shown as <see cref="Message"/>.
+    /// </summary>
+    public string? MessageKey { get; init; }
+
+    /// <summary>
+    /// Gets or sets the values filled into the message, in order.
+    /// </summary>
+    public IReadOnlyList<string> MessageArguments { get; init; } = [];
+
+    /// <summary>
     /// Gets or sets the time at which the error occurred.
     /// </summary>
     public DateTimeOffset OccurredAt { get; init; }

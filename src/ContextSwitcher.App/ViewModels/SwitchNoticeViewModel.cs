@@ -105,7 +105,7 @@ public sealed class SwitchNoticeViewModel : ViewModelBase, IDisposable
             ?? state.CurrentContextId;
         this.Show(
             failed ? Localized.Format(Strings.Notice_CouldNotSwitchTo, name) : Localized.Format(Strings.Notice_SwitchedWithWarnings, name),
-            state.LastErrors.Select(error => error.Message).Where(message => !string.IsNullOrWhiteSpace(message)).ToList(),
+            state.LastErrors.Select(MessageText.Of).Where(message => !string.IsNullOrWhiteSpace(message)).ToList(),
             completedAt,
             failed);
     }

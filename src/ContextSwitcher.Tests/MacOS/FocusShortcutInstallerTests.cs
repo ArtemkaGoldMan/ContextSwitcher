@@ -29,7 +29,7 @@ public sealed class FocusShortcutInstallerTests : IDisposable
         SigningRunner runner = new();
         FocusShortcutInstaller installer = new(runner, this.work);
 
-        string? problem = await installer.OfferAsync("Work", turnOff: false, CancellationToken.None);
+        string? problem = (await installer.OfferAsync("Work", turnOff: false, CancellationToken.None))?.English;
 
         Assert.Null(problem);
         Assert.Equal(["shortcuts", "open"], runner.Calls.Select(call => call.FileName));
@@ -68,7 +68,7 @@ public sealed class FocusShortcutInstallerTests : IDisposable
     {
         SigningRunner runner = new();
 
-        string? problem = await new FocusShortcutInstaller(runner, this.work).OfferAsync("Deep Work", turnOff: false, CancellationToken.None);
+        string? problem = (await new FocusShortcutInstaller(runner, this.work).OfferAsync("Deep Work", turnOff: false, CancellationToken.None))?.English;
 
         Assert.Contains("you made yourself", problem, StringComparison.Ordinal);
         Assert.Empty(runner.Calls);
@@ -79,7 +79,7 @@ public sealed class FocusShortcutInstallerTests : IDisposable
     {
         FakeProcessRunner runner = new() { DefaultResult = new ProcessResult(1, string.Empty, "Error: signing failed", false) };
 
-        string? problem = await new FocusShortcutInstaller(runner, this.work).OfferAsync("Sleep", turnOff: false, CancellationToken.None);
+        string? problem = (await new FocusShortcutInstaller(runner, this.work).OfferAsync("Sleep", turnOff: false, CancellationToken.None))?.English;
 
         Assert.Equal("Couldn't prepare the Shortcut: Error: signing failed", problem);
         Assert.Single(runner.Calls);
@@ -98,7 +98,7 @@ public sealed class FocusShortcutInstallerTests : IDisposable
         }
 
         OpenNothingRunner runner = new();
-        string? problem = await new FocusShortcutInstaller(runner, this.work).OfferAsync("Do Not Disturb", turnOff: true, CancellationToken.None);
+        string? problem = (await new FocusShortcutInstaller(runner, this.work).OfferAsync("Do Not Disturb", turnOff: true, CancellationToken.None))?.English;
 
         Assert.Null(problem);
         Assert.True(new FileInfo(runner.Opened!).Length > 0);

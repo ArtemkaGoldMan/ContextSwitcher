@@ -2,6 +2,7 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.AppleScript;
+using ContextSwitcher.Core.Messages;
 
 namespace ContextSwitcher.Infrastructure.Browser;
 
@@ -59,7 +60,7 @@ public sealed class BrowserLauncher
         TimeSpan timeout,
         CancellationToken cancellationToken)
     {
-        List<string> warnings = [];
+        List<UserMessage> warnings = [];
 
         // The default browser is unknown ahead of time, so it cannot be targeted by AppleScript.
         bool probeTabs = avoidDuplicateTabs && browser != BrowserKind.Default;
@@ -90,8 +91,7 @@ public sealed class BrowserLauncher
             else
             {
                 probeTabs = false;
-                warnings.Add(
-                    $"Could not check {BrowserAppName(browser)} for existing tabs, so URLs were opened without duplicate checking. Check Automation permissions.");
+                warnings.Add(SwitchMessages.CouldNotCheckTabs.With(BrowserAppName(browser)));
             }
         }
 
@@ -114,7 +114,7 @@ public sealed class BrowserLauncher
 
             if (result.ExitCode != 0)
             {
-                warnings.Add($"Could not open '{url}': {result.StandardError.Trim()}");
+                warnings.Add(SwitchMessages.CouldNotOpenUrl.With(url, result.StandardError.Trim()));
             }
         }
 
@@ -133,7 +133,7 @@ public sealed class BrowserLauncher
         TimeSpan timeout,
         CancellationToken cancellationToken)
     {
-        List<string> warnings = [];
+        List<UserMessage> warnings = [];
         bool anyGroupFailed = false;
 
         foreach (string group in tabGroups)
@@ -148,7 +148,7 @@ public sealed class BrowserLauncher
             if (!activated)
             {
                 anyGroupFailed = true;
-                warnings.Add($"Could not activate tab group '{group}'. Browser tab group scripting may not be supported on this macOS version.");
+                warnings.Add(SwitchMessages.CouldNotActivateTabGroup.With(group));
             }
         }
 
@@ -167,7 +167,7 @@ public sealed class BrowserLauncher
         TimeSpan timeout,
         CancellationToken cancellationToken)
     {
-        List<string> warnings = [];
+        List<UserMessage> warnings = [];
 
         foreach (BrowserProfileConfig profile in profiles)
         {
@@ -186,7 +186,7 @@ public sealed class BrowserLauncher
 
             if (result.ExitCode != 0)
             {
-                warnings.Add($"Could not launch {profile.Browser} profile '{profile.ProfileDirectory}': {result.StandardError.Trim()}");
+                warnings.Add(SwitchMessages.CouldNotLaunchBrowserProfile.With(profile.Browser.ToString(), profile.ProfileDirectory, result.StandardError.Trim()));
             }
         }
 

@@ -1116,4 +1116,254 @@
     <value>Off</value>
     <comment>The label beside a switch that is off. Keep it short.</comment>
   </data>
+  <data name="Msg_Config_SchemaTooNew" xml:space="preserve">
+    <value>This configuration is version {0}, written by a newer version of ContextSwitcher; this build understands up to {1}. Update the app.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving. {0} is the file's schema version, {1} the newest this build reads.</comment>
+  </data>
+  <data name="Msg_Config_SchemaUnsupported" xml:space="preserve">
+    <value>Unsupported configuration schema version.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_NoContexts" xml:space="preserve">
+    <value>At least one context is required.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_IdNotUrlSafe" xml:space="preserve">
+    <value>Context id must be lowercase and URL-safe.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_IdNotUnique" xml:space="preserve">
+    <value>Context id must be unique.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_DisplayNameRequired" xml:space="preserve">
+    <value>Context display name is required.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_AccentColorInvalid" xml:space="preserve">
+    <value>Accent color must be a 6-digit hex color.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_ActiveContextMissing" xml:space="preserve">
+    <value>Active context must reference an existing context.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_UrlModeNeedsUrl" xml:space="preserve">
+    <value>URL mode requires at least one URL.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_BrowserModeInvalid" xml:space="preserve">
+    <value>Browser management mode is invalid.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_BrowserInvalid" xml:space="preserve">
+    <value>Browser must be Default, Chrome, Brave, or Safari.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_TabGroupsNeedName" xml:space="preserve">
+    <value>Tab groups mode requires at least one tab group name.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_TabGroupNameEmpty" xml:space="preserve">
+    <value>Tab group name cannot be empty.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_ProfilesNeedProfile" xml:space="preserve">
+    <value>Profiles mode requires at least one browser profile.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_ProfileBrowserInvalid" xml:space="preserve">
+    <value>Profile browser must be Chrome or Brave.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_ProfileDirectoryRequired" xml:space="preserve">
+    <value>Profile directory is required.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_QuickLinkUrlInvalid" xml:space="preserve">
+    <value>Quick link URL must use http or https.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_UrlInvalid" xml:space="preserve">
+    <value>URL must use http or https.</value>
+    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Focus_CustomFocus" xml:space="preserve">
+    <value>“{0}” is a Focus you made yourself, so it has to be picked in the Shortcut by hand.</value>
+    <comment>Profile Setup → Focus, after clicking Create it. Why a Focus Shortcut couldn't be offered. Mirrored in Strings.resx as &lt;c&gt;Msg_&amp;lt;Key&amp;gt;&lt;/c&gt;.</comment>
+  </data>
+  <data name="Msg_Focus_CouldNotPrepare" xml:space="preserve">
+    <value>Couldn't prepare the Shortcut.</value>
+    <comment>Profile Setup → Focus, after clicking Create it.</comment>
+  </data>
+  <data name="Msg_Focus_CouldNotOpenShortcuts" xml:space="preserve">
+    <value>Couldn't open the Shortcuts app.</value>
+    <comment>Profile Setup → Focus, after clicking Create it.</comment>
+  </data>
+  <data name="Msg_Focus_CouldNotPrepareBecause" xml:space="preserve">
+    <value>Couldn't prepare the Shortcut: {0}</value>
+    <comment>Profile Setup → Focus, after clicking Create it. {0} is macOS's own reason.</comment>
+  </data>
+  <data name="Msg_Switch_CouldNotClose" xml:space="preserve">
+    <value>Could not close: {0}.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. /// What a switch reports about a step that didn't fully work. Each is also in the app's Strings.resx as
+/// &lt;c&gt;Msg_&amp;lt;Key&amp;gt;&lt;/c&gt;, with the same English - a test keeps the two in step.
+///</comment>
+  </data>
+  <data name="Msg_Switch_CouldNotLaunch" xml:space="preserve">
+    <value>Could not launch: {0}.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
+  </data>
+  <data name="Msg_Switch_CouldNotStartContainers" xml:space="preserve">
+    <value>Could not start containers: {0}.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
+  </data>
+  <data name="Msg_Switch_CouldNotStopContainers" xml:space="preserve">
+    <value>Could not stop containers: {0}.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
+  </data>
+  <data name="Msg_Switch_NoPlaylist" xml:space="preserve">
+    <value>No playlist configured.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
+  </data>
+  <data name="Msg_Switch_CouldNotPlayAppleMusic" xml:space="preserve">
+    <value>Could not play Apple Music playlist '{0}'.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
+  </data>
+  <data name="Msg_Switch_CouldNotPlaySpotify" xml:space="preserve">
+    <value>Could not start Spotify playback for '{0}'.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
+  </data>
+  <data name="Msg_Switch_ShortcutMissing" xml:space="preserve">
+    <value>Shortcut '{0}' doesn't exist yet. In Context Switcher, edit the profile and click "Create it" under Focus, or see docs/shortcuts-integration.md.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
+  </data>
+  <data name="Msg_Switch_ShortcutFailed" xml:space="preserve">
+    <value>Shortcut '{0}' ran but failed: {1}</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. {1} is macOS's own reason, in the Mac's language.</comment>
+  </data>
+  <data name="Msg_Switch_ShortcutFailedWithExitCode" xml:space="preserve">
+    <value>Shortcut '{0}' ran but failed: exit code {1}</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
+  </data>
+  <data name="Msg_Switch_StepTimedOut" xml:space="preserve">
+    <value>Step timed out after {0} seconds.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
+  </data>
+  <data name="Msg_Switch_CouldNotCheckTabs" xml:space="preserve">
+    <value>Could not check {0} for existing tabs, so URLs were opened without duplicate checking. Check Automation permissions.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
+  </data>
+  <data name="Msg_Switch_CouldNotOpenUrl" xml:space="preserve">
+    <value>Could not open '{0}': {1}</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. {1} is the browser's or macOS's own reason.</comment>
+  </data>
+  <data name="Msg_Switch_CouldNotActivateTabGroup" xml:space="preserve">
+    <value>Could not activate tab group '{0}'. Browser tab group scripting may not be supported on this macOS version.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
+  </data>
+  <data name="Msg_Switch_CouldNotLaunchBrowserProfile" xml:space="preserve">
+    <value>Could not launch {0} profile '{1}': {2}</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. {0} is the browser, {1} the profile folder, {2} the browser's own reason.</comment>
+  </data>
+  <data name="Msg_Update_GitHubError" xml:space="preserve">
+    <value>GitHub answered with an error ({0}). Try again later.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.' Why an update couldn't be checked for or installed. Mirrored in Strings.resx as &lt;c&gt;Msg_&amp;lt;Key&amp;gt;&lt;/c&gt;.</comment>
+  </data>
+  <data name="Msg_Update_GitHubUnreachable" xml:space="preserve">
+    <value>Couldn't reach GitHub. Check the internet connection.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_GitHubTimedOut" xml:space="preserve">
+    <value>GitHub didn't answer in time. Try again later.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_GitHubUnreadable" xml:space="preserve">
+    <value>GitHub's answer couldn't be read.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_TagNotAVersion" xml:space="preserve">
+    <value>The latest release is tagged "{0}", which isn't a version number.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_NoArchive" xml:space="preserve">
+    <value>Version {0} has no {1} to install from. Download it from its release page instead.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.' {0} is the version, {1} the archive's file name.</comment>
+  </data>
+  <data name="Msg_Update_CouldNotUnpack" xml:space="preserve">
+    <value>The download couldn't be unpacked into the app. Try again, or download it from the release page.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_WrongVersion" xml:space="preserve">
+    <value>The download is version {0}, not {1}, so it wasn't installed.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_NotSigned" xml:space="preserve">
+    <value>The download isn't signed with Context Switcher's certificate, so it wasn't installed.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_NotInstalledApp" xml:space="preserve">
+    <value>This copy isn't an installed app, so there is nothing to replace.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_CouldNotStart" xml:space="preserve">
+    <value>The update couldn't be started.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_DownloadError" xml:space="preserve">
+    <value>The download failed ({0}). Try again later.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_DownloadTooLarge" xml:space="preserve">
+    <value>The download is far larger than a release should be, so it wasn't installed.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_DownloadFailed" xml:space="preserve">
+    <value>The download failed. Check the internet connection and try again.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_NoVersion" xml:space="preserve">
+    <value>The download has no version number, so it wasn't installed.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_RunsFromSource" xml:space="preserve">
+    <value>This copy runs from source rather than as an installed app, so it can't update itself.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_CannotReplaceIn" xml:space="preserve">
+    <value>Context Switcher isn't allowed to replace itself in {0}. Download the new version from its release page.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Msg_Update_NotReleaseSigned" xml:space="preserve">
+    <value>This copy isn't signed with the release certificate, so it can't check that an update is genuine. Download the new version from its release page.</value>
+    <comment>Settings → Updates, after 'Couldn't check for updates.' or 'Couldn't install the update.'</comment>
+  </data>
+  <data name="Status_Succeeded" xml:space="preserve">
+    <value>Switched</value>
+    <comment>Dashboard → Last switch: how it went.</comment>
+  </data>
+  <data name="Status_SucceededWithWarnings" xml:space="preserve">
+    <value>Switched, with warnings</value>
+    <comment>Dashboard → Last switch: how it went.</comment>
+  </data>
+  <data name="Status_Failed" xml:space="preserve">
+    <value>Switch failed</value>
+    <comment>Dashboard → Last switch: how it went.</comment>
+  </data>
+  <data name="Status_Cancelled" xml:space="preserve">
+    <value>Switch cancelled</value>
+    <comment>Dashboard → Last switch: how it went.</comment>
+  </data>
+  <data name="Status_NoOp" xml:space="preserve">
+    <value>Already there</value>
+    <comment>Dashboard → Last switch: the profile was already active.</comment>
+  </data>
+  <data name="ProfileSetup_TabGroupName" xml:space="preserve">
+    <value>Tab group name</value>
+    <comment>Placeholder of a tab group row in Profile Setup → Browser.</comment>
+  </data>
+  <data name="ProfileSetup_ContainerName" xml:space="preserve">
+    <value>Container name</value>
+    <comment>Placeholder of a Docker container row in Profile Setup → Docker.</comment>
+  </data>
 </root>

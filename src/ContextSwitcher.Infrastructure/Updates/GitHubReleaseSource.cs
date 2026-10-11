@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Updates;
+using ContextSwitcher.Core.Messages;
+using System.Globalization;
 
 namespace ContextSwitcher.Infrastructure.Updates;
 
@@ -56,7 +58,7 @@ public sealed class GitHubReleaseSource : IReleaseSource
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new UpdateException($"GitHub answered with an error ({(int)response.StatusCode}). Try again later.");
+                throw new UpdateException(UpdateMessages.GitHubError.With(((int)response.StatusCode).ToString(CultureInfo.InvariantCulture)));
             }
 
             Stream body = await response.Content.ReadAsStreamAsync(timeout.Token).ConfigureAwait(false);
@@ -68,15 +70,15 @@ public sealed class GitHubReleaseSource : IReleaseSource
         }
         catch (HttpRequestException ex)
         {
-            throw new UpdateException("Couldn't reach GitHub. Check the internet connection.", ex);
+            throw new UpdateException(UpdateMessages.GitHubUnreachable.With(), ex);
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new UpdateException("GitHub didn't answer in time. Try again later.", ex);
+            throw new UpdateException(UpdateMessages.GitHubTimedOut.With(), ex);
         }
         catch (JsonException ex)
         {
-            throw new UpdateException("GitHub's answer couldn't be read.", ex);
+            throw new UpdateException(UpdateMessages.GitHubUnreadable.With(), ex);
         }
     }
 
@@ -85,7 +87,7 @@ public sealed class GitHubReleaseSource : IReleaseSource
         string tag = release.TryGetProperty("tag_name", out JsonElement tagElement) ? tagElement.GetString() ?? string.Empty : string.Empty;
         if (!ReleaseVersion.TryParse(tag, out Version version))
         {
-            throw new UpdateException($"The latest release is tagged \"{tag}\", which isn't a version number.");
+            throw new UpdateException(UpdateMessages.TagNotAVersion.With(tag));
         }
 
         string page = release.TryGetProperty("html_url", out JsonElement pageElement) ? pageElement.GetString() ?? string.Empty : string.Empty;

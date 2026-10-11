@@ -850,4 +850,190 @@
   <data name="Common_Off" xml:space="preserve">
     <value>Вимк.</value>
   </data>
+  <data name="Msg_Config_SchemaTooNew" xml:space="preserve">
+    <value>Цю конфігурацію версії {0} записала новіша версія ContextSwitcher; ця розуміє лише до {1}. Оновіть програму.</value>
+  </data>
+  <data name="Msg_Config_SchemaUnsupported" xml:space="preserve">
+    <value>Непідтримувана версія конфігурації.</value>
+  </data>
+  <data name="Msg_Config_NoContexts" xml:space="preserve">
+    <value>Потрібен принаймні один профіль.</value>
+  </data>
+  <data name="Msg_Config_IdNotUrlSafe" xml:space="preserve">
+    <value>Ідентифікатор профілю має складатися з малих латинських літер, цифр і дефісів.</value>
+  </data>
+  <data name="Msg_Config_IdNotUnique" xml:space="preserve">
+    <value>Ідентифікатор профілю має бути унікальним.</value>
+  </data>
+  <data name="Msg_Config_DisplayNameRequired" xml:space="preserve">
+    <value>Потрібна назва профілю.</value>
+  </data>
+  <data name="Msg_Config_AccentColorInvalid" xml:space="preserve">
+    <value>Колір має бути шестизначним hex-кодом.</value>
+  </data>
+  <data name="Msg_Config_ActiveContextMissing" xml:space="preserve">
+    <value>Активний профіль має бути одним з наявних.</value>
+  </data>
+  <data name="Msg_Config_UrlModeNeedsUrl" xml:space="preserve">
+    <value>Для відкриття сторінок потрібна принаймні одна URL-адреса.</value>
+  </data>
+  <data name="Msg_Config_BrowserModeInvalid" xml:space="preserve">
+    <value>Неправильний режим браузера.</value>
+  </data>
+  <data name="Msg_Config_BrowserInvalid" xml:space="preserve">
+    <value>Браузер має бути Default, Chrome, Brave або Safari.</value>
+  </data>
+  <data name="Msg_Config_TabGroupsNeedName" xml:space="preserve">
+    <value>Для груп вкладок потрібна принаймні одна назва групи.</value>
+  </data>
+  <data name="Msg_Config_TabGroupNameEmpty" xml:space="preserve">
+    <value>Назва групи вкладок не може бути порожньою.</value>
+  </data>
+  <data name="Msg_Config_ProfilesNeedProfile" xml:space="preserve">
+    <value>Для профілів браузера потрібен принаймні один профіль.</value>
+  </data>
+  <data name="Msg_Config_ProfileBrowserInvalid" xml:space="preserve">
+    <value>Браузер профілю має бути Chrome або Brave.</value>
+  </data>
+  <data name="Msg_Config_ProfileDirectoryRequired" xml:space="preserve">
+    <value>Потрібна тека профілю.</value>
+  </data>
+  <data name="Msg_Config_QuickLinkUrlInvalid" xml:space="preserve">
+    <value>Адреса швидкого посилання має починатися з http або https.</value>
+  </data>
+  <data name="Msg_Config_UrlInvalid" xml:space="preserve">
+    <value>Адреса має починатися з http або https.</value>
+  </data>
+  <data name="Msg_Focus_CustomFocus" xml:space="preserve">
+    <value>«{0}» — режим зосередження, який ви створили самі, тож у швидкій команді його треба вибрати вручну.</value>
+  </data>
+  <data name="Msg_Focus_CouldNotPrepare" xml:space="preserve">
+    <value>Не вдалося підготувати швидку команду.</value>
+  </data>
+  <data name="Msg_Focus_CouldNotOpenShortcuts" xml:space="preserve">
+    <value>Не вдалося відкрити «Швидкі команди».</value>
+  </data>
+  <data name="Msg_Focus_CouldNotPrepareBecause" xml:space="preserve">
+    <value>Не вдалося підготувати швидку команду: {0}</value>
+  </data>
+  <data name="Msg_Switch_CouldNotClose" xml:space="preserve">
+    <value>Не вдалося закрити: {0}.</value>
+  </data>
+  <data name="Msg_Switch_CouldNotLaunch" xml:space="preserve">
+    <value>Не вдалося відкрити: {0}.</value>
+  </data>
+  <data name="Msg_Switch_CouldNotStartContainers" xml:space="preserve">
+    <value>Не вдалося запустити контейнери: {0}.</value>
+  </data>
+  <data name="Msg_Switch_CouldNotStopContainers" xml:space="preserve">
+    <value>Не вдалося зупинити контейнери: {0}.</value>
+  </data>
+  <data name="Msg_Switch_NoPlaylist" xml:space="preserve">
+    <value>Плейлист не вибрано.</value>
+  </data>
+  <data name="Msg_Switch_CouldNotPlayAppleMusic" xml:space="preserve">
+    <value>Не вдалося ввімкнути плейлист «{0}» в Apple Music.</value>
+  </data>
+  <data name="Msg_Switch_CouldNotPlaySpotify" xml:space="preserve">
+    <value>Не вдалося ввімкнути «{0}» у Spotify.</value>
+  </data>
+  <data name="Msg_Switch_ShortcutMissing" xml:space="preserve">
+    <value>Швидкої команди «{0}» ще немає. У Context Switcher змініть профіль і натисніть «Створити» в розділі «Зосередження».</value>
+  </data>
+  <data name="Msg_Switch_ShortcutFailed" xml:space="preserve">
+    <value>Швидка команда «{0}» запустилася, але не спрацювала: {1}</value>
+  </data>
+  <data name="Msg_Switch_ShortcutFailedWithExitCode" xml:space="preserve">
+    <value>Швидка команда «{0}» запустилася, але не спрацювала: код виходу {1}</value>
+  </data>
+  <data name="Msg_Switch_StepTimedOut" xml:space="preserve">
+    <value>Крок не завершився за {0} с.</value>
+  </data>
+  <data name="Msg_Switch_CouldNotCheckTabs" xml:space="preserve">
+    <value>Не вдалося перевірити вкладки в {0}, тож сторінки відкрито без перевірки повторів. Перевірте дозволи «Автоматизації».</value>
+  </data>
+  <data name="Msg_Switch_CouldNotOpenUrl" xml:space="preserve">
+    <value>Не вдалося відкрити «{0}»: {1}</value>
+  </data>
+  <data name="Msg_Switch_CouldNotActivateTabGroup" xml:space="preserve">
+    <value>Не вдалося відкрити групу вкладок «{0}». Ця версія macOS може не підтримувати керування групами вкладок.</value>
+  </data>
+  <data name="Msg_Switch_CouldNotLaunchBrowserProfile" xml:space="preserve">
+    <value>Не вдалося відкрити профіль {0} «{1}»: {2}</value>
+  </data>
+  <data name="Msg_Update_GitHubError" xml:space="preserve">
+    <value>GitHub відповів помилкою ({0}). Спробуйте пізніше.</value>
+  </data>
+  <data name="Msg_Update_GitHubUnreachable" xml:space="preserve">
+    <value>Не вдалося з'єднатися з GitHub. Перевірте підключення до інтернету.</value>
+  </data>
+  <data name="Msg_Update_GitHubTimedOut" xml:space="preserve">
+    <value>GitHub не відповів вчасно. Спробуйте пізніше.</value>
+  </data>
+  <data name="Msg_Update_GitHubUnreadable" xml:space="preserve">
+    <value>Не вдалося прочитати відповідь GitHub.</value>
+  </data>
+  <data name="Msg_Update_TagNotAVersion" xml:space="preserve">
+    <value>Останній реліз позначено «{0}», а це не номер версії.</value>
+  </data>
+  <data name="Msg_Update_NoArchive" xml:space="preserve">
+    <value>Версія {0} не має файлу {1} для встановлення. Завантажте її зі сторінки релізу.</value>
+  </data>
+  <data name="Msg_Update_CouldNotUnpack" xml:space="preserve">
+    <value>Не вдалося розпакувати завантажене. Спробуйте ще раз або завантажте зі сторінки релізу.</value>
+  </data>
+  <data name="Msg_Update_WrongVersion" xml:space="preserve">
+    <value>Завантажено версію {0}, а не {1}, тож її не встановлено.</value>
+  </data>
+  <data name="Msg_Update_NotSigned" xml:space="preserve">
+    <value>Завантаження не підписане сертифікатом Context Switcher, тож його не встановлено.</value>
+  </data>
+  <data name="Msg_Update_NotInstalledApp" xml:space="preserve">
+    <value>Ця копія не встановлена як програма, тож замінювати нічого.</value>
+  </data>
+  <data name="Msg_Update_CouldNotStart" xml:space="preserve">
+    <value>Не вдалося запустити оновлення.</value>
+  </data>
+  <data name="Msg_Update_DownloadError" xml:space="preserve">
+    <value>Завантаження не вдалося ({0}). Спробуйте пізніше.</value>
+  </data>
+  <data name="Msg_Update_DownloadTooLarge" xml:space="preserve">
+    <value>Завантаження значно більше, ніж має бути реліз, тож його не встановлено.</value>
+  </data>
+  <data name="Msg_Update_DownloadFailed" xml:space="preserve">
+    <value>Завантаження не вдалося. Перевірте підключення до інтернету й спробуйте ще раз.</value>
+  </data>
+  <data name="Msg_Update_NoVersion" xml:space="preserve">
+    <value>Завантаження не має номера версії, тож його не встановлено.</value>
+  </data>
+  <data name="Msg_Update_RunsFromSource" xml:space="preserve">
+    <value>Ця копія запущена з вихідного коду, а не встановлена як програма, тож оновитися сама не може.</value>
+  </data>
+  <data name="Msg_Update_CannotReplaceIn" xml:space="preserve">
+    <value>Context Switcher не має права замінити себе в {0}. Завантажте нову версію зі сторінки релізу.</value>
+  </data>
+  <data name="Msg_Update_NotReleaseSigned" xml:space="preserve">
+    <value>Ця копія не підписана сертифікатом релізів, тож не може перевірити, що оновлення справжнє. Завантажте нову версію зі сторінки релізу.</value>
+  </data>
+  <data name="Status_Succeeded" xml:space="preserve">
+    <value>Перемкнено</value>
+  </data>
+  <data name="Status_SucceededWithWarnings" xml:space="preserve">
+    <value>Перемкнено, з попередженнями</value>
+  </data>
+  <data name="Status_Failed" xml:space="preserve">
+    <value>Перемикання не вдалося</value>
+  </data>
+  <data name="Status_Cancelled" xml:space="preserve">
+    <value>Перемикання скасовано</value>
+  </data>
+  <data name="Status_NoOp" xml:space="preserve">
+    <value>Уже активний</value>
+  </data>
+  <data name="ProfileSetup_TabGroupName" xml:space="preserve">
+    <value>Назва групи вкладок</value>
+  </data>
+  <data name="ProfileSetup_ContainerName" xml:space="preserve">
+    <value>Назва контейнера</value>
+  </data>
 </root>

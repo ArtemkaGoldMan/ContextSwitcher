@@ -1,4 +1,5 @@
 using ContextSwitcher.Core.Updates;
+using ContextSwitcher.Core.Messages;
 
 namespace ContextSwitcher.Core.Abstractions;
 
@@ -12,7 +13,7 @@ public interface IAppUpdater
     /// Why this copy cannot replace itself - it runs from source, say, or was not signed with the
     /// release certificate - or null when it can.
     /// </summary>
-    Task<string?> GetInstallBlockerAsync(CancellationToken cancellationToken);
+    Task<UserMessage?> GetInstallBlockerAsync(CancellationToken cancellationToken);
 
     /// <summary>
     /// Downloads, unpacks and verifies <paramref name="release"/>. Throws <see cref="UpdateException"/>

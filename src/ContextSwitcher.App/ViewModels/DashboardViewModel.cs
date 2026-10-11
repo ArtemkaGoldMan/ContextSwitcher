@@ -246,7 +246,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
             .ToList();
 
         this.ConfigurationWarnings = AppHost.ConfigurationValidation.Errors
-            .Select(error => $"{error.Path}: {error.Message}")
+            .Select(MessageText.Of)
             .ToList();
     }
 
@@ -303,7 +303,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         // Read the last outcome from state rather than from the popover's own switch result: the
         // tray menu, the CLI and Shortcuts switch too, and their warnings belong here just as much.
         this.LastSwitchStatusText = DescribeStatus(state.LastSwitchStatus);
-        this.LastSwitchWarnings = state.LastErrors.Select(error => error.Message).ToList();
+        this.LastSwitchWarnings = state.LastErrors.Select(MessageText.Of).ToList();
         this.activeSince = state.LastSwitchCompletedAt;
         this.RefreshElapsedDisplay();
 
@@ -322,11 +322,11 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     /// <summary>The last switch's outcome in words; state.json keeps the enum name.</summary>
     private static string DescribeStatus(string? status) => status switch
     {
-        nameof(ContextSwitchStatus.Succeeded) => "Switched",
-        nameof(ContextSwitchStatus.SucceededWithWarnings) => "Switched, with warnings",
-        nameof(ContextSwitchStatus.Failed) => "Switch failed",
-        nameof(ContextSwitchStatus.Cancelled) => "Switch cancelled",
-        nameof(ContextSwitchStatus.NoOp) => "Already there",
+        nameof(ContextSwitchStatus.Succeeded) => Strings.Status_Succeeded,
+        nameof(ContextSwitchStatus.SucceededWithWarnings) => Strings.Status_SucceededWithWarnings,
+        nameof(ContextSwitchStatus.Failed) => Strings.Status_Failed,
+        nameof(ContextSwitchStatus.Cancelled) => Strings.Status_Cancelled,
+        nameof(ContextSwitchStatus.NoOp) => Strings.Status_NoOp,
         null or "" => string.Empty,
         _ => status
     };

@@ -1,3 +1,5 @@
+using ContextSwitcher.Core.Messages;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace ContextSwitcher.Core.Configuration.Validation;
@@ -28,19 +30,20 @@ public sealed class ConfigurationValidator
         // save. Add a migration step here when a version stops being readable as-is.
         if (configuration.SchemaVersion > AppConfiguration.CurrentSchemaVersion)
         {
-            errors.Add(new ConfigurationValidationError(
+            errors.Add(ConfigurationValidationError.Of(
                 "schemaVersion",
-                $"This configuration is version {configuration.SchemaVersion}, written by a newer version of "
-                + $"ContextSwitcher; this build understands up to {AppConfiguration.CurrentSchemaVersion}. Update the app."));
+                ConfigurationMessages.SchemaTooNew.With(
+                    configuration.SchemaVersion.ToString(CultureInfo.InvariantCulture),
+                    AppConfiguration.CurrentSchemaVersion.ToString(CultureInfo.InvariantCulture))));
         }
         else if (configuration.SchemaVersion < 1)
         {
-            errors.Add(new ConfigurationValidationError("schemaVersion", "Unsupported configuration schema version."));
+            errors.Add(ConfigurationValidationError.Of("schemaVersion", ConfigurationMessages.SchemaUnsupported.With()));
         }
 
         if (configuration.Contexts.Count == 0)
         {
-            errors.Add(new ConfigurationValidationError("contexts", "At least one context is required."));
+            errors.Add(ConfigurationValidationError.Of("contexts", ConfigurationMessages.NoContexts.With()));
         }
 
         ValidateContexts(configuration, errors);
@@ -59,21 +62,21 @@ public sealed class ConfigurationValidator
 
             if (string.IsNullOrWhiteSpace(context.Id) || !ContextIdPattern.IsMatch(context.Id))
             {
-                errors.Add(new ConfigurationValidationError($"{path}.id", "Context id must be lowercase and URL-safe."));
+                errors.Add(ConfigurationValidationError.Of($"{path}.id", ConfigurationMessages.IdNotUrlSafe.With()));
             }
             else if (!seenContextIds.Add(context.Id))
             {
-                errors.Add(new ConfigurationValidationError($"{path}.id", "Context id must be unique."));
+                errors.Add(ConfigurationValidationError.Of($"{path}.id", ConfigurationMessages.IdNotUnique.With()));
             }
 
             if (string.IsNullOrWhiteSpace(context.DisplayName))
             {
-                errors.Add(new ConfigurationValidationError($"{path}.displayName", "Context display name is required."));
+                errors.Add(ConfigurationValidationError.Of($"{path}.displayName", ConfigurationMessages.DisplayNameRequired.With()));
             }
 
             if (!HexColorPattern.IsMatch(context.AccentColor))
             {
-                errors.Add(new ConfigurationValidationError($"{path}.accentColor", "Accent color must be a 6-digit hex color."));
+                errors.Add(ConfigurationValidationError.Of($"{path}.accentColor", ConfigurationMessages.AccentColorInvalid.With()));
             }
 
             ValidateBrowserManagement(context.BrowserManagement, $"{path}.browser_management", errors);
@@ -83,7 +86,7 @@ public sealed class ConfigurationValidator
         if (!string.IsNullOrWhiteSpace(configuration.ActiveContextId) &&
             !seenContextIds.Contains(configuration.ActiveContextId))
         {
-            errors.Add(new ConfigurationValidationError("activeContextId", "Active context must reference an existing context."));
+            errors.Add(ConfigurationValidationError.Of("activeContextId", ConfigurationMessages.ActiveContextMissing.With()));
         }
     }
 
@@ -101,7 +104,7 @@ public sealed class ConfigurationValidator
             case BrowserManagementMode.Urls:
                 if (browserManagement.Urls.Count == 0)
                 {
-                    errors.Add(new ConfigurationValidationError($"{path}.urls", "URL mode requires at least one URL."));
+                    errors.Add(ConfigurationValidationError.Of($"{path}.urls", ConfigurationMessages.UrlModeNeedsUrl.With()));
                 }
 
                 break;
@@ -112,14 +115,14 @@ public sealed class ConfigurationValidator
                 ValidateProfiles(browserManagement.Profiles, $"{path}.profiles", errors);
                 break;
             default:
-                errors.Add(new ConfigurationValidationError($"{path}.mode", "Browser management mode is invalid."));
+                errors.Add(ConfigurationValidationError.Of($"{path}.mode", ConfigurationMessages.BrowserModeInvalid.With()));
                 break;
         }
 
         if (browserManagement.Mode is BrowserManagementMode.Urls or BrowserManagementMode.Groups &&
             !IsSupportedInteractiveBrowser(browserManagement.Browser))
         {
-            errors.Add(new ConfigurationValidationError($"{path}.browser", "Browser must be Default, Chrome, Brave, or Safari."));
+            errors.Add(ConfigurationValidationError.Of($"{path}.browser", ConfigurationMessages.BrowserInvalid.With()));
         }
     }
 
@@ -130,7 +133,7 @@ public sealed class ConfigurationValidator
     {
         if (tabGroups.Count == 0)
         {
-            errors.Add(new ConfigurationValidationError(path, "Tab groups mode requires at least one tab group name."));
+            errors.Add(ConfigurationValidationError.Of(path, ConfigurationMessages.TabGroupsNeedName.With()));
             return;
         }
 
@@ -138,7 +141,7 @@ public sealed class ConfigurationValidator
         {
             if (string.IsNullOrWhiteSpace(tabGroups[i]))
             {
-                errors.Add(new ConfigurationValidationError($"{path}[{i}]", "Tab group name cannot be empty."));
+                errors.Add(ConfigurationValidationError.Of($"{path}[{i}]", ConfigurationMessages.TabGroupNameEmpty.With()));
             }
         }
     }
@@ -150,7 +153,7 @@ public sealed class ConfigurationValidator
     {
         if (profiles.Count == 0)
         {
-            errors.Add(new ConfigurationValidationError(path, "Profiles mode requires at least one browser profile."));
+            errors.Add(ConfigurationValidationError.Of(path, ConfigurationMessages.ProfilesNeedProfile.With()));
             return;
         }
 
@@ -161,12 +164,12 @@ public sealed class ConfigurationValidator
 
             if (!IsSupportedProfileBrowser(profile.Browser))
             {
-                errors.Add(new ConfigurationValidationError($"{profilePath}.browser", "Profile browser must be Chrome or Brave."));
+                errors.Add(ConfigurationValidationError.Of($"{profilePath}.browser", ConfigurationMessages.ProfileBrowserInvalid.With()));
             }
 
             if (string.IsNullOrWhiteSpace(profile.ProfileDirectory))
             {
-                errors.Add(new ConfigurationValidationError($"{profilePath}.profile_directory", "Profile directory is required."));
+                errors.Add(ConfigurationValidationError.Of($"{profilePath}.profile_directory", ConfigurationMessages.ProfileDirectoryRequired.With()));
             }
 
             ValidateUrls(profile.Urls, $"{profilePath}.urls", errors);
@@ -182,7 +185,7 @@ public sealed class ConfigurationValidator
         {
             if (!IsHttpUrl(quickLinks[i].Url))
             {
-                errors.Add(new ConfigurationValidationError($"{path}[{i}].url", "Quick link URL must use http or https."));
+                errors.Add(ConfigurationValidationError.Of($"{path}[{i}].url", ConfigurationMessages.QuickLinkUrlInvalid.With()));
             }
         }
     }
@@ -196,7 +199,7 @@ public sealed class ConfigurationValidator
         {
             if (!IsHttpUrl(urls[i]))
             {
-                errors.Add(new ConfigurationValidationError($"{path}[{i}]", "URL must use http or https."));
+                errors.Add(ConfigurationValidationError.Of($"{path}[{i}]", ConfigurationMessages.UrlInvalid.With()));
             }
         }
     }
