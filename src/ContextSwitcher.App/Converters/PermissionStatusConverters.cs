@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia.Data.Converters;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.Converters;
 
@@ -15,9 +16,9 @@ public sealed class PermissionStatusTextConverter : IValueConverter
     {
         return value switch
         {
-            true => "Allowed",
-            false => "Not allowed",
-            _ => "Checking…"
+            true => Strings.Permission_Allowed,
+            false => Strings.Permission_NotAllowed,
+            _ => Strings.Common_Checking
         };
     }
 

@@ -1687,6 +1687,16 @@ Manual QA checklist:
 
 ## 17. Coding Standards
 
+Text (docs/translating.md):
+
+- No user-visible text in views or view models: it lives in `Resources/Strings.resx` (English) and is
+  used as `{x:Static r:Strings.Key}` / `Strings.Key`. `ResourceTests` fails on text written into a
+  view. Keys are `Area_What` with a `<comment>` for translators.
+- Placeholders through `Localized.Format`, counted phrases through `Plurals.Format` (CLDR one/few/
+  many/other, so Ukrainian and Polish get their three forms).
+- The language is read once at startup; the log, CLI output and identifiers (Focus Shortcut names)
+  stay English.
+
 C#:
 
 - Enable nullable reference types.

@@ -7,6 +7,8 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.App.Resources;
+using System.Globalization;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -166,7 +168,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     public bool IsNew { get; }
 
-    public string HeaderText => this.IsNew ? "New Profile" : $"Edit {this.displayName}";
+    public string HeaderText => this.IsNew ? Strings.ProfileSetup_NewProfileHeader : Localized.Format(Strings.ProfileSetup_EditHeader, this.displayName);
 
     /// <summary>
     /// The profile's id, which is no longer shown or edited. An existing profile keeps the id it
@@ -299,15 +301,15 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     public IReadOnlyList<Choice<BrowserManagementMode>> BrowserModeChoices { get; } =
     [
-        new(BrowserManagementMode.None, "Don't open anything"),
-        new(BrowserManagementMode.Urls, "Open web pages"),
-        new(BrowserManagementMode.Groups, "Open tab groups"),
-        new(BrowserManagementMode.Profiles, "Open browser profiles")
+        new(BrowserManagementMode.None, Strings.Browser_Mode_None),
+        new(BrowserManagementMode.Urls, Strings.Browser_Mode_Urls),
+        new(BrowserManagementMode.Groups, Strings.Browser_Mode_Groups),
+        new(BrowserManagementMode.Profiles, Strings.Browser_Mode_Profiles)
     ];
 
     public IReadOnlyList<Choice<BrowserKind>> BrowserKindChoices { get; } =
     [
-        new(BrowserKind.Default, "Default browser"),
+        new(BrowserKind.Default, Strings.Browser_Default),
         new(BrowserKind.Safari, "Safari"),
         new(BrowserKind.Chrome, "Google Chrome"),
         new(BrowserKind.Brave, "Brave")
@@ -389,8 +391,8 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     public bool CanAvoidDuplicateTabs => this.BrowserKind != BrowserKind.Default;
 
     public string AvoidDuplicateTabsHint => this.CanAvoidDuplicateTabs
-        ? "Focuses a matching tab instead of opening a second one."
-        : "Needs a specific browser - the default browser can't be checked for open tabs.";
+        ? Strings.Browser_AvoidDuplicates_On
+        : Strings.Browser_AvoidDuplicates_NeedsBrowser;
 
     public bool AvoidDuplicateTabs
     {
@@ -663,30 +665,28 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         };
     }
 
-    private const string OpenTabsEmptyText =
-        "No other web pages are open. Open the ones you want in your browser, then try again.";
+    private static string OpenTabsEmptyText => Strings.Picker_OpenTabsEmpty;
 
-    private const string OpenTabsUnavailableText = "Couldn't read your browser's tabs.";
+    private static string OpenTabsUnavailableText => Strings.Picker_OpenTabsUnavailable;
 
-    private const string ContainersEmptyText = "No other containers to add.";
+    private static string ContainersEmptyText => Strings.Picker_ContainersEmpty;
 
-    private const string OpenTabsSearchText = "Search open tabs…";
+    private static string OpenTabsSearchText => Strings.Picker_SearchOpenTabs;
 
-    private const string ContainersSearchText = "Search containers…";
+    private static string ContainersSearchText => Strings.Picker_SearchContainers;
 
-    private const string ContainersUnavailableText =
-        "Docker isn't running. Start Docker Desktop to choose a container, or type its name.";
+    private static string ContainersUnavailableText => Strings.Picker_DockerNotRunning;
 
     private static readonly (string Hex, string Name)[] AccentPalette =
     [
-        ("#2F6FED", "Blue"),
-        ("#7B61FF", "Violet"),
-        ("#D6409F", "Pink"),
-        ("#E5484D", "Red"),
-        ("#F2994A", "Orange"),
-        ("#20A67A", "Green"),
-        ("#0FA3B1", "Teal"),
-        ("#6E7781", "Graphite")
+        ("#2F6FED", Strings.Accent_Blue),
+        ("#7B61FF", Strings.Accent_Violet),
+        ("#D6409F", Strings.Accent_Pink),
+        ("#E5484D", Strings.Accent_Red),
+        ("#F2994A", Strings.Accent_Orange),
+        ("#20A67A", Strings.Accent_Green),
+        ("#0FA3B1", Strings.Accent_Teal),
+        ("#6E7781", Strings.Accent_Graphite)
     ];
 
     private AccentChoiceViewModel? MatchingPreset() =>
@@ -729,8 +729,8 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         return new ContextDefinition
         {
             Id = id,
-            DisplayName = "New Profile",
-            MenuBarLabel = "NEW",
+            DisplayName = Strings.ProfileSetup_NewProfileName,
+            MenuBarLabel = Strings.ProfileSetup_NewProfileName.ToUpper(CultureInfo.CurrentCulture),
             AccentColor = "#2F6FED",
             Icon = "circle"
         };

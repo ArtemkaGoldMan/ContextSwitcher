@@ -4,6 +4,7 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -119,11 +120,11 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
         // never got that far, so the notice is told directly.
         if (result.Status is ContextSwitchStatus.Cancelled)
         {
-            this.Notice.ShowRejected($"Couldn't switch to {context.DisplayName}", "Another switch was still running. Try again once it has finished.", result.CompletedAt);
+            this.Notice.ShowRejected(Localized.Format(Strings.Notice_CouldNotSwitchTo, context.DisplayName), Strings.Notice_AnotherSwitchRunning, result.CompletedAt);
         }
         else if (result.Status is ContextSwitchStatus.Failed && AppHost.State.LastSwitchCompletedAt == lastSwitchBefore)
         {
-            this.Notice.ShowRejected($"Couldn't switch to {context.DisplayName}", "The switch stopped before it could finish. The app log has the details.", result.CompletedAt);
+            this.Notice.ShowRejected(Localized.Format(Strings.Notice_CouldNotSwitchTo, context.DisplayName), Strings.Notice_SwitchStopped, result.CompletedAt);
         }
     }
 
@@ -132,7 +133,7 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
         this.ErrorMessage = null;
 
         string newId = GenerateUniqueId(context.Id, AppHost.Configuration.Contexts);
-        ContextDefinition duplicate = context with { Id = newId, DisplayName = $"{context.DisplayName} Copy" };
+        ContextDefinition duplicate = context with { Id = newId, DisplayName = Localized.Format(Strings.Profiles_CopyName, context.DisplayName) };
 
         AppConfiguration updated = AppHost.Configuration with
         {
@@ -148,13 +149,13 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
 
         if (context.Id == AppHost.State.CurrentContextId)
         {
-            this.ErrorMessage = $"Can't delete {context.DisplayName} - it's the active profile. Switch to another profile first.";
+            this.ErrorMessage = Localized.Format(Strings.Profiles_CannotDeleteActive, context.DisplayName);
             return;
         }
 
         if (AppHost.Configuration.Contexts.Count <= 1)
         {
-            this.ErrorMessage = "At least one profile is required.";
+            this.ErrorMessage = Strings.Profiles_AtLeastOne;
             return;
         }
 

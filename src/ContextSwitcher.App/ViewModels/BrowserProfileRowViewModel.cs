@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -122,7 +123,7 @@ public sealed class BrowserProfileRowViewModel : ViewModelBase
         Choice<string>? match = choices.FirstOrDefault(choice => choice.Value == keep);
         if (match is null && keep.Length > 0 && this.selectedProfile is null)
         {
-            match = new Choice<string>(keep, $"{keep} (not found)");
+            match = new Choice<string>(keep, Localized.Format(Strings.Browser_ProfileNotFound, keep));
             choices.Add(match);
         }
 

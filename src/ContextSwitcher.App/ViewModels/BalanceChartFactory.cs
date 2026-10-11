@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia.Media;
 using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -65,8 +66,8 @@ public static class BalanceChartFactory
 
             string date = day.Date.ToString("ddd d MMM", CultureInfo.CurrentCulture);
             string tooltip = parts.Count == 0
-                ? $"{date}: nothing recorded"
-                : $"{date}\n" + string.Join("\n", parts.Select(part => $"{part.Name}: {FormatHours(part.Seconds)}"));
+                ? Localized.Format(Strings.Chart_NothingRecorded, date)
+                : $"{date}\n" + string.Join("\n", parts.Select(part => Localized.Format(Strings.Chart_ProfileTime, part.Name, FormatHours(part.Seconds))));
 
             days.Add(new BalanceDayViewModel(
                 day.Date.ToString(labelFormat, CultureInfo.CurrentCulture),
@@ -105,7 +106,7 @@ public static class BalanceChartFactory
 
     /// <summary>"45m" under an hour, "2.5h" above.</summary>
     public static string FormatHours(long seconds) =>
-        seconds < 3600 ? $"{Math.Max(1, seconds / 60)}m" : $"{seconds / 3600.0:0.#}h";
+        seconds < 3600 ? Localized.Format(Strings.Units_Minutes, Math.Max(1, seconds / 60)) : Localized.Format(Strings.Units_Hours, seconds / 3600.0);
 }
 
 /// <summary>The whole chart: a column per day, and the legend of totals under it.</summary>

@@ -4,6 +4,7 @@ using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Core.Updates;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -28,7 +29,7 @@ public sealed class UpdatesViewModel : ViewModelBase
 
     private ReleaseInfo? available;
     private string? installBlocker;
-    private string statusText = "Not checked yet.";
+    private string statusText = Strings.Updates_NotCheckedYet;
     private bool isBusy;
     private DispatcherTimer? timer;
 
@@ -57,7 +58,7 @@ public sealed class UpdatesViewModel : ViewModelBase
     public Version CurrentVersion { get; }
 
     /// <summary>"Version 0.1.0".</summary>
-    public string CurrentVersionText => $"Version {ReleaseVersion.Format(this.CurrentVersion)}";
+    public string CurrentVersionText => Localized.Format(Strings.Updates_Version, ReleaseVersion.Format(this.CurrentVersion));
 
     public string StatusText
     {
@@ -93,8 +94,8 @@ public sealed class UpdatesViewModel : ViewModelBase
 
     /// <summary>The link to the release: its notes when the app installs it, the download when it can't.</summary>
     public string ReleasePageLinkText => this.installBlocker is null
-        ? $"What's new in {this.AvailableVersionText} ↗"
-        : $"Download {this.AvailableVersionText} from GitHub ↗";
+        ? Localized.Format(Strings.Updates_WhatsNewIn, this.AvailableVersionText)
+        : Localized.Format(Strings.Updates_DownloadFromGitHub, this.AvailableVersionText);
 
     public bool IsBusy
     {
@@ -149,7 +150,7 @@ public sealed class UpdatesViewModel : ViewModelBase
         this.IsBusy = true;
         if (userAsked)
         {
-            this.StatusText = "Checking…";
+            this.StatusText = Strings.Common_Checking;
         }
 
         try
@@ -158,19 +159,19 @@ public sealed class UpdatesViewModel : ViewModelBase
             if (latest is null || latest.Version <= this.CurrentVersion)
             {
                 this.SetAvailable(null);
-                this.StatusText = $"Up to date. Checked at {this.now():HH:mm}.";
+                this.StatusText = Localized.Format(Strings.Updates_UpToDate, this.now());
                 return;
             }
 
             this.InstallBlocker = await this.updater.GetInstallBlockerAsync(CancellationToken.None).ConfigureAwait(true);
             this.SetAvailable(latest);
-            this.StatusText = $"Version {ReleaseVersion.Format(latest.Version)} is available.";
+            this.StatusText = Localized.Format(Strings.Updates_Available, ReleaseVersion.Format(latest.Version));
         }
         catch (UpdateException ex)
         {
             if (userAsked)
             {
-                this.StatusText = $"Couldn't check for updates. {ex.Message}";
+                this.StatusText = Localized.Format(Strings.Updates_CouldNotCheck, ex.Message);
             }
         }
         finally
@@ -187,17 +188,17 @@ public sealed class UpdatesViewModel : ViewModelBase
         }
 
         this.IsBusy = true;
-        this.StatusText = $"Downloading version {ReleaseVersion.Format(release.Version)}…";
+        this.StatusText = Localized.Format(Strings.Updates_Downloading, ReleaseVersion.Format(release.Version));
         try
         {
             StagedUpdate staged = await this.updater.StageAsync(release, CancellationToken.None).ConfigureAwait(true);
             this.updater.InstallOnExit(staged);
-            this.StatusText = "Restarting…";
+            this.StatusText = Strings.Updates_Restarting;
             this.RestartRequested?.Invoke(this, EventArgs.Empty);
         }
         catch (UpdateException ex)
         {
-            this.StatusText = $"Couldn't install the update. {ex.Message}";
+            this.StatusText = Localized.Format(Strings.Updates_CouldNotInstall, ex.Message);
         }
         finally
         {

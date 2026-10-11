@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App;
 
@@ -19,11 +20,11 @@ namespace ContextSwitcher.App;
 /// </summary>
 public sealed class TrayMenu
 {
-    public const string OpenDashboardLabel = "Open Dashboard";
+    public static string OpenDashboardLabel => Strings.Tray_OpenDashboard;
 
-    public const string OpenAppLabel = "Open App";
+    public static string OpenAppLabel => Strings.Tray_OpenApp;
 
-    public const string QuitLabel = "Quit";
+    public static string QuitLabel => Strings.Tray_Quit;
 
     private readonly Action<string> switchTo;
     private readonly List<(string ContextId, NativeMenuItem Item)> profileItems = [];
@@ -46,7 +47,7 @@ public sealed class TrayMenu
     public NativeMenu Menu { get; }
 
     /// <summary>"Update to 0.2.0…" for the menu entry that leads to a waiting update.</summary>
-    public static string UpdateLabel(string version) => $"Update to {version}…";
+    public static string UpdateLabel(string version) => Localized.Format(Strings.Tray_UpdateTo, version);
 
     /// <summary>
     /// Shows the "Update to …" entry above Quit while <paramref name="version"/> is waiting, and takes

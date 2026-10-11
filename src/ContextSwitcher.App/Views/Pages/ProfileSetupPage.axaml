@@ -2,6 +2,7 @@
   x:Class="ContextSwitcher.App.Views.Pages.ProfileSetupPage"
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:r="using:ContextSwitcher.App.Resources"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
   xmlns:conv="using:ContextSwitcher.App.Converters"
   xmlns:ctl="using:ContextSwitcher.App.Controls"
@@ -15,14 +16,14 @@
       <!-- A live preview of the profile: its icon on its accent color, as the rows and the menu bar
            popover will draw it. -->
       <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{Binding AccentBrush}" Margin="0,0,12,0"
-              ToolTip.Tip="Preview" AutomationProperties.Name="Profile preview">
+              ToolTip.Tip="{x:Static r:Strings.ProfileSetup_Preview}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_ProfilePreview}">
         <Viewbox Classes="icon" Width="17" Height="17">
           <Path Classes="glyph" Data="{Binding Icon, Converter={x:Static conv:ProfileIconConverter.Instance}}" />
         </Viewbox>
       </Border>
       <TextBlock Grid.Column="1" Text="{Binding HeaderText}" Classes="header" VerticalAlignment="Center" />
-      <Button Grid.Column="2" Classes="switchContext" Content="Cancel" Command="{Binding CancelCommand}" IsCancel="True" Margin="0,0,8,0" />
-      <Button Grid.Column="3" Classes="switchContext current" Content="Save" Command="{Binding SaveCommand}" IsDefault="True" />
+      <Button Grid.Column="2" Classes="switchContext" Content="{x:Static r:Strings.ProfileSetup_Cancel}" Command="{Binding CancelCommand}" IsCancel="True" Margin="0,0,8,0" />
+      <Button Grid.Column="3" Classes="switchContext current" Content="{x:Static r:Strings.ProfileSetup_Save}" Command="{Binding SaveCommand}" IsDefault="True" />
     </Grid>
 
     <TextBlock
@@ -35,15 +36,15 @@
     <!-- Identity -->
     <Border Classes="panel">
       <StackPanel Spacing="10">
-        <TextBlock Text="IDENTITY" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.ProfileSetup_Identity_Section}" Classes="sectionTitle" />
 
-        <ctl:FormRow Title="Display name">
-          <TextBox Text="{Binding DisplayName}" AutomationProperties.Name="Display name" />
+        <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_DisplayName}">
+          <TextBox Text="{Binding DisplayName}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_DisplayName}" />
         </ctl:FormRow>
         <Border Classes="divider" />
 
-        <ctl:FormRow Title="Accent color">
-          <ComboBox ItemsSource="{Binding AccentChoices}" SelectedItem="{Binding SelectedAccent}" AutomationProperties.Name="Accent color">
+        <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_AccentColor}">
+          <ComboBox ItemsSource="{Binding AccentChoices}" SelectedItem="{Binding SelectedAccent}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_AccentColor}">
             <ComboBox.ItemTemplate>
               <DataTemplate x:DataType="vm:AccentChoiceViewModel">
                 <StackPanel Orientation="Horizontal">
@@ -65,11 +66,11 @@
           IsVisible="{Binding IsCustomAccent}"
           Width="{StaticResource FieldWidth}"
           HorizontalAlignment="Right"
-          AutomationProperties.Name="Custom color" />
+          AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_CustomColor}" />
         <Border Classes="divider" />
 
-        <ctl:FormRow Title="Icon">
-          <ComboBox ItemsSource="{Binding IconChoices}" SelectedItem="{Binding SelectedIcon}" MaxDropDownHeight="340" AutomationProperties.Name="Icon">
+        <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_Icon}">
+          <ComboBox ItemsSource="{Binding IconChoices}" SelectedItem="{Binding SelectedIcon}" MaxDropDownHeight="340" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Icon}">
             <ComboBox.ItemTemplate>
               <DataTemplate x:DataType="vm:IconChoiceViewModel">
                 <StackPanel Orientation="Horizontal">
@@ -90,9 +91,9 @@
     <!-- Apps -->
     <Border Classes="panel">
       <StackPanel Spacing="10">
-        <TextBlock Text="APPS" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.ProfileSetup_Apps_Section}" Classes="sectionTitle" />
         <TextBlock
-          Text="Launch opens the app when you enter this profile. Close quits it when you leave."
+          Text="{x:Static r:Strings.ProfileSetup_LaunchOpensTheAppWhen}"
           Classes="caption"
           TextWrapping="Wrap" />
 
@@ -105,18 +106,18 @@
         </ItemsControl>
 
         <TextBlock
-          Text="No apps yet — add the ones this profile should open or close."
+          Text="{x:Static r:Strings.ProfileSetup_NoAppsYetAddThe}"
           Classes="caption"
           IsVisible="{Binding !Apps.Count}" />
 
-        <Button Classes="linkButton" Content="+ Add app">
+        <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddApp}">
           <Button.Flyout>
             <Flyout Placement="BottomEdgeAlignedLeft">
               <StackPanel Width="{StaticResource PickerWidth}" Spacing="8">
                 <ContentControl Content="{Binding AppPicker}" ContentTemplate="{StaticResource AppPickerContent}" />
                 <Border Classes="divider" />
-                <Button Classes="linkButton" Content="Type a name…" Command="{Binding AddAppCommand}" ctl:PopupActions.ClosesPopup="True"
-                        ToolTip.Tip="For an app that isn't in Applications" />
+                <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAName}" Command="{Binding AddAppCommand}" ctl:PopupActions.ClosesPopup="True"
+                        ToolTip.Tip="{x:Static r:Strings.ProfileSetup_ForAnAppThatIsnt}" />
               </StackPanel>
             </Flyout>
           </Button.Flyout>
@@ -127,28 +128,28 @@
     <!-- Browser management -->
     <Border Classes="panel">
       <StackPanel Spacing="10">
-        <TextBlock Text="BROWSER MANAGEMENT" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.ProfileSetup_BrowserManagement_Section}" Classes="sectionTitle" />
 
-        <ctl:FormRow Title="On switch">
-          <ComboBox ItemsSource="{Binding BrowserModeChoices}" SelectedItem="{Binding SelectedBrowserMode}" AutomationProperties.Name="On switch" />
+        <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_OnSwitch}">
+          <ComboBox ItemsSource="{Binding BrowserModeChoices}" SelectedItem="{Binding SelectedBrowserMode}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_OnSwitch}" />
         </ctl:FormRow>
 
         <StackPanel Spacing="10" IsVisible="{Binding ShowsBrowserChoice}">
           <Border Classes="divider" />
-          <ctl:FormRow Title="Browser">
-            <ComboBox ItemsSource="{Binding BrowserKindChoices}" SelectedItem="{Binding SelectedBrowserKind}" AutomationProperties.Name="Browser" />
+          <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_Browser}">
+            <ComboBox ItemsSource="{Binding BrowserKindChoices}" SelectedItem="{Binding SelectedBrowserKind}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Browser}" />
           </ctl:FormRow>
         </StackPanel>
 
         <StackPanel Spacing="10" IsVisible="{Binding IsUrlsMode}">
           <Border Classes="divider" />
-          <ctl:FormRow Title="Avoid duplicate tabs" Description="{Binding AvoidDuplicateTabsHint}">
+          <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_AvoidDuplicateTabs}" Description="{Binding AvoidDuplicateTabsHint}">
             <ToggleSwitch IsChecked="{Binding AvoidDuplicateTabs}" IsEnabled="{Binding CanAvoidDuplicateTabs}" />
           </ctl:FormRow>
         </StackPanel>
 
         <StackPanel Spacing="6" IsVisible="{Binding IsUrlsMode}" Margin="0,6,0,0">
-          <TextBlock Text="Startup URLs" Classes="caption" />
+          <TextBlock Text="{x:Static r:Strings.ProfileSetup_StartupURLs}" Classes="caption" />
           <ItemsControl ItemsSource="{Binding BrowserUrls}" ItemTemplate="{StaticResource StringRow}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
@@ -157,13 +158,13 @@
             </ItemsControl.ItemsPanel>
           </ItemsControl>
           <!-- Every opening re-reads the browser, so the list is what is open right now. -->
-          <Button Classes="linkButton" Content="+ Add URL" Command="{Binding UrlTabPicker.LoadCommand}">
+          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddUrl}" Command="{Binding UrlTabPicker.LoadCommand}">
             <Button.Flyout>
               <Flyout Placement="BottomEdgeAlignedLeft">
                 <StackPanel Width="{StaticResource PickerWidth}" Spacing="8">
                   <ContentControl Content="{Binding UrlTabPicker}" ContentTemplate="{StaticResource ChoicePickerContent}" />
                   <Border Classes="divider" />
-                  <Button Classes="linkButton" Content="Type a URL…" Command="{Binding AddBrowserUrlCommand}" ctl:PopupActions.ClosesPopup="True" />
+                  <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAUrl}" Command="{Binding AddBrowserUrlCommand}" ctl:PopupActions.ClosesPopup="True" />
                 </StackPanel>
               </Flyout>
             </Button.Flyout>
@@ -171,7 +172,7 @@
         </StackPanel>
 
         <StackPanel Spacing="6" IsVisible="{Binding IsGroupsMode}" Margin="0,6,0,0">
-          <TextBlock Text="Tab groups" Classes="caption" />
+          <TextBlock Text="{x:Static r:Strings.ProfileSetup_TabGroups}" Classes="caption" />
           <ItemsControl ItemsSource="{Binding TabGroups}" ItemTemplate="{StaticResource StringRow}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
@@ -180,11 +181,11 @@
             </ItemsControl.ItemsPanel>
           </ItemsControl>
           <!-- No picker: browsers don't tell other apps their tab groups' names. -->
-          <Button Classes="linkButton" Content="+ Add tab group" Command="{Binding AddTabGroupCommand}" />
+          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddTabGroup}" Command="{Binding AddTabGroupCommand}" />
         </StackPanel>
 
         <StackPanel Spacing="6" IsVisible="{Binding IsProfilesMode}" Margin="0,6,0,0">
-          <TextBlock Text="Browser profiles" Classes="caption" />
+          <TextBlock Text="{x:Static r:Strings.ProfileSetup_BrowserProfiles}" Classes="caption" />
           <ItemsControl ItemsSource="{Binding BrowserProfiles}" ItemTemplate="{StaticResource BrowserProfileRow}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
@@ -192,7 +193,7 @@
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
           </ItemsControl>
-          <Button Classes="linkButton" Content="+ Add browser profile" Command="{Binding AddBrowserProfileCommand}" />
+          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddBrowserProfile}" Command="{Binding AddBrowserProfileCommand}" />
         </StackPanel>
       </StackPanel>
     </Border>
@@ -200,24 +201,24 @@
     <!-- Everything below Browser is collapsed by default: a new profile only needs identity,
          apps and browser to be useful, and showing all 12 sections at once was the single
          biggest reason Profile Setup read as a config file (agent.md section 11.1.2). -->
-    <Expander Classes="section" AutomationProperties.Name="Focus and music">
+    <Expander Classes="section" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_FocusAndMusic}">
       <Expander.Header>
         <StackPanel Spacing="2">
-          <TextBlock Text="Focus &amp; music" Classes="body" FontWeight="SemiBold" />
-          <TextBlock Text="Turn on a macOS Focus and start a playlist when you switch to this profile." Classes="caption" FontWeight="Normal" TextWrapping="Wrap" />
+          <TextBlock Text="{x:Static r:Strings.ProfileSetup_FocusMusic}" Classes="body" FontWeight="SemiBold" />
+          <TextBlock Text="{x:Static r:Strings.ProfileSetup_TurnOnAMacOSFocus}" Classes="caption" FontWeight="Normal" TextWrapping="Wrap" />
         </StackPanel>
       </Expander.Header>
       <StackPanel Spacing="20">
         <!-- Focus -->
         <Border Classes="panel">
           <StackPanel Spacing="10">
-            <TextBlock Text="FOCUS" Classes="sectionTitle" />
+            <TextBlock Text="{x:Static r:Strings.ProfileSetup_Focus_Section}" Classes="sectionTitle" />
             <TextBlock
-              Text="Switches macOS Focus - Do Not Disturb, Work, Sleep… - when you switch to this profile, so only the notifications you want get through. Switching to a profile without one turns Focus off."
+              Text="{x:Static r:Strings.ProfileSetup_SwitchesMacOSFocusDoNot}"
               Classes="caption"
               TextWrapping="Wrap" />
-            <ctl:FormRow Title="Focus mode">
-              <ComboBox ItemsSource="{Binding Focus.Choices}" SelectedItem="{Binding Focus.Selected}" AutomationProperties.Name="Focus mode">
+            <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_FocusMode}">
+              <ComboBox ItemsSource="{Binding Focus.Choices}" SelectedItem="{Binding Focus.Selected}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_FocusMode}">
                 <ComboBox.ItemTemplate>
                   <DataTemplate x:DataType="vm:FocusChoiceViewModel">
                     <StackPanel Orientation="Horizontal" Spacing="10">
@@ -234,16 +235,16 @@
             <StackPanel Spacing="8" IsVisible="{Binding Focus.HasHint}">
               <StackPanel Spacing="4" IsVisible="{Binding Focus.IsShortcutMissing}">
                 <TextBlock Text="{Binding Focus.MissingShortcutText}" Classes="caption" TextWrapping="Wrap" />
-                <Button Classes="linkButton" Content="Create it" Command="{Binding Focus.CreateShortcutCommand}" IsVisible="{Binding Focus.CanCreateShortcut}" />
+                <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_CreateIt}" Command="{Binding Focus.CreateShortcutCommand}" IsVisible="{Binding Focus.CanCreateShortcut}" />
               </StackPanel>
               <StackPanel Spacing="4" IsVisible="{Binding Focus.IsOffShortcutMissing}">
                 <TextBlock Text="{Binding Focus.MissingOffShortcutText}" Classes="caption" TextWrapping="Wrap" />
-                <Button Classes="linkButton" Content="Create it" Command="{Binding Focus.CreateOffShortcutCommand}" IsVisible="{Binding Focus.CanCreateOffShortcut}" />
+                <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_CreateIt}" Command="{Binding Focus.CreateOffShortcutCommand}" IsVisible="{Binding Focus.CanCreateOffShortcut}" />
               </StackPanel>
               <TextBlock Text="{Binding Focus.ShortcutStatus}" Classes="caption" Foreground="{DynamicResource AccentBrush}" TextWrapping="Wrap" IsVisible="{Binding Focus.HasShortcutStatus}" />
               <StackPanel Orientation="Horizontal" Spacing="18">
-                <Button Classes="linkButton secondary" Content="Open Shortcuts ↗" Command="{Binding Focus.OpenShortcutsCommand}" />
-                <Button Classes="linkButton secondary" Content="Check again" Command="{Binding Focus.RecheckCommand}" />
+                <Button Classes="linkButton secondary" Content="{x:Static r:Strings.ProfileSetup_OpenShortcuts}" Command="{Binding Focus.OpenShortcutsCommand}" />
+                <Button Classes="linkButton secondary" Content="{x:Static r:Strings.ProfileSetup_CheckAgain}" Command="{Binding Focus.RecheckCommand}" />
               </StackPanel>
             </StackPanel>
           </StackPanel>
@@ -252,34 +253,34 @@
         <!-- Media -->
         <Border Classes="panel">
           <StackPanel Spacing="10">
-            <TextBlock Text="MEDIA" Classes="sectionTitle" />
-            <TextBlock Text="Starts a playlist when you switch to this profile." Classes="caption" TextWrapping="Wrap" />
-            <ctl:FormRow Title="Player">
-              <ComboBox ItemsSource="{Binding Media.Players}" SelectedItem="{Binding Media.SelectedPlayer}" AutomationProperties.Name="Player" />
+            <TextBlock Text="{x:Static r:Strings.ProfileSetup_Media_Section}" Classes="sectionTitle" />
+            <TextBlock Text="{x:Static r:Strings.ProfileSetup_StartsAPlaylistWhenYou}" Classes="caption" TextWrapping="Wrap" />
+            <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_Player}">
+              <ComboBox ItemsSource="{Binding Media.Players}" SelectedItem="{Binding Media.SelectedPlayer}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Player}" />
             </ctl:FormRow>
 
             <StackPanel Spacing="10" IsVisible="{Binding Media.IsAppleMusic}">
               <Border Classes="divider" />
-              <ctl:FormRow Title="Playlist">
-                <ComboBox ItemsSource="{Binding Media.MusicPlaylists}" SelectedItem="{Binding Media.Playlist}" PlaceholderText="Choose a playlist" AutomationProperties.Name="Playlist" />
+              <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_Playlist}">
+                <ComboBox ItemsSource="{Binding Media.MusicPlaylists}" SelectedItem="{Binding Media.Playlist}" PlaceholderText="{x:Static r:Strings.ProfileSetup_ChooseAPlaylist}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Playlist}" />
               </ctl:FormRow>
               <!-- Music's playlists are only readable by scripting Music, which opens it - so only on request. -->
-              <Button Classes="linkButton" Content="Load playlists from Music" Command="{Binding Media.LoadMusicPlaylistsCommand}" IsVisible="{Binding Media.CanLoadMusicPlaylists}" ToolTip.Tip="Opens Music to read your playlists" />
-              <TextBlock Text="Reading playlists from Music…" Classes="caption" IsVisible="{Binding Media.IsLoadingMusicPlaylists}" />
+              <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_LoadPlaylistsFromMusic}" Command="{Binding Media.LoadMusicPlaylistsCommand}" IsVisible="{Binding Media.CanLoadMusicPlaylists}" ToolTip.Tip="{x:Static r:Strings.ProfileSetup_OpensMusicToReadYour}" />
+              <TextBlock Text="{x:Static r:Strings.ProfileSetup_ReadingPlaylistsFromMusic}" Classes="caption" IsVisible="{Binding Media.IsLoadingMusicPlaylists}" />
               <TextBlock Text="{Binding Media.MusicStatus}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding Media.HasMusicStatus}" />
             </StackPanel>
 
             <!-- Spotify won't list playlists to a script; a pasted Share link is the next best thing. -->
             <StackPanel Spacing="10" IsVisible="{Binding Media.IsSpotify}">
               <Border Classes="divider" />
-              <ctl:FormRow Title="Playlist" Description="In Spotify: Share → Copy link to playlist, then paste it here.">
-                <TextBox Text="{Binding Media.Playlist}" PlaceholderText="https://open.spotify.com/…" AutomationProperties.Name="Spotify link" />
+              <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_Playlist}" Description="{x:Static r:Strings.ProfileSetup_InSpotifyShareCopyLink}">
+                <TextBox Text="{Binding Media.Playlist}" PlaceholderText="{x:Static r:Strings.ProfileSetup_HttpsOpenSpotifyCom}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_SpotifyLink}" />
               </ctl:FormRow>
             </StackPanel>
 
             <StackPanel Spacing="10" IsVisible="{Binding Media.HasPlayer}">
               <Border Classes="divider" />
-              <ctl:FormRow Title="Play when switching in">
+              <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_PlayWhenSwitchingIn}">
                 <ToggleSwitch IsChecked="{Binding Media.AutoPlay}" />
               </ctl:FormRow>
             </StackPanel>
@@ -288,24 +289,24 @@
       </StackPanel>
     </Expander>
 
-    <Expander Classes="section" AutomationProperties.Name="Advanced">
+    <Expander Classes="section" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Advanced}">
       <Expander.Header>
         <StackPanel Spacing="2">
-          <TextBlock Text="Advanced" Classes="body" FontWeight="SemiBold" />
-          <TextBlock Text="Docker containers, links and notes for the dashboard, and what happens when a step fails." Classes="caption" FontWeight="Normal" TextWrapping="Wrap" />
+          <TextBlock Text="{x:Static r:Strings.ProfileSetup_Advanced}" Classes="body" FontWeight="SemiBold" />
+          <TextBlock Text="{x:Static r:Strings.ProfileSetup_DockerContainersLinksAndNotes}" Classes="caption" FontWeight="Normal" TextWrapping="Wrap" />
         </StackPanel>
       </Expander.Header>
       <StackPanel Spacing="20">
         <!-- Docker -->
         <Border Classes="panel">
           <StackPanel Spacing="6">
-            <TextBlock Text="DOCKER" Classes="sectionTitle" />
+            <TextBlock Text="{x:Static r:Strings.ProfileSetup_Docker_Section}" Classes="sectionTitle" />
             <TextBlock
-              Text="Starts the containers this profile needs when you switch to it - a local database, say - and stops the ones you list when you leave it."
+              Text="{x:Static r:Strings.ProfileSetup_StartsTheContainersThisProfile}"
               Classes="caption"
               TextWrapping="Wrap"
               Margin="0,0,0,6" />
-            <TextBlock Text="Start when entering" Classes="caption" />
+            <TextBlock Text="{x:Static r:Strings.ProfileSetup_StartWhenEntering}" Classes="caption" />
             <ItemsControl ItemsSource="{Binding DockerStart}" ItemTemplate="{StaticResource StringRow}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -313,13 +314,13 @@
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
             </ItemsControl>
-            <Button Classes="linkButton" Content="+ Add container" Command="{Binding DockerStartPicker.LoadCommand}">
+            <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddContainer}" Command="{Binding DockerStartPicker.LoadCommand}">
               <Button.Flyout>
                 <Flyout Placement="BottomEdgeAlignedLeft">
                   <StackPanel Width="{StaticResource PickerWidth}" Spacing="8">
                     <ContentControl Content="{Binding DockerStartPicker}" ContentTemplate="{StaticResource ChoicePickerContent}" />
                     <Border Classes="divider" />
-                    <Button Classes="linkButton" Content="Type a name…" Command="{Binding AddDockerStartCommand}" ctl:PopupActions.ClosesPopup="True" />
+                    <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAName}" Command="{Binding AddDockerStartCommand}" ctl:PopupActions.ClosesPopup="True" />
                   </StackPanel>
                 </Flyout>
               </Button.Flyout>
@@ -327,7 +328,7 @@
 
             <Border Classes="divider" Margin="0,8" />
 
-            <TextBlock Text="Stop when leaving" Classes="caption" />
+            <TextBlock Text="{x:Static r:Strings.ProfileSetup_StopWhenLeaving}" Classes="caption" />
             <ItemsControl ItemsSource="{Binding DockerStop}" ItemTemplate="{StaticResource StringRow}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -335,13 +336,13 @@
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
             </ItemsControl>
-            <Button Classes="linkButton" Content="+ Add container" Command="{Binding DockerStopPicker.LoadCommand}">
+            <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddContainer}" Command="{Binding DockerStopPicker.LoadCommand}">
               <Button.Flyout>
                 <Flyout Placement="BottomEdgeAlignedLeft">
                   <StackPanel Width="{StaticResource PickerWidth}" Spacing="8">
                     <ContentControl Content="{Binding DockerStopPicker}" ContentTemplate="{StaticResource ChoicePickerContent}" />
                     <Border Classes="divider" />
-                    <Button Classes="linkButton" Content="Type a name…" Command="{Binding AddDockerStopCommand}" ctl:PopupActions.ClosesPopup="True" />
+                    <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAName}" Command="{Binding AddDockerStopCommand}" ctl:PopupActions.ClosesPopup="True" />
                   </StackPanel>
                 </Flyout>
               </Button.Flyout>
@@ -352,9 +353,9 @@
         <!-- Quick links -->
         <Border Classes="panel">
           <StackPanel Spacing="10">
-            <TextBlock Text="QUICK LINKS" Classes="sectionTitle" />
+            <TextBlock Text="{x:Static r:Strings.ProfileSetup_QuickLinks_Section}" Classes="sectionTitle" />
             <TextBlock
-              Text="Shown in the menu bar dashboard while this profile is active, one click to open - your team's board, a dashboard, your inbox."
+              Text="{x:Static r:Strings.ProfileSetup_ShownInTheMenuBar}"
               Classes="caption"
               TextWrapping="Wrap" />
             <ItemsControl ItemsSource="{Binding QuickLinks}" ItemTemplate="{StaticResource QuickLinkRow}">
@@ -364,13 +365,13 @@
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
             </ItemsControl>
-            <Button Classes="linkButton" Content="+ Add quick link" Command="{Binding QuickLinkTabPicker.LoadCommand}">
+            <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddQuickLink}" Command="{Binding QuickLinkTabPicker.LoadCommand}">
               <Button.Flyout>
                 <Flyout Placement="BottomEdgeAlignedLeft">
                   <StackPanel Width="{StaticResource PickerWidth}" Spacing="8">
                     <ContentControl Content="{Binding QuickLinkTabPicker}" ContentTemplate="{StaticResource ChoicePickerContent}" />
                     <Border Classes="divider" />
-                    <Button Classes="linkButton" Content="Type a URL…" Command="{Binding AddQuickLinkCommand}" ctl:PopupActions.ClosesPopup="True" />
+                    <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAUrl}" Command="{Binding AddQuickLinkCommand}" ctl:PopupActions.ClosesPopup="True" />
                   </StackPanel>
                 </Flyout>
               </Button.Flyout>
@@ -381,32 +382,32 @@
         <!-- Notes -->
         <Border Classes="panel">
           <StackPanel Spacing="10">
-            <TextBlock Text="NOTES" Classes="sectionTitle" />
+            <TextBlock Text="{x:Static r:Strings.ProfileSetup_Notes_Section}" Classes="sectionTitle" />
             <TextBlock
-              Text="Reminders shown in the menu bar dashboard while this profile is active - a standup time, today's focus. One per line."
+              Text="{x:Static r:Strings.ProfileSetup_RemindersShownInTheMenu}"
               Classes="caption"
               TextWrapping="Wrap" />
-            <TextBox Text="{Binding NotesText}" AcceptsReturn="True" TextWrapping="Wrap" Height="80" AutomationProperties.Name="Notes" />
+            <TextBox Text="{Binding NotesText}" AcceptsReturn="True" TextWrapping="Wrap" Height="80" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Notes}" />
           </StackPanel>
         </Border>
 
         <!-- Switch policy: what a failed step does to the rest of the switch. -->
         <Border Classes="panel">
           <StackPanel Spacing="10">
-            <TextBlock Text="IF A STEP FAILS" Classes="sectionTitle" />
+            <TextBlock Text="{x:Static r:Strings.ProfileSetup_IfAStepFails_Section}" Classes="sectionTitle" />
             <TextBlock
-              Text="A switch runs in steps: it stops the containers and quits the apps of the profile you're leaving, then changes Focus and opens the apps, browser, containers and music of this one."
+              Text="{x:Static r:Strings.ProfileSetup_ASwitchRunsInSteps}"
               Classes="caption"
               TextWrapping="Wrap" />
             <ctl:FormRow
-              Title="Keep going after a failed step"
-              Description="On: a step that fails - an app that won't quit, a missing Shortcut - shows as a warning and the rest still runs. Off: the switch stops at the first failure.">
+              Title="{x:Static r:Strings.ProfileSetup_KeepGoingAfterAFailed}"
+              Description="{x:Static r:Strings.ProfileSetup_OnAStepThatFails}">
               <ToggleSwitch IsChecked="{Binding ContinueOnNonCriticalFailure}" />
             </ctl:FormRow>
             <Border Classes="divider" />
             <ctl:FormRow
-              Title="Steps that must work"
-              Description="If a step ticked here fails, the switch stops there and counts as failed, whatever the setting above." />
+              Title="{x:Static r:Strings.ProfileSetup_StepsThatMustWork}"
+              Description="{x:Static r:Strings.ProfileSetup_IfAStepTickedHere}" />
             <ItemsControl ItemsSource="{Binding CriticalStepOptions}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>

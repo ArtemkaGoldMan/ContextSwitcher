@@ -1,5 +1,6 @@
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -103,7 +104,7 @@ public sealed class SwitchNoticeViewModel : ViewModelBase, IDisposable
         string name = AppHost.Configuration?.Contexts.FirstOrDefault(c => c.Id == state.CurrentContextId)?.DisplayName
             ?? state.CurrentContextId;
         this.Show(
-            failed ? $"Couldn't switch to {name}" : $"Switched to {name}, with warnings",
+            failed ? Localized.Format(Strings.Notice_CouldNotSwitchTo, name) : Localized.Format(Strings.Notice_SwitchedWithWarnings, name),
             state.LastErrors.Select(error => error.Message).Where(message => !string.IsNullOrWhiteSpace(message)).ToList(),
             completedAt,
             failed);
@@ -113,7 +114,7 @@ public sealed class SwitchNoticeViewModel : ViewModelBase, IDisposable
     {
         this.Title = title;
         this.Messages = messages;
-        this.TimeText = $"at {at.ToLocalTime():HH:mm}";
+        this.TimeText = Localized.Format(Strings.Notice_At, at.ToLocalTime());
         this.IsFailure = isFailure;
         this.IsShown = true;
     }

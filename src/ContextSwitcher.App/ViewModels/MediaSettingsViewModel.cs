@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -39,7 +40,7 @@ public sealed class MediaSettingsViewModel : ViewModelBase
 
     public IReadOnlyList<Choice<MediaPlayerKind>> Players { get; } =
     [
-        new(MediaPlayerKind.None, "None"),
+        new(MediaPlayerKind.None, Strings.Media_None),
         new(MediaPlayerKind.AppleMusic, "Apple Music"),
         new(MediaPlayerKind.Spotify, "Spotify")
     ];
@@ -169,12 +170,12 @@ public sealed class MediaSettingsViewModel : ViewModelBase
         if (playlists is not null)
         {
             this.musicPlaylistsLoaded = true;
-            this.MusicStatus = playlists.Count == 0 ? "Music has no playlists yet." : string.Empty;
+            this.MusicStatus = playlists.Count == 0 ? Strings.Media_NoPlaylists : string.Empty;
             this.RefreshMusicPlaylists(playlists);
         }
         else if (startMusicIfNeeded)
         {
-            this.MusicStatus = "Couldn't read playlists from Music. Allow Context Switcher to control Music in System Settings → Privacy & Security → Automation.";
+            this.MusicStatus = Strings.Media_CouldNotReadPlaylists;
         }
 
         this.OnPropertyChanged(nameof(this.CanLoadMusicPlaylists));

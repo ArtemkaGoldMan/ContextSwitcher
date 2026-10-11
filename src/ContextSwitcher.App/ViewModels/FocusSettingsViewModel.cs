@@ -1,6 +1,7 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -76,7 +77,7 @@ public sealed class FocusSettingsViewModel : ViewModelBase
 
     /// <summary>The Shortcut the chosen mode needs, for the hint under the dropdown.</summary>
     public string MissingShortcutText =>
-        $"Needs a Shortcut named “{ShortcutPrefix}{this.Selected.ModeName}” with a Set Focus action that turns this Focus on.";
+        Localized.Format(Strings.Focus_NeedsShortcut, ShortcutPrefix + this.Selected.ModeName);
 
     public bool IsShortcutMissing => this.shortcutsLoaded && this.IsEnabled && !this.Selected.HasShortcut;
 
@@ -92,7 +93,7 @@ public sealed class FocusSettingsViewModel : ViewModelBase
         && (FocusModes.Find(this.Selected.ModeName) is not null || !this.legacyOffExists);
 
     public string MissingOffShortcutText =>
-        $"Also add “{FocusModes.OffShortcutName(this.Selected.ModeName)}” so {this.Selected.ModeName} turns off when you switch to a profile without Focus.";
+        Localized.Format(Strings.Focus_AlsoAddOffShortcut, FocusModes.OffShortcutName(this.Selected.ModeName), this.Selected.ModeName);
 
     public bool HasHint => this.IsShortcutMissing || this.IsOffShortcutMissing;
 
@@ -204,7 +205,7 @@ public sealed class FocusSettingsViewModel : ViewModelBase
                 return;
             }
 
-            this.ShortcutStatus = "Click “Add Shortcut” in the Shortcuts window that opened.";
+            this.ShortcutStatus = Strings.Focus_ClickAddShortcut;
             DateTime deadline = DateTime.UtcNow + WaitForAdd;
             while (DateTime.UtcNow < deadline)
             {
@@ -218,11 +219,11 @@ public sealed class FocusSettingsViewModel : ViewModelBase
                 await Task.Delay(this.PollInterval).ConfigureAwait(true);
             }
 
-            this.ShortcutStatus = "The Shortcut wasn't added. Try again, or check the Shortcuts app.";
+            this.ShortcutStatus = Strings.Focus_ShortcutNotAdded;
         }
         catch (Exception ex)
         {
-            this.ShortcutStatus = $"Couldn't create the Shortcut: {ex.Message}";
+            this.ShortcutStatus = Localized.Format(Strings.Focus_CouldNotCreate, ex.Message);
         }
         finally
         {
@@ -285,7 +286,7 @@ public sealed class FocusChoiceViewModel
     {
         this.ModeName = modeName;
         this.HasShortcut = hasShortcut;
-        this.Status = !statusKnown || this.IsNone ? string.Empty : hasShortcut ? "Ready" : "Needs Shortcut";
+        this.Status = !statusKnown || this.IsNone ? string.Empty : hasShortcut ? Strings.Focus_Ready : Strings.Focus_NeedsShortcutStatus;
     }
 
     /// <summary>The mode name stored in config; empty for <see cref="None"/>.</summary>
@@ -293,7 +294,7 @@ public sealed class FocusChoiceViewModel
 
     public bool IsNone => this.ModeName.Length == 0;
 
-    public string Label => this.IsNone ? "Don't use Focus" : this.ModeName;
+    public string Label => this.IsNone ? Strings.Focus_DontUse : this.ModeName;
 
     public bool HasShortcut { get; }
 

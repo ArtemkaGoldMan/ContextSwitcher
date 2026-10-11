@@ -1,0 +1,1091 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Common_SearchInstalledApps" xml:space="preserve">
+    <value>Search installed apps…</value>
+    <comment>Templates.axaml: PlaceholderText</comment>
+  </data>
+  <data name="Common_Loading" xml:space="preserve">
+    <value>Loading…</value>
+    <comment>Templates.axaml: Text</comment>
+  </data>
+  <data name="Common_NoMatchingApps" xml:space="preserve">
+    <value>No matching apps.</value>
+    <comment>Templates.axaml: Text</comment>
+  </data>
+  <data name="Common_AppNameAsInApplications" xml:space="preserve">
+    <value>App name, as in /Applications</value>
+    <comment>Templates.axaml: PlaceholderText</comment>
+  </data>
+  <data name="Common_Launch" xml:space="preserve">
+    <value>Launch</value>
+    <comment>Templates.axaml: Content</comment>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Close</value>
+    <comment>Templates.axaml: Content</comment>
+  </data>
+  <data name="Common_Remove" xml:space="preserve">
+    <value>Remove</value>
+    <comment>Templates.axaml: ToolTip.Tip</comment>
+  </data>
+  <data name="Common_TitleOptional" xml:space="preserve">
+    <value>Title (optional)</value>
+    <comment>Templates.axaml: PlaceholderText</comment>
+  </data>
+  <data name="Common_Https" xml:space="preserve">
+    <value>https://…</value>
+    <comment>Templates.axaml: PlaceholderText</comment>
+  </data>
+  <data name="Common_Browser" xml:space="preserve">
+    <value>Browser</value>
+    <comment>Templates.axaml: AutomationProperties.Name</comment>
+  </data>
+  <data name="Common_BrowserProfile" xml:space="preserve">
+    <value>Browser profile</value>
+    <comment>Templates.axaml: AutomationProperties.Name</comment>
+  </data>
+  <data name="Common_PagesToOpenInThis" xml:space="preserve">
+    <value>Pages to open in this profile, one URL per line</value>
+    <comment>Templates.axaml: PlaceholderText</comment>
+  </data>
+  <data name="Dashboard_CloseEsc" xml:space="preserve">
+    <value>Close (Esc)</value>
+    <comment>DashboardWindow.axaml: ToolTip.Tip</comment>
+  </data>
+  <data name="Dashboard_Close" xml:space="preserve">
+    <value>Close</value>
+    <comment>DashboardWindow.axaml: AutomationProperties.Name</comment>
+  </data>
+  <data name="Dashboard_SwitchTo_Section" xml:space="preserve">
+    <value>SWITCH TO</value>
+    <comment>DashboardWindow.axaml: Text</comment>
+  </data>
+  <data name="Dashboard_Active" xml:space="preserve">
+    <value>Active</value>
+    <comment>DashboardWindow.axaml: Text</comment>
+  </data>
+  <data name="Dashboard_Switching" xml:space="preserve">
+    <value>Switching…</value>
+    <comment>DashboardWindow.axaml: Text</comment>
+  </data>
+  <data name="Dashboard_LastSwitch_Section" xml:space="preserve">
+    <value>LAST SWITCH</value>
+    <comment>DashboardWindow.axaml: Text</comment>
+  </data>
+  <data name="Dashboard_ConfigurationWarnings_Section" xml:space="preserve">
+    <value>CONFIGURATION WARNINGS</value>
+    <comment>DashboardWindow.axaml: Text</comment>
+  </data>
+  <data name="Dashboard_QuickLinks_Section" xml:space="preserve">
+    <value>QUICK LINKS</value>
+    <comment>DashboardWindow.axaml: Text</comment>
+  </data>
+  <data name="Dashboard_Notes_Section" xml:space="preserve">
+    <value>NOTES</value>
+    <comment>DashboardWindow.axaml: Text</comment>
+  </data>
+  <data name="Dashboard_Last7Days_Section" xml:space="preserve">
+    <value>LAST 7 DAYS</value>
+    <comment>DashboardWindow.axaml: Text</comment>
+  </data>
+  <data name="Dashboard_OpenApp" xml:space="preserve">
+    <value>Open App</value>
+    <comment>DashboardWindow.axaml: Content</comment>
+  </data>
+  <data name="Dashboard_SupportTheDeveloper" xml:space="preserve">
+    <value>Support the developer ↗</value>
+    <comment>DashboardWindow.axaml: Content</comment>
+  </data>
+  <data name="MainWindow_Profiles" xml:space="preserve">
+    <value>Profiles</value>
+    <comment>MainAppWindow.axaml: Text</comment>
+  </data>
+  <data name="MainWindow_Settings" xml:space="preserve">
+    <value>Settings</value>
+    <comment>MainAppWindow.axaml: Text</comment>
+  </data>
+  <data name="MainWindow_Stats" xml:space="preserve">
+    <value>Stats</value>
+    <comment>MainAppWindow.axaml: Text</comment>
+  </data>
+  <data name="MainWindow_SwitchProblems" xml:space="preserve">
+    <value>Switch problems</value>
+    <comment>MainAppWindow.axaml: AutomationProperties.Name</comment>
+  </data>
+  <data name="MainWindow_Close" xml:space="preserve">
+    <value>Close</value>
+    <comment>MainAppWindow.axaml: ToolTip.Tip</comment>
+  </data>
+  <data name="MainWindow_CloseNotice" xml:space="preserve">
+    <value>Close notice</value>
+    <comment>MainAppWindow.axaml: AutomationProperties.Name</comment>
+  </data>
+  <data name="Onboarding_WelcomeToContextSwitcher" xml:space="preserve">
+    <value>Welcome to Context Switcher</value>
+    <comment>OnboardingWindow.axaml: Title</comment>
+  </data>
+  <data name="Onboarding_ProfileName" xml:space="preserve">
+    <value>Profile name</value>
+    <comment>OnboardingWindow.axaml: Title</comment>
+  </data>
+  <data name="Onboarding_Apps_Section" xml:space="preserve">
+    <value>APPS</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_WevePreFilledAFew" xml:space="preserve">
+    <value>We've pre-filled a few we found installed. Launch opens the app when you enter this profile; Close quits it when you leave.</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_NoAppsChosenYet" xml:space="preserve">
+    <value>No apps chosen yet.</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_AddApp" xml:space="preserve">
+    <value>+ Add app</value>
+    <comment>OnboardingWindow.axaml: Content</comment>
+  </data>
+  <data name="Onboarding_OneClickFlipsYourMac" xml:space="preserve">
+    <value>One click flips your Mac between work and personal — opening the apps you need, closing the ones you don't, and keeping the two from bleeding into each other.</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_LetsSetUpTwoProfiles" xml:space="preserve">
+    <value>Let's set up two profiles. Takes about a minute, and you can change everything later.</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_YourWorkProfile" xml:space="preserve">
+    <value>Your work profile</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_AppsToOpenWhenYou" xml:space="preserve">
+    <value>Apps to open when you start working, and close when you stop.</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_YourPersonalProfile" xml:space="preserve">
+    <value>Your personal profile</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_AppsForYourOwnTime" xml:space="preserve">
+    <value>Apps for your own time — and the work apps you want gone.</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_YoureSet" xml:space="preserve">
+    <value>You're set</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_FinishingWillSaveBothProfiles" xml:space="preserve">
+    <value>Finishing will save both profiles and switch you into Work, so you can see exactly what it does.</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_Next_Section" xml:space="preserve">
+    <value>NEXT</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_SwitchAnytimeFromTheMenu" xml:space="preserve">
+    <value>• Switch anytime from the menu bar icon</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_AddBrowserTabsFocusAnd" xml:space="preserve">
+    <value>• Add browser tabs, Focus and Docker in Profile Setup</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_ChangeAProfilesColorIcon" xml:space="preserve">
+    <value>• Change a profile's color, icon and apps any time from Open App</value>
+    <comment>OnboardingWindow.axaml: Text</comment>
+  </data>
+  <data name="Onboarding_SkipSetup" xml:space="preserve">
+    <value>Skip setup</value>
+    <comment>OnboardingWindow.axaml: Content</comment>
+  </data>
+  <data name="Onboarding_Back" xml:space="preserve">
+    <value>Back</value>
+    <comment>OnboardingWindow.axaml: Content</comment>
+  </data>
+  <data name="Onboarding_Continue" xml:space="preserve">
+    <value>Continue</value>
+    <comment>OnboardingWindow.axaml: Content</comment>
+  </data>
+  <data name="Onboarding_FinishSwitchToWork" xml:space="preserve">
+    <value>Finish &amp; switch to Work</value>
+    <comment>OnboardingWindow.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_Preview" xml:space="preserve">
+    <value>Preview</value>
+    <comment>ProfileSetupPage.axaml: ToolTip.Tip</comment>
+  </data>
+  <data name="ProfileSetup_ProfilePreview" xml:space="preserve">
+    <value>Profile preview</value>
+    <comment>ProfileSetupPage.axaml: AutomationProperties.Name</comment>
+  </data>
+  <data name="ProfileSetup_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_Save" xml:space="preserve">
+    <value>Save</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_Identity_Section" xml:space="preserve">
+    <value>IDENTITY</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_DisplayName" xml:space="preserve">
+    <value>Display name</value>
+    <comment>ProfileSetupPage.axaml: Title</comment>
+  </data>
+  <data name="ProfileSetup_AccentColor" xml:space="preserve">
+    <value>Accent color</value>
+    <comment>ProfileSetupPage.axaml: Title</comment>
+  </data>
+  <data name="ProfileSetup_CustomColor" xml:space="preserve">
+    <value>Custom color</value>
+    <comment>ProfileSetupPage.axaml: AutomationProperties.Name</comment>
+  </data>
+  <data name="ProfileSetup_Icon" xml:space="preserve">
+    <value>Icon</value>
+    <comment>ProfileSetupPage.axaml: Title</comment>
+  </data>
+  <data name="ProfileSetup_Apps_Section" xml:space="preserve">
+    <value>APPS</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_LaunchOpensTheAppWhen" xml:space="preserve">
+    <value>Launch opens the app when you enter this profile. Close quits it when you leave.</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_NoAppsYetAddThe" xml:space="preserve">
+    <value>No apps yet — add the ones this profile should open or close.</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_AddApp" xml:space="preserve">
+    <value>+ Add app</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_TypeAName" xml:space="preserve">
+    <value>Type a name…</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_ForAnAppThatIsnt" xml:space="preserve">
+    <value>For an app that isn't in Applications</value>
+    <comment>ProfileSetupPage.axaml: ToolTip.Tip</comment>
+  </data>
+  <data name="ProfileSetup_BrowserManagement_Section" xml:space="preserve">
+    <value>BROWSER MANAGEMENT</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_OnSwitch" xml:space="preserve">
+    <value>On switch</value>
+    <comment>ProfileSetupPage.axaml: Title</comment>
+  </data>
+  <data name="ProfileSetup_Browser" xml:space="preserve">
+    <value>Browser</value>
+    <comment>ProfileSetupPage.axaml: Title</comment>
+  </data>
+  <data name="ProfileSetup_AvoidDuplicateTabs" xml:space="preserve">
+    <value>Avoid duplicate tabs</value>
+    <comment>ProfileSetupPage.axaml: Title</comment>
+  </data>
+  <data name="ProfileSetup_StartupURLs" xml:space="preserve">
+    <value>Startup URLs</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_AddUrl" xml:space="preserve">
+    <value>+ Add URL</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_TypeAUrl" xml:space="preserve">
+    <value>Type a URL…</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_TabGroups" xml:space="preserve">
+    <value>Tab groups</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_AddTabGroup" xml:space="preserve">
+    <value>+ Add tab group</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_BrowserProfiles" xml:space="preserve">
+    <value>Browser profiles</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_AddBrowserProfile" xml:space="preserve">
+    <value>+ Add browser profile</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_FocusAndMusic" xml:space="preserve">
+    <value>Focus and music</value>
+    <comment>ProfileSetupPage.axaml: AutomationProperties.Name</comment>
+  </data>
+  <data name="ProfileSetup_FocusMusic" xml:space="preserve">
+    <value>Focus &amp; music</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_TurnOnAMacOSFocus" xml:space="preserve">
+    <value>Turn on a macOS Focus and start a playlist when you switch to this profile.</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_Focus_Section" xml:space="preserve">
+    <value>FOCUS</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_SwitchesMacOSFocusDoNot" xml:space="preserve">
+    <value>Switches macOS Focus - Do Not Disturb, Work, Sleep… - when you switch to this profile, so only the notifications you want get through. Switching to a profile without one turns Focus off.</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_FocusMode" xml:space="preserve">
+    <value>Focus mode</value>
+    <comment>ProfileSetupPage.axaml: Title</comment>
+  </data>
+  <data name="ProfileSetup_CreateIt" xml:space="preserve">
+    <value>Create it</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_OpenShortcuts" xml:space="preserve">
+    <value>Open Shortcuts ↗</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_CheckAgain" xml:space="preserve">
+    <value>Check again</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_Media_Section" xml:space="preserve">
+    <value>MEDIA</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_StartsAPlaylistWhenYou" xml:space="preserve">
+    <value>Starts a playlist when you switch to this profile.</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_Player" xml:space="preserve">
+    <value>Player</value>
+    <comment>ProfileSetupPage.axaml: Title</comment>
+  </data>
+  <data name="ProfileSetup_Playlist" xml:space="preserve">
+    <value>Playlist</value>
+    <comment>ProfileSetupPage.axaml: Title</comment>
+  </data>
+  <data name="ProfileSetup_ChooseAPlaylist" xml:space="preserve">
+    <value>Choose a playlist</value>
+    <comment>ProfileSetupPage.axaml: PlaceholderText</comment>
+  </data>
+  <data name="ProfileSetup_LoadPlaylistsFromMusic" xml:space="preserve">
+    <value>Load playlists from Music</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_OpensMusicToReadYour" xml:space="preserve">
+    <value>Opens Music to read your playlists</value>
+    <comment>ProfileSetupPage.axaml: ToolTip.Tip</comment>
+  </data>
+  <data name="ProfileSetup_ReadingPlaylistsFromMusic" xml:space="preserve">
+    <value>Reading playlists from Music…</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_InSpotifyShareCopyLink" xml:space="preserve">
+    <value>In Spotify: Share → Copy link to playlist, then paste it here.</value>
+    <comment>ProfileSetupPage.axaml: Description</comment>
+  </data>
+  <data name="ProfileSetup_HttpsOpenSpotifyCom" xml:space="preserve">
+    <value>https://open.spotify.com/…</value>
+    <comment>ProfileSetupPage.axaml: PlaceholderText</comment>
+  </data>
+  <data name="ProfileSetup_SpotifyLink" xml:space="preserve">
+    <value>Spotify link</value>
+    <comment>ProfileSetupPage.axaml: AutomationProperties.Name</comment>
+  </data>
+  <data name="ProfileSetup_PlayWhenSwitchingIn" xml:space="preserve">
+    <value>Play when switching in</value>
+    <comment>ProfileSetupPage.axaml: Title</comment>
+  </data>
+  <data name="ProfileSetup_Advanced" xml:space="preserve">
+    <value>Advanced</value>
+    <comment>ProfileSetupPage.axaml: AutomationProperties.Name</comment>
+  </data>
+  <data name="ProfileSetup_DockerContainersLinksAndNotes" xml:space="preserve">
+    <value>Docker containers, links and notes for the dashboard, and what happens when a step fails.</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_Docker_Section" xml:space="preserve">
+    <value>DOCKER</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_StartsTheContainersThisProfile" xml:space="preserve">
+    <value>Starts the containers this profile needs when you switch to it - a local database, say - and stops the ones you list when you leave it.</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_StartWhenEntering" xml:space="preserve">
+    <value>Start when entering</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_AddContainer" xml:space="preserve">
+    <value>+ Add container</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_StopWhenLeaving" xml:space="preserve">
+    <value>Stop when leaving</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_QuickLinks_Section" xml:space="preserve">
+    <value>QUICK LINKS</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_ShownInTheMenuBar" xml:space="preserve">
+    <value>Shown in the menu bar dashboard while this profile is active, one click to open - your team's board, a dashboard, your inbox.</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_AddQuickLink" xml:space="preserve">
+    <value>+ Add quick link</value>
+    <comment>ProfileSetupPage.axaml: Content</comment>
+  </data>
+  <data name="ProfileSetup_Notes_Section" xml:space="preserve">
+    <value>NOTES</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_RemindersShownInTheMenu" xml:space="preserve">
+    <value>Reminders shown in the menu bar dashboard while this profile is active - a standup time, today's focus. One per line.</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_Notes" xml:space="preserve">
+    <value>Notes</value>
+    <comment>ProfileSetupPage.axaml: AutomationProperties.Name</comment>
+  </data>
+  <data name="ProfileSetup_IfAStepFails_Section" xml:space="preserve">
+    <value>IF A STEP FAILS</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_ASwitchRunsInSteps" xml:space="preserve">
+    <value>A switch runs in steps: it stops the containers and quits the apps of the profile you're leaving, then changes Focus and opens the apps, browser, containers and music of this one.</value>
+    <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_KeepGoingAfterAFailed" xml:space="preserve">
+    <value>Keep going after a failed step</value>
+    <comment>ProfileSetupPage.axaml: Title</comment>
+  </data>
+  <data name="ProfileSetup_OnAStepThatFails" xml:space="preserve">
+    <value>On: a step that fails - an app that won't quit, a missing Shortcut - shows as a warning and the rest still runs. Off: the switch stops at the first failure.</value>
+    <comment>ProfileSetupPage.axaml: Description</comment>
+  </data>
+  <data name="ProfileSetup_StepsThatMustWork" xml:space="preserve">
+    <value>Steps that must work</value>
+    <comment>ProfileSetupPage.axaml: Title</comment>
+  </data>
+  <data name="ProfileSetup_IfAStepTickedHere" xml:space="preserve">
+    <value>If a step ticked here fails, the switch stops there and counts as failed, whatever the setting above.</value>
+    <comment>ProfileSetupPage.axaml: Description</comment>
+  </data>
+  <data name="Profiles_Profiles" xml:space="preserve">
+    <value>Profiles</value>
+    <comment>ProfilesPage.axaml: Text</comment>
+  </data>
+  <data name="Profiles_AddNewProfile" xml:space="preserve">
+    <value>+ Add new profile</value>
+    <comment>ProfilesPage.axaml: Content</comment>
+  </data>
+  <data name="Profiles_ActiveNow" xml:space="preserve">
+    <value>Active now</value>
+    <comment>ProfilesPage.axaml: Text</comment>
+  </data>
+  <data name="Profiles_Activate" xml:space="preserve">
+    <value>Activate</value>
+    <comment>ProfilesPage.axaml: Content</comment>
+  </data>
+  <data name="Profiles_Edit" xml:space="preserve">
+    <value>Edit</value>
+    <comment>ProfilesPage.axaml: ToolTip.Tip</comment>
+  </data>
+  <data name="Profiles_Duplicate" xml:space="preserve">
+    <value>Duplicate</value>
+    <comment>ProfilesPage.axaml: ToolTip.Tip</comment>
+  </data>
+  <data name="Profiles_Delete" xml:space="preserve">
+    <value>Delete</value>
+    <comment>ProfilesPage.axaml: ToolTip.Tip</comment>
+  </data>
+  <data name="Profiles_Delete2" xml:space="preserve">
+    <value>Delete?</value>
+    <comment>ProfilesPage.axaml: Text</comment>
+  </data>
+  <data name="Profiles_Yes" xml:space="preserve">
+    <value>Yes</value>
+    <comment>ProfilesPage.axaml: Content</comment>
+  </data>
+  <data name="Profiles_No" xml:space="preserve">
+    <value>No</value>
+    <comment>ProfilesPage.axaml: Content</comment>
+  </data>
+  <data name="Settings_Settings" xml:space="preserve">
+    <value>Settings</value>
+    <comment>SettingsPage.axaml: Text</comment>
+  </data>
+  <data name="Settings_ChangesAreSavedAsYou" xml:space="preserve">
+    <value>Changes are saved as you make them.</value>
+    <comment>SettingsPage.axaml: Text</comment>
+  </data>
+  <data name="Settings_Appearance_Section" xml:space="preserve">
+    <value>APPEARANCE</value>
+    <comment>SettingsPage.axaml: Text</comment>
+  </data>
+  <data name="Settings_Theme" xml:space="preserve">
+    <value>Theme</value>
+    <comment>SettingsPage.axaml: Title</comment>
+  </data>
+  <data name="Settings_MatchMacOSFollowsTheSystems" xml:space="preserve">
+    <value>Match macOS follows the system's light or dark appearance as it changes.</value>
+    <comment>SettingsPage.axaml: Description</comment>
+  </data>
+  <data name="Settings_ShowInTheDock" xml:space="preserve">
+    <value>Show in the Dock</value>
+    <comment>SettingsPage.axaml: Title</comment>
+  </data>
+  <data name="Settings_OffContextSwitcherLivesOnly" xml:space="preserve">
+    <value>Off, Context Switcher lives only in the menu bar. On, it also appears in the Dock and in ⌘-Tab. Applies the next time the app starts.</value>
+    <comment>SettingsPage.axaml: Description</comment>
+  </data>
+  <data name="Settings_Permission_Section" xml:space="preserve">
+    <value>PERMISSION</value>
+    <comment>SettingsPage.axaml: Text</comment>
+  </data>
+  <data name="Settings_ToQuitAppsReadYour" xml:space="preserve">
+    <value>To quit apps, read your browser's tabs and start music, Context Switcher needs your permission to control other apps. macOS asks the first time a switch needs it.</value>
+    <comment>SettingsPage.axaml: Text</comment>
+  </data>
+  <data name="Settings_ControlOtherApps" xml:space="preserve">
+    <value>Control other apps</value>
+    <comment>SettingsPage.axaml: Title</comment>
+  </data>
+  <data name="Settings_OpenSystemSettings" xml:space="preserve">
+    <value>Open System Settings ↗</value>
+    <comment>SettingsPage.axaml: Content</comment>
+  </data>
+  <data name="Settings_CheckAgain" xml:space="preserve">
+    <value>Check again</value>
+    <comment>SettingsPage.axaml: Content</comment>
+  </data>
+  <data name="Settings_TimeTracking_Section" xml:space="preserve">
+    <value>TIME TRACKING</value>
+    <comment>SettingsPage.axaml: Text</comment>
+  </data>
+  <data name="Settings_RecordsHowLongYouSpend" xml:space="preserve">
+    <value>Records how long you spend in each profile, for the Stats page and the chart in the menu bar dashboard. It stays on this Mac.</value>
+    <comment>SettingsPage.axaml: Text</comment>
+  </data>
+  <data name="Settings_RecordTimePerProfile" xml:space="preserve">
+    <value>Record time per profile</value>
+    <comment>SettingsPage.axaml: Title</comment>
+  </data>
+  <data name="Settings_KeepHistoryFor" xml:space="preserve">
+    <value>Keep history for</value>
+    <comment>SettingsPage.axaml: Title</comment>
+  </data>
+  <data name="Settings_OlderDaysAreDeletedAutomatically" xml:space="preserve">
+    <value>Older days are deleted automatically.</value>
+    <comment>SettingsPage.axaml: Description</comment>
+  </data>
+  <data name="Settings_Updates_Section" xml:space="preserve">
+    <value>UPDATES</value>
+    <comment>SettingsPage.axaml: Text</comment>
+  </data>
+  <data name="Settings_NewVersionsComeFromThe" xml:space="preserve">
+    <value>New versions come from the project's GitHub page. Nothing is installed until you click Install, and your profiles and settings stay as they are.</value>
+    <comment>SettingsPage.axaml: Text</comment>
+  </data>
+  <data name="Settings_CheckAutomatically" xml:space="preserve">
+    <value>Check automatically</value>
+    <comment>SettingsPage.axaml: Title</comment>
+  </data>
+  <data name="Settings_OnceADayTurnedOff" xml:space="preserve">
+    <value>Once a day. Turned off, Context Switcher only checks when you click Check now.</value>
+    <comment>SettingsPage.axaml: Description</comment>
+  </data>
+  <data name="Settings_CheckForUpdatesAutomatically" xml:space="preserve">
+    <value>Check for updates automatically</value>
+    <comment>SettingsPage.axaml: AutomationProperties.Name</comment>
+  </data>
+  <data name="Settings_CheckNow" xml:space="preserve">
+    <value>Check now</value>
+    <comment>SettingsPage.axaml: Content</comment>
+  </data>
+  <data name="Settings_InstallAndRestart" xml:space="preserve">
+    <value>Install and restart</value>
+    <comment>SettingsPage.axaml: Content</comment>
+  </data>
+  <data name="Settings_About_Section" xml:space="preserve">
+    <value>ABOUT</value>
+    <comment>SettingsPage.axaml: Text</comment>
+  </data>
+  <data name="Settings_FreeAndOpenSourceUnder" xml:space="preserve">
+    <value>Free and open source, under the MIT licence.</value>
+    <comment>SettingsPage.axaml: Description</comment>
+  </data>
+  <data name="Settings_SupportTheDeveloper" xml:space="preserve">
+    <value>Support the developer ↗</value>
+    <comment>SettingsPage.axaml: Content</comment>
+  </data>
+  <data name="Stats_Stats" xml:space="preserve">
+    <value>Stats</value>
+    <comment>StatsPage.axaml: Text</comment>
+  </data>
+  <data name="Stats_Week" xml:space="preserve">
+    <value>Week</value>
+    <comment>StatsPage.axaml: Content</comment>
+  </data>
+  <data name="Stats_Month" xml:space="preserve">
+    <value>Month</value>
+    <comment>StatsPage.axaml: Content</comment>
+  </data>
+  <data name="Stats_TimePerDay_Section" xml:space="preserve">
+    <value>TIME PER DAY</value>
+    <comment>StatsPage.axaml: Text</comment>
+  </data>
+  <data name="Stats_NoContextTimeRecordedFor" xml:space="preserve">
+    <value>No context time recorded for this range yet.</value>
+    <comment>StatsPage.axaml: Text</comment>
+  </data>
+  <data name="Permission_Allowed" xml:space="preserve">
+    <value>Allowed</value>
+    <comment>Settings: the permission status pill.</comment>
+  </data>
+  <data name="Permission_NotAllowed" xml:space="preserve">
+    <value>Not allowed</value>
+    <comment>Settings: the permission status pill.</comment>
+  </data>
+  <data name="Common_Checking" xml:space="preserve">
+    <value>Checking…</value>
+    <comment>A check in progress (permission, updates).</comment>
+  </data>
+  <data name="Tray_OpenDashboard" xml:space="preserve">
+    <value>Open Dashboard</value>
+    <comment>Menu bar menu item.</comment>
+  </data>
+  <data name="Tray_OpenApp" xml:space="preserve">
+    <value>Open App</value>
+    <comment>Menu bar menu item: opens the main window.</comment>
+  </data>
+  <data name="Tray_Quit" xml:space="preserve">
+    <value>Quit</value>
+    <comment>Menu bar menu item.</comment>
+  </data>
+  <data name="Tray_UpdateTo" xml:space="preserve">
+    <value>Update to {0}…</value>
+    <comment>Menu bar menu item while an update waits. {0} = version, e.g. 0.3.0.</comment>
+  </data>
+  <data name="Accent_Custom" xml:space="preserve">
+    <value>Custom</value>
+    <comment>Accent color dropdown: reveals a color picker.</comment>
+  </data>
+  <data name="Accent_Blue" xml:space="preserve">
+    <value>Blue</value>
+    <comment>Accent color dropdown entry.</comment>
+  </data>
+  <data name="Accent_Violet" xml:space="preserve">
+    <value>Violet</value>
+    <comment>Accent color dropdown entry.</comment>
+  </data>
+  <data name="Accent_Pink" xml:space="preserve">
+    <value>Pink</value>
+    <comment>Accent color dropdown entry.</comment>
+  </data>
+  <data name="Accent_Red" xml:space="preserve">
+    <value>Red</value>
+    <comment>Accent color dropdown entry.</comment>
+  </data>
+  <data name="Accent_Orange" xml:space="preserve">
+    <value>Orange</value>
+    <comment>Accent color dropdown entry.</comment>
+  </data>
+  <data name="Accent_Green" xml:space="preserve">
+    <value>Green</value>
+    <comment>Accent color dropdown entry.</comment>
+  </data>
+  <data name="Accent_Teal" xml:space="preserve">
+    <value>Teal</value>
+    <comment>Accent color dropdown entry.</comment>
+  </data>
+  <data name="Accent_Graphite" xml:space="preserve">
+    <value>Graphite</value>
+    <comment>Accent color dropdown entry.</comment>
+  </data>
+  <data name="Icon_Circle" xml:space="preserve">
+    <value>Circle</value>
+    <comment>Profile icon dropdown: the name of the 'circle' icon.</comment>
+  </data>
+  <data name="Icon_Briefcase" xml:space="preserve">
+    <value>Work</value>
+    <comment>Profile icon dropdown: the name of the 'briefcase' icon.</comment>
+  </data>
+  <data name="Icon_House" xml:space="preserve">
+    <value>Home</value>
+    <comment>Profile icon dropdown: the name of the 'house' icon.</comment>
+  </data>
+  <data name="Icon_Code" xml:space="preserve">
+    <value>Code</value>
+    <comment>Profile icon dropdown: the name of the 'code' icon.</comment>
+  </data>
+  <data name="Icon_Laptop" xml:space="preserve">
+    <value>Laptop</value>
+    <comment>Profile icon dropdown: the name of the 'laptop' icon.</comment>
+  </data>
+  <data name="Icon_Book" xml:space="preserve">
+    <value>Study</value>
+    <comment>Profile icon dropdown: the name of the 'book' icon.</comment>
+  </data>
+  <data name="Icon_Coffee" xml:space="preserve">
+    <value>Break</value>
+    <comment>Profile icon dropdown: the name of the 'coffee' icon.</comment>
+  </data>
+  <data name="Icon_Moon" xml:space="preserve">
+    <value>Evening</value>
+    <comment>Profile icon dropdown: the name of the 'moon' icon.</comment>
+  </data>
+  <data name="Icon_Sun" xml:space="preserve">
+    <value>Morning</value>
+    <comment>Profile icon dropdown: the name of the 'sun' icon.</comment>
+  </data>
+  <data name="Icon_Heart" xml:space="preserve">
+    <value>Personal</value>
+    <comment>Profile icon dropdown: the name of the 'heart' icon.</comment>
+  </data>
+  <data name="Icon_Music" xml:space="preserve">
+    <value>Music</value>
+    <comment>Profile icon dropdown: the name of the 'music' icon.</comment>
+  </data>
+  <data name="Icon_Gamepad" xml:space="preserve">
+    <value>Games</value>
+    <comment>Profile icon dropdown: the name of the 'gamepad' icon.</comment>
+  </data>
+  <data name="Icon_Star" xml:space="preserve">
+    <value>Favourite</value>
+    <comment>Profile icon dropdown: the name of the 'star' icon.</comment>
+  </data>
+  <data name="Icon_Zap" xml:space="preserve">
+    <value>Focus</value>
+    <comment>Profile icon dropdown: the name of the 'zap' icon.</comment>
+  </data>
+  <data name="Icon_Leaf" xml:space="preserve">
+    <value>Calm</value>
+    <comment>Profile icon dropdown: the name of the 'leaf' icon.</comment>
+  </data>
+  <data name="Icon_Target" xml:space="preserve">
+    <value>Goals</value>
+    <comment>Profile icon dropdown: the name of the 'target' icon.</comment>
+  </data>
+  <data name="Step_StopDockerResources" xml:space="preserve">
+    <value>Stopping containers</value>
+    <comment>Profile Setup → If a step fails: a step that can be marked as one that must work.</comment>
+  </data>
+  <data name="Step_CloseApplications" xml:space="preserve">
+    <value>Quitting apps</value>
+    <comment>Profile Setup → If a step fails: a step that can be marked as one that must work.</comment>
+  </data>
+  <data name="Step_SetFocusMode" xml:space="preserve">
+    <value>Changing Focus</value>
+    <comment>Profile Setup → If a step fails: a step that can be marked as one that must work.</comment>
+  </data>
+  <data name="Step_LaunchApplications" xml:space="preserve">
+    <value>Opening apps</value>
+    <comment>Profile Setup → If a step fails: a step that can be marked as one that must work.</comment>
+  </data>
+  <data name="Step_ManageBrowserContext" xml:space="preserve">
+    <value>Opening the browser</value>
+    <comment>Profile Setup → If a step fails: a step that can be marked as one that must work.</comment>
+  </data>
+  <data name="Step_StartDockerResources" xml:space="preserve">
+    <value>Starting containers</value>
+    <comment>Profile Setup → If a step fails: a step that can be marked as one that must work.</comment>
+  </data>
+  <data name="Step_ControlMedia" xml:space="preserve">
+    <value>Starting music</value>
+    <comment>Profile Setup → If a step fails: a step that can be marked as one that must work.</comment>
+  </data>
+  <data name="Settings_Theme_MatchMacOS" xml:space="preserve">
+    <value>Match macOS</value>
+    <comment>Settings → Theme dropdown: follow the system's light or dark appearance.</comment>
+  </data>
+  <data name="Settings_Theme_Light" xml:space="preserve">
+    <value>Light</value>
+    <comment>Settings → Theme dropdown.</comment>
+  </data>
+  <data name="Settings_Theme_Dark" xml:space="preserve">
+    <value>Dark</value>
+    <comment>Settings → Theme dropdown.</comment>
+  </data>
+  <data name="Settings_Automation_AllowedDetail" xml:space="preserve">
+    <value>Allowed. macOS may still ask once for each app, the first time a switch controls it.</value>
+    <comment>Settings → Permission, under Control other apps.</comment>
+  </data>
+  <data name="Settings_Automation_NotAllowedDetail" xml:space="preserve">
+    <value>Not allowed. Turn on Context Switcher in System Settings → Privacy &amp; Security → Automation.</value>
+    <comment>Settings → Permission, under Control other apps.</comment>
+  </data>
+  <data name="Settings_CouldNotSave" xml:space="preserve">
+    <value>Couldn't save: {0}</value>
+    <comment>Settings: saving failed. {0} = the reason.</comment>
+  </data>
+  <data name="Duration_Days_One" xml:space="preserve">
+    <value>{0} day</value>
+    <comment>History length, e.g. Keep history for: 1 day.</comment>
+  </data>
+  <data name="Duration_Days_Other" xml:space="preserve">
+    <value>{0} days</value>
+    <comment>History length, e.g. Keep history for: 30 days.</comment>
+  </data>
+  <data name="Duration_Weeks_One" xml:space="preserve">
+    <value>{0} week</value>
+    <comment>History length: 1 week.</comment>
+  </data>
+  <data name="Duration_Weeks_Other" xml:space="preserve">
+    <value>{0} weeks</value>
+    <comment>History length in weeks.</comment>
+  </data>
+  <data name="Duration_Months_One" xml:space="preserve">
+    <value>{0} month</value>
+    <comment>History length in months.</comment>
+  </data>
+  <data name="Duration_Months_Other" xml:space="preserve">
+    <value>{0} months</value>
+    <comment>History length: 6 months.</comment>
+  </data>
+  <data name="Duration_Years_One" xml:space="preserve">
+    <value>{0} year</value>
+    <comment>History length: 1 year.</comment>
+  </data>
+  <data name="Duration_Years_Other" xml:space="preserve">
+    <value>{0} years</value>
+    <comment>History length: 2 years.</comment>
+  </data>
+  <data name="Updates_NotCheckedYet" xml:space="preserve">
+    <value>Not checked yet.</value>
+    <comment>Settings → Updates status before any check.</comment>
+  </data>
+  <data name="Updates_Version" xml:space="preserve">
+    <value>Version {0}</value>
+    <comment>Settings → Updates: the installed version. {0} = e.g. 0.2.1.</comment>
+  </data>
+  <data name="Updates_WhatsNewIn" xml:space="preserve">
+    <value>What's new in {0} ↗</value>
+    <comment>Link to a waiting release's notes. {0} = version.</comment>
+  </data>
+  <data name="Updates_DownloadFromGitHub" xml:space="preserve">
+    <value>Download {0} from GitHub ↗</value>
+    <comment>Link shown when this copy can't install the update itself. {0} = version.</comment>
+  </data>
+  <data name="Updates_UpToDate" xml:space="preserve">
+    <value>Up to date. Checked at {0:HH:mm}.</value>
+    <comment>Settings → Updates status. {0} = the time of the check.</comment>
+  </data>
+  <data name="Updates_Available" xml:space="preserve">
+    <value>Version {0} is available.</value>
+    <comment>Settings → Updates status. {0} = version.</comment>
+  </data>
+  <data name="Updates_CouldNotCheck" xml:space="preserve">
+    <value>Couldn't check for updates. {0}</value>
+    <comment>Settings → Updates status. {0} = the reason.</comment>
+  </data>
+  <data name="Updates_Downloading" xml:space="preserve">
+    <value>Downloading version {0}…</value>
+    <comment>Settings → Updates status while installing. {0} = version.</comment>
+  </data>
+  <data name="Updates_Restarting" xml:space="preserve">
+    <value>Restarting…</value>
+    <comment>Settings → Updates status just before the app restarts into the update.</comment>
+  </data>
+  <data name="Updates_CouldNotInstall" xml:space="preserve">
+    <value>Couldn't install the update. {0}</value>
+    <comment>Settings → Updates status. {0} = the reason.</comment>
+  </data>
+  <data name="Notice_CouldNotSwitchTo" xml:space="preserve">
+    <value>Couldn't switch to {0}</value>
+    <comment>Title of the switch-problems card. {0} = profile name.</comment>
+  </data>
+  <data name="Notice_SwitchedWithWarnings" xml:space="preserve">
+    <value>Switched to {0}, with warnings</value>
+    <comment>Title of the switch-problems card. {0} = profile name.</comment>
+  </data>
+  <data name="Notice_At" xml:space="preserve">
+    <value>at {0:HH:mm}</value>
+    <comment>Beside the switch-problems card's title: when it happened.</comment>
+  </data>
+  <data name="Notice_AnotherSwitchRunning" xml:space="preserve">
+    <value>Another switch was still running. Try again once it has finished.</value>
+    <comment>Switch-problems card: the switch was turned away.</comment>
+  </data>
+  <data name="Notice_SwitchStopped" xml:space="preserve">
+    <value>The switch stopped before it could finish. The app log has the details.</value>
+    <comment>Switch-problems card: the switch failed before recording anything.</comment>
+  </data>
+  <data name="Profiles_CopyName" xml:space="preserve">
+    <value>{0} Copy</value>
+    <comment>Name of a duplicated profile. {0} = the original's name.</comment>
+  </data>
+  <data name="Profiles_CannotDeleteActive" xml:space="preserve">
+    <value>Can't delete {0} - it's the active profile. Switch to another profile first.</value>
+    <comment>Profiles page error. {0} = profile name.</comment>
+  </data>
+  <data name="Profiles_AtLeastOne" xml:space="preserve">
+    <value>At least one profile is required.</value>
+    <comment>Profiles page error when deleting the last profile.</comment>
+  </data>
+  <data name="Dashboard_NoProfile" xml:space="preserve">
+    <value>(none)</value>
+    <comment>Dashboard header when no profile is active.</comment>
+  </data>
+  <data name="Dashboard_CurrentProfile" xml:space="preserve">
+    <value>Current profile</value>
+    <comment>Dashboard header subtitle when it isn't known how long the profile has been active.</comment>
+  </data>
+  <data name="Dashboard_ActiveFor" xml:space="preserve">
+    <value>Active for {0}</value>
+    <comment>Dashboard header subtitle. {0} = a short duration, e.g. 1h 20m.</comment>
+  </data>
+  <data name="Units_HoursMinutes" xml:space="preserve">
+    <value>{0}h {1}m</value>
+    <comment>A short duration: hours and minutes.</comment>
+  </data>
+  <data name="Units_Minutes" xml:space="preserve">
+    <value>{0}m</value>
+    <comment>A short duration in minutes.</comment>
+  </data>
+  <data name="Units_Seconds" xml:space="preserve">
+    <value>{0}s</value>
+    <comment>A short duration in seconds.</comment>
+  </data>
+  <data name="Units_Hours" xml:space="preserve">
+    <value>{0:0.#}h</value>
+    <comment>A short duration in hours, with up to one decimal, e.g. 2.5h.</comment>
+  </data>
+  <data name="Chart_NothingRecorded" xml:space="preserve">
+    <value>{0}: nothing recorded</value>
+    <comment>Chart tooltip for a day without recorded time. {0} = the date.</comment>
+  </data>
+  <data name="Chart_ProfileTime" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>Chart tooltip line. {0} = profile name, {1} = its time that day.</comment>
+  </data>
+  <data name="Focus_NeedsShortcut" xml:space="preserve">
+    <value>Needs a Shortcut named “{0}” with a Set Focus action that turns this Focus on.</value>
+    <comment>Profile Setup hint. {0} = the Shortcut's exact name, which stays in English.</comment>
+  </data>
+  <data name="Focus_AlsoAddOffShortcut" xml:space="preserve">
+    <value>Also add “{0}” so {1} turns off when you switch to a profile without Focus.</value>
+    <comment>Profile Setup hint. {0} = the Off Shortcut's exact name (stays in English), {1} = the Focus mode.</comment>
+  </data>
+  <data name="Focus_ClickAddShortcut" xml:space="preserve">
+    <value>Click “Add Shortcut” in the Shortcuts window that opened.</value>
+    <comment>Profile Setup, after Create it. Use the button's name as the Shortcuts app shows it in this language.</comment>
+  </data>
+  <data name="Focus_ShortcutNotAdded" xml:space="preserve">
+    <value>The Shortcut wasn't added. Try again, or check the Shortcuts app.</value>
+    <comment>Profile Setup, after Create it timed out.</comment>
+  </data>
+  <data name="Focus_CouldNotCreate" xml:space="preserve">
+    <value>Couldn't create the Shortcut: {0}</value>
+    <comment>Profile Setup. {0} = the reason.</comment>
+  </data>
+  <data name="Focus_Ready" xml:space="preserve">
+    <value>Ready</value>
+    <comment>Beside a Focus mode in the dropdown: its Shortcut exists.</comment>
+  </data>
+  <data name="Focus_NeedsShortcutStatus" xml:space="preserve">
+    <value>Needs Shortcut</value>
+    <comment>Beside a Focus mode in the dropdown: its Shortcut is missing.</comment>
+  </data>
+  <data name="Focus_DontUse" xml:space="preserve">
+    <value>Don't use Focus</value>
+    <comment>First entry of the Focus mode dropdown.</comment>
+  </data>
+  <data name="Media_None" xml:space="preserve">
+    <value>None</value>
+    <comment>Profile Setup → Media → Player: no music.</comment>
+  </data>
+  <data name="Media_NoPlaylists" xml:space="preserve">
+    <value>Music has no playlists yet.</value>
+    <comment>Profile Setup → Media, after reading Music's playlists.</comment>
+  </data>
+  <data name="Media_CouldNotReadPlaylists" xml:space="preserve">
+    <value>Couldn't read playlists from Music. Allow Context Switcher to control Music in System Settings → Privacy &amp; Security → Automation.</value>
+    <comment>Profile Setup → Media.</comment>
+  </data>
+  <data name="Onboarding_WorkName" xml:space="preserve">
+    <value>Work</value>
+    <comment>The name the setup wizard gives the work profile. It becomes the user's data, so it stays in this language afterwards.</comment>
+  </data>
+  <data name="Onboarding_PersonalName" xml:space="preserve">
+    <value>Personal</value>
+    <comment>The name the setup wizard gives the personal profile.</comment>
+  </data>
+  <data name="Onboarding_StepOf" xml:space="preserve">
+    <value>Step {0} of {1}</value>
+    <comment>Setup wizard footer.</comment>
+  </data>
+  <data name="ProfileSetup_NewProfileHeader" xml:space="preserve">
+    <value>New Profile</value>
+    <comment>Profile Setup header while creating a profile.</comment>
+  </data>
+  <data name="ProfileSetup_EditHeader" xml:space="preserve">
+    <value>Edit {0}</value>
+    <comment>Profile Setup header. {0} = profile name.</comment>
+  </data>
+  <data name="ProfileSetup_NewProfileName" xml:space="preserve">
+    <value>New Profile</value>
+    <comment>The name a newly created profile starts with.</comment>
+  </data>
+  <data name="Browser_Mode_None" xml:space="preserve">
+    <value>Don't open anything</value>
+    <comment>Profile Setup → Browser → On switch.</comment>
+  </data>
+  <data name="Browser_Mode_Urls" xml:space="preserve">
+    <value>Open web pages</value>
+    <comment>Profile Setup → Browser → On switch.</comment>
+  </data>
+  <data name="Browser_Mode_Groups" xml:space="preserve">
+    <value>Open tab groups</value>
+    <comment>Profile Setup → Browser → On switch.</comment>
+  </data>
+  <data name="Browser_Mode_Profiles" xml:space="preserve">
+    <value>Open browser profiles</value>
+    <comment>Profile Setup → Browser → On switch.</comment>
+  </data>
+  <data name="Browser_Default" xml:space="preserve">
+    <value>Default browser</value>
+    <comment>Profile Setup → Browser: whichever browser macOS opens links in.</comment>
+  </data>
+  <data name="Browser_AvoidDuplicates_On" xml:space="preserve">
+    <value>Focuses a matching tab instead of opening a second one.</value>
+    <comment>Profile Setup → Avoid duplicate tabs, when it can work.</comment>
+  </data>
+  <data name="Browser_AvoidDuplicates_NeedsBrowser" xml:space="preserve">
+    <value>Needs a specific browser - the default browser can't be checked for open tabs.</value>
+    <comment>Profile Setup → Avoid duplicate tabs, when Default browser is chosen.</comment>
+  </data>
+  <data name="Picker_OpenTabsEmpty" xml:space="preserve">
+    <value>No other web pages are open. Open the ones you want in your browser, then try again.</value>
+    <comment>Open-tabs picker with nothing to offer.</comment>
+  </data>
+  <data name="Picker_OpenTabsUnavailable" xml:space="preserve">
+    <value>Couldn't read your browser's tabs.</value>
+    <comment>Open-tabs picker error.</comment>
+  </data>
+  <data name="Picker_ContainersEmpty" xml:space="preserve">
+    <value>No other containers to add.</value>
+    <comment>Docker container picker with nothing to offer.</comment>
+  </data>
+  <data name="Picker_SearchOpenTabs" xml:space="preserve">
+    <value>Search open tabs…</value>
+    <comment>Placeholder of the open-tabs picker's search box.</comment>
+  </data>
+  <data name="Picker_SearchContainers" xml:space="preserve">
+    <value>Search containers…</value>
+    <comment>Placeholder of the container picker's search box.</comment>
+  </data>
+  <data name="Picker_DockerNotRunning" xml:space="preserve">
+    <value>Docker isn't running. Start Docker Desktop to choose a container, or type its name.</value>
+    <comment>Docker container picker when Docker is off.</comment>
+  </data>
+  <data name="Browser_ProfileNotFound" xml:space="preserve">
+    <value>{0} (not found)</value>
+    <comment>A browser profile in the config that isn't on this Mac. {0} = its folder name.</comment>
+  </data>
+</root>

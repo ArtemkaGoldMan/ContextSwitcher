@@ -2,6 +2,7 @@
   x:Class="ContextSwitcher.App.Views.DashboardWindow"
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:r="using:ContextSwitcher.App.Resources"
   xmlns:vm="using:ContextSwitcher.App.ViewModels"
   xmlns:conv="using:ContextSwitcher.App.Converters"
   xmlns:local="using:ContextSwitcher.App.Views"
@@ -43,7 +44,7 @@
         </StackPanel>
         <!-- A click anywhere outside or Escape closes it too; this is the one you can see. -->
         <Button Grid.Column="2" Classes="rowAction" Command="{Binding CloseCommand}" VerticalAlignment="Top"
-                ToolTip.Tip="Close (Esc)" AutomationProperties.Name="Close">
+                ToolTip.Tip="{x:Static r:Strings.Dashboard_CloseEsc}" AutomationProperties.Name="{x:Static r:Strings.Dashboard_Close}">
           <Viewbox Classes="icon rowAction">
             <Path Classes="glyph" Data="{StaticResource IconX}" />
           </Viewbox>
@@ -53,7 +54,7 @@
       <!-- Switch buttons -->
       <StackPanel Spacing="8">
         <Border Classes="divider" />
-        <TextBlock Text="SWITCH TO" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.Dashboard_SwitchTo_Section}" Classes="sectionTitle" />
         <ItemsControl ItemsSource="{Binding SwitchButtons}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
@@ -78,20 +79,20 @@
                     </Viewbox>
                   </Border>
                   <TextBlock Grid.Column="1" Text="{Binding DisplayName}" Classes="body" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                  <TextBlock Grid.Column="2" Text="Active" Classes="caption" Foreground="White" VerticalAlignment="Center" IsVisible="{Binding IsCurrent}" />
+                  <TextBlock Grid.Column="2" Text="{x:Static r:Strings.Dashboard_Active}" Classes="caption" Foreground="White" VerticalAlignment="Center" IsVisible="{Binding IsCurrent}" />
                 </Grid>
               </Button>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <TextBlock Text="Switching…" Classes="caption" IsVisible="{Binding IsSwitching}" />
+        <TextBlock Text="{x:Static r:Strings.Dashboard_Switching}" Classes="caption" IsVisible="{Binding IsSwitching}" />
         <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsSwitching}" Height="3" CornerRadius="2" />
       </StackPanel>
 
       <!-- Last switch outcome -->
       <StackPanel Spacing="6" IsVisible="{Binding HasLastSwitchWarnings}">
         <Border Classes="divider" />
-        <TextBlock Text="LAST SWITCH" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.Dashboard_LastSwitch_Section}" Classes="sectionTitle" />
         <TextBlock Text="{Binding LastSwitchStatusText}" Classes="body" Foreground="{DynamicResource WarningBrush}" />
         <ItemsControl ItemsSource="{Binding LastSwitchWarnings}">
           <ItemsControl.ItemsPanel>
@@ -110,7 +111,7 @@
       <!-- Config warnings -->
       <StackPanel Spacing="6" IsVisible="{Binding HasConfigurationWarnings}">
         <Border Classes="divider" />
-        <TextBlock Text="CONFIGURATION WARNINGS" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.Dashboard_ConfigurationWarnings_Section}" Classes="sectionTitle" />
         <ItemsControl ItemsSource="{Binding ConfigurationWarnings}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
@@ -129,7 +130,7 @@
            an ellipsis when long; the full address shows on hover. -->
       <StackPanel Spacing="6" IsVisible="{Binding HasQuickLinks}">
         <Border Classes="divider" />
-        <TextBlock Text="QUICK LINKS" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.Dashboard_QuickLinks_Section}" Classes="sectionTitle" />
         <ItemsControl ItemsSource="{Binding QuickLinks}" Margin="-8,0">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
@@ -157,7 +158,7 @@
       <!-- Notes: one per line, each its own bullet, at reading size. -->
       <StackPanel Spacing="6" IsVisible="{Binding HasNotes}">
         <Border Classes="divider" />
-        <TextBlock Text="NOTES" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.Dashboard_Notes_Section}" Classes="sectionTitle" />
         <ItemsControl ItemsSource="{Binding Notes}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
@@ -178,7 +179,7 @@
       <!-- Balance chart -->
       <StackPanel Spacing="8" IsVisible="{Binding HasBalanceData}">
         <Border Classes="divider" />
-        <TextBlock Text="LAST 7 DAYS" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.Dashboard_Last7Days_Section}" Classes="sectionTitle" />
         <ContentControl Content="{Binding BalanceChart}" ContentTemplate="{StaticResource BalanceChart}" />
       </StackPanel>
 
@@ -186,8 +187,8 @@
       <StackPanel Spacing="10">
         <Border Classes="divider" />
         <Grid ColumnDefinitions="*,Auto">
-          <Button Grid.Column="0" Classes="linkButton" Command="{Binding OpenAppCommand}" Content="Open App" />
-          <Button Grid.Column="1" Classes="linkButton secondary" Command="{Binding SupportDeveloperCommand}" Content="Support the developer ↗" />
+          <Button Grid.Column="0" Classes="linkButton" Command="{Binding OpenAppCommand}" Content="{x:Static r:Strings.Dashboard_OpenApp}" />
+          <Button Grid.Column="1" Classes="linkButton secondary" Command="{Binding SupportDeveloperCommand}" Content="{x:Static r:Strings.Dashboard_SupportTheDeveloper}" />
         </Grid>
       </StackPanel>
     </StackPanel>

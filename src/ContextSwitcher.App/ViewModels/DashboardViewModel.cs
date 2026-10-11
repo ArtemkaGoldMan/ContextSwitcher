@@ -7,6 +7,7 @@ using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -27,8 +28,8 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IClock clock;
     private readonly DispatcherTimer elapsedTimer;
 
-    private string activeContextDisplayName = "(none)";
-    private string elapsedDisplay = "Current profile";
+    private string activeContextDisplayName = Strings.Dashboard_NoProfile;
+    private string elapsedDisplay = Strings.Dashboard_CurrentProfile;
     private Avalonia.Media.IBrush activeAccentBrush = AccentColorParser.ToBrush(string.Empty);
     private string activeIcon = ProfileIcons.Fallback;
     private bool isSwitching;
@@ -295,7 +296,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         ContextDefinition? active = AppHost.Configuration.Contexts
             .FirstOrDefault(context => context.Id == state.CurrentContextId);
 
-        this.ActiveContextDisplayName = active?.DisplayName ?? "(none)";
+        this.ActiveContextDisplayName = active?.DisplayName ?? Strings.Dashboard_NoProfile;
         this.ActiveAccentBrush = AccentColorParser.ToBrush(active?.AccentColor ?? string.Empty);
         this.ActiveIcon = active?.Icon ?? ProfileIcons.Fallback;
 
@@ -338,8 +339,8 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     private void RefreshElapsedDisplay()
     {
         this.ElapsedDisplay = this.activeSince is { } since
-            ? $"Active for {FormatElapsed(this.clock.UtcNow - since)}"
-            : "Current profile";
+            ? Localized.Format(Strings.Dashboard_ActiveFor, FormatElapsed(this.clock.UtcNow - since))
+            : Strings.Dashboard_CurrentProfile;
     }
 
     private static string FormatElapsed(TimeSpan elapsed)
@@ -351,11 +352,11 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
 
         if (elapsed.TotalHours >= 1)
         {
-            return $"{(int)elapsed.TotalHours}h {elapsed.Minutes}m";
+            return Localized.Format(Strings.Units_HoursMinutes, (int)elapsed.TotalHours, elapsed.Minutes);
         }
 
         return elapsed.TotalMinutes >= 1
-            ? $"{(int)elapsed.TotalMinutes}m"
-            : $"{(int)elapsed.TotalSeconds}s";
+            ? Localized.Format(Strings.Units_Minutes, (int)elapsed.TotalMinutes)
+            : Localized.Format(Strings.Units_Seconds, (int)elapsed.TotalSeconds);
     }
 }

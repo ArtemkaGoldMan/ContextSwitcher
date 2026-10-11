@@ -1,4 +1,5 @@
 using ContextSwitcher.Core.Automation;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -19,13 +20,13 @@ public sealed class CriticalStepOptionViewModel(AutomationStepType stepType, str
     /// </summary>
     public static IReadOnlyList<(AutomationStepType Type, string Label)> SelectableSteps { get; } =
     [
-        (AutomationStepType.StopDockerResources, "Stopping containers"),
-        (AutomationStepType.CloseApplications, "Quitting apps"),
-        (AutomationStepType.SetFocusMode, "Changing Focus"),
-        (AutomationStepType.LaunchApplications, "Opening apps"),
-        (AutomationStepType.ManageBrowserContext, "Opening the browser"),
-        (AutomationStepType.StartDockerResources, "Starting containers"),
-        (AutomationStepType.ControlMedia, "Starting music")
+        (AutomationStepType.StopDockerResources, Strings.Step_StopDockerResources),
+        (AutomationStepType.CloseApplications, Strings.Step_CloseApplications),
+        (AutomationStepType.SetFocusMode, Strings.Step_SetFocusMode),
+        (AutomationStepType.LaunchApplications, Strings.Step_LaunchApplications),
+        (AutomationStepType.ManageBrowserContext, Strings.Step_ManageBrowserContext),
+        (AutomationStepType.StartDockerResources, Strings.Step_StartDockerResources),
+        (AutomationStepType.ControlMedia, Strings.Step_ControlMedia)
     ];
 
     public AutomationStepType StepType { get; } = stepType;
