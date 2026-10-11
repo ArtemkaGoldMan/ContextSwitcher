@@ -8,6 +8,8 @@ using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Core.Serialization;
 using ContextSwitcher.Infrastructure.AppleScript;
 using ContextSwitcher.Infrastructure.Browser;
+using ContextSwitcher.Core.Messages;
+using System.Globalization;
 
 namespace ContextSwitcher.Infrastructure.Automation;
 
@@ -136,7 +138,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
 
         return Degraded(
             step,
-            $"Could not close: {string.Join(", ", stillRunning)}.",
+            SwitchMessages.CouldNotClose.With(string.Join(", ", stillRunning)),
             standardError.ToString(),
             startedAt,
             completedAt);
@@ -218,7 +220,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
 
         return Degraded(
             step,
-            $"Could not launch: {string.Join(", ", failedApps)}.",
+            SwitchMessages.CouldNotLaunch.With(string.Join(", ", failedApps)),
             standardError.ToString(),
             startedAt,
             completedAt);
@@ -244,7 +246,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
             return Succeeded(step, "Browser context managed.", startedAt, completedAt);
         }
 
-        return Degraded(step, string.Join(' ', outcome.Warnings), standardError: string.Empty, startedAt, completedAt);
+        return Degraded(step, outcome.Warnings, standardError: string.Empty, startedAt, completedAt);
     }
 
     private async Task<AutomationResult> RunDockerCommandAsync(AutomationStep step, string dockerCommand, CancellationToken cancellationToken)
@@ -263,10 +265,8 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
             return Succeeded(step, $"Docker containers {dockerCommand}ed.", startedAt, completedAt);
         }
 
-        AutomationResultStatus status = step.IsCritical ? AutomationResultStatus.Failed : AutomationResultStatus.Warning;
-        return new AutomationResult(
-            step.Id, step.Type, status, $"Could not {dockerCommand} containers: {string.Join(", ", containers)}.",
-            result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
+        MessageTemplate failure = dockerCommand == "stop" ? SwitchMessages.CouldNotStopContainers : SwitchMessages.CouldNotStartContainers;
+        return WithProblem(step, failure.With(string.Join(", ", containers)), result, startedAt, completedAt);
     }
 
     private async Task<AutomationResult> ControlMediaAsync(AutomationStep step, CancellationToken cancellationToken)
@@ -283,9 +283,13 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
 
         if (string.IsNullOrWhiteSpace(playlist))
         {
+            UserMessage noPlaylist = SwitchMessages.NoPlaylist.With();
             return new AutomationResult(
-                step.Id, step.Type, AutomationResultStatus.Warning, "No playlist configured.",
-                null, null, null, startedAt, this.clock.UtcNow);
+                step.Id, step.Type, AutomationResultStatus.Warning, noPlaylist.English,
+                null, null, null, startedAt, this.clock.UtcNow)
+            {
+                Problems = [noPlaylist]
+            };
         }
 
         return player switch
@@ -308,10 +312,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
             return Succeeded(step, "Apple Music playlist started.", startedAt, completedAt);
         }
 
-        AutomationResultStatus status = step.IsCritical ? AutomationResultStatus.Failed : AutomationResultStatus.Warning;
-        return new AutomationResult(
-            step.Id, step.Type, status, $"Could not play Apple Music playlist '{playlist}'.",
-            result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
+        return WithProblem(step, SwitchMessages.CouldNotPlayAppleMusic.With(playlist), result, startedAt, completedAt);
     }
 
     private async Task<AutomationResult> PlaySpotifyAsync(AutomationStep step, string playlist, DateTimeOffset startedAt, CancellationToken cancellationToken)
@@ -327,9 +328,13 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         }
 
         // Spotify automation failures are always non-critical (section 9.10), regardless of step.IsCritical.
+        UserMessage spotify = SwitchMessages.CouldNotPlaySpotify.With(playlist);
         return new AutomationResult(
-            step.Id, step.Type, AutomationResultStatus.Warning, $"Could not start Spotify playback for '{playlist}'.",
-            result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
+            step.Id, step.Type, AutomationResultStatus.Warning, spotify.English,
+            result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt)
+        {
+            Problems = [spotify]
+        };
     }
 
     private async Task<AutomationResult> SetFocusModeAsync(AutomationStep step, CancellationToken cancellationToken)
@@ -372,14 +377,13 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
 
         // Say what actually went wrong. This used to tell the user to create a Shortcut that was
         // right there in their list, when it had run and failed - a Focus it names was never set up.
-        string message = IsMissingShortcut(result)
-            ? $"Shortcut '{candidates[0]}' doesn't exist yet. In Context Switcher, edit the profile and click \"Create it\" under Focus, or see docs/shortcuts-integration.md."
-            : $"Shortcut '{shortcutName}' ran but failed: {(FirstLine(result.StandardError) is { Length: > 0 } reason ? reason : $"exit code {result.ExitCode}")}";
+        UserMessage message = IsMissingShortcut(result)
+            ? SwitchMessages.ShortcutMissing.With(candidates[0])
+            : FirstLine(result.StandardError) is { Length: > 0 } reason
+                ? SwitchMessages.ShortcutFailed.With(shortcutName, reason)
+                : SwitchMessages.ShortcutFailedWithExitCode.With(shortcutName, result.ExitCode.ToString(CultureInfo.InvariantCulture));
 
-        AutomationResultStatus status = step.IsCritical ? AutomationResultStatus.Failed : AutomationResultStatus.Warning;
-        return new AutomationResult(
-            step.Id, step.Type, status, message,
-            result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt);
+        return WithProblem(step, message, result, startedAt, completedAt);
     }
 
     /// <summary>What `shortcuts run` says, and exits 1 with, when no Shortcut has the name.</summary>
@@ -427,13 +431,37 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
 
     private static AutomationResult Degraded(
         AutomationStep step,
-        string message,
+        UserMessage problem,
+        string standardError,
+        DateTimeOffset startedAt,
+        DateTimeOffset completedAt) =>
+        Degraded(step, [problem], standardError, startedAt, completedAt);
+
+    /// <summary>A warning, or a failure for a critical step, listing each problem - the English joined for the log.</summary>
+    private static AutomationResult Degraded(
+        AutomationStep step,
+        IReadOnlyList<UserMessage> problems,
         string standardError,
         DateTimeOffset startedAt,
         DateTimeOffset completedAt)
     {
         AutomationResultStatus status = step.IsCritical ? AutomationResultStatus.Failed : AutomationResultStatus.Warning;
-        return new AutomationResult(step.Id, step.Type, status, message, null, null, standardError, startedAt, completedAt);
+        return new AutomationResult(step.Id, step.Type, status, string.Join(' ', problems.Select(p => p.English)), null, null, standardError, startedAt, completedAt)
+        {
+            Problems = problems
+        };
+    }
+
+    /// <summary>A warning, or a failure for a critical step, keeping the process's own output for the log.</summary>
+    private static AutomationResult WithProblem(AutomationStep step, UserMessage problem, ProcessResult result, DateTimeOffset startedAt, DateTimeOffset completedAt)
+    {
+        AutomationResultStatus status = step.IsCritical ? AutomationResultStatus.Failed : AutomationResultStatus.Warning;
+        return new AutomationResult(
+            step.Id, step.Type, status, problem.English,
+            result.ExitCode, result.StandardOutput, result.StandardError, startedAt, completedAt)
+        {
+            Problems = [problem]
+        };
     }
 
     private static void AppendIfPresent(StringBuilder builder, string app, string value)

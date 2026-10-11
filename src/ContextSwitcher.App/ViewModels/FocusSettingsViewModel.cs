@@ -2,6 +2,7 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.App.Resources;
+using ContextSwitcher.Core.Messages;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -198,10 +199,10 @@ public sealed class FocusSettingsViewModel : ViewModelBase
         this.SetOffering(true);
         try
         {
-            string? problem = await this.installer.OfferAsync(modeName, turnOff, CancellationToken.None).ConfigureAwait(true);
+            UserMessage? problem = await this.installer.OfferAsync(modeName, turnOff, CancellationToken.None).ConfigureAwait(true);
             if (problem is not null)
             {
-                this.ShortcutStatus = problem;
+                this.ShortcutStatus = MessageText.Of(problem);
                 return;
             }
 

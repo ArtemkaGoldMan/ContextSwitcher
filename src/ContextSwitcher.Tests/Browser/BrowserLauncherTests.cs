@@ -123,7 +123,7 @@ public sealed class BrowserLauncherTests
 
         ProcessStartOptions call = Assert.Single(processRunner.Calls);
         Assert.Equal(["-a", "Google Chrome", "https://example.com/"], call.Arguments);
-        Assert.Contains(outcome.Warnings, warning => warning.Contains("Google Chrome", StringComparison.Ordinal));
+        Assert.Contains(outcome.Warnings, warning => warning.English.Contains("Google Chrome", StringComparison.Ordinal));
     }
 
     /// <summary>

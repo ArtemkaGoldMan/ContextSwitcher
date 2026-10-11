@@ -39,11 +39,14 @@ macOS also gets the list: `scripts/build-app.sh` declares every translation in t
 Rider and Visual Studio both edit `.resx` files as a table with a column per language, which is
 easier than the XML.
 
-## Not translatable yet
+## Messages from the switch engine
 
-What a switch reports about its steps ("Couldn't quit Visual Studio Code…") and the configuration
-check's messages still come from the switch engine as finished English sentences. Turning them into
-translatable messages is the next step.
+What a switch reports about a step ("Couldn't quit Visual Studio Code…"), the configuration check's
+messages, and the updater's are made in the engine, which has no translations. Each is a template in
+`src/ContextSwitcher.Core/Messages/` with a key and its English; the engine records the key and the
+values, and the app shows the `Msg_<key>` translation from Strings.resx. The log and the command line
+keep the English, so a bug report reads the same whatever the reporter's language. A switch recorded
+before messages had keys is shown in the English it was written in.
 
 ## Rules for translators
 
@@ -73,5 +76,8 @@ translatable messages is the next step.
   where it shows and what each placeholder is — translators see only the file.
 - Patterns with placeholders go through `Localized.Format(Strings.Key, value)`, so numbers and dates
   use the user's formats. Counted phrases go through `Plurals.Format("Base", count)`.
+- A new message from the engine is a `MessageTemplate` in a catalog in `Core/Messages/`, plus the same
+  English as `Msg_<key>` in Strings.resx and its translations. A test fails if the two Englishes
+  differ or either is missing; build it with `Template.With(values…)` and pass the `UserMessage` on.
 - The log, the command line's output, and identifiers stay in English: the log is what people send
   with bug reports, and scripts read the command line.

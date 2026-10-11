@@ -545,10 +545,10 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         new(url, this.RemoveBrowserUrl, isEditable: true, "IconGlobe", "https://…");
 
     private EditableStringRowViewModel TabGroupRow(string name) =>
-        new(name, this.RemoveTabGroup, isEditable: true, "IconLayers", "Tab group name");
+        new(name, this.RemoveTabGroup, isEditable: true, "IconLayers", Strings.ProfileSetup_TabGroupName);
 
     private EditableStringRowViewModel ContainerRow(string name, Action<EditableStringRowViewModel> remove, bool isEditable) =>
-        new(name, remove, isEditable, "IconBox", "Container name");
+        new(name, remove, isEditable, "IconBox", Strings.ProfileSetup_ContainerName);
 
     private async Task<IReadOnlyList<PickerChoice>?> LoadOpenTabsAsync(CancellationToken cancellationToken)
     {

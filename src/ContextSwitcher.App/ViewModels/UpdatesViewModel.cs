@@ -163,7 +163,9 @@ public sealed class UpdatesViewModel : ViewModelBase
                 return;
             }
 
-            this.InstallBlocker = await this.updater.GetInstallBlockerAsync(CancellationToken.None).ConfigureAwait(true);
+            this.InstallBlocker = await this.updater.GetInstallBlockerAsync(CancellationToken.None).ConfigureAwait(true) is { } blocker
+                ? MessageText.Of(blocker)
+                : null;
             this.SetAvailable(latest);
             this.StatusText = Localized.Format(Strings.Updates_Available, ReleaseVersion.Format(latest.Version));
         }
@@ -171,7 +173,7 @@ public sealed class UpdatesViewModel : ViewModelBase
         {
             if (userAsked)
             {
-                this.StatusText = Localized.Format(Strings.Updates_CouldNotCheck, ex.Message);
+                this.StatusText = Localized.Format(Strings.Updates_CouldNotCheck, MessageText.Of(ex.Detail));
             }
         }
         finally
@@ -198,7 +200,7 @@ public sealed class UpdatesViewModel : ViewModelBase
         }
         catch (UpdateException ex)
         {
-            this.StatusText = Localized.Format(Strings.Updates_CouldNotInstall, ex.Message);
+            this.StatusText = Localized.Format(Strings.Updates_CouldNotInstall, MessageText.Of(ex.Detail));
         }
         finally
         {

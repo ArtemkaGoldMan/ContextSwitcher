@@ -2,6 +2,8 @@ using System.Diagnostics;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Core.Updates;
+using ContextSwitcher.Core.Messages;
+using System.Globalization;
 
 namespace ContextSwitcher.Infrastructure.Updates;
 
@@ -110,7 +112,7 @@ public sealed class AppBundleUpdater : IAppUpdater
     }
 
     /// <inheritdoc />
-    public async Task<string?> GetInstallBlockerAsync(CancellationToken cancellationToken) =>
+    public async Task<UserMessage?> GetInstallBlockerAsync(CancellationToken cancellationToken) =>
         (await this.CheckCanInstallAsync(cancellationToken).ConfigureAwait(false)).Blocker;
 
     /// <inheritdoc />
@@ -118,7 +120,7 @@ public sealed class AppBundleUpdater : IAppUpdater
     {
         ArgumentNullException.ThrowIfNull(release);
 
-        (string? blocker, string? requirement) = await this.CheckCanInstallAsync(cancellationToken).ConfigureAwait(false);
+        (UserMessage? blocker, string? requirement) = await this.CheckCanInstallAsync(cancellationToken).ConfigureAwait(false);
         if (blocker is not null)
         {
             throw new UpdateException(blocker);
@@ -126,7 +128,7 @@ public sealed class AppBundleUpdater : IAppUpdater
 
         if (release.ArchiveUrl is null)
         {
-            throw new UpdateException($"Version {ReleaseVersion.Format(release.Version)} has no {GitHubReleaseSource.ArchiveName} to install from. Download it from its release page instead.");
+            throw new UpdateException(UpdateMessages.NoArchive.With(ReleaseVersion.Format(release.Version), GitHubReleaseSource.ArchiveName));
         }
 
         string work = Path.Combine(this.workRoot, $"ContextSwitcher-update-{Guid.NewGuid():N}");
@@ -141,19 +143,19 @@ public sealed class AppBundleUpdater : IAppUpdater
             string app = Path.Combine(unpacked, BundleName);
             if (unzip.ExitCode != 0 || !Directory.Exists(app))
             {
-                throw new UpdateException("The download couldn't be unpacked into the app. Try again, or download it from the release page.");
+                throw new UpdateException(UpdateMessages.CouldNotUnpack.With());
             }
 
             Version downloaded = await this.ReadVersionAsync(app, cancellationToken).ConfigureAwait(false);
             if (downloaded != release.Version)
             {
-                throw new UpdateException($"The download is version {ReleaseVersion.Format(downloaded)}, not {ReleaseVersion.Format(release.Version)}, so it wasn't installed.");
+                throw new UpdateException(UpdateMessages.WrongVersion.With(ReleaseVersion.Format(downloaded), ReleaseVersion.Format(release.Version)));
             }
 
             ProcessResult verify = await this.RunAsync("codesign", ["--verify", "--deep", "--strict", $"-R={requirement}", app], cancellationToken).ConfigureAwait(false);
             if (verify.ExitCode != 0)
             {
-                throw new UpdateException("The download isn't signed with Context Switcher's certificate, so it wasn't installed.");
+                throw new UpdateException(UpdateMessages.NotSigned.With());
             }
 
             return new StagedUpdate(release.Version, app, work);
@@ -171,7 +173,7 @@ public sealed class AppBundleUpdater : IAppUpdater
         ArgumentNullException.ThrowIfNull(update);
         if (this.bundlePath is null)
         {
-            throw new UpdateException("This copy isn't an installed app, so there is nothing to replace.");
+            throw new UpdateException(UpdateMessages.NotInstalledApp.With());
         }
 
         string script = Path.Combine(update.WorkDirectory, "install.sh");
@@ -186,28 +188,28 @@ public sealed class AppBundleUpdater : IAppUpdater
         using Process? installer = Process.Start(start);
         if (installer is null)
         {
-            throw new UpdateException("The update couldn't be started.");
+            throw new UpdateException(UpdateMessages.CouldNotStart.With());
         }
     }
 
-    private async Task<(string? Blocker, string? Requirement)> CheckCanInstallAsync(CancellationToken cancellationToken)
+    private async Task<(UserMessage? Blocker, string? Requirement)> CheckCanInstallAsync(CancellationToken cancellationToken)
     {
         if (this.bundlePath is null)
         {
-            return ("This copy runs from source rather than as an installed app, so it can't update itself.", null);
+            return (UpdateMessages.RunsFromSource.With(), null);
         }
 
         string folder = Path.GetDirectoryName(this.bundlePath)!;
         if (!CanWriteTo(folder))
         {
-            return ($"Context Switcher isn't allowed to replace itself in {folder}. Download the new version from its release page.", null);
+            return (UpdateMessages.CannotReplaceIn.With(folder), null);
         }
 
         ProcessResult display = await this.RunAsync("codesign", ["-d", "-r-", this.bundlePath], cancellationToken).ConfigureAwait(false);
         string? requirement = ParseDesignatedRequirement(display.StandardOutput + "\n" + display.StandardError);
         if (requirement is null || requirement.StartsWith("cdhash", StringComparison.Ordinal))
         {
-            return ("This copy isn't signed with the release certificate, so it can't check that an update is genuine. Download the new version from its release page.", null);
+            return (UpdateMessages.NotReleaseSigned.With(), null);
         }
 
         return (null, requirement);
@@ -220,12 +222,12 @@ public sealed class AppBundleUpdater : IAppUpdater
             using HttpResponseMessage response = await this.http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                throw new UpdateException($"The download failed ({(int)response.StatusCode}). Try again later.");
+                throw new UpdateException(UpdateMessages.DownloadError.With(((int)response.StatusCode).ToString(CultureInfo.InvariantCulture)));
             }
 
             if (response.Content.Headers.ContentLength > MaxArchiveBytes)
             {
-                throw new UpdateException("The download is far larger than a release should be, so it wasn't installed.");
+                throw new UpdateException(UpdateMessages.DownloadTooLarge.With());
             }
 
             Stream source = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
@@ -242,7 +244,7 @@ public sealed class AppBundleUpdater : IAppUpdater
                         total += read;
                         if (total > MaxArchiveBytes)
                         {
-                            throw new UpdateException("The download is far larger than a release should be, so it wasn't installed.");
+                            throw new UpdateException(UpdateMessages.DownloadTooLarge.With());
                         }
 
                         await target.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
@@ -252,7 +254,7 @@ public sealed class AppBundleUpdater : IAppUpdater
         }
         catch (HttpRequestException ex)
         {
-            throw new UpdateException("The download failed. Check the internet connection and try again.", ex);
+            throw new UpdateException(UpdateMessages.DownloadFailed.With(), ex);
         }
     }
 
@@ -265,7 +267,7 @@ public sealed class AppBundleUpdater : IAppUpdater
 
         return result.ExitCode == 0 && ReleaseVersion.TryParse(result.StandardOutput, out Version version)
             ? version
-            : throw new UpdateException("The download has no version number, so it wasn't installed.");
+            : throw new UpdateException(UpdateMessages.NoVersion.With());
     }
 
     private Task<ProcessResult> RunAsync(string tool, IReadOnlyList<string> arguments, CancellationToken cancellationToken) =>

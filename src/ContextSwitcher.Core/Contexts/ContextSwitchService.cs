@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Messages;
 using System.Globalization;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Analytics;
@@ -275,8 +276,11 @@ public sealed class ContextSwitchService : IContextSwitchService
         catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
         {
             DateTimeOffset completedAt = this.clock.UtcNow;
-            return new AutomationResult(
-                step.Id, step.Type, AutomationResultStatus.TimedOut, $"Step timed out after {step.Timeout}.", null, null, null, startedAt, completedAt);
+            UserMessage timedOut = SwitchMessages.StepTimedOut.With(((int)step.Timeout.TotalSeconds).ToString(CultureInfo.InvariantCulture));
+            return new AutomationResult(step.Id, step.Type, AutomationResultStatus.TimedOut, timedOut.English, null, null, null, startedAt, completedAt)
+            {
+                Problems = [timedOut]
+            };
         }
     }
 
@@ -333,14 +337,20 @@ public sealed class ContextSwitchService : IContextSwitchService
 
     private static IReadOnlyList<StateError> BuildStateErrors(IReadOnlyList<AutomationResult> stepResults)
     {
+        // One entry per problem, each with its key so the app can show it translated. A step with no
+        // listed problems keeps its single English message.
         return stepResults
             .Where(result => result.Status is AutomationResultStatus.Warning or AutomationResultStatus.Failed or AutomationResultStatus.TimedOut)
-            .Select(result => new StateError
-            {
-                StepId = result.StepId,
-                Message = result.Message,
-                OccurredAt = result.CompletedAt
-            })
+            .SelectMany(result => result.Problems.Count == 0
+                ? [new StateError { StepId = result.StepId, Message = result.Message, OccurredAt = result.CompletedAt }]
+                : result.Problems.Select(problem => new StateError
+                {
+                    StepId = result.StepId,
+                    Message = problem.English,
+                    MessageKey = problem.Key,
+                    MessageArguments = problem.Arguments,
+                    OccurredAt = result.CompletedAt
+                }))
             .ToList();
     }
 

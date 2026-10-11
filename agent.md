@@ -1694,6 +1694,10 @@ Text (docs/translating.md):
   view. Keys are `Area_What` with a `<comment>` for translators.
 - Placeholders through `Localized.Format`, counted phrases through `Plurals.Format` (CLDR one/few/
   many/other, so Ukrainian and Polish get their three forms).
+- Messages made in Core/Infrastructure (step problems, configuration errors, updater errors, Focus
+  Shortcut problems) are `MessageTemplate`s in `Core/Messages/*Messages.cs`, producing `UserMessage`
+  (key, values, English). `AutomationResult.Problems` and `StateError.MessageKey/MessageArguments` carry
+  them; the App shows them through `MessageText.Of`, from `Msg_<key>` in Strings.resx.
 - The language is chosen once at startup (Program.Main, before any window) by `AppLanguages`: the
   `language` setting, or the first of the Mac's preferred languages (`PreferredLanguages`, via
   NSLocale) that has a translation. A language in `AppLanguages.Supported` must be translated in

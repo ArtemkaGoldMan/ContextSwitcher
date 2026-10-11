@@ -3,6 +3,7 @@ using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Logging;
+using ContextSwitcher.Core.Messages;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Contexts;
@@ -100,6 +101,45 @@ public sealed class ContextSwitchServiceTests
         // Non-critical failures continue the pipeline by default.
         Assert.Contains(executor.ExecutedSteps, step => step.Type == AutomationStepType.ManageBrowserContext);
         Assert.Single(result.StepResults, step => step.Status == AutomationResultStatus.Failed);
+    }
+
+    /// <summary>
+    /// Each problem a step reports is its own entry in state.json, with its key and values, so the app
+    /// can show it in the user's language; the English stays beside it for the log and older builds.
+    /// </summary>
+    [Fact]
+    public async Task EachProblemIsRecordedWithItsKeyAndValues()
+    {
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _, _) = CreateService();
+        store.Seed(SettingsPath, TwoContextConfiguration());
+        store.Seed(StatePath, new CurrentContextState { CurrentContextId = "personal" });
+
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        UserMessage tabs = SwitchMessages.CouldNotCheckTabs.With("Google Chrome");
+        UserMessage page = SwitchMessages.CouldNotOpenUrl.With("https://example.com/", "denied");
+        executor.SetResult(
+            "ManageBrowserContext.work",
+            new AutomationResult("ManageBrowserContext.work", AutomationStepType.ManageBrowserContext, AutomationResultStatus.Warning, $"{tabs.English} {page.English}", null, null, null, now, now)
+            {
+                Problems = [tabs, page]
+            });
+
+        await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
+
+        CurrentContextState state = store.Get<CurrentContextState>(StatePath)!;
+        Assert.Collection(
+            state.LastErrors,
+            error =>
+            {
+                Assert.Equal("Switch_CouldNotCheckTabs", error.MessageKey);
+                Assert.Equal(["Google Chrome"], error.MessageArguments);
+                Assert.Equal(tabs.English, error.Message);
+            },
+            error =>
+            {
+                Assert.Equal("Switch_CouldNotOpenUrl", error.MessageKey);
+                Assert.Equal(["https://example.com/", "denied"], error.MessageArguments);
+            });
     }
 
     [Fact]

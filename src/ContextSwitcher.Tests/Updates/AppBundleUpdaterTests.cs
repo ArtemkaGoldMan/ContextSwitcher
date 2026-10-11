@@ -53,7 +53,7 @@ public sealed class AppBundleUpdaterTests : IDisposable
     {
         AppBundleUpdater updater = new(new HttpClient(this.handler), new FakeProcessRunner(), bundlePath: null, this.root, "/usr/bin/true");
 
-        string? blocker = await updater.GetInstallBlockerAsync(CancellationToken.None);
+        string? blocker = (await updater.GetInstallBlockerAsync(CancellationToken.None))?.English;
 
         Assert.Contains("runs from source", blocker, StringComparison.Ordinal);
     }
@@ -73,7 +73,7 @@ public sealed class AppBundleUpdaterTests : IDisposable
         string installed = await MakeBundleAsync(Path.Combine(this.root, "Applications"), "0.1.0", signAdHoc: true);
         AppBundleUpdater updater = new(new HttpClient(this.handler), new ProcessRunner(), installed, this.root, "/usr/bin/true");
 
-        string? blocker = await updater.GetInstallBlockerAsync(CancellationToken.None);
+        string? blocker = (await updater.GetInstallBlockerAsync(CancellationToken.None))?.English;
 
         Assert.Contains("isn't signed with the release certificate", blocker, StringComparison.Ordinal);
     }

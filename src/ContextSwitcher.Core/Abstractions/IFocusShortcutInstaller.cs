@@ -1,3 +1,5 @@
+using ContextSwitcher.Core.Messages;
+
 namespace ContextSwitcher.Core.Abstractions;
 
 /// <summary>
@@ -12,5 +14,5 @@ public interface IFocusShortcutInstaller
     /// <paramref name="turnOff"/> is set. Returns null once the Shortcuts app has it, or why it
     /// could not be offered.
     /// </summary>
-    Task<string?> OfferAsync(string modeName, bool turnOff, CancellationToken cancellationToken);
+    Task<UserMessage?> OfferAsync(string modeName, bool turnOff, CancellationToken cancellationToken);
 }

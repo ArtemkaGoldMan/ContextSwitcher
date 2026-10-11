@@ -3,6 +3,7 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.Services;
 
@@ -44,7 +45,7 @@ public sealed class ConfigurationStore
         ConfigurationValidationResult validation = this.validator.Validate(configuration);
         if (!validation.IsValid)
         {
-            return ConfigurationSaveResult.Invalid(validation.Errors.Select(error => $"{error.Path}: {error.Message}").ToList());
+            return ConfigurationSaveResult.Invalid(validation.Errors.Select(MessageText.Of).ToList());
         }
 
         // ConfigureAwait(true): UpdateConfiguration below raises ConfigurationChanged inline, and
