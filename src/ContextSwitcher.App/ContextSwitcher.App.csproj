@@ -12,7 +12,7 @@
 
     <!-- Single source of truth for the version. scripts/build-app.sh reads it from here so the
          bundle, the Info.plist and the .dmg filename cannot drift apart. -->
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

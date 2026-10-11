@@ -68,6 +68,17 @@ public sealed partial class App : Application
             if (this.TryGetFeature<IActivatableLifetime>() is { } activatable)
             {
                 activatable.Deactivated += (_, _) => this.dashboardWindow?.Hide();
+
+                // Opening the app again while it runs - from Applications, Spotlight or its Dock
+                // icon - brings up its window. The menu bar icon used to be the only way in, and
+                // macOS hides menu bar icons that don't fit beside a MacBook's notch.
+                activatable.Activated += (_, e) =>
+                {
+                    if (e.Kind == ActivationKind.Reopen)
+                    {
+                        this.ShowOnReopen(desktop);
+                    }
+                };
             }
 
             // A fresh install otherwise lands on one empty "Default" profile - a context switcher
@@ -190,6 +201,18 @@ public sealed partial class App : Application
                 },
                 CancellationToken.None).ConfigureAwait(true);
         }
+    }
+
+    /// <summary>The setup wizard while it is still open - it comes first - and otherwise the main window.</summary>
+    private void ShowOnReopen(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        if (desktop.Windows.OfType<OnboardingWindow>().FirstOrDefault() is { } onboarding)
+        {
+            onboarding.Activate();
+            return;
+        }
+
+        this.ShowMainApp();
     }
 
     private void ShowOnboarding()
