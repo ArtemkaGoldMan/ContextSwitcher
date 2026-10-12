@@ -449,7 +449,7 @@
     <value>Перевіряти автоматично</value>
   </data>
   <data name="Settings_OnceADayTurnedOff" xml:space="preserve">
-    <value>Раз на день. Якщо вимкнено, Context Switcher перевіряє лише тоді, коли ви натискаєте «Перевірити зараз».</value>
+    <value>Раз на день, зі сповіщенням, коли виходить нова версія. Якщо вимкнено, Context Switcher перевіряє лише тоді, коли ви натискаєте «Перевірити зараз».</value>
   </data>
   <data name="Settings_CheckForUpdatesAutomatically" xml:space="preserve">
     <value>Автоматично перевіряти оновлення</value>
@@ -504,6 +504,12 @@
   </data>
   <data name="Tray_UpdateTo" xml:space="preserve">
     <value>Оновити до {0}…</value>
+  </data>
+  <data name="Notification_UpdateTitle" xml:space="preserve">
+    <value>Вийшов Context Switcher {0}</value>
+  </data>
+  <data name="Notification_UpdateBody" xml:space="preserve">
+    <value>Натисніть, щоб побачити, що нового, і встановити.</value>
   </data>
   <data name="Accent_Custom" xml:space="preserve">
     <value>Власний</value>

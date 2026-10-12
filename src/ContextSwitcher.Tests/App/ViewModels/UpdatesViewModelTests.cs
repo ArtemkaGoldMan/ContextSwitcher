@@ -16,6 +16,7 @@ public sealed class UpdatesViewModelTests
     private readonly FakeReleaseSource releases = new();
     private readonly FakeAppUpdater updater = new();
     private readonly FakeProcessRunner processRunner = new();
+    private readonly FakeSystemNotifications notifications = new();
 
     [Fact]
     public async Task ANewerReleaseIsOfferedForInstalling()
@@ -157,6 +158,52 @@ public sealed class UpdatesViewModelTests
         Assert.Contains(nameof(UpdatesViewModel.IsUpdateAvailable), changed);
     }
 
+    /// <summary>The daily check announces what it finds in Notification Center - once per version.</summary>
+    [Fact]
+    public async Task TheDailyCheckAnnouncesEachNewVersionOnce()
+    {
+        this.releases.Latest = NewRelease;
+        UpdatesViewModel updates = this.Create();
+
+        await updates.CheckAsync(userAsked: false);
+        await updates.CheckAsync(userAsked: false);
+
+        (string id, string title, string body) = Assert.Single(this.notifications.Shown);
+        Assert.Equal(UpdatesViewModel.NotificationId, id);
+        Assert.Equal("Context Switcher 0.2.0 is available", title);
+        Assert.Equal("Click to see what's new and install it.", body);
+
+        this.releases.Latest = NewRelease with { Version = new Version(0, 3, 0) };
+        await updates.CheckAsync(userAsked: false);
+
+        Assert.Equal(["Context Switcher 0.2.0 is available", "Context Switcher 0.3.0 is available"], this.notifications.Shown.Select(shown => shown.Title));
+    }
+
+    /// <summary>Someone who clicked Check now is reading the answer already - and it isn't repeated later.</summary>
+    [Fact]
+    public async Task AVersionFoundByCheckNowIsNotAnnounced()
+    {
+        this.releases.Latest = NewRelease;
+        UpdatesViewModel updates = this.Create();
+
+        await updates.CheckAsync(userAsked: true);
+        await updates.CheckAsync(userAsked: false);
+
+        Assert.Empty(this.notifications.Shown);
+    }
+
+    /// <summary>Once up to date, a notice about the version now installed is taken out of Notification Center.</summary>
+    [Fact]
+    public async Task BeingUpToDateTakesTheNoticeAway()
+    {
+        UpdatesViewModel updates = this.Create();
+
+        await updates.CheckAsync(userAsked: false);
+
+        Assert.Empty(this.notifications.Shown);
+        Assert.Equal([UpdatesViewModel.NotificationId], this.notifications.Removed);
+    }
+
     private UpdatesViewModel Create() =>
-        new(this.releases, this.updater, this.processRunner, new Version(0, 1, 0), () => new DateTimeOffset(2026, 10, 10, 14, 32, 0, TimeSpan.Zero));
+        new(this.releases, this.updater, this.processRunner, this.notifications, new Version(0, 1, 0), () => new DateTimeOffset(2026, 10, 10, 14, 32, 0, TimeSpan.Zero));
 }

@@ -225,14 +225,16 @@ recorded only on your Mac and you can turn it off in Settings.
 
 ## Updates
 
-ContextSwitcher checks for a new version once a day. When there is one, **Update to x.y.z…**
-appears in the menu bar menu and in **Settings → Updates**. Click **Install and restart**: it
-downloads the new version, checks it is signed with the same certificate as the one you have, and
-restarts into it.
+ContextSwitcher checks for a new version once a day. When there is one, macOS shows a notification,
+and **Update to x.y.z…** appears in the menu bar menu and in **Settings → Updates**. Click
+**Install and restart**: it downloads the new version, checks it is signed with the same certificate
+as the one you have, and restarts into it.
 
 - Your profiles, settings and history are kept.
 - You don't need the Terminal command again, and macOS doesn't ask for permissions again.
 - Prefer to check yourself? Turn off **Check automatically** and use **Check now**.
+- The first notification makes macOS ask whether ContextSwitcher may send them. You can change that
+  later in **System Settings → Notifications**.
 
 Running the one-command install again also updates, and so does `brew upgrade --greedy` if you
 installed with Homebrew.

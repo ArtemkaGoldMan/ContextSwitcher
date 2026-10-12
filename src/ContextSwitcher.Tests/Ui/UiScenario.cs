@@ -42,7 +42,7 @@ public sealed class UiScenario
         this.Notice = new SwitchNoticeViewModel(DateTimeOffset.UtcNow);
         this.Releases = new FakeReleaseSource();
         this.Updater = new FakeAppUpdater();
-        this.Updates = new UpdatesViewModel(this.Releases, this.Updater, this.ProcessRunner, new Version(0, 1, 0), () => new DateTimeOffset(2026, 10, 10, 14, 32, 0, TimeSpan.Zero));
+        this.Updates = new UpdatesViewModel(this.Releases, this.Updater, this.ProcessRunner, new FakeSystemNotifications(), new Version(0, 1, 0), () => new DateTimeOffset(2026, 10, 10, 14, 32, 0, TimeSpan.Zero));
     }
 
     public ConfigPaths Paths { get; }

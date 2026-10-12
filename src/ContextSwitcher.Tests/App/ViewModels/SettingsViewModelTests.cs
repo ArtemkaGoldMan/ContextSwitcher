@@ -104,5 +104,5 @@ public sealed class SettingsViewModelTests
     }
 
     private static UpdatesViewModel Updates() =>
-        new(new FakeReleaseSource(), new FakeAppUpdater(), new FakeProcessRunner(), new Version(0, 1, 0));
+        new(new FakeReleaseSource(), new FakeAppUpdater(), new FakeProcessRunner(), new FakeSystemNotifications(), new Version(0, 1, 0));
 }

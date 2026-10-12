@@ -146,6 +146,23 @@ public sealed partial class App : Application
         };
         updates.RestartRequested += (_, _) => desktop.Shutdown();
 
+        // Clicking the update notification leads to the same place. It can be one shown before a
+        // restart, while this run hasn't found the update yet, so it asks again.
+        AppHost.Services.GetRequiredService<ISystemNotifications>().Clicked += (_, id) =>
+        {
+            if (id == UpdatesViewModel.NotificationId)
+            {
+                this.Dispatcher.Post(() =>
+                {
+                    this.ShowUpdates();
+                    if (!updates.IsUpdateAvailable)
+                    {
+                        _ = updates.CheckAsync(userAsked: true);
+                    }
+                });
+            }
+        };
+
         TrayIcon trayIcon = new()
         {
             Icon = new WindowIcon(AssetLoader.Open(TrayIconUri)),

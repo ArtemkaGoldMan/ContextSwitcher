@@ -16,28 +16,43 @@ namespace ContextSwitcher.App.ViewModels;
 /// and on "Check now". It never installs anything by itself - an update restarts the app, and that is
 /// for the person to choose. A check that fails on its own, offline say, says nothing: only one asked
 /// for gets an error message.
+///
+/// A version found by the daily check is also announced in a macOS notification, once: the menu bar
+/// entry is easy to miss, and is hidden altogether when macOS has no room for the icon.
 /// </summary>
 public sealed class UpdatesViewModel : ViewModelBase
 {
+    /// <summary>The notification's id: a newer version's notice replaces the older one.</summary>
+    public const string NotificationId = "update";
+
     private static readonly TimeSpan FirstCheckDelay = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan CheckInterval = TimeSpan.FromDays(1);
 
     private readonly IReleaseSource releaseSource;
     private readonly IAppUpdater updater;
     private readonly IProcessRunner processRunner;
+    private readonly ISystemNotifications notifications;
     private readonly Func<DateTimeOffset> now;
 
     private ReleaseInfo? available;
+    private Version? announced;
     private string? installBlocker;
     private string statusText = Strings.Updates_NotCheckedYet;
     private bool isBusy;
     private DispatcherTimer? timer;
 
-    public UpdatesViewModel(IReleaseSource releaseSource, IAppUpdater updater, IProcessRunner processRunner, Version currentVersion, Func<DateTimeOffset>? now = null)
+    public UpdatesViewModel(
+        IReleaseSource releaseSource,
+        IAppUpdater updater,
+        IProcessRunner processRunner,
+        ISystemNotifications notifications,
+        Version currentVersion,
+        Func<DateTimeOffset>? now = null)
     {
         this.releaseSource = releaseSource;
         this.updater = updater;
         this.processRunner = processRunner;
+        this.notifications = notifications;
         this.CurrentVersion = currentVersion;
         this.now = now ?? (() => DateTimeOffset.Now);
 
@@ -160,6 +175,9 @@ public sealed class UpdatesViewModel : ViewModelBase
             {
                 this.SetAvailable(null);
                 this.StatusText = Localized.Format(Strings.Updates_UpToDate, this.now());
+
+                // A notice left from before this version was installed no longer holds.
+                this.notifications.Remove(NotificationId);
                 return;
             }
 
@@ -168,6 +186,7 @@ public sealed class UpdatesViewModel : ViewModelBase
                 : null;
             this.SetAvailable(latest);
             this.StatusText = Localized.Format(Strings.Updates_Available, ReleaseVersion.Format(latest.Version));
+            this.Announce(latest.Version, userAsked);
         }
         catch (UpdateException ex)
         {
@@ -205,6 +224,27 @@ public sealed class UpdatesViewModel : ViewModelBase
         finally
         {
             this.IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Each version once a run. Someone who clicked Check now is looking at the answer already; the
+    /// daily check that finds the same version tomorrow would only repeat it.
+    /// </summary>
+    private void Announce(Version version, bool userAsked)
+    {
+        if (version == this.announced)
+        {
+            return;
+        }
+
+        this.announced = version;
+        if (!userAsked)
+        {
+            this.notifications.Show(
+                NotificationId,
+                Localized.Format(Strings.Notification_UpdateTitle, ReleaseVersion.Format(version)),
+                Strings.Notification_UpdateBody);
         }
     }
 
