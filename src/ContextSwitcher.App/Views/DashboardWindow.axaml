@@ -67,6 +67,7 @@
                 Classes="switchContext"
                 Classes.current="{Binding IsCurrent}"
                 Command="{Binding SwitchCommand}"
+                ToolTip.Tip="{Binding ToolTip}"
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch">
                 <Grid ColumnDefinitions="Auto,*,Auto">

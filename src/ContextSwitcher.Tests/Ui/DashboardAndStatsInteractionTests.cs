@@ -51,6 +51,7 @@ public sealed class DashboardAndStatsInteractionTests : UiTest
             Button work = FindControl<Button>(window, b => b.Classes.Contains("switchContext")
                 && b.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "Work")
                 && IsClickable(b));
+            Assert.Equal("Click to turn this profile off", ToolTip.GetTip(work));
             Click(window, work);
             PumpUntil(WaitUntil(() => scenario.SwitchService.LastRequest is not null));
 
@@ -67,6 +68,7 @@ public sealed class DashboardAndStatsInteractionTests : UiTest
             Assert.False(viewModel.IsAnyActive);
             Assert.Equal(("No profile", "Click a profile to turn it on"), (viewModel.ActiveContextDisplayName, viewModel.ElapsedDisplay));
             Assert.DoesNotContain(viewModel.SwitchButtons, button => button.IsCurrent);
+            Assert.All(viewModel.SwitchButtons, button => Assert.Null(button.ToolTip));
         });
     }
 

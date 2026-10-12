@@ -976,6 +976,10 @@
     <value>No profile</value>
     <comment>Dashboard header when no profile is active - none yet, or the active one was turned off.</comment>
   </data>
+  <data name="Dashboard_ClickToTurnOff" xml:space="preserve">
+    <value>Click to turn this profile off</value>
+    <comment>Tooltip on the active profile's button in the dashboard.</comment>
+  </data>
   <data name="Dashboard_PickAProfile" xml:space="preserve">
     <value>Click a profile to turn it on</value>
     <comment>Dashboard header subtitle under "No profile".</comment>
