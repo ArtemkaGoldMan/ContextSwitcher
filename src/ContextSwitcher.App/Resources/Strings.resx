@@ -928,6 +928,14 @@
     <value>Switched to {0}, with warnings</value>
     <comment>Title of the switch-problems card. {0} = profile name.</comment>
   </data>
+  <data name="Notice_CouldNotTurnOff" xml:space="preserve">
+    <value>Couldn't turn off {0}</value>
+    <comment>Title of the switch-problems card after the active profile was clicked to turn it off. {0} = profile name.</comment>
+  </data>
+  <data name="Notice_TurnedOffWithWarnings" xml:space="preserve">
+    <value>Turned off {0}, with warnings</value>
+    <comment>Title of the switch-problems card after the active profile was turned off. {0} = profile name.</comment>
+  </data>
   <data name="Notice_At" xml:space="preserve">
     <value>at {0:HH:mm}</value>
     <comment>Beside the switch-problems card's title: when it happened.</comment>
@@ -953,8 +961,12 @@
     <comment>Profiles page error when deleting the last profile.</comment>
   </data>
   <data name="Dashboard_NoProfile" xml:space="preserve">
-    <value>(none)</value>
-    <comment>Dashboard header when no profile is active.</comment>
+    <value>No profile</value>
+    <comment>Dashboard header when no profile is active - none yet, or the active one was turned off.</comment>
+  </data>
+  <data name="Dashboard_PickAProfile" xml:space="preserve">
+    <value>Click a profile to turn it on</value>
+    <comment>Dashboard header subtitle under "No profile".</comment>
   </data>
   <data name="Dashboard_CurrentProfile" xml:space="preserve">
     <value>Current profile</value>

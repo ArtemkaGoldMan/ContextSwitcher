@@ -70,6 +70,8 @@ phrases:
 
 - "Switch to work" → `ContextSwitcher switch --context work`
 - "Switch to personal" → `ContextSwitcher switch --context personal`
+- "End the day" → `ContextSwitcher off`, which turns the active profile off without switching to
+  another, as clicking it again in the menu bar does
 
 These commands run without opening a window, so they're quick to trigger from Siri, a keyboard
 shortcut (in Shortcuts: the shortcut's **ⓘ → Add Keyboard Shortcut**) or any script.
@@ -81,6 +83,7 @@ All CLI commands exit without starting the GUI (except `open-dashboard`, which o
 ```bash
 ContextSwitcher switch --context work        # switch to a context
 ContextSwitcher switch --context work --json # same, machine-readable output
+ContextSwitcher off                           # turn the active context off, so none is active
 ContextSwitcher status                        # show current context and last switch outcome
 ContextSwitcher list-contexts                  # list configured context ids and names
 ContextSwitcher validate-config                # check settings.json for errors

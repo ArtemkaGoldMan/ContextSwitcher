@@ -127,6 +127,19 @@ public sealed class SwitchNoticeViewModelTests
         Assert.False(notice.IsShown);
     }
 
+
+    /// <summary>Problems from turning a profile off are told as that, under the profile turned off.</summary>
+    [Fact]
+    public void ProblemsTurningAProfileOffAreToldAsThat()
+    {
+        using SwitchNoticeViewModel notice = new(Started);
+
+        AppHost.UpdateState(Switched(string.Empty, ContextSwitchStatus.SucceededWithWarnings, Started.AddMinutes(5), "Could not close Slack.") with { PreviousContextId = "work" });
+        Assert.Equal("Turned off Work, with warnings", notice.Title);
+
+        AppHost.UpdateState(Switched(string.Empty, ContextSwitchStatus.Failed, Started.AddMinutes(6), "Could not close Slack.") with { PreviousContextId = "work" });
+        Assert.Equal("Couldn't turn off Work", notice.Title);
+    }
     private static CurrentContextState Switched(string contextId, ContextSwitchStatus status, DateTimeOffset completedAt, params string[] errors) => new()
     {
         CurrentContextId = contextId,

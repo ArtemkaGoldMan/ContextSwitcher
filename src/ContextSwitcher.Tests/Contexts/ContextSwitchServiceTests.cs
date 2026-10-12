@@ -249,6 +249,77 @@ public sealed class ContextSwitchServiceTests
         Assert.True(launch.Data!["stderr"].Length < 1000);
     }
 
+
+    /// <summary>
+    /// Clicking the active profile turns it off: the half of a switch that leaves it runs, and then
+    /// no profile is current and no time is counted.
+    /// </summary>
+    [Fact]
+    public async Task TurningOffLeavesTheActiveProfileAndEntersNone()
+    {
+        InMemoryAnalyticsSessionStore sessions = new();
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor) = CreateService(sessions);
+        store.Seed(SettingsPath, TwoContextConfiguration());
+        store.Seed(StatePath, new CurrentContextState { CurrentContextId = "personal" });
+
+        ContextSwitchResult result = await service.SwitchAsync(ContextSwitchRequest.TurnOff(ContextSwitchSource.Test), CancellationToken.None);
+
+        Assert.Equal(ContextSwitchStatus.Succeeded, result.Status);
+        Assert.Equal((string.Empty, "personal"), (result.TargetContextId, result.PreviousContextId));
+        Assert.Equal([AutomationStepType.CloseApplications], executor.ExecutedSteps.Select(step => step.Type));
+        CurrentContextState? state = await store.ReadAsync<CurrentContextState>(StatePath);
+        Assert.Equal((string.Empty, "personal"), (state?.CurrentContextId, state?.PreviousContextId));
+        Assert.NotNull(state?.LastSwitchCompletedAt);
+        Assert.Null(await sessions.ReadActiveMarkerAsync(CancellationToken.None));
+    }
+
+    /// <summary>From nothing, a switch only enters: there is no profile to leave.</summary>
+    [Fact]
+    public async Task SwitchingOnAfterTurningOffOnlyEnters()
+    {
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor) = CreateService(new InMemoryAnalyticsSessionStore());
+        store.Seed(SettingsPath, TwoContextConfiguration());
+        store.Seed(StatePath, new CurrentContextState { CurrentContextId = "personal" });
+        await service.SwitchAsync(ContextSwitchRequest.TurnOff(ContextSwitchSource.Test), CancellationToken.None);
+        executor.ExecutedSteps.Clear();
+
+        ContextSwitchResult result = await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
+
+        Assert.Null(result.PreviousContextId);
+        Assert.Equal([AutomationStepType.LaunchApplications, AutomationStepType.ManageBrowserContext], executor.ExecutedSteps.Select(step => step.Type));
+    }
+
+    [Fact]
+    public async Task TurningOffWithNothingActiveChangesNothing()
+    {
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor) = CreateService(new InMemoryAnalyticsSessionStore());
+        store.Seed(SettingsPath, TwoContextConfiguration());
+
+        ContextSwitchResult result = await service.SwitchAsync(ContextSwitchRequest.TurnOff(ContextSwitchSource.Test), CancellationToken.None);
+
+        Assert.Equal(ContextSwitchStatus.NoOp, result.Status);
+        Assert.Empty(executor.ExecutedSteps);
+        Assert.Null(await store.ReadAsync<CurrentContextState>(StatePath));
+    }
+
+    /// <summary>The profile that is on is the switch that turns it off; any other is switched to.</summary>
+    [Fact]
+    public void ClickingTheActiveProfileTurnsItOff()
+    {
+        Assert.True(ContextSwitchRequest.ForClickOn("work", "work", ContextSwitchSource.MenuBar).IsTurnOff);
+        Assert.Equal("personal", ContextSwitchRequest.ForClickOn("personal", "work", ContextSwitchSource.MenuBar).TargetContextId);
+        Assert.Equal("work", ContextSwitchRequest.ForClickOn("work", string.Empty, ContextSwitchSource.Dashboard).TargetContextId);
+    }
+
+    private static (ContextSwitchService Service, InMemoryJsonStore Store, FakeAutomationStepExecutor Executor) CreateService(InMemoryAnalyticsSessionStore sessions)
+    {
+        InMemoryJsonStore store = new();
+        FakeAutomationStepExecutor executor = new();
+        FakeClock clock = new();
+        ContextSwitchService service = new(
+            store, executor, new AutomationPlanBuilder(), new AnalyticsService(clock, sessions), clock, new TestLogger(), SettingsPath, StatePath);
+        return (service, store, executor);
+    }
     private static (ContextSwitchService Service, InMemoryJsonStore Store, FakeAutomationStepExecutor Executor, FakeClock Clock, TestLogger Logger) CreateService()
     {
         InMemoryJsonStore store = new();

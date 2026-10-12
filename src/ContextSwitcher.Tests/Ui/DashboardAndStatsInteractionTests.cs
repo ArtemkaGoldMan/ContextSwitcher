@@ -35,6 +35,41 @@ public sealed class DashboardAndStatsInteractionTests : UiTest
         });
     }
 
+    /// <summary>
+    /// The active profile's button is how it is turned off - no other control for it - and with
+    /// none on, the header says so and how to turn one on.
+    /// </summary>
+    [Fact]
+    public async Task ClickingTheActiveProfileTurnsItOff()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            UiScenario scenario = UiScenario.WithTwoProfiles();
+            DashboardViewModel viewModel = scenario.Dashboard();
+            Window window = ShowDashboard(viewModel);
+
+            Button work = FindControl<Button>(window, b => b.Classes.Contains("switchContext")
+                && b.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "Work")
+                && IsClickable(b));
+            Click(window, work);
+            PumpUntil(WaitUntil(() => scenario.SwitchService.LastRequest is not null));
+
+            Assert.True(scenario.SwitchService.LastRequest!.IsTurnOff);
+
+            ContextSwitcher.App.Startup.AppHost.UpdateState(new ContextSwitcher.Core.Contexts.CurrentContextState
+            {
+                PreviousContextId = "work",
+                LastSwitchCompletedAt = DateTimeOffset.UtcNow,
+                LastSwitchStatus = "Succeeded"
+            });
+            Settle(window);
+
+            Assert.False(viewModel.IsAnyActive);
+            Assert.Equal(("No profile", "Click a profile to turn it on"), (viewModel.ActiveContextDisplayName, viewModel.ElapsedDisplay));
+            Assert.DoesNotContain(viewModel.SwitchButtons, button => button.IsCurrent);
+        });
+    }
+
     [Fact]
     public async Task ThePopoverRendersWithEveryProfileListed()
     {

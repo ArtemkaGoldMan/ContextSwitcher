@@ -22,12 +22,15 @@ public sealed class AutomationPlanBuilder
     /// Builds the automation plan for switching from <paramref name="previous"/> to <paramref name="target"/>.
     /// </summary>
     /// <param name="previous">The context being left, or <see langword="null"/> on the first switch.</param>
-    /// <param name="target">The context being switched to.</param>
-    public AutomationPlan Build(ContextDefinition? previous, ContextDefinition target)
+    /// <param name="target">
+    /// The context being switched to, or <see langword="null"/> to turn <paramref name="previous"/>
+    /// off: only the half of a switch that leaves it, with nothing entered after.
+    /// </param>
+    public AutomationPlan Build(ContextDefinition? previous, ContextDefinition? target)
     {
-        ArgumentNullException.ThrowIfNull(target);
-
-        HashSet<string> criticalTypes = new(target.SwitchPolicy.CriticalSteps, StringComparer.Ordinal);
+        // Which steps must work is the entered profile's call; turning one off, the one being left's.
+        SwitchPolicyConfig policy = (target ?? previous)?.SwitchPolicy ?? new SwitchPolicyConfig();
+        HashSet<string> criticalTypes = new(policy.CriticalSteps, StringComparer.Ordinal);
         List<AutomationStep> steps = [];
 
         if (previous is not null)
@@ -41,12 +44,16 @@ public sealed class AutomationPlanBuilder
         }
 
         AddSetFocusMode(steps, previous, target, criticalTypes);
-        AddLaunchApplications(steps, target, criticalTypes);
-        AddManageBrowserContext(steps, target, criticalTypes);
-        AddStartDockerResources(steps, target, criticalTypes);
-        AddControlMedia(steps, target, criticalTypes);
 
-        return new AutomationPlan(target.Id, previous?.Id, steps);
+        if (target is not null)
+        {
+            AddLaunchApplications(steps, target, criticalTypes);
+            AddManageBrowserContext(steps, target, criticalTypes);
+            AddStartDockerResources(steps, target, criticalTypes);
+            AddControlMedia(steps, target, criticalTypes);
+        }
+
+        return new AutomationPlan(target?.Id ?? string.Empty, previous?.Id, steps);
     }
 
     private static void AddStopDockerResources(List<AutomationStep> steps, ContextDefinition previous, HashSet<string> criticalTypes)
@@ -73,7 +80,7 @@ public sealed class AutomationPlanBuilder
     private static void AddCloseBrowserTabs(
         List<AutomationStep> steps,
         ContextDefinition previous,
-        ContextDefinition target,
+        ContextDefinition? target,
         HashSet<string> criticalTypes)
     {
         BrowserManagementConfig leaving = previous.BrowserManagement;
@@ -82,8 +89,8 @@ public sealed class AutomationPlanBuilder
             return;
         }
 
-        BrowserManagementConfig entering = target.BrowserManagement;
-        IReadOnlyList<string> keep = entering.Mode == BrowserManagementMode.Urls && entering.Browser == leaving.Browser
+        BrowserManagementConfig? entering = target?.BrowserManagement;
+        IReadOnlyList<string> keep = entering is { Mode: BrowserManagementMode.Urls } && entering.Browser == leaving.Browser
             ? entering.Urls
             : [];
 
@@ -120,7 +127,7 @@ public sealed class AutomationPlanBuilder
     private static void AddSetFocusMode(
         List<AutomationStep> steps,
         ContextDefinition? previous,
-        ContextDefinition target,
+        ContextDefinition? target,
         HashSet<string> criticalTypes)
     {
         // Turning Focus off is only worth doing when something turned it on. This step used to be
@@ -130,21 +137,22 @@ public sealed class AutomationPlanBuilder
         //
         // The previous context is what decides it: leaving a profile that enabled Focus still needs
         // clearing, even though the target doesn't want Focus itself.
-        if (!UsesFocus(target) && (previous is null || !UsesFocus(previous)))
+        bool targetUsesFocus = target is not null && UsesFocus(target);
+        if (!targetUsesFocus && (previous is null || !UsesFocus(previous)))
         {
             return;
         }
 
         steps.Add(CreateStep(
             AutomationStepType.SetFocusMode,
-            target.Id,
+            (target ?? previous)!.Id,
             "Set Focus mode",
             FocusTimeout,
             criticalTypes,
             new Dictionary<string, string>
             {
-                ["enabled"] = UsesFocus(target).ToString(),
-                ["modeName"] = target.Focus.ModeName,
+                ["enabled"] = targetUsesFocus.ToString(),
+                ["modeName"] = target?.Focus.ModeName ?? string.Empty,
 
                 // What to turn off when the target wants no Focus: the mode the profile being left
                 // turned on, each having its own Off Shortcut.

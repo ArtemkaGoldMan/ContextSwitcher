@@ -234,9 +234,7 @@ public static class AppHost
         State = await jsonStore.ReadAsync<CurrentContextState>(configPaths.StatePath).ConfigureAwait(false)
             ?? new CurrentContextState();
 
-        string activeContextId = string.IsNullOrEmpty(State.CurrentContextId)
-            ? Configuration.ActiveContextId
-            : State.CurrentContextId;
+        string activeContextId = ActiveAtStartup(State, Configuration);
 
         bool activeContextIsValid = ConfigurationValidation.IsValid
             && Configuration.Contexts.Any(context => context.Id == activeContextId);
@@ -256,6 +254,21 @@ public static class AppHost
             await analyticsService.StartSessionAsync(activeContextId, CancellationToken.None).ConfigureAwait(false);
         }
 
+    }
+
+    /// <summary>
+    /// The profile whose time is counted from launch. The configured one stands in only until the
+    /// first switch; after one, no current profile means the active one was turned off, and nothing
+    /// is counted until another is switched to.
+    /// </summary>
+    public static string ActiveAtStartup(CurrentContextState state, AppConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        return string.IsNullOrEmpty(state.CurrentContextId) && state.LastSwitchCompletedAt is null
+            ? configuration.ActiveContextId
+            : state.CurrentContextId;
     }
 
     /// <summary>

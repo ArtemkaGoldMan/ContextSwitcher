@@ -685,6 +685,12 @@
   <data name="Notice_SwitchedWithWarnings" xml:space="preserve">
     <value>Перемкнено на «{0}», з попередженнями</value>
   </data>
+  <data name="Notice_CouldNotTurnOff" xml:space="preserve">
+    <value>Не вдалося вимкнути «{0}»</value>
+  </data>
+  <data name="Notice_TurnedOffWithWarnings" xml:space="preserve">
+    <value>«{0}» вимкнено, з попередженнями</value>
+  </data>
   <data name="Notice_At" xml:space="preserve">
     <value>о {0:HH:mm}</value>
   </data>
@@ -704,7 +710,10 @@
     <value>Потрібен принаймні один профіль.</value>
   </data>
   <data name="Dashboard_NoProfile" xml:space="preserve">
-    <value>(немає)</value>
+    <value>Без профілю</value>
+  </data>
+  <data name="Dashboard_PickAProfile" xml:space="preserve">
+    <value>Натисніть профіль, щоб увімкнути його</value>
   </data>
   <data name="Dashboard_CurrentProfile" xml:space="preserve">
     <value>Поточний профіль</value>

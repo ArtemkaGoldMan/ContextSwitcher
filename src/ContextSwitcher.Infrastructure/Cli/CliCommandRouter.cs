@@ -79,6 +79,8 @@ public sealed class CliCommandRouter
             "switch" => await this.RunSwitchAsync(
                     GetOptionValue(args, "--context"), configuration, configurationValidation, json, args.Contains("--dry-run"), args.Contains("--force"), output, cancellationToken)
                 .ConfigureAwait(false),
+            "off" => await this.RunOffAsync(configurationValidation, json, args.Contains("--dry-run"), output, cancellationToken)
+                .ConfigureAwait(false),
             "status" => RunStatus(state, json, output),
             "list-contexts" => RunListContexts(configuration, json, output),
             "validate-config" => RunValidateConfig(configurationValidation, configurationQuarantined, json, output),
@@ -118,6 +120,49 @@ public sealed class CliCommandRouter
             .SwitchAsync(new ContextSwitchRequest(contextId, ContextSwitchSource.Cli, DryRun: dryRun, Force: force), cancellationToken)
             .ConfigureAwait(false);
 
+        return Report(
+            result,
+            json,
+            dryRun,
+            dryRun
+                ? $"Dry run for '{result.TargetContextId}': {result.StepResults.Count} step(s) would run, nothing was changed."
+                : $"Switch to '{result.TargetContextId}' finished with status: {result.Status}",
+            output);
+    }
+
+    /// <summary>
+    /// Turns the active context off: its half of a switch, and then none is active - for a Shortcut
+    /// or Siri phrase that ends the working day.
+    /// </summary>
+    private async Task<int> RunOffAsync(
+        ConfigurationValidationResult configurationValidation,
+        bool json,
+        bool dryRun,
+        TextWriter output,
+        CancellationToken cancellationToken)
+    {
+        if (!configurationValidation.IsValid)
+        {
+            WriteError(output, json, "Configuration is invalid. Run 'validate-config' for details.");
+            return (int)CliExitCode.ConfigurationInvalid;
+        }
+
+        ContextSwitchResult result = await this.switchService
+            .SwitchAsync(ContextSwitchRequest.TurnOff(ContextSwitchSource.Cli, dryRun), cancellationToken)
+            .ConfigureAwait(false);
+
+        string summary = result switch
+        {
+            { Status: ContextSwitchStatus.NoOp } => "No context is active, so nothing was turned off.",
+            _ when dryRun => $"Dry run for turning '{result.PreviousContextId}' off: {result.StepResults.Count} step(s) would run, nothing was changed.",
+            _ => $"Turning '{result.PreviousContextId}' off finished with status: {result.Status}"
+        };
+
+        return Report(result, json, dryRun, summary, output);
+    }
+
+    private static int Report(ContextSwitchResult result, bool json, bool dryRun, string summary, TextWriter output)
+    {
         List<string> warnings = result.StepResults
             .Where(step => step.Status is AutomationResultStatus.Warning or AutomationResultStatus.Failed or AutomationResultStatus.TimedOut)
             .Select(step => step.Message)
@@ -138,9 +183,7 @@ public sealed class CliCommandRouter
         }
         else
         {
-            output.WriteLine(dryRun
-                ? $"Dry run for '{result.TargetContextId}': {result.StepResults.Count} step(s) would run, nothing was changed."
-                : $"Switch to '{result.TargetContextId}' finished with status: {result.Status}");
+            output.WriteLine(summary);
 
             if (dryRun)
             {
@@ -264,6 +307,7 @@ public sealed class CliCommandRouter
         output.WriteLine();
         output.WriteLine("Commands:");
         output.WriteLine("  switch --context <id>   Switch to the given context");
+        output.WriteLine("  off                     Turn the active context off, so none is active");
         output.WriteLine("  status                  Show the current context and last switch outcome");
         output.WriteLine("  list-contexts           List configured contexts");
         output.WriteLine("  validate-config         Validate the local configuration");
@@ -271,7 +315,7 @@ public sealed class CliCommandRouter
         output.WriteLine();
         output.WriteLine("Options:");
         output.WriteLine("  --json                  Emit machine-readable JSON instead of text");
-        output.WriteLine("  --dry-run               With 'switch': show the steps without applying anything");
+        output.WriteLine("  --dry-run               With 'switch' or 'off': show the steps without applying anything");
         output.WriteLine("  --force                 With 'switch': re-apply even if the context is already active");
     }
 

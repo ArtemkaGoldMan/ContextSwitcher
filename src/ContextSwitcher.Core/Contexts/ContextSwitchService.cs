@@ -157,14 +157,21 @@ public sealed class ContextSwitchService : IContextSwitchService
         DateTimeOffset startedAt,
         CancellationToken cancellationToken)
     {
-        await LogAsync(LogLevel.Information, "SwitchStarted", $"Switching to '{request.TargetContextId}'.", request.TargetContextId, correlationId, cancellationToken)
-            .ConfigureAwait(false);
+        await LogAsync(
+            LogLevel.Information,
+            "SwitchStarted",
+            request.IsTurnOff ? "Turning the active context off." : $"Switching to '{request.TargetContextId}'.",
+            request.TargetContextId,
+            correlationId,
+            cancellationToken).ConfigureAwait(false);
 
         AppConfiguration? configuration = await this.jsonStore.ReadAsync<AppConfiguration>(this.settingsPath, cancellationToken)
             .ConfigureAwait(false);
+
+        // Null when turning off: nothing is entered.
         ContextDefinition? target = configuration?.Contexts.FirstOrDefault(context => context.Id == request.TargetContextId);
 
-        if (configuration is null || target is null)
+        if (configuration is null || (target is null && !request.IsTurnOff))
         {
             string message = configuration is null
                 ? "Configuration could not be loaded."
@@ -178,11 +185,18 @@ public sealed class ContextSwitchService : IContextSwitchService
             ?? new CurrentContextState();
         string? previousContextId = string.IsNullOrEmpty(currentState.CurrentContextId) ? null : currentState.CurrentContextId;
 
-        if (previousContextId == target.Id && !request.Force)
+        if (target is not null && previousContextId == target.Id && !request.Force)
         {
             await LogAsync(LogLevel.Information, "SwitchCompleted", $"Already in context '{target.Id}'.", target.Id, correlationId, cancellationToken)
                 .ConfigureAwait(false);
             return new ContextSwitchResult(target.Id, previousContextId, ContextSwitchStatus.NoOp, [], startedAt, this.clock.UtcNow, correlationId);
+        }
+
+        if (target is null && previousContextId is null)
+        {
+            await LogAsync(LogLevel.Information, "SwitchCompleted", "No context is active, so there is nothing to turn off.", string.Empty, correlationId, cancellationToken)
+                .ConfigureAwait(false);
+            return new ContextSwitchResult(string.Empty, null, ContextSwitchStatus.NoOp, [], startedAt, this.clock.UtcNow, correlationId);
         }
 
         ContextDefinition? previous = previousContextId is null
@@ -192,7 +206,12 @@ public sealed class ContextSwitchService : IContextSwitchService
         await this.analyticsService.EndCurrentSessionAsync(SessionEndReason.Switch, cancellationToken).ConfigureAwait(false);
 
         AutomationPlan plan = this.planBuilder.Build(previous, target);
-        (List<AutomationResult> stepResults, bool criticalFailure) = await ExecutePlanAsync(plan, request.DryRun, target, correlationId, cancellationToken)
+
+        // The steps' log entries go under the profile they act for: the one entered, or the one
+        // being turned off.
+        string subjectId = target?.Id ?? previousContextId ?? string.Empty;
+        SwitchPolicyConfig policy = (target ?? previous)?.SwitchPolicy ?? new SwitchPolicyConfig();
+        (List<AutomationResult> stepResults, bool criticalFailure) = await ExecutePlanAsync(plan, request.DryRun, policy, subjectId, correlationId, cancellationToken)
             .ConfigureAwait(false);
 
         ContextSwitchStatus overallStatus = DetermineStatus(request.DryRun, criticalFailure, stepResults);
@@ -208,18 +227,21 @@ public sealed class ContextSwitchService : IContextSwitchService
         await LogAsync(
             overallStatus == ContextSwitchStatus.Failed ? LogLevel.Error : LogLevel.Information,
             eventId,
-            $"Switch to '{target.Id}' finished with status {overallStatus}.",
-            target.Id,
+            target is null
+                ? $"Turning '{previousContextId}' off finished with status {overallStatus}."
+                : $"Switch to '{target.Id}' finished with status {overallStatus}.",
+            subjectId,
             correlationId,
             cancellationToken).ConfigureAwait(false);
 
-        return new ContextSwitchResult(target.Id, previousContextId, overallStatus, stepResults, startedAt, completedAt, correlationId);
+        return new ContextSwitchResult(target?.Id ?? string.Empty, previousContextId, overallStatus, stepResults, startedAt, completedAt, correlationId);
     }
 
     private async Task<(List<AutomationResult> StepResults, bool CriticalFailure)> ExecutePlanAsync(
         AutomationPlan plan,
         bool dryRun,
-        ContextDefinition target,
+        SwitchPolicyConfig policy,
+        string subjectId,
         string correlationId,
         CancellationToken cancellationToken)
     {
@@ -234,13 +256,13 @@ public sealed class ContextSwitchService : IContextSwitchService
                 AutomationResult dryRunResult = new(
                     step.Id, step.Type, AutomationResultStatus.Skipped, "Dry run: no changes applied.", null, null, null, now, now);
                 stepResults.Add(dryRunResult);
-                await this.LogStepAsync(dryRunResult, target.Id, correlationId, cancellationToken).ConfigureAwait(false);
+                await this.LogStepAsync(dryRunResult, subjectId, correlationId, cancellationToken).ConfigureAwait(false);
                 continue;
             }
 
             AutomationResult result = await ExecuteWithTimeoutAsync(step, cancellationToken).ConfigureAwait(false);
             stepResults.Add(result);
-            await this.LogStepAsync(result, target.Id, correlationId, cancellationToken).ConfigureAwait(false);
+            await this.LogStepAsync(result, subjectId, correlationId, cancellationToken).ConfigureAwait(false);
 
             bool failed = result.Status is AutomationResultStatus.Failed or AutomationResultStatus.TimedOut;
             if (!failed)
@@ -254,7 +276,7 @@ public sealed class ContextSwitchService : IContextSwitchService
                 break;
             }
 
-            if (!target.SwitchPolicy.ContinueOnNonCriticalFailure)
+            if (!policy.ContinueOnNonCriticalFailure)
             {
                 break;
             }
@@ -284,8 +306,12 @@ public sealed class ContextSwitchService : IContextSwitchService
         }
     }
 
+    /// <summary>
+    /// Records the outcome as the current state. With no <paramref name="target"/> - a profile
+    /// turned off - no context is current, and no time is counted until one is switched to.
+    /// </summary>
     private async Task<ContextSwitchStatus> PersistOutcomeAsync(
-        ContextDefinition target,
+        ContextDefinition? target,
         string? previousContextId,
         DateTimeOffset startedAt,
         ContextSwitchStatus overallStatus,
@@ -295,7 +321,7 @@ public sealed class ContextSwitchService : IContextSwitchService
     {
         CurrentContextState newState = new()
         {
-            CurrentContextId = target.Id,
+            CurrentContextId = target?.Id ?? string.Empty,
             PreviousContextId = previousContextId,
             LastSwitchStartedAt = startedAt,
             LastSwitchCompletedAt = this.clock.UtcNow,
@@ -306,12 +332,16 @@ public sealed class ContextSwitchService : IContextSwitchService
         try
         {
             await this.jsonStore.WriteAsync(this.statePath, newState, cancellationToken).ConfigureAwait(false);
-            await this.analyticsService.StartSessionAsync(target.Id, cancellationToken).ConfigureAwait(false);
+            if (target is not null)
+            {
+                await this.analyticsService.StartSessionAsync(target.Id, cancellationToken).ConfigureAwait(false);
+            }
+
             return overallStatus;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            await LogAsync(LogLevel.Error, "SwitchFailed", $"Failed to persist state: {ex.Message}", target.Id, correlationId, CancellationToken.None)
+            await LogAsync(LogLevel.Error, "SwitchFailed", $"Failed to persist state: {ex.Message}", target?.Id ?? string.Empty, correlationId, CancellationToken.None)
                 .ConfigureAwait(false);
             return ContextSwitchStatus.Failed;
         }

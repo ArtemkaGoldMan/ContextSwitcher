@@ -101,10 +101,19 @@ public sealed class SwitchNoticeViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        string name = AppHost.Configuration?.Contexts.FirstOrDefault(c => c.Id == state.CurrentContextId)?.DisplayName
-            ?? state.CurrentContextId;
+        // With no profile current, the active one was turned off: the problems are from leaving it.
+        bool turnedOff = string.IsNullOrEmpty(state.CurrentContextId);
+        string subjectId = (turnedOff ? state.PreviousContextId : state.CurrentContextId) ?? string.Empty;
+        string name = AppHost.Configuration?.Contexts.FirstOrDefault(c => c.Id == subjectId)?.DisplayName ?? subjectId;
+        string title = (turnedOff, failed) switch
+        {
+            (true, true) => Localized.Format(Strings.Notice_CouldNotTurnOff, name),
+            (true, false) => Localized.Format(Strings.Notice_TurnedOffWithWarnings, name),
+            (false, true) => Localized.Format(Strings.Notice_CouldNotSwitchTo, name),
+            (false, false) => Localized.Format(Strings.Notice_SwitchedWithWarnings, name)
+        };
         this.Show(
-            failed ? Localized.Format(Strings.Notice_CouldNotSwitchTo, name) : Localized.Format(Strings.Notice_SwitchedWithWarnings, name),
+            title,
             state.LastErrors.Select(MessageText.Of).Where(message => !string.IsNullOrWhiteSpace(message)).ToList(),
             completedAt,
             failed);
