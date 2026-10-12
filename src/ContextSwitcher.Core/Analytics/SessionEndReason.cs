@@ -7,5 +7,8 @@ public enum SessionEndReason
 {
     Switch,
     AppShutdown,
-    RecoveredAfterCrash
+    RecoveredAfterCrash,
+
+    /// <summary>The Mac went to sleep; a new session starts when it wakes.</summary>
+    Sleep
 }

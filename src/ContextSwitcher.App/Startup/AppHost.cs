@@ -56,6 +56,7 @@ public static class AppHost
     public static bool ConfigurationWasQuarantined { get; private set; }
 
     private static StateFileWatcher? stateWatcher;
+    private static SleepEvents? sleepEvents;
 
     /// <summary>
     /// Gets the runtime state loaded during startup, or a fresh default when none was persisted.
@@ -282,7 +283,31 @@ public static class AppHost
         // in its own process and so cannot raise StateChanged here.
         stateWatcher ??= Services.GetRequiredService<StateFileWatcher>();
 
+        // No time counts while the Mac sleeps.
+        sleepEvents ??= StartSleepPause(Services.GetRequiredService<IAnalyticsService>());
+
         Services.GetRequiredService<UpdatesViewModel>().StartAutomaticChecks();
+    }
+
+    private static SleepEvents StartSleepPause(IAnalyticsService analyticsService)
+    {
+        SleepPause pause = new(analyticsService, () => State.CurrentContextId);
+        SleepEvents events = new();
+        events.WillSleep += (_, _) => _ = QuietlyAsync(() => pause.OnWillSleepAsync(CancellationToken.None));
+        events.DidWake += (_, _) => _ = QuietlyAsync(() => pause.OnDidWakeAsync(CancellationToken.None));
+        return events;
+    }
+
+    /// <summary>Time tracking that can't write its file gives up on that once; it never takes the app down.</summary>
+    private static async Task QuietlyAsync(Func<Task> work)
+    {
+        try
+        {
+            await work().ConfigureAwait(true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+        }
     }
 
     private static void StartPeriodicPruning(IAnalyticsService analyticsService)

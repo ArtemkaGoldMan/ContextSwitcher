@@ -213,8 +213,9 @@ and how to fix it. It stays until you close it or switch again.
 
 ### See where your time goes
 
-**Stats** shows how long you spent in each profile, per day, for the last week or month. It's
-recorded only on your Mac and you can turn it off in Settings.
+**Stats** shows how long you spent in each profile, per day, for the last week or month — the
+profile you're in counts as it goes, and time while your Mac sleeps doesn't count. It's recorded
+only on your Mac and you can turn it off in Settings.
 
 <div align="center">
 <picture>
