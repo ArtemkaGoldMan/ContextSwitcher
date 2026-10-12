@@ -35,12 +35,12 @@ public sealed class AutomationPlanBuilder
 
         if (previous is not null)
         {
-            AddStopDockerResources(steps, previous, criticalTypes);
+            AddStopDockerResources(steps, previous, target, criticalTypes);
 
             // Before the apps: if the browser itself is quit as well, its tabs are closed first, so
             // they don't come back when it next restores its last session.
             AddCloseBrowserTabs(steps, previous, target, criticalTypes);
-            AddCloseApplications(steps, previous, criticalTypes);
+            AddCloseApplications(steps, previous, target, criticalTypes);
         }
 
         AddSetFocusMode(steps, previous, target, criticalTypes);
@@ -56,9 +56,17 @@ public sealed class AutomationPlanBuilder
         return new AutomationPlan(target?.Id ?? string.Empty, previous?.Id, steps);
     }
 
-    private static void AddStopDockerResources(List<AutomationStep> steps, ContextDefinition previous, HashSet<string> criticalTypes)
+    /// <summary>A container the profile being entered starts again is left running.</summary>
+    private static void AddStopDockerResources(
+        List<AutomationStep> steps,
+        ContextDefinition previous,
+        ContextDefinition? target,
+        HashSet<string> criticalTypes)
     {
-        if (previous.Docker.Stop.Count == 0)
+        List<string> containers = previous.Docker.Stop
+            .Except(target?.Docker.Start ?? [], StringComparer.Ordinal)
+            .ToList();
+        if (containers.Count == 0)
         {
             return;
         }
@@ -69,7 +77,7 @@ public sealed class AutomationPlanBuilder
             "Stop Docker resources",
             DockerTimeout,
             criticalTypes,
-            new Dictionary<string, string> { ["containers"] = List(previous.Docker.Stop) }));
+            new Dictionary<string, string> { ["containers"] = List(containers) }));
     }
 
     /// <summary>
@@ -108,9 +116,20 @@ public sealed class AutomationPlanBuilder
             }));
     }
 
-    private static void AddCloseApplications(List<AutomationStep> steps, ContextDefinition previous, HashSet<string> criticalTypes)
+    /// <summary>
+    /// An app the profile being entered launches is left running: quitting it only to open it
+    /// again lost its windows and work, and made the switch wait for both.
+    /// </summary>
+    private static void AddCloseApplications(
+        List<AutomationStep> steps,
+        ContextDefinition previous,
+        ContextDefinition? target,
+        HashSet<string> criticalTypes)
     {
-        if (previous.CloseApps.Count == 0)
+        List<string> apps = previous.CloseApps
+            .Except(target?.LaunchApps ?? [], StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (apps.Count == 0)
         {
             return;
         }
@@ -119,9 +138,9 @@ public sealed class AutomationPlanBuilder
             AutomationStepType.CloseApplications,
             previous.Id,
             "Close applications",
-            QuitAppTimeoutPerApp * previous.CloseApps.Count,
+            QuitAppTimeoutPerApp * apps.Count,
             criticalTypes,
-            new Dictionary<string, string> { ["apps"] = List(previous.CloseApps) }));
+            new Dictionary<string, string> { ["apps"] = List(apps) }));
     }
 
     private static void AddSetFocusMode(

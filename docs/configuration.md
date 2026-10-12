@@ -116,6 +116,9 @@ UI shows one row per app with two checkboxes, and why both are ticked by default
 To have an app quit as you *arrive* somewhere, put it in the `closeApps` of the profile you're
 arriving **from** — not the one you're arriving at.
 
+An app the profile you're arriving at launches is left running rather than quit and opened again,
+so its windows survive the switch.
+
 Quitting is a graceful AppleScript quit, the same as pressing `Cmd+Q`. An app with unsaved work will
 show its save dialog and refuse; that's reported as a warning naming the app, and the switch carries
 on. ContextSwitcher never force-kills anything.
@@ -167,7 +170,8 @@ in [shortcuts-integration.md](shortcuts-integration.md).
 **`media.player`** is `AppleMusic`, `Spotify` or `None`. Nothing plays unless `autoPlay` is `true`.
 
 **`docker.start` / `docker.stop`** take container names. `start` runs on entering the profile,
-`stop` on leaving it — the same direction as the app lists.
+`stop` on leaving it — the same direction as the app lists. A container the next profile starts is
+left running.
 
 ## Switch policy
 

@@ -361,4 +361,47 @@ public sealed class AutomationPlanBuilderTests
         AutomationStep focus = plan.Steps[3];
         Assert.Equal(("False", "Work"), (focus.Arguments["enabled"], focus.Arguments["previousModeName"]));
     }
+
+    /// <summary>
+    /// An app or container the next profile starts again is left running, rather than quit and
+    /// reopened - which lost its windows and made the switch wait for both.
+    /// </summary>
+    [Fact]
+    public void WhatTheNextProfileStartsIsLeftRunning()
+    {
+        ContextDefinition previous = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            CloseApps = ["Slack", "Visual Studio Code"],
+            Docker = new DockerResourceConfig { Stop = ["postgres", "redis"] }
+        };
+        ContextDefinition target = new()
+        {
+            Id = "side",
+            DisplayName = "Side project",
+            LaunchApps = ["slack"],
+            Docker = new DockerResourceConfig { Start = ["postgres"] }
+        };
+
+        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
+
+        Assert.Equal("""["Visual Studio Code"]""", plan.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments["apps"]);
+        Assert.Equal("""["redis"]""", plan.Steps.Single(step => step.Type == AutomationStepType.StopDockerResources).Arguments["containers"]);
+
+        // Leaving for no profile at all, everything listed goes.
+        AutomationPlan off = new AutomationPlanBuilder().Build(previous, target: null);
+        Assert.Equal("""["Slack","Visual Studio Code"]""", off.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments["apps"]);
+    }
+
+    [Fact]
+    public void NothingToCloseWhenTheNextProfileStartsItAll()
+    {
+        ContextDefinition previous = new() { Id = "work", DisplayName = "Work", CloseApps = ["Slack"] };
+        ContextDefinition target = new() { Id = "side", DisplayName = "Side", LaunchApps = ["Slack"] };
+
+        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
+
+        Assert.DoesNotContain(plan.Steps, step => step.Type == AutomationStepType.CloseApplications);
+    }
 }
