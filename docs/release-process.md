@@ -98,6 +98,11 @@ A release marked as a pre-release on GitHub is not offered as an update.
   latest release (`UpdatesViewModel`, `GitHubReleaseSource`). A newer version shows as "Update to …"
   in the menu bar menu and in Settings → Updates. A failed automatic check says nothing; "Check now"
   says why.
+- **Notifying.** A version the automatic check finds is also announced in a macOS notification
+  (`MacNotifications`), once per version per run; clicking it opens Settings → Updates. The first one
+  makes macOS ask whether the app may send notifications. A check that finds nothing newer takes an
+  old notice out of Notification Center. Run from source there are no notifications: macOS only
+  serves app bundles.
 - **Installing** (`AppBundleUpdater`), only on "Install and restart": download the zip, unpack it with
   `ditto`, check its version, check it against the running copy's designated requirement, then start a
   small script and quit. The script waits for the app to exit, swaps the new copy in (putting the old

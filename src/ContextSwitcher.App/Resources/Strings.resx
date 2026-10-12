@@ -597,7 +597,7 @@
     <comment>SettingsPage.axaml: Title</comment>
   </data>
   <data name="Settings_OnceADayTurnedOff" xml:space="preserve">
-    <value>Once a day. Turned off, Context Switcher only checks when you click Check now.</value>
+    <value>Once a day, with a notification when there is a new version. Turned off, Context Switcher only checks when you click Check now.</value>
     <comment>SettingsPage.axaml: Description</comment>
   </data>
   <data name="Settings_CheckForUpdatesAutomatically" xml:space="preserve">
@@ -671,6 +671,14 @@
   <data name="Tray_UpdateTo" xml:space="preserve">
     <value>Update to {0}…</value>
     <comment>Menu bar menu item while an update waits. {0} = version, e.g. 0.3.0.</comment>
+  </data>
+  <data name="Notification_UpdateTitle" xml:space="preserve">
+    <value>Context Switcher {0} is available</value>
+    <comment>Title of the macOS notification when the daily check finds a new version. {0} = version, e.g. 0.4.0.</comment>
+  </data>
+  <data name="Notification_UpdateBody" xml:space="preserve">
+    <value>Click to see what's new and install it.</value>
+    <comment>Text of that notification; clicking it opens Settings → Updates.</comment>
   </data>
   <data name="Accent_Custom" xml:space="preserve">
     <value>Custom</value>

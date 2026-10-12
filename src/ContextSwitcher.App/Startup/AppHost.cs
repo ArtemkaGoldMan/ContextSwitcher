@@ -124,10 +124,12 @@ public static class AppHost
             provider.GetRequiredService<HttpClient>(), ReleaseVersion.Format(UpdatesViewModel.RunningVersion)));
         services.AddSingleton<IAppUpdater>(provider => new AppBundleUpdater(
             provider.GetRequiredService<HttpClient>(), provider.GetRequiredService<IProcessRunner>()));
+        services.AddSingleton<ISystemNotifications, MacNotifications>();
         services.AddSingleton(provider => new UpdatesViewModel(
             provider.GetRequiredService<IReleaseSource>(),
             provider.GetRequiredService<IAppUpdater>(),
             provider.GetRequiredService<IProcessRunner>(),
+            provider.GetRequiredService<ISystemNotifications>(),
             UpdatesViewModel.RunningVersion));
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<MainAppViewModel>();
