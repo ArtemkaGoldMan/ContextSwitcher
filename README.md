@@ -150,12 +150,13 @@ The **Profiles** page lists every profile: **Activate** switches to it, **Edit**
 </div>
 
 Editing a profile is mostly picking from lists: apps from the apps you have installed, web pages
-from the tabs you have open, playlists from your library, containers from Docker.
+from the tabs you have open, playlists from your library, containers from Docker. Apps and pages
+each have two ticks — open when you enter the profile, close when you leave it.
 
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/profile-setup-dark.png">
-  <img src="docs/images/profile-setup-light.png" width="720" alt="Editing the Work profile: its name, color and icon, its apps and its browser pages">
+  <img src="docs/images/profile-setup-light.png" width="720" alt="Editing the Work profile: its apps with Launch and Close, and its pages with Open and Close">
 </picture>
 </div>
 
