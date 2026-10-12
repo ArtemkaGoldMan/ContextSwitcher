@@ -135,6 +135,7 @@ release note, not just a new field.
 
 ## Checklist before tagging
 
+- [ ] **What's new** at the top of `.github/release-notes.md` describes this version
 - [ ] `dotnet build -c Release -warnaserror` — no warnings
 - [ ] `dotnet test` — all green
 - [ ] The secrets `CS_SIGNING_P12_BASE64` and `CS_SIGNING_PASSWORD` are set
