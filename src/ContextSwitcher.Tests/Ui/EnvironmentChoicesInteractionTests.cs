@@ -140,7 +140,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
 
             ClickInPopup(window, PickerItem(fromTabs, "Pull requests"));
 
-            Assert.Equal(["https://github.com/pulls"], viewModel.BrowserUrls.Select(row => row.Value));
+            Assert.Equal(["https://github.com/pulls"], viewModel.BrowserUrls.Select(row => row.Url));
 
             // The picker stays open for picking several; a click elsewhere only dismisses it.
             fromTabs.Flyout.Hide();
@@ -291,7 +291,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
             Settle(window);
             ClickInPopup(window, PickerItem(addContainer, "redis"));
 
-            Assert.Equal(["https://linear.app/inbox"], viewModel.BrowserUrls.Select(row => row.Value));
+            Assert.Equal(["https://linear.app/inbox"], viewModel.BrowserUrls.Select(row => row.Url));
             Assert.Equal(["redis"], viewModel.DockerStart.Select(row => row.Value));
             Assert.Equal(["Deep Focus"], viewModel.Media.MusicPlaylists);
         });

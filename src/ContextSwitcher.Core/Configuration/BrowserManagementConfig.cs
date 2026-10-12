@@ -23,6 +23,15 @@ public sealed record BrowserManagementConfig
     public IReadOnlyList<string> Urls { get; init; } = [];
 
     /// <summary>
+    /// Pages whose tabs close when the context is left, in <see cref="BrowserManagementMode.Urls"/>
+    /// mode with a named browser. A page here may also be in <see cref="Urls"/> - opened on the way
+    /// in, closed on the way out - or only here. A tab matches when it shows the page or anything
+    /// under it (<c>PageMatch</c>); every other tab is left alone.
+    /// </summary>
+    [JsonPropertyName("close_urls")]
+    public IReadOnlyList<string> CloseUrls { get; init; } = [];
+
+    /// <summary>
     /// Gets or sets the tab groups to activate when group mode is used.
     /// </summary>
     [JsonPropertyName("tab_groups")]

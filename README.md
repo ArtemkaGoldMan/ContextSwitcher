@@ -38,7 +38,7 @@ ContextSwitcher keeps a **profile** for each part of your day. Click one, and yo
 | | What a profile can do |
 | --- | --- |
 | **Apps** | Open apps when you switch in, and quit them when you switch out — the polite way, like ⌘Q, never force-quit |
-| **Browser** | Open web pages, Chrome tab groups or a whole browser profile, without duplicating tabs that are already open |
+| **Browser** | Open web pages, Chrome tab groups or a whole browser profile, without duplicating tabs that are already open — and close a profile's pages when you leave it, leaving every other tab alone |
 | **Focus** | Turn on a macOS Focus — Do Not Disturb, Work, Sleep… — and turn it off again when you leave |
 | **Music** | Start an Apple Music or Spotify playlist |
 | **Docker** | Start the containers this profile needs, stop the ones it doesn't |
@@ -256,7 +256,7 @@ installed with Homebrew.
 - **One network request a day**, to GitHub, to see whether there is a new version. Turn it off in
   **Settings → Updates**.
 - It never reads your browsing history. It only looks at open tabs to avoid opening a page twice,
-  or when you pick one in the profile editor.
+  to close the pages you asked it to close, or when you pick one in the profile editor.
 - It only uses a short, fixed set of macOS's own tools to do its job — AppleScript, `open`,
   Shortcuts, and Docker if you use it.
 

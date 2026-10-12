@@ -99,7 +99,29 @@
     </Border>
   </DataTemplate>
 
-  <!-- A one-value row - a startup URL, a tab group, a Docker container - with the glyph for its kind.
+  <!-- A page: its address, then whether to open it on entering the profile and close it on leaving,
+       the way an app row has Launch and Close. -->
+  <DataTemplate x:Key="BrowserPageRow" x:DataType="vm:BrowserPageRowViewModel">
+    <Border Classes="listRow">
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+        <Panel Grid.Column="0" Classes="leadingIcon">
+          <Viewbox Classes="icon">
+            <Path Classes="glyph" Data="{DynamicResource IconGlobe}" />
+          </Viewbox>
+        </Panel>
+        <TextBox Grid.Column="1" Classes="inRow" Text="{Binding Url}" PlaceholderText="{x:Static r:Strings.Common_Https}" Margin="0,0,10,0" />
+        <CheckBox Grid.Column="2" Content="{x:Static r:Strings.Common_Open}" IsChecked="{Binding OpenOnEnter}" Margin="8,0" VerticalAlignment="Center" />
+        <CheckBox Grid.Column="3" Content="{x:Static r:Strings.Common_Close}" IsChecked="{Binding CloseOnLeave}" IsEnabled="{Binding CanClose}" Margin="8,0" VerticalAlignment="Center" />
+        <Button Grid.Column="4" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="{x:Static r:Strings.Common_Remove}" AutomationProperties.Name="{x:Static r:Strings.Common_Remove}">
+          <Viewbox Classes="icon rowAction">
+            <Path Classes="glyph" Data="{DynamicResource IconX}" />
+          </Viewbox>
+        </Button>
+      </Grid>
+    </Border>
+  </DataTemplate>
+
+  <!-- A one-value row - a tab group, a Docker container - with the glyph for its kind.
        Shown as text when it was picked from a list, as a box when it is being typed. -->
   <DataTemplate x:Key="StringRow" x:DataType="vm:EditableStringRowViewModel">
     <Border Classes="listRow">

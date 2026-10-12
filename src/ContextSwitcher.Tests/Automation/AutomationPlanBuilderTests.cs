@@ -223,4 +223,105 @@ public sealed class AutomationPlanBuilderTests
         AutomationStep focus = Assert.Single(builder.Build(dnd, noMode).Steps, step => step.Type == AutomationStepType.SetFocusMode);
         Assert.Equal("False", focus.Arguments["enabled"]);
     }
+    /// <summary>
+    /// Leaving a profile closes the tabs it lists - first, before any app is quit, so a browser
+    /// that is quit too doesn't bring them back - and spares what the next profile opens.
+    /// </summary>
+    [Fact]
+    public void LeavingAProfileClosesItsTabsButNotThoseTheNextOneOpens()
+    {
+        ContextDefinition previous = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            CloseApps = ["Slack"],
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Urls,
+                Browser = BrowserKind.Chrome,
+                Urls = ["https://linear.app/"],
+                CloseUrls = ["https://linear.app/", "https://mail.google.com/"]
+            }
+        };
+        ContextDefinition target = new()
+        {
+            Id = "personal",
+            DisplayName = "Personal",
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Urls,
+                Browser = BrowserKind.Chrome,
+                Urls = ["https://mail.google.com/"]
+            }
+        };
+
+        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
+
+        Assert.Equal(
+            [AutomationStepType.CloseBrowserTabs, AutomationStepType.CloseApplications, AutomationStepType.ManageBrowserContext],
+            plan.Steps.Select(step => step.Type));
+        AutomationStep closing = plan.Steps[0];
+        Assert.Equal("Chrome", closing.Arguments["browser"]);
+        Assert.Equal("""["https://linear.app/","https://mail.google.com/"]""", closing.Arguments["closeUrlsJson"]);
+        Assert.Equal("""["https://mail.google.com/"]""", closing.Arguments["keepUrlsJson"]);
+    }
+
+    /// <summary>Only pages in the same browser are spared: a page open in Safari is a different tab.</summary>
+    [Fact]
+    public void PagesTheNextProfileOpensInAnotherBrowserAreNotSpared()
+    {
+        ContextDefinition previous = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Urls,
+                Browser = BrowserKind.Chrome,
+                CloseUrls = ["https://mail.google.com/"]
+            }
+        };
+        ContextDefinition target = new()
+        {
+            Id = "personal",
+            DisplayName = "Personal",
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Urls,
+                Browser = BrowserKind.Safari,
+                Urls = ["https://mail.google.com/"]
+            }
+        };
+
+        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
+
+        Assert.Equal("[]", plan.Steps.Single(step => step.Type == AutomationStepType.CloseBrowserTabs).Arguments["keepUrlsJson"]);
+    }
+
+    /// <summary>
+    /// The default browser can't be asked for its tabs, and a profile in another mode has no pages
+    /// to close; entering a profile with pages only to close opens nothing.
+    /// </summary>
+    [Fact]
+    public void NothingClosesWithoutPagesToCloseInANamedBrowser()
+    {
+        AutomationPlanBuilder builder = new();
+        ContextDefinition closeOnly = new()
+        {
+            Id = "focus",
+            DisplayName = "Focus",
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Urls,
+                Browser = BrowserKind.Chrome,
+                CloseUrls = ["https://youtube.com/"]
+            }
+        };
+        ContextDefinition target = new() { Id = "rest", DisplayName = "Rest" };
+
+        Assert.Empty(builder.Build(target, closeOnly).Steps);
+        Assert.Single(builder.Build(closeOnly, target).Steps);
+        Assert.Empty(builder.Build(closeOnly with { BrowserManagement = closeOnly.BrowserManagement with { Browser = BrowserKind.Default } }, target).Steps);
+        Assert.Empty(builder.Build(closeOnly with { BrowserManagement = closeOnly.BrowserManagement with { Mode = BrowserManagementMode.Groups } }, target).Steps);
+    }
 }

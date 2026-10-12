@@ -13,6 +13,7 @@ public sealed class AutomationPlanBuilder
     private static readonly TimeSpan QuitAppTimeoutPerApp = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan LaunchAppTimeoutPerApp = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan BrowserContextTimeout = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan CloseTabsTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan FocusTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan MediaTimeout = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan DockerTimeout = TimeSpan.FromSeconds(45);
@@ -32,6 +33,10 @@ public sealed class AutomationPlanBuilder
         if (previous is not null)
         {
             AddStopDockerResources(steps, previous, criticalTypes);
+
+            // Before the apps: if the browser itself is quit as well, its tabs are closed first, so
+            // they don't come back when it next restores its last session.
+            AddCloseBrowserTabs(steps, previous, target, criticalTypes);
             AddCloseApplications(steps, previous, criticalTypes);
         }
 
@@ -58,6 +63,42 @@ public sealed class AutomationPlanBuilder
             DockerTimeout,
             criticalTypes,
             new Dictionary<string, string> { ["containers"] = string.Join(',', previous.Docker.Stop) }));
+    }
+
+    /// <summary>
+    /// The tabs the profile being left lists to close - in its own browser, so only with a named
+    /// one. A page the profile being entered opens in the same browser is spared: closing it would
+    /// only make it load again, losing whatever was done in it.
+    /// </summary>
+    private static void AddCloseBrowserTabs(
+        List<AutomationStep> steps,
+        ContextDefinition previous,
+        ContextDefinition target,
+        HashSet<string> criticalTypes)
+    {
+        BrowserManagementConfig leaving = previous.BrowserManagement;
+        if (leaving.Mode != BrowserManagementMode.Urls || leaving.Browser == BrowserKind.Default || leaving.CloseUrls.Count == 0)
+        {
+            return;
+        }
+
+        BrowserManagementConfig entering = target.BrowserManagement;
+        IReadOnlyList<string> keep = entering.Mode == BrowserManagementMode.Urls && entering.Browser == leaving.Browser
+            ? entering.Urls
+            : [];
+
+        steps.Add(CreateStep(
+            AutomationStepType.CloseBrowserTabs,
+            previous.Id,
+            "Close browser tabs",
+            CloseTabsTimeout,
+            criticalTypes,
+            new Dictionary<string, string>
+            {
+                ["browser"] = leaving.Browser.ToString(),
+                ["closeUrlsJson"] = JsonSerializer.Serialize(leaving.CloseUrls, ContextSwitcherJson.CompactOptions),
+                ["keepUrlsJson"] = JsonSerializer.Serialize(keep, ContextSwitcherJson.CompactOptions)
+            }));
     }
 
     private static void AddCloseApplications(List<AutomationStep> steps, ContextDefinition previous, HashSet<string> criticalTypes)
@@ -138,7 +179,9 @@ public sealed class AutomationPlanBuilder
     private static void AddManageBrowserContext(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
     {
         BrowserManagementConfig browser = target.BrowserManagement;
-        if (browser.Mode == BrowserManagementMode.None)
+
+        // A pages profile can list pages only to close them, with none to open.
+        if (browser.Mode == BrowserManagementMode.None || (browser.Mode == BrowserManagementMode.Urls && browser.Urls.Count == 0))
         {
             return;
         }

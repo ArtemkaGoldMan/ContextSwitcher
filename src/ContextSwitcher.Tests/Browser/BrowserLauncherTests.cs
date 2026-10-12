@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
+using ContextSwitcher.Infrastructure.AppleScript;
 using ContextSwitcher.Infrastructure.Browser;
 using ContextSwitcher.Tests.TestDoubles;
 
@@ -278,5 +279,89 @@ public sealed class BrowserLauncherTests
             CancellationToken.None);
 
         Assert.Single(outcome.Warnings);
+    }
+
+    /// <summary>
+    /// The tab Gmail redirected to is still Gmail: it is focused by its own address, and no second
+    /// tab is opened.
+    /// </summary>
+    [Fact]
+    public async Task ADuplicateIsFoundUnderTheAddressThePageMovedTo()
+    {
+        FakeProcessRunner processRunner = new();
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(0, "https://mail.google.com/mail/u/0/#inbox\n", string.Empty, false));
+        BrowserLauncher launcher = new(processRunner, scriptRunner);
+
+        await launcher.ManageBrowserContextAsync(
+            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://mail.google.com/"], [], true, [], Timeout),
+            CancellationToken.None);
+
+        Assert.Empty(processRunner.Calls);
+        Assert.Contains("https://mail.google.com/mail/u/0/#inbox", scriptRunner.Scripts[1], StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Only the profile's pages close - each tab by the address the browser reported - and a page
+    /// the next profile opens stays.
+    /// </summary>
+    [Fact]
+    public async Task ClosingTabsClosesTheProfilesPagesAndNothingElse()
+    {
+        FakeScriptRunner scriptRunner = new();
+        char separator = AppleScriptBuilder.OpenTabFieldSeparator;
+        scriptRunner.Enqueue(new ProcessResult(
+            0,
+            $"https://linear.app/team/issues{separator}Issues\nhttps://news.example/{separator}News\nhttps://mail.google.com/mail/u/0/{separator}Inbox\n",
+            string.Empty,
+            false));
+        scriptRunner.Enqueue(new ProcessResult(0, "1", string.Empty, false));
+        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+
+        TabClosingOutcome outcome = await launcher.CloseTabsAsync(
+            BrowserKind.Chrome, ["https://linear.app/", "https://mail.google.com/"], ["https://mail.google.com/"], Timeout, CancellationToken.None);
+
+        Assert.Equal(new TabClosingOutcome(1, null), outcome);
+        Assert.Equal(2, scriptRunner.Scripts.Count);
+        Assert.Contains("set doomed to {\"https://linear.app/team/issues\"}", scriptRunner.Scripts[1], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WithNoTabToCloseTheBrowserIsOnlyAsked()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(0, "https://news.example/\n", string.Empty, false));
+        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+
+        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Safari, ["https://linear.app/"], [], Timeout, CancellationToken.None);
+
+        Assert.Equal(new TabClosingOutcome(0, null), outcome);
+        Assert.Single(scriptRunner.Scripts);
+    }
+
+    /// <summary>The default browser can't be asked for its tabs, so nothing is tried.</summary>
+    [Fact]
+    public async Task TheDefaultBrowsersTabsAreNeverTouched()
+    {
+        FakeScriptRunner scriptRunner = new();
+        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+
+        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Default, ["https://linear.app/"], [], Timeout, CancellationToken.None);
+
+        Assert.Equal(new TabClosingOutcome(0, null), outcome);
+        Assert.Empty(scriptRunner.Scripts);
+    }
+
+    [Fact]
+    public async Task ABrowserThatWontAnswerIsReported()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "Not authorized to send Apple events", false));
+        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+
+        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Brave, ["https://linear.app/"], [], Timeout, CancellationToken.None);
+
+        Assert.Equal(0, outcome.Closed);
+        Assert.Equal("Could not close the profile's tabs in Brave Browser. Check Automation permissions.", outcome.Problem?.English);
     }
 }

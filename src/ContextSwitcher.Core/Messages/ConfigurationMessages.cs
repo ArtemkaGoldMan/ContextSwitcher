@@ -28,6 +28,10 @@ public static class ConfigurationMessages
 
     public static readonly MessageTemplate BrowserInvalid = new("Config_BrowserInvalid", "Browser must be Default, Chrome, Brave, or Safari.");
 
+    public static readonly MessageTemplate CloseTabsNeedsBrowser = new(
+        "Config_CloseTabsNeedsBrowser",
+        "Closing tabs needs Chrome, Brave, or Safari: the default browser can't be asked which tabs are open.");
+
     public static readonly MessageTemplate TabGroupsNeedName = new("Config_TabGroupsNeedName", "Tab groups mode requires at least one tab group name.");
 
     public static readonly MessageTemplate TabGroupNameEmpty = new("Config_TabGroupNameEmpty", "Tab group name cannot be empty.");

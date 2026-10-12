@@ -73,6 +73,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
             AutomationStepType.CloseApplications => this.CloseApplicationsAsync(step, cancellationToken),
             AutomationStepType.LaunchApplications => this.LaunchApplicationsAsync(step, cancellationToken),
             AutomationStepType.ManageBrowserContext => this.ManageBrowserContextAsync(step, cancellationToken),
+            AutomationStepType.CloseBrowserTabs => this.CloseBrowserTabsAsync(step, cancellationToken),
             AutomationStepType.StartDockerResources => this.RunDockerCommandAsync(step, "start", cancellationToken),
             AutomationStepType.StopDockerResources => this.RunDockerCommandAsync(step, "stop", cancellationToken),
             AutomationStepType.ControlMedia => this.ControlMediaAsync(step, cancellationToken),
@@ -249,6 +250,24 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         return Degraded(step, outcome.Warnings, standardError: string.Empty, startedAt, completedAt);
     }
 
+    private async Task<AutomationResult> CloseBrowserTabsAsync(AutomationStep step, CancellationToken cancellationToken)
+    {
+        DateTimeOffset startedAt = this.clock.UtcNow;
+
+        BrowserKind browser = Enum.Parse<BrowserKind>(step.Arguments.GetValueOrDefault("browser", nameof(BrowserKind.Default)));
+        IReadOnlyList<string> pages = DeserializeStrings(step.Arguments.GetValueOrDefault("closeUrlsJson", "[]"));
+        IReadOnlyList<string> keep = DeserializeStrings(step.Arguments.GetValueOrDefault("keepUrlsJson", "[]"));
+
+        TabClosingOutcome outcome = await this.browserLauncher
+            .CloseTabsAsync(browser, pages, keep, WithReportingHeadroom(step.Timeout), cancellationToken)
+            .ConfigureAwait(false);
+
+        DateTimeOffset completedAt = this.clock.UtcNow;
+        return outcome.Problem is null
+            ? Succeeded(step, $"Closed {outcome.Closed} tab(s).", startedAt, completedAt)
+            : Degraded(step, outcome.Problem, standardError: string.Empty, startedAt, completedAt);
+    }
+
     private async Task<AutomationResult> RunDockerCommandAsync(AutomationStep step, string dockerCommand, CancellationToken cancellationToken)
     {
         DateTimeOffset startedAt = this.clock.UtcNow;
@@ -415,6 +434,13 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
     {
         return JsonSerializer.Deserialize<IReadOnlyList<BrowserProfileConfig>>(profilesJson, ContextSwitcherJson.CompactOptions) ?? [];
     }
+
+    /// <summary>
+    /// A list of addresses, carried as JSON: an address can hold the comma the other lists are
+    /// joined with.
+    /// </summary>
+    private static IReadOnlyList<string> DeserializeStrings(string json) =>
+        JsonSerializer.Deserialize<IReadOnlyList<string>>(json, ContextSwitcherJson.CompactOptions) ?? [];
 
     private static Task<AutomationResult> NotImplemented(AutomationStep step)
     {
