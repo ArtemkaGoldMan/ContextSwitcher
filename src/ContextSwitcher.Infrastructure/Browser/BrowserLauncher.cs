@@ -9,7 +9,7 @@ namespace ContextSwitcher.Infrastructure.Browser;
 /// <summary>
 /// Implements the three browser management modes from agent.md section 9.3-9.5: opening URLs
 /// (with best-effort duplicate-tab avoidance), activating named tab groups, and launching
-/// Chromium browser profiles.
+/// Chromium browser profiles - and closing the tabs a profile being left lists to close.
 /// </summary>
 public sealed class BrowserLauncher
 {
@@ -70,7 +70,7 @@ public sealed class BrowserLauncher
         // URL, which is what made a three-URL context spend about 490ms deciding what to open even
         // when every tab was already there; a single listing costs about 130ms and does not grow
         // with the URL count.
-        HashSet<string> openTabs = [];
+        List<string> openTabs = [];
         if (probeTabs)
         {
             ProcessResult listing = await this.scriptRunner
@@ -103,9 +103,11 @@ public sealed class BrowserLauncher
 
         foreach (string url in urls)
         {
-            if (probeTabs && openTabs.Contains(url))
+            // A tab that has moved on from the address it was opened at - redirected, or clicked
+            // around in - is still that page; see PageMatch. Focusing goes by the tab's own address.
+            if (probeTabs && openTabs.FirstOrDefault(tab => PageMatch.Matches(url, tab)) is { } openTab)
             {
-                tabToFocus = url;
+                tabToFocus = openTab;
                 continue;
             }
 
@@ -124,6 +126,63 @@ public sealed class BrowserLauncher
         }
 
         return new BrowserLaunchOutcome(warnings);
+    }
+
+    /// <summary>
+    /// Closes the tabs in <paramref name="browser"/> that show any of <paramref name="pages"/>, except
+    /// those that also show one of <paramref name="keep"/> - the pages the profile being entered is
+    /// about to open, which would only be closed to be loaded again. No other tab is touched, and a
+    /// browser that isn't running is not started.
+    /// </summary>
+    public async Task<TabClosingOutcome> CloseTabsAsync(
+        BrowserKind browser,
+        IReadOnlyList<string> pages,
+        IReadOnlyList<string> keep,
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(pages);
+        ArgumentNullException.ThrowIfNull(keep);
+
+        // Which tab is which is only known by asking the browser itself.
+        if (browser == BrowserKind.Default || pages.Count == 0)
+        {
+            return new TabClosingOutcome(0, null);
+        }
+
+        string app = BrowserAppName(browser);
+
+        // The matching happens here rather than in AppleScript, where it would be unreadable and
+        // untested: list the tabs, pick the ones to close, then close those exact addresses.
+        ProcessResult listing = await this.scriptRunner
+            .RunAsync(AppleScriptBuilder.ListOpenTabs(app, browser == BrowserKind.Safari), timeout / 2, cancellationToken)
+            .ConfigureAwait(false);
+        if (listing.ExitCode != 0)
+        {
+            return new TabClosingOutcome(0, SwitchMessages.CouldNotCloseTabs.With(app));
+        }
+
+        List<string> doomed = listing.StandardOutput
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(line => line.Split(AppleScriptBuilder.OpenTabFieldSeparator)[0].Trim())
+            .Where(url => PageMatch.MatchesAny(pages, url) && !PageMatch.MatchesAny(keep, url))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        if (doomed.Count == 0)
+        {
+            return new TabClosingOutcome(0, null);
+        }
+
+        ProcessResult closing = await this.scriptRunner
+            .RunAsync(AppleScriptBuilder.CloseTabsWithUrls(app, doomed), timeout / 2, cancellationToken)
+            .ConfigureAwait(false);
+        if (closing.ExitCode != 0)
+        {
+            return new TabClosingOutcome(0, SwitchMessages.CouldNotCloseTabs.With(app));
+        }
+
+        int.TryParse(closing.StandardOutput.Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int closed);
+        return new TabClosingOutcome(closed, null);
     }
 
     private async Task<BrowserLaunchOutcome> ActivateTabGroupsAsync(

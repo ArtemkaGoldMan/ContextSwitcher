@@ -91,6 +91,42 @@ public static class AppleScriptBuilder
     }
 
     /// <summary>
+    /// Builds a script that closes every tab whose URL is exactly one of <paramref name="urls"/> - the
+    /// addresses <see cref="ListOpenTabs"/> reported, the matching having been done before - and
+    /// prints how many it closed. A browser that isn't running is left that way: there is nothing to
+    /// close, and scripting it would start it.
+    ///
+    /// Windows are visited by id and tabs from the last one back, because closing a tab renumbers
+    /// the ones after it and closing a window's last tab closes the window.
+    /// </summary>
+    public static string CloseTabsWithUrls(string appName, IReadOnlyList<string> urls)
+    {
+        ArgumentNullException.ThrowIfNull(urls);
+
+        string escapedApp = EscapeStringLiteral(appName);
+        string list = string.Join(", ", urls.Select(url => $"\"{EscapeStringLiteral(url)}\""));
+        return string.Join(
+            '\n',
+            $"if application \"{escapedApp}\" is not running then return 0",
+            $"set doomed to {{{list}}}",
+            "set closed to 0",
+            $"tell application \"{escapedApp}\"",
+            "    repeat with windowId in (id of every window)",
+            "        try",
+            "            set w to window id (contents of windowId)",
+            "            repeat with i from (count of tabs of w) to 1 by -1",
+            "                if doomed contains (URL of tab i of w) then",
+            "                    close tab i of w",
+            "                    set closed to closed + 1",
+            "                end if",
+            "            end repeat",
+            "        end try",
+            "    end repeat",
+            "end tell",
+            "return closed");
+    }
+
+    /// <summary>
     /// Builds a script listing Apple Music's playlists, one per line. Unless
     /// <paramref name="startMusicIfNeeded"/> is set it prints <see cref="MusicNotRunningMarker"/>
     /// instead of starting Music, since scripting an app launches it.

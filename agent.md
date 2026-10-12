@@ -802,7 +802,8 @@ Argument array:
 Best-effort duplicate prevention:
 
 - If `avoidDuplicateTabs == true`, run browser-specific AppleScript before opening.
-- For Safari, inspect windows/tabs and focus a tab whose URL matches exactly.
+- List the browser's tabs once and focus a tab that shows the page (`PageMatch`: same site, at the
+  page's path or below it - an exact comparison missed every page that redirected).
 - For Chrome and Brave, inspect windows/tabs through AppleScript where supported and focus matching URL.
 - If inspection fails because of permissions or browser scripting limitations, log a warning and fall back to `open`.
 - Never read or persist arbitrary browsing history; only compare configured startup URLs.
@@ -813,6 +814,15 @@ Rules:
 - Use `open -a "Google Chrome" URL`, `open -a "Brave Browser" URL`, or `open -a "Safari" URL` when a concrete browser is configured.
 - Validate all URLs before switch execution.
 - Opening URLs is non-critical unless the context switch policy marks it critical.
+
+Closing pages (`close_urls`), on leaving a context, as its own `CloseBrowserTabs` step before the
+apps are quit:
+
+- Only with a named browser, and only a running one - scripting a browser starts it.
+- List the tabs, choose in C# the ones that show a page in `close_urls` (`PageMatch`), and close
+  exactly those addresses. No other tab is ever closed.
+- Spare a page the context being entered opens in the same browser.
+- A browser that won't answer is a warning; nothing else is tried.
 
 ### 9.4 Browser Tab Groups Mode
 

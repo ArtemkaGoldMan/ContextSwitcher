@@ -19,6 +19,9 @@
   <data name="Common_Launch" xml:space="preserve">
     <value>Відкривати</value>
   </data>
+  <data name="Common_Open" xml:space="preserve">
+    <value>Відкривати</value>
+  </data>
   <data name="Common_Close" xml:space="preserve">
     <value>Закривати</value>
   </data>
@@ -216,6 +219,12 @@
   </data>
   <data name="ProfileSetup_AvoidDuplicateTabs" xml:space="preserve">
     <value>Без повторних вкладок</value>
+  </data>
+  <data name="ProfileSetup_PagesOpenClose" xml:space="preserve">
+    <value>«Відкривати» відкриває сторінку, коли ви переходите в цей профіль. «Закривати» закриває її вкладки, коли ви з нього виходите, — саму сторінку й усе під нею, але ніколи інші вкладки.</value>
+  </data>
+  <data name="ProfileSetup_CloseTabsNeedsBrowser" xml:space="preserve">
+    <value>Щоб закривати вкладки, потрібен конкретний браузер — у браузері за замовчуванням не можна перевірити відкриті вкладки.</value>
   </data>
   <data name="ProfileSetup_StartupURLs" xml:space="preserve">
     <value>Сторінки</value>
@@ -586,6 +595,9 @@
   <data name="Icon_Target" xml:space="preserve">
     <value>Цілі</value>
   </data>
+  <data name="Step_CloseBrowserTabs" xml:space="preserve">
+    <value>Закриття вкладок</value>
+  </data>
   <data name="Step_StopDockerResources" xml:space="preserve">
     <value>Зупинка контейнерів</value>
   </data>
@@ -886,6 +898,9 @@
   <data name="Msg_Config_BrowserModeInvalid" xml:space="preserve">
     <value>Неправильний режим браузера.</value>
   </data>
+  <data name="Msg_Config_CloseTabsNeedsBrowser" xml:space="preserve">
+    <value>Щоб закривати вкладки, потрібен Chrome, Brave або Safari: у браузера за замовчуванням не можна дізнатися, які вкладки відкриті.</value>
+  </data>
   <data name="Msg_Config_BrowserInvalid" xml:space="preserve">
     <value>Браузер має бути Default, Chrome, Brave або Safari.</value>
   </data>
@@ -954,6 +969,9 @@
   </data>
   <data name="Msg_Switch_StepTimedOut" xml:space="preserve">
     <value>Крок не завершився за {0} с.</value>
+  </data>
+  <data name="Msg_Switch_CouldNotCloseTabs" xml:space="preserve">
+    <value>Не вдалося закрити вкладки профілю в {0}. Перевірте дозволи «Автоматизації».</value>
   </data>
   <data name="Msg_Switch_CouldNotCheckTabs" xml:space="preserve">
     <value>Не вдалося перевірити вкладки в {0}, тож сторінки відкрито без перевірки повторів. Перевірте дозволи «Автоматизації».</value>

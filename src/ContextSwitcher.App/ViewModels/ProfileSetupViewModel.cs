@@ -83,8 +83,13 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.browserMode = source.BrowserManagement.Mode;
         this.browserKind = source.BrowserManagement.Browser;
         this.avoidDuplicateTabs = source.BrowserManagement.AvoidDuplicateTabs;
-        this.BrowserUrls = new ObservableCollection<EditableStringRowViewModel>(
-            source.BrowserManagement.Urls.Select(url => this.UrlRow(url)));
+        this.BrowserUrls = new ObservableCollection<BrowserPageRowViewModel>(
+            source.BrowserManagement.Urls.Concat(source.BrowserManagement.CloseUrls)
+                .Distinct(StringComparer.Ordinal)
+                .Select(url => this.UrlRow(
+                    url,
+                    source.BrowserManagement.Urls.Contains(url),
+                    source.BrowserManagement.CloseUrls.Contains(url))));
         this.TabGroups = new ObservableCollection<EditableStringRowViewModel>(
             source.BrowserManagement.TabGroups.Select(group => this.TabGroupRow(group)));
         this.BrowserProfiles = new ObservableCollection<BrowserProfileRowViewModel>(
@@ -92,7 +97,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 profile.Browser, profile.ProfileDirectory, profile.Urls, catalog.GetBrowserProfiles, this.RemoveBrowserProfile)));
         this.UrlTabPicker = new ChoicePickerViewModel(
             this.LoadOpenTabsAsync,
-            () => this.BrowserUrls.Select(row => row.Value.Trim()),
+            () => this.BrowserUrls.Select(row => row.Url.Trim()),
             choice => this.BrowserUrls.Add(this.UrlRow(choice.Value)),
             OpenTabsEmptyText,
             OpenTabsUnavailableText,
@@ -366,6 +371,11 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 this.OnPropertyChanged(nameof(this.SelectedBrowserKind));
                 this.OnPropertyChanged(nameof(this.CanAvoidDuplicateTabs));
                 this.OnPropertyChanged(nameof(this.AvoidDuplicateTabsHint));
+                this.OnPropertyChanged(nameof(this.CanCloseTabs));
+                foreach (BrowserPageRowViewModel row in this.BrowserUrls)
+                {
+                    row.CanClose = this.CanCloseTabs;
+                }
             }
         }
     }
@@ -394,13 +404,19 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         ? Strings.Browser_AvoidDuplicates_On
         : Strings.Browser_AvoidDuplicates_NeedsBrowser;
 
+    /// <summary>
+    /// Whether pages can be closed on leaving: as with duplicates, it takes asking a named browser
+    /// for its tabs. The rows' Close stays visible but off, with the reason under the list.
+    /// </summary>
+    public bool CanCloseTabs => this.BrowserKind != BrowserKind.Default;
+
     public bool AvoidDuplicateTabs
     {
         get => this.avoidDuplicateTabs;
         set => this.SetProperty(ref this.avoidDuplicateTabs, value);
     }
 
-    public ObservableCollection<EditableStringRowViewModel> BrowserUrls { get; }
+    public ObservableCollection<BrowserPageRowViewModel> BrowserUrls { get; }
 
     public ObservableCollection<EditableStringRowViewModel> TabGroups { get; }
 
@@ -513,7 +529,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.AppPicker.Refresh();
     }
 
-    private void RemoveBrowserUrl(EditableStringRowViewModel row)
+    private void RemoveBrowserUrl(BrowserPageRowViewModel row)
     {
         this.BrowserUrls.Remove(row);
         this.UrlTabPicker.Refresh();
@@ -541,8 +557,9 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.QuickLinkTabPicker.Refresh();
     }
 
-    private EditableStringRowViewModel UrlRow(string url) =>
-        new(url, this.RemoveBrowserUrl, isEditable: true, "IconGlobe", "https://…");
+    /// <summary>A page added now opens, as pages always did; closing it is opted into.</summary>
+    private BrowserPageRowViewModel UrlRow(string url, bool open = true, bool close = false) =>
+        new(url, open, close, this.CanCloseTabs, this.RemoveBrowserUrl);
 
     private EditableStringRowViewModel TabGroupRow(string name) =>
         new(name, this.RemoveTabGroup, isEditable: true, "IconLayers", Strings.ProfileSetup_TabGroupName);
@@ -628,7 +645,13 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             {
                 Mode = this.BrowserMode,
                 Browser = this.BrowserKind,
-                Urls = this.BrowserUrls.Where(u => !string.IsNullOrWhiteSpace(u.Value)).Select(u => u.Value.Trim()).ToList(),
+                Urls = this.BrowserUrls.Where(u => u.OpenOnEnter && !string.IsNullOrWhiteSpace(u.Url)).Select(u => u.Url.Trim()).ToList(),
+
+                // Kept only where it can work, so switching to the default browser can't save a
+                // profile that fails its check.
+                CloseUrls = this.CanCloseTabs
+                    ? this.BrowserUrls.Where(u => u.CloseOnLeave && !string.IsNullOrWhiteSpace(u.Url)).Select(u => u.Url.Trim()).ToList()
+                    : [],
                 TabGroups = this.TabGroups.Where(g => !string.IsNullOrWhiteSpace(g.Value)).Select(g => g.Value.Trim()).ToList(),
                 Profiles = this.BrowserProfiles
                     .Where(p => !string.IsNullOrWhiteSpace(p.ProfileDirectory))

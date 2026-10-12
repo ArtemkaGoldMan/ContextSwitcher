@@ -96,13 +96,14 @@ public sealed class ConfigurationValidator
         List<ConfigurationValidationError> errors)
     {
         ValidateUrls(browserManagement.Urls, $"{path}.urls", errors);
+        ValidateUrls(browserManagement.CloseUrls, $"{path}.close_urls", errors);
 
         switch (browserManagement.Mode)
         {
             case BrowserManagementMode.None:
                 break;
             case BrowserManagementMode.Urls:
-                if (browserManagement.Urls.Count == 0)
+                if (browserManagement.Urls.Count == 0 && browserManagement.CloseUrls.Count == 0)
                 {
                     errors.Add(ConfigurationValidationError.Of($"{path}.urls", ConfigurationMessages.UrlModeNeedsUrl.With()));
                 }
@@ -123,6 +124,13 @@ public sealed class ConfigurationValidator
             !IsSupportedInteractiveBrowser(browserManagement.Browser))
         {
             errors.Add(ConfigurationValidationError.Of($"{path}.browser", ConfigurationMessages.BrowserInvalid.With()));
+        }
+
+        if (browserManagement.Mode == BrowserManagementMode.Urls
+            && browserManagement.Browser == BrowserKind.Default
+            && browserManagement.CloseUrls.Count > 0)
+        {
+            errors.Add(ConfigurationValidationError.Of($"{path}.close_urls", ConfigurationMessages.CloseTabsNeedsBrowser.With()));
         }
     }
 

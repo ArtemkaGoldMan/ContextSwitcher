@@ -264,6 +264,27 @@ public sealed class AutomationStepExecutorTests
         Assert.Equal(["-na", "Google Chrome", "--args", "--profile-directory=Profile 1", "https://mail.example/"], call.Arguments);
     }
 
+
+    [Fact]
+    public async Task ExecuteAsyncCloseBrowserTabsReportsWhatItClosed()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(0, "https://linear.app/a\nhttps://linear.app/b\n", string.Empty, false));
+        scriptRunner.Enqueue(new ProcessResult(0, "2", string.Empty, false));
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
+        Dictionary<string, string> arguments = new()
+        {
+            ["browser"] = "Chrome",
+            ["closeUrlsJson"] = "[\"https://linear.app/\"]",
+            ["keepUrlsJson"] = "[]"
+        };
+        AutomationStep step = new("CloseBrowserTabs.work", AutomationStepType.CloseBrowserTabs, "Close browser tabs", false, TimeSpan.FromSeconds(10), arguments);
+
+        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
+        Assert.Equal("Closed 2 tab(s).", result.Message);
+    }
     private static AutomationStep ManageBrowserContextStep(string mode, string browser, string urls, bool isCritical)
     {
         Dictionary<string, string> arguments = new()

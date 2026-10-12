@@ -88,4 +88,17 @@ public sealed class BrowserManagementSerializationTests
         Assert.Contains("\"mode\": \"groups\"", json, StringComparison.Ordinal);
         Assert.Contains("\"browser\": \"Safari\"", json, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void PagesToCloseAreReadFromCloseUrls()
+    {
+        const string json = """
+        { "mode": "urls", "browser": "Chrome", "urls": ["https://github.com/"], "close_urls": ["https://youtube.com/"] }
+        """;
+
+        BrowserManagementConfig? browser = JsonSerializer.Deserialize<BrowserManagementConfig>(json, ContextSwitcherJson.Options);
+
+        Assert.Equal(["https://youtube.com/"], browser?.CloseUrls);
+        Assert.Contains("\"close_urls\"", JsonSerializer.Serialize(browser, ContextSwitcherJson.Options), StringComparison.Ordinal);
+    }
 }

@@ -35,6 +35,10 @@ public static class SwitchMessages
         "Switch_CouldNotCheckTabs",
         "Could not check {0} for existing tabs, so URLs were opened without duplicate checking. Check Automation permissions.");
 
+    public static readonly MessageTemplate CouldNotCloseTabs = new(
+        "Switch_CouldNotCloseTabs",
+        "Could not close the profile's tabs in {0}. Check Automation permissions.");
+
     /// <summary>{1} is the browser's or macOS's own reason.</summary>
     public static readonly MessageTemplate CouldNotOpenUrl = new("Switch_CouldNotOpenUrl", "Could not open '{0}': {1}");
 

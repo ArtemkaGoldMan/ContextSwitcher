@@ -127,6 +127,52 @@ public sealed class ConfigurationValidatorTests
         Assert.Contains(result.Errors, error => error.Path == "contexts[0].browser_management.urls[0]");
     }
 
+
+    /// <summary>A profile can list pages only to close them when it is left.</summary>
+    [Fact]
+    public void ValidateAcceptsUrlsModeWithPagesOnlyToClose()
+    {
+        AppConfiguration configuration = CreateConfiguration(new BrowserManagementConfig
+        {
+            Mode = BrowserManagementMode.Urls,
+            Browser = BrowserKind.Chrome,
+            CloseUrls = ["https://youtube.com/"]
+        });
+
+        Assert.True(this.validator.Validate(configuration).IsValid);
+    }
+
+    [Fact]
+    public void ValidateRejectsClosingTabsInTheDefaultBrowser()
+    {
+        AppConfiguration configuration = CreateConfiguration(new BrowserManagementConfig
+        {
+            Mode = BrowserManagementMode.Urls,
+            Browser = BrowserKind.Default,
+            Urls = ["https://github.com/"],
+            CloseUrls = ["https://github.com/"]
+        });
+
+        ConfigurationValidationResult result = this.validator.Validate(configuration);
+
+        ConfigurationValidationError error = Assert.Single(result.Errors);
+        Assert.Equal("contexts[0].browser_management.close_urls", error.Path);
+    }
+
+    [Fact]
+    public void ValidateRejectsAPageToCloseThatIsntAWebAddress()
+    {
+        AppConfiguration configuration = CreateConfiguration(new BrowserManagementConfig
+        {
+            Mode = BrowserManagementMode.Urls,
+            Browser = BrowserKind.Safari,
+            CloseUrls = ["file:///etc/hosts"]
+        });
+
+        ConfigurationValidationResult result = this.validator.Validate(configuration);
+
+        Assert.Contains(result.Errors, error => error.Path == "contexts[0].browser_management.close_urls[0]");
+    }
     private static AppConfiguration CreateConfiguration(BrowserManagementConfig browserManagement)
     {
         return new AppConfiguration

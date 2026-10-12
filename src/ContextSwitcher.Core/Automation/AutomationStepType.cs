@@ -14,5 +14,8 @@ public enum AutomationStepType
     StopDockerResources,
     OpenUrls,
     WriteState,
-    AnalyticsBoundary
+    AnalyticsBoundary,
+
+    /// <summary>Closes the tabs of the pages the context being left lists to close.</summary>
+    CloseBrowserTabs
 }

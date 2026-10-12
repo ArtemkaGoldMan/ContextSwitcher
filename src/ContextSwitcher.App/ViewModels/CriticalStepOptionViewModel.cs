@@ -21,6 +21,7 @@ public sealed class CriticalStepOptionViewModel(AutomationStepType stepType, str
     public static IReadOnlyList<(AutomationStepType Type, string Label)> SelectableSteps { get; } =
     [
         (AutomationStepType.StopDockerResources, Strings.Step_StopDockerResources),
+        (AutomationStepType.CloseBrowserTabs, Strings.Step_CloseBrowserTabs),
         (AutomationStepType.CloseApplications, Strings.Step_CloseApplications),
         (AutomationStepType.SetFocusMode, Strings.Step_SetFocusMode),
         (AutomationStepType.LaunchApplications, Strings.Step_LaunchApplications),

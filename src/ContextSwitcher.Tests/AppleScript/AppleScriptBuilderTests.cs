@@ -54,6 +54,17 @@ public sealed class AppleScriptBuilderTests
         Assert.Contains("name of t", AppleScriptBuilder.ListOpenTabs("Safari", isSafari: true), StringComparison.Ordinal);
     }
 
+
+    /// <summary>Closing never starts a browser that isn't running, and closes from the last tab back.</summary>
+    [Fact]
+    public void CloseTabsWithUrlsLeavesABrowserThatIsntRunningAndEscapesTheAddresses()
+    {
+        string script = AppleScriptBuilder.CloseTabsWithUrls("Google Chrome", ["https://a.example/", "https://b.example/?q=\"x\""]);
+
+        Assert.StartsWith("if application \"Google Chrome\" is not running then return 0", script, StringComparison.Ordinal);
+        Assert.Contains("set doomed to {\"https://a.example/\", \"https://b.example/?q=\\\"x\\\"\"}", script, StringComparison.Ordinal);
+        Assert.Contains("to 1 by -1", script, StringComparison.Ordinal);
+    }
     [Fact]
     public void ListMusicPlaylistsOnlyStartsMusicWhenAskedTo()
     {

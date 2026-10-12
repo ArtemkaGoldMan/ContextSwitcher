@@ -333,7 +333,7 @@ public sealed class EnvironmentChoicesTests
         viewModel.QuickLinkTabPicker.LoadCommand.Execute(null);
         viewModel.QuickLinkTabPicker.Items[0].PickCommand.Execute(null);
 
-        Assert.Equal(["https://github.com/pulls"], viewModel.BrowserUrls.Select(row => row.Value));
+        Assert.Equal(["https://github.com/pulls"], viewModel.BrowserUrls.Select(row => row.Url));
         QuickLinkRowViewModel link = Assert.Single(viewModel.QuickLinks);
         Assert.Equal(("Pull requests", "https://github.com/pulls"), (link.Title, link.Url));
         Assert.Equal([BrowserKind.Safari, BrowserKind.Safari], catalog.OpenTabRequests);

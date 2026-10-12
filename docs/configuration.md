@@ -76,6 +76,7 @@ field has a sensible default, and an omitted section simply does nothing.
     "mode": "urls",
     "browser": "Chrome",
     "urls": ["https://mail.google.com/"],
+    "close_urls": ["https://mail.google.com/"],
     "tab_groups": [],
     "profiles": [],
     "avoid_duplicate_tabs": true
@@ -123,11 +124,25 @@ on. ContextSwitcher never force-kills anything.
 | `mode` | Behaviour |
 | --- | --- |
 | `none` | Don't touch the browser. |
-| `urls` | Open `urls[]`. |
+| `urls` | Open `urls[]` on entering; close the tabs of `close_urls[]` on leaving. |
 | `groups` | Activate the named `tab_groups[]`, falling back to `urls[]` if that fails. |
 | `profiles` | Launch each entry in `profiles[]` with its own `--profile-directory`. |
 
 `browser` is `Default`, `Chrome`, `Brave` or `Safari`.
+
+**`close_urls`** are the pages whose tabs close when you leave the profile — the same direction as
+`closeApps`. A page can be in both lists (opened on the way in, closed on the way out) or only in
+`close_urls`. Profile Setup shows each page as one row with **Open** and **Close**. Only tabs of
+those pages close; every other tab stays. A page the profile you're switching to opens in the same
+browser is left open rather than closed and loaded again. Closing tabs needs a named browser, for
+the reason below, and only applies in `urls` mode.
+
+**A tab matches a page when it's on the same site, at the page's path or below it.**
+`https://github.com/ArtemkaGoldMan` matches every page of that account and nothing else on GitHub;
+`https://mail.google.com/` matches all of Gmail, wherever it redirected. `http`/`https`, a leading
+`www.`, a trailing slash, letter case and the `#` part don't count; a page with a `?query` matches
+only tabs with that query. The same rule decides what `avoid_duplicate_tabs` counts as already
+open.
 
 **`avoid_duplicate_tabs` needs a named browser.** Finding an already-open tab means scripting a
 specific browser, and the *default* browser can't be identified ahead of time — so with
@@ -162,7 +177,7 @@ in [shortcuts-integration.md](shortcuts-integration.md).
 By default a failing step is a warning and the switch continues. Naming a step type in
 `criticalSteps` makes its failure stop the switch and report `Failed`. Profile Setup sets both under
 **Advanced → If a step fails**. Valid values are the
-`AutomationStepType` names: `CloseApplications`, `LaunchApplications`, `ManageBrowserContext`,
+`AutomationStepType` names: `CloseBrowserTabs`, `CloseApplications`, `LaunchApplications`, `ManageBrowserContext`,
 `SetFocusMode`, `ControlMedia`, `StartDockerResources`,
 `StopDockerResources`.
 

@@ -284,6 +284,89 @@ public sealed class ProfileSetupViewModelTests
         Assert.Empty(viewModel.AppPicker.FilteredApps);
     }
 
+
+    /// <summary>
+    /// Pages show the way apps do - one row, Open and Close - over the two lists in the file, and
+    /// a page with neither ticked is dropped.
+    /// </summary>
+    [Fact]
+    public void PagesAreRowsWithOpenAndCloseOverTheTwoLists()
+    {
+        ContextDefinition context = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Urls,
+                Browser = BrowserKind.Chrome,
+                Urls = ["https://github.com/", "https://linear.app/"],
+                CloseUrls = ["https://linear.app/", "https://youtube.com/"]
+            }
+        };
+        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+
+        Assert.Equal(
+            [("https://github.com/", true, false), ("https://linear.app/", true, true), ("https://youtube.com/", false, true)],
+            viewModel.BrowserUrls.Select(row => (row.Url, row.OpenOnEnter, row.CloseOnLeave)));
+
+        viewModel.BrowserUrls[0].CloseOnLeave = true;
+        viewModel.BrowserUrls[2].CloseOnLeave = false;
+        viewModel.SaveCommand.Execute(null);
+
+        BrowserManagementConfig saved = Assert.Single(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!.Contexts).BrowserManagement;
+        Assert.Equal(["https://github.com/", "https://linear.app/"], saved.Urls);
+        Assert.Equal(["https://github.com/", "https://linear.app/"], saved.CloseUrls);
+    }
+
+    /// <summary>
+    /// The default browser can't be asked for its tabs: Close goes off on every row, with the
+    /// reason, and isn't saved - so the profile still passes its check.
+    /// </summary>
+    [Fact]
+    public void TheDefaultBrowserCantCloseTabs()
+    {
+        ContextDefinition context = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Urls,
+                Browser = BrowserKind.Chrome,
+                Urls = ["https://github.com/"],
+                CloseUrls = ["https://github.com/"]
+            }
+        };
+        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+        Assert.True(viewModel.BrowserUrls[0].CanClose);
+
+        viewModel.BrowserKind = BrowserKind.Default;
+        viewModel.SaveCommand.Execute(null);
+
+        Assert.False(viewModel.CanCloseTabs);
+        Assert.False(viewModel.BrowserUrls[0].CanClose);
+        Assert.False(viewModel.HasErrorMessage);
+        BrowserManagementConfig saved = Assert.Single(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!.Contexts).BrowserManagement;
+        Assert.Equal(["https://github.com/"], saved.Urls);
+        Assert.Empty(saved.CloseUrls);
+    }
+
+    [Fact]
+    public void APageAddedNowOpensAndDoesntClose()
+    {
+        ProfileSetupViewModel viewModel = NewProfile();
+
+        viewModel.AddBrowserUrlCommand.Execute(null);
+
+        BrowserPageRowViewModel row = Assert.Single(viewModel.BrowserUrls);
+        Assert.True(row.OpenOnEnter);
+        Assert.False(row.CloseOnLeave);
+    }
     private static ConfigurationStore CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths)
     {
         jsonStore = new InMemoryJsonStore();
