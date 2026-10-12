@@ -892,6 +892,14 @@
     <value>Version {0}</value>
     <comment>Settings → Updates: the installed version. {0} = e.g. 0.2.1.</comment>
   </data>
+  <data name="Updates_WhatsNewHeading" xml:space="preserve">
+    <value>What's new in {0}</value>
+    <comment>Settings → Updates: over the list of what a waiting update brings. {0} = version, e.g. 0.4.1.</comment>
+  </data>
+  <data name="Updates_ReleaseNotesLink" xml:space="preserve">
+    <value>Release notes on GitHub ↗</value>
+    <comment>Settings → Updates: link under that list to the release's page.</comment>
+  </data>
   <data name="Updates_WhatsNewIn" xml:space="preserve">
     <value>What's new in {0} ↗</value>
     <comment>Link to a waiting release's notes. {0} = version.</comment>

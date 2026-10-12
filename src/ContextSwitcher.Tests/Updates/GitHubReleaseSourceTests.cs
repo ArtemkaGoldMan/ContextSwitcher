@@ -14,6 +14,7 @@ public sealed class GitHubReleaseSourceTests
           "html_url": "https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.2.0",
           "draft": false,
           "prerelease": false,
+          "body": "## What's new\r\n\r\n- **Faster switching.** Apps open together.\r\n\r\n## Install\r\n\r\n- Paste this.",
           "assets": [
             { "name": "ContextSwitcher-0.2.0.dmg", "browser_download_url": "https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/download/v0.2.0/ContextSwitcher-0.2.0.dmg" },
             { "name": "ContextSwitcher.zip", "browser_download_url": "https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/download/v0.2.0/ContextSwitcher.zip" }
@@ -37,6 +38,16 @@ public sealed class GitHubReleaseSourceTests
     }
 
     /// <summary>GitHub's API turns away requests without a User-Agent, so every one names the app.</summary>
+    [Fact]
+    public async Task ReadsWhatsNewFromTheDescription()
+    {
+        this.handler.Respond = _ => Json(HttpStatusCode.OK, Release);
+
+        ReleaseInfo? release = await this.Source().GetLatestAsync(CancellationToken.None);
+
+        Assert.Equal(["Faster switching. Apps open together."], release?.Notes);
+    }
+
     [Fact]
     public async Task AsksGitHubsLatestReleaseEndpointAsTheApp()
     {

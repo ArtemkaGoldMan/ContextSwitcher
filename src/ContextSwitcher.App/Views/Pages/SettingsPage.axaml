@@ -106,6 +106,25 @@
             <Button Classes="switchContext current" Content="{x:Static r:Strings.Settings_InstallAndRestart}" Command="{Binding Updates.InstallCommand}" IsVisible="{Binding Updates.CanInstall}" />
           </Panel>
         </ctl:FormRow>
+        <!-- What the update brings, before it is installed: its release's "What's new" list. -->
+        <StackPanel Spacing="6" IsVisible="{Binding Updates.HasNotes}">
+          <TextBlock Text="{Binding Updates.WhatsNewHeading}" Classes="body" FontWeight="SemiBold" />
+          <ItemsControl ItemsSource="{Binding Updates.AvailableNotes}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Spacing="4" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <Grid ColumnDefinitions="Auto,*">
+                  <TextBlock Grid.Column="0" Text="•" Classes="caption" Margin="2,0,8,0" />
+                  <TextBlock Grid.Column="1" Text="{Binding}" Classes="caption" TextWrapping="Wrap" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
         <TextBlock Text="{Binding Updates.InstallBlocker}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding Updates.HasInstallBlocker}" />
         <Button Classes="linkButton" Content="{Binding Updates.ReleasePageLinkText}" Command="{Binding Updates.OpenReleasePageCommand}" IsVisible="{Binding Updates.IsUpdateAvailable}" />
       </StackPanel>

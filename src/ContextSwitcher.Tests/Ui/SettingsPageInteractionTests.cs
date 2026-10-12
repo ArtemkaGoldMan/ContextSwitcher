@@ -182,7 +182,10 @@ public sealed class SettingsPageInteractionTests : UiTest
             scenario.Releases.Latest = new ContextSwitcher.Core.Updates.ReleaseInfo(
                 new Version(0, 2, 0),
                 "https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.2.0",
-                "https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/download/v0.2.0/ContextSwitcher.zip");
+                "https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/download/v0.2.0/ContextSwitcher.zip")
+            {
+                Notes = ["Update notifications.", "Turn a profile off."]
+            };
             SettingsViewModel viewModel = scenario.Settings();
             Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 1400);
 
@@ -194,7 +197,10 @@ public sealed class SettingsPageInteractionTests : UiTest
             Settle(window);
 
             Assert.True(IsClickable(FindControl<TextBlock>(window, t => t.Text == "Version 0.2.0 is available.")));
-            Assert.True(IsClickable(FindVisibleButton(window, "What's new in 0.2.0 ↗")));
+            // What it brings, before it's installed - and the page for the rest.
+            Assert.True(IsClickable(FindControl<TextBlock>(window, t => t.Text == "What's new in 0.2.0")));
+            Assert.True(IsClickable(FindControl<TextBlock>(window, t => t.Text == "Turn a profile off.")));
+            Assert.True(IsClickable(FindVisibleButton(window, "Release notes on GitHub ↗")));
 
             Click(window, FindVisibleButton(window, "Install and restart"));
             PumpUntil(WaitUntil(() => scenario.Updater.Installed is not null));

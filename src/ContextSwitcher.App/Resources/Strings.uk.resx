@@ -658,6 +658,12 @@
   <data name="Updates_Version" xml:space="preserve">
     <value>Версія {0}</value>
   </data>
+  <data name="Updates_WhatsNewHeading" xml:space="preserve">
+    <value>Що нового у версії {0}</value>
+  </data>
+  <data name="Updates_ReleaseNotesLink" xml:space="preserve">
+    <value>Опис релізу на GitHub ↗</value>
+  </data>
   <data name="Updates_WhatsNewIn" xml:space="preserve">
     <value>Що нового у версії {0} ↗</value>
   </data>

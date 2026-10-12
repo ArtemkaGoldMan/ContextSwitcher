@@ -101,6 +101,10 @@ public sealed class GitHubReleaseSource : IReleaseSource
                 .FirstOrDefault();
         }
 
-        return new ReleaseInfo(version, page, archive);
+        string? description = release.TryGetProperty("body", out JsonElement bodyElement) && bodyElement.ValueKind == JsonValueKind.String
+            ? bodyElement.GetString()
+            : null;
+
+        return new ReleaseInfo(version, page, archive) { Notes = ReleaseNotes.WhatsNew(description) };
     }
 }

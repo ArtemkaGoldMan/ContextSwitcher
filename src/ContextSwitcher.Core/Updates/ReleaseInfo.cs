@@ -7,4 +7,8 @@ namespace ContextSwitcher.Core.Updates;
 /// The zipped app the updater installs from, or null when the release has none - one published by
 /// hand with only a disk image, say.
 /// </param>
-public sealed record ReleaseInfo(Version Version, string PageUrl, string? ArchiveUrl);
+public sealed record ReleaseInfo(Version Version, string PageUrl, string? ArchiveUrl)
+{
+    /// <summary>What the release brings, from its description's "What's new" list; empty if none.</summary>
+    public IReadOnlyList<string> Notes { get; init; } = [];
+}
