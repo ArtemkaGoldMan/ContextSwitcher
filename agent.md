@@ -818,7 +818,8 @@ Rules:
 Closing pages (`close_urls`), on leaving a context, as its own `CloseBrowserTabs` step before the
 apps are quit:
 
-- Only with a named browser, and only a running one - scripting a browser starts it.
+- Only with a browser that can be scripted - Chrome, Brave, Safari, or the default browser when it
+  is one of them (`IDefaultBrowser`) - and only a running one, as scripting a browser starts it.
 - List the tabs, choose in C# the ones that show a page in `close_urls` (`PageMatch`), and close
   exactly those addresses. No other tab is ever closed.
 - Spare a page the context being entered opens in the same browser.

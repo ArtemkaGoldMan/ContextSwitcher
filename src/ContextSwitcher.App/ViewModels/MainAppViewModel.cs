@@ -19,6 +19,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
     private readonly ISystemCatalog catalog;
     private readonly IProcessRunner processRunner;
     private readonly IFocusShortcutInstaller focusShortcuts;
+    private readonly IDefaultBrowser? defaultBrowser;
 
     private object currentPage;
 
@@ -34,9 +35,11 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         ISystemCatalog catalog,
         IFocusShortcutInstaller focusShortcuts,
         SwitchNoticeViewModel switchNotice,
-        UpdatesViewModel updates)
+        UpdatesViewModel updates,
+        IDefaultBrowser? defaultBrowser = null)
     {
         this.focusShortcuts = focusShortcuts;
+        this.defaultBrowser = defaultBrowser;
         this.configurationStore = configurationStore;
         this.installedAppsService = installedAppsService;
         this.catalog = catalog;
@@ -99,7 +102,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
 
     private void OnEditRequested(object? sender, ContextDefinition? context)
     {
-        ProfileSetupViewModel setup = new(this.configurationStore, this.installedAppsService, this.catalog, this.processRunner, this.focusShortcuts, context);
+        ProfileSetupViewModel setup = new(this.configurationStore, this.installedAppsService, this.catalog, this.processRunner, this.focusShortcuts, context, this.defaultBrowser);
         setup.Saved += this.OnProfileSetupFinished;
         setup.CancelRequested += this.OnProfileSetupFinished;
         this.CurrentPage = setup;

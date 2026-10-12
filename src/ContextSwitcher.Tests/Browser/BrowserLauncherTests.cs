@@ -339,16 +339,20 @@ public sealed class BrowserLauncherTests
         Assert.Single(scriptRunner.Scripts);
     }
 
-    /// <summary>The default browser can't be asked for its tabs, so nothing is tried.</summary>
+    /// <summary>
+    /// A default browser that can't be scripted - the plan leaves Default only for those - can't be
+    /// asked for its tabs: nothing is tried, and the switch says why.
+    /// </summary>
     [Fact]
-    public async Task TheDefaultBrowsersTabsAreNeverTouched()
+    public async Task AnUnscriptableDefaultBrowserIsReportedAndLeftAlone()
     {
         FakeScriptRunner scriptRunner = new();
         BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
 
         TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Default, ["https://linear.app/"], [], Timeout, CancellationToken.None);
 
-        Assert.Equal(new TabClosingOutcome(0, null), outcome);
+        Assert.Equal(0, outcome.Closed);
+        Assert.Equal("Switch_CloseTabsNeedsBrowser", outcome.Problem?.Key);
         Assert.Empty(scriptRunner.Scripts);
     }
 

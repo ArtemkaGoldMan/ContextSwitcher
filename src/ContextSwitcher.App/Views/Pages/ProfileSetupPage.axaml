@@ -158,7 +158,7 @@
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
           </ItemsControl>
-          <TextBlock Text="{x:Static r:Strings.ProfileSetup_CloseTabsNeedsBrowser}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding !CanCloseTabs}" />
+          <TextBlock Text="{Binding CloseTabsHint}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding !CanCloseTabs}" />
           <!-- Every opening re-reads the browser, so the list is what is open right now. -->
           <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddUrl}" Command="{Binding UrlTabPicker.LoadCommand}">
             <Button.Flyout>

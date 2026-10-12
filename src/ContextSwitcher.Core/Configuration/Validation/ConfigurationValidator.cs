@@ -125,13 +125,6 @@ public sealed class ConfigurationValidator
         {
             errors.Add(ConfigurationValidationError.Of($"{path}.browser", ConfigurationMessages.BrowserInvalid.With()));
         }
-
-        if (browserManagement.Mode == BrowserManagementMode.Urls
-            && browserManagement.Browser == BrowserKind.Default
-            && browserManagement.CloseUrls.Count > 0)
-        {
-            errors.Add(ConfigurationValidationError.Of($"{path}.close_urls", ConfigurationMessages.CloseTabsNeedsBrowser.With()));
-        }
     }
 
     private static void ValidateTabGroups(

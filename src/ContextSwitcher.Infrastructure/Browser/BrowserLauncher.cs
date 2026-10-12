@@ -144,10 +144,16 @@ public sealed class BrowserLauncher
         ArgumentNullException.ThrowIfNull(pages);
         ArgumentNullException.ThrowIfNull(keep);
 
-        // Which tab is which is only known by asking the browser itself.
-        if (browser == BrowserKind.Default || pages.Count == 0)
+        if (pages.Count == 0)
         {
             return new TabClosingOutcome(0, null);
+        }
+
+        // Which tab is which is only known by asking the browser itself; a default browser that can't
+        // be scripted (Firefox, Arc…) can't be asked.
+        if (browser == BrowserKind.Default)
+        {
+            return new TabClosingOutcome(0, SwitchMessages.CloseTabsNeedsBrowser.With());
         }
 
         string app = BrowserAppName(browser);

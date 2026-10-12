@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Automation;
 
@@ -299,11 +300,11 @@ public sealed class AutomationPlanBuilderTests
     }
 
     /// <summary>
-    /// The default browser can't be asked for its tabs, and a profile in another mode has no pages
-    /// to close; entering a profile with pages only to close opens nothing.
+    /// A profile in another mode has no pages to close; entering a profile with pages only to close
+    /// opens nothing.
     /// </summary>
     [Fact]
-    public void NothingClosesWithoutPagesToCloseInANamedBrowser()
+    public void NothingClosesWithoutPagesToClose()
     {
         AutomationPlanBuilder builder = new();
         ContextDefinition closeOnly = new()
@@ -321,7 +322,6 @@ public sealed class AutomationPlanBuilderTests
 
         Assert.Empty(builder.Build(target, closeOnly).Steps);
         Assert.Single(builder.Build(closeOnly, target).Steps);
-        Assert.Empty(builder.Build(closeOnly with { BrowserManagement = closeOnly.BrowserManagement with { Browser = BrowserKind.Default } }, target).Steps);
         Assert.Empty(builder.Build(closeOnly with { BrowserManagement = closeOnly.BrowserManagement with { Mode = BrowserManagementMode.Groups } }, target).Steps);
     }
 
@@ -403,5 +403,63 @@ public sealed class AutomationPlanBuilderTests
         AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
 
         Assert.DoesNotContain(plan.Steps, step => step.Type == AutomationStepType.CloseApplications);
+    }
+
+    /// <summary>
+    /// "Default browser" is planned as the browser macOS opens links in, when it can be scripted:
+    /// duplicates are checked for in it, its tabs close, and the next profile's pages in it are
+    /// spared whether that profile names it or not.
+    /// </summary>
+    [Fact]
+    public void TheDefaultBrowserIsPlannedAsTheOneInUse()
+    {
+        ContextDefinition previous = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Urls,
+                Browser = BrowserKind.Default,
+                CloseUrls = ["https://linear.app/", "https://mail.google.com/"]
+            }
+        };
+        ContextDefinition target = new()
+        {
+            Id = "personal",
+            DisplayName = "Personal",
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Urls,
+                Browser = BrowserKind.Chrome,
+                Urls = ["https://mail.google.com/"]
+            }
+        };
+
+        AutomationPlan plan = new AutomationPlanBuilder(new FakeDefaultBrowser(BrowserKind.Chrome, "Google Chrome")).Build(previous, target);
+
+        AutomationStep closing = plan.Steps.Single(step => step.Type == AutomationStepType.CloseBrowserTabs);
+        Assert.Equal(("Chrome", """["https://mail.google.com/"]"""), (closing.Arguments["browser"], closing.Arguments["keepUrlsJson"]));
+
+        // Entering a Default profile opens its pages in that browser too, checking for duplicates.
+        ContextDefinition entering = previous with { BrowserManagement = previous.BrowserManagement with { Urls = ["https://linear.app/"] } };
+        AutomationPlan opening = new AutomationPlanBuilder(new FakeDefaultBrowser(BrowserKind.Safari, "Safari")).Build(null, entering);
+        Assert.Equal("Safari", opening.Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext).Arguments["browser"]);
+    }
+
+    /// <summary>A default browser that can't be scripted stays Default, and the closing step says why it did nothing.</summary>
+    [Fact]
+    public void AnUnscriptableDefaultBrowserStaysDefault()
+    {
+        ContextDefinition previous = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            BrowserManagement = new BrowserManagementConfig { Mode = BrowserManagementMode.Urls, CloseUrls = ["https://linear.app/"] }
+        };
+
+        AutomationPlan plan = new AutomationPlanBuilder(new FakeDefaultBrowser(BrowserKind.Default, "Firefox")).Build(previous, target: null);
+
+        Assert.Equal("Default", plan.Steps.Single(step => step.Type == AutomationStepType.CloseBrowserTabs).Arguments["browser"]);
     }
 }
