@@ -109,7 +109,7 @@ public sealed class AnalyticsService : IAnalyticsService
         // from, so a whole day in one profile read as nothing at all until evening.
         if (await this.store.ReadActiveMarkerAsync(cancellationToken).ConfigureAwait(false) is { } running)
         {
-            sessions.Add(this.EndedNow(running, reason: null));
+            sessions.Add(Ended(running, reason: null, this.clock.UtcNow));
         }
 
         DateOnly today = DateOnly.FromDateTime(this.clock.UtcNow.LocalDateTime);
@@ -119,20 +119,22 @@ public sealed class AnalyticsService : IAnalyticsService
     /// <summary>Ends whatever session is running, whichever process started it, and records it.</summary>
     private async Task<ContextSession?> CompleteRunningSessionAsync(SessionEndReason reason, CancellationToken cancellationToken)
     {
+        // The moment of asking, read before anything waits: on the way to sleep the writes below
+        // can be held over until the Mac wakes, and the night must not count.
+        DateTimeOffset endedAt = this.clock.UtcNow;
         if (await this.store.ReadActiveMarkerAsync(cancellationToken).ConfigureAwait(false) is not { } running)
         {
             return null;
         }
 
-        ContextSession completed = this.EndedNow(running, reason);
+        ContextSession completed = Ended(running, reason, endedAt);
         await this.store.AppendCompletedSessionAsync(completed, cancellationToken).ConfigureAwait(false);
         await this.store.ClearActiveMarkerAsync(cancellationToken).ConfigureAwait(false);
         return completed;
     }
 
-    private ContextSession EndedNow(ContextSession running, SessionEndReason? reason)
+    private static ContextSession Ended(ContextSession running, SessionEndReason? reason, DateTimeOffset endedAt)
     {
-        DateTimeOffset endedAt = this.clock.UtcNow;
         return running with
         {
             EndedAt = endedAt,
