@@ -154,6 +154,21 @@ public sealed class CliCommandRouterTests
 
     private static ConfigurationValidationResult Valid { get; } = new([]);
 
+
+    /// <summary>`off` - for a Shortcut or Siri phrase that ends the day - turns the active profile off.</summary>
+    [Fact]
+    public async Task RunAsyncOffTurnsTheActiveContextOff()
+    {
+        (CliCommandRouter router, StubContextSwitchService switchService, StringWriter output) = Create();
+        switchService.Result = new ContextSwitchResult(string.Empty, "work", ContextSwitchStatus.Succeeded, [], DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, "id");
+
+        int exitCode = await router.RunAsync(["off"], TwoContextConfiguration(), Valid, new CurrentContextState { CurrentContextId = "work" }, output, CancellationToken.None);
+
+        Assert.Equal((int)CliExitCode.Success, exitCode);
+        Assert.True(switchService.LastRequest?.IsTurnOff);
+        Assert.Equal(ContextSwitchSource.Cli, switchService.LastRequest?.Source);
+        Assert.Contains("Turning 'work' off finished with status: Succeeded", output.ToString(), StringComparison.Ordinal);
+    }
     private static (CliCommandRouter Router, StubContextSwitchService SwitchService, StringWriter Output) Create()
     {
         StubContextSwitchService switchService = new();

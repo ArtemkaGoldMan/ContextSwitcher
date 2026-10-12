@@ -324,4 +324,41 @@ public sealed class AutomationPlanBuilderTests
         Assert.Empty(builder.Build(closeOnly with { BrowserManagement = closeOnly.BrowserManagement with { Browser = BrowserKind.Default } }, target).Steps);
         Assert.Empty(builder.Build(closeOnly with { BrowserManagement = closeOnly.BrowserManagement with { Mode = BrowserManagementMode.Groups } }, target).Steps);
     }
+
+    /// <summary>
+    /// Turning a profile off is the half of a switch that leaves it - its containers, tabs, apps and
+    /// Focus - under its own policy, and nothing else.
+    /// </summary>
+    [Fact]
+    public void TurningOffBuildsOnlyTheLeavingHalf()
+    {
+        ContextDefinition previous = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            CloseApps = ["Slack"],
+            LaunchApps = ["Linear"],
+            Focus = new FocusConfig { Enabled = true, ModeName = "Work" },
+            Docker = new DockerResourceConfig { Stop = ["db"], Start = ["db"] },
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Urls,
+                Browser = BrowserKind.Chrome,
+                Urls = ["https://linear.app/"],
+                CloseUrls = ["https://linear.app/"]
+            },
+            SwitchPolicy = new SwitchPolicyConfig { CriticalSteps = ["CloseApplications"] }
+        };
+
+        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target: null);
+
+        Assert.Equal(
+            [AutomationStepType.StopDockerResources, AutomationStepType.CloseBrowserTabs, AutomationStepType.CloseApplications, AutomationStepType.SetFocusMode],
+            plan.Steps.Select(step => step.Type));
+        Assert.Equal((string.Empty, "work"), (plan.TargetContextId, plan.PreviousContextId));
+        Assert.Equal("[]", plan.Steps[1].Arguments["keepUrlsJson"]);
+        Assert.True(plan.Steps[2].IsCritical);
+        AutomationStep focus = plan.Steps[3];
+        Assert.Equal(("False", "Work"), (focus.Arguments["enabled"], focus.Arguments["previousModeName"]));
+    }
 }

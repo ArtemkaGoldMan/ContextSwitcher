@@ -127,7 +127,9 @@ profile, and **Close** to quit it when you switch away. You can change everythin
 ContextSwitcher lives in the **menu bar** — look for the icon of two overlapping squares. It has no
 Dock icon (you can turn one on in Settings).
 
-- **Click the icon** and pick a profile to switch to it.
+- **Click the icon** and pick a profile to switch to it. The active one has a tick; pick it again to
+  turn it off — it closes what it closes when you switch away, and no profile is on until you pick
+  one. No time is counted while none is on.
 - **Open Dashboard** shows the active profile, how long you've been in it, its quick links and notes,
   and the last seven days. Click anywhere else to close it.
 - **Open App** opens the main window, where you set profiles up.

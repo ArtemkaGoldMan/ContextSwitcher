@@ -7,8 +7,8 @@ namespace ContextSwitcher.App;
 
 /// <summary>
 /// The menu bar icon's menu: every profile first, with the active one ticked, so switching takes a
-/// single click from the menu bar; then Open Dashboard, Open App, "Update to …" while a new version
-/// is waiting, and Quit.
+/// single click from the menu bar - and clicking the ticked one turns it off, leaving none ticked;
+/// then Open Dashboard, Open App, "Update to …" while a new version is waiting, and Quit.
 ///
 /// One menu object lives for the whole run and is updated in place. On macOS, handing the tray icon
 /// a replacement NativeMenu works once and then throws "The menu being updated does not match" from

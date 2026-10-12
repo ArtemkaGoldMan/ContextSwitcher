@@ -38,6 +38,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     private IReadOnlyList<QuickLinkViewModel> quickLinks = [];
     private IReadOnlyList<string> notes = [];
     private DateTimeOffset? activeSince;
+    private bool isAnyActive;
     private BalanceChartViewModel balanceChart = BalanceChartViewModel.Empty;
     private IReadOnlyList<SwitchButtonViewModel> switchButtons = [];
     private IReadOnlyList<string> configurationWarnings = [];
@@ -116,7 +117,17 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         private set => this.SetProperty(ref this.activeContextDisplayName, value);
     }
 
-    /// <summary>"Active for 1h 20m" under the profile's name, or "Current profile" when unknown.</summary>
+    /// <summary>Whether a profile is on - none is after the active one was clicked again.</summary>
+    public bool IsAnyActive
+    {
+        get => this.isAnyActive;
+        private set => this.SetProperty(ref this.isAnyActive, value);
+    }
+
+    /// <summary>
+    /// "Active for 1h 20m" under the profile's name, "Current profile" when that isn't known, or,
+    /// with every profile off, how to turn one on.
+    /// </summary>
     public string ElapsedDisplay
     {
         get => this.elapsedDisplay;
@@ -260,8 +271,9 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         this.IsSwitching = true;
         try
         {
+            // The active profile's button turns it off.
             ContextSwitchResult result = await this.switchService
-                .SwitchAsync(new ContextSwitchRequest(contextId, ContextSwitchSource.Dashboard), CancellationToken.None)
+                .SwitchAsync(ContextSwitchRequest.ForClickOn(contextId, AppHost.State.CurrentContextId, ContextSwitchSource.Dashboard), CancellationToken.None)
                 .ConfigureAwait(true);
 
             CurrentContextState? state = await this.jsonStore
@@ -299,12 +311,15 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         this.ActiveContextDisplayName = active?.DisplayName ?? Strings.Dashboard_NoProfile;
         this.ActiveAccentBrush = AccentColorParser.ToBrush(active?.AccentColor ?? string.Empty);
         this.ActiveIcon = active?.Icon ?? ProfileIcons.Fallback;
+        this.IsAnyActive = active is not null;
 
         // Read the last outcome from state rather than from the popover's own switch result: the
         // tray menu, the CLI and Shortcuts switch too, and their warnings belong here just as much.
         this.LastSwitchStatusText = DescribeStatus(state.LastSwitchStatus);
         this.LastSwitchWarnings = state.LastErrors.Select(MessageText.Of).ToList();
-        this.activeSince = state.LastSwitchCompletedAt;
+        // Since the last switch only while something is on: after turning off, that is how long
+        // nothing has been.
+        this.activeSince = active is null ? null : state.LastSwitchCompletedAt;
         this.RefreshElapsedDisplay();
 
         foreach (SwitchButtonViewModel button in this.SwitchButtons)
@@ -340,7 +355,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     {
         this.ElapsedDisplay = this.activeSince is { } since
             ? Localized.Format(Strings.Dashboard_ActiveFor, FormatElapsed(this.clock.UtcNow - since))
-            : Strings.Dashboard_CurrentProfile;
+            : this.IsAnyActive ? Strings.Dashboard_CurrentProfile : Strings.Dashboard_PickAProfile;
     }
 
     private static string FormatElapsed(TimeSpan elapsed)

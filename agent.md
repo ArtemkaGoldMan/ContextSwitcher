@@ -1039,6 +1039,7 @@ Initial command contract:
 ```text
 ContextSwitcher switch --context work
 ContextSwitcher switch --context personal
+ContextSwitcher off
 ContextSwitcher status
 ContextSwitcher list-contexts
 ContextSwitcher validate-config
@@ -1472,7 +1473,7 @@ Acceptance criteria:
 Deliverables:
 
 - CLI command router.
-- `switch`, `status`, `list-contexts`, `validate-config`.
+- `switch`, `off`, `status`, `list-contexts`, `validate-config`.
 - JSON output mode.
 
 Acceptance criteria:
