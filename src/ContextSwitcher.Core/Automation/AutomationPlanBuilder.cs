@@ -69,7 +69,7 @@ public sealed class AutomationPlanBuilder
             "Stop Docker resources",
             DockerTimeout,
             criticalTypes,
-            new Dictionary<string, string> { ["containers"] = string.Join(',', previous.Docker.Stop) }));
+            new Dictionary<string, string> { ["containers"] = List(previous.Docker.Stop) }));
     }
 
     /// <summary>
@@ -121,7 +121,7 @@ public sealed class AutomationPlanBuilder
             "Close applications",
             QuitAppTimeoutPerApp * previous.CloseApps.Count,
             criticalTypes,
-            new Dictionary<string, string> { ["apps"] = string.Join(',', previous.CloseApps) }));
+            new Dictionary<string, string> { ["apps"] = List(previous.CloseApps) }));
     }
 
     private static void AddSetFocusMode(
@@ -181,7 +181,7 @@ public sealed class AutomationPlanBuilder
             "Launch applications",
             LaunchAppTimeoutPerApp * target.LaunchApps.Count,
             criticalTypes,
-            new Dictionary<string, string> { ["apps"] = string.Join(',', target.LaunchApps) }));
+            new Dictionary<string, string> { ["apps"] = List(target.LaunchApps) }));
     }
 
     private static void AddManageBrowserContext(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
@@ -204,8 +204,8 @@ public sealed class AutomationPlanBuilder
             {
                 ["mode"] = browser.Mode.ToString(),
                 ["browser"] = browser.Browser.ToString(),
-                ["urls"] = string.Join(',', browser.Urls),
-                ["tabGroups"] = string.Join(',', browser.TabGroups),
+                ["urls"] = List(browser.Urls),
+                ["tabGroups"] = List(browser.TabGroups),
                 ["avoidDuplicateTabs"] = browser.AvoidDuplicateTabs.ToString(),
                 ["profilesJson"] = JsonSerializer.Serialize(browser.Profiles, ContextSwitcherJson.CompactOptions)
             }));
@@ -224,7 +224,7 @@ public sealed class AutomationPlanBuilder
             "Start Docker resources",
             DockerTimeout,
             criticalTypes,
-            new Dictionary<string, string> { ["containers"] = string.Join(',', target.Docker.Start) }));
+            new Dictionary<string, string> { ["containers"] = List(target.Docker.Start) }));
     }
 
     private static void AddControlMedia(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
@@ -247,6 +247,13 @@ public sealed class AutomationPlanBuilder
                 ["autoPlay"] = target.Media.AutoPlay.ToString()
             }));
     }
+
+    /// <summary>
+    /// A list argument, as JSON. Lists used to be joined with commas, which split any address that
+    /// held one - a map's coordinates, a query's values - into pieces that opened nothing.
+    /// </summary>
+    private static string List(IReadOnlyList<string> values) =>
+        JsonSerializer.Serialize(values, ContextSwitcherJson.CompactOptions);
 
     private static AutomationStep CreateStep(
         AutomationStepType type,

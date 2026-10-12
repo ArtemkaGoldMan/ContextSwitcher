@@ -498,10 +498,11 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         }
     }
 
+    /// <summary>A list argument, carried as JSON by the plan builder.</summary>
     private static string[] SplitArgument(IReadOnlyDictionary<string, string> arguments, string key)
     {
         return arguments.TryGetValue(key, out string? value) && !string.IsNullOrWhiteSpace(value)
-            ? value.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            ? JsonSerializer.Deserialize<string[]>(value, ContextSwitcherJson.CompactOptions) ?? []
             : [];
     }
 }

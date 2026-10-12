@@ -116,7 +116,7 @@ public sealed class AutomationStepExecutorTests
         TimeSpan stepTimeout = TimeSpan.FromSeconds(20);
         AutomationStep step = new(
             "CloseApplications.personal", AutomationStepType.CloseApplications, "Close applications", false,
-            stepTimeout, new Dictionary<string, string> { ["apps"] = "Chess,Stickies" });
+            stepTimeout, new Dictionary<string, string> { ["apps"] = """["Chess","Stickies"]""" });
 
         await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -138,7 +138,7 @@ public sealed class AutomationStepExecutorTests
         TimeSpan stepTimeout = TimeSpan.FromSeconds(30);
         AutomationStep step = new(
             "LaunchApplications.work", AutomationStepType.LaunchApplications, "Launch applications", false,
-            stepTimeout, new Dictionary<string, string> { ["apps"] = "Calculator,Stickies" });
+            stepTimeout, new Dictionary<string, string> { ["apps"] = """["Calculator","Stickies"]""" });
 
         await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -285,13 +285,31 @@ public sealed class AutomationStepExecutorTests
         Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
         Assert.Equal("Closed 2 tab(s).", result.Message);
     }
+    /// <summary>
+    /// A comma belongs to the address: a map's coordinates used to split it into pieces that
+    /// opened nothing.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsyncManageBrowserContextOpensAnAddressWithCommasWhole()
+    {
+        FakeProcessRunner processRunner = new();
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+        AutomationStep step = ManageBrowserContextStep(
+            mode: "Urls", browser: "Default", urls: "https://www.google.com/maps/@50.45,30.52,12z", isCritical: false);
+
+        await executor.ExecuteAsync(step, CancellationToken.None);
+
+        ProcessStartOptions call = Assert.Single(processRunner.Calls);
+        Assert.Equal(["https://www.google.com/maps/@50.45,30.52,12z"], call.Arguments);
+    }
+
     private static AutomationStep ManageBrowserContextStep(string mode, string browser, string urls, bool isCritical)
     {
         Dictionary<string, string> arguments = new()
         {
             ["mode"] = mode,
             ["browser"] = browser,
-            ["urls"] = urls,
+            ["urls"] = System.Text.Json.JsonSerializer.Serialize(new[] { urls }),
             ["tabGroups"] = string.Empty,
             ["avoidDuplicateTabs"] = "False",
             ["profilesJson"] = "[]"
@@ -321,7 +339,7 @@ public sealed class AutomationStepExecutorTests
         AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
         AutomationStep step = new(
             $"{type}.work", type, "Docker", false, TimeSpan.FromSeconds(45),
-            new Dictionary<string, string> { ["containers"] = "postgres-work,redis-work" });
+            new Dictionary<string, string> { ["containers"] = """["postgres-work","redis-work"]""" });
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -339,7 +357,7 @@ public sealed class AutomationStepExecutorTests
         AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
         AutomationStep step = new(
             "StopDockerResources.work", AutomationStepType.StopDockerResources, "Docker", true, TimeSpan.FromSeconds(45),
-            new Dictionary<string, string> { ["containers"] = "redis-work" });
+            new Dictionary<string, string> { ["containers"] = """["redis-work"]""" });
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -532,13 +550,13 @@ public sealed class AutomationStepExecutorTests
     {
         return new AutomationStep(
             "CloseApplications.personal", AutomationStepType.CloseApplications, "Close applications", isCritical,
-            TimeSpan.FromSeconds(10), new Dictionary<string, string> { ["apps"] = string.Join(',', apps) });
+            TimeSpan.FromSeconds(10), new Dictionary<string, string> { ["apps"] = System.Text.Json.JsonSerializer.Serialize(apps) });
     }
 
     private static AutomationStep LaunchApplicationsStep(IReadOnlyList<string> apps, bool isCritical)
     {
         return new AutomationStep(
             "LaunchApplications.work", AutomationStepType.LaunchApplications, "Launch applications", isCritical,
-            TimeSpan.FromSeconds(15), new Dictionary<string, string> { ["apps"] = string.Join(',', apps) });
+            TimeSpan.FromSeconds(15), new Dictionary<string, string> { ["apps"] = System.Text.Json.JsonSerializer.Serialize(apps) });
     }
 }

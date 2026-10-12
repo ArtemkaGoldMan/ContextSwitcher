@@ -97,7 +97,7 @@ public sealed class AutomationPlanBuilderTests
         AutomationPlan plan = builder.Build(previous, target);
 
         AutomationStep close = Assert.Single(plan.Steps, step => step.Type == AutomationStepType.CloseApplications);
-        Assert.Equal("Obsidian,Spotify", close.Arguments["apps"]);
+        Assert.Equal("""["Obsidian","Spotify"]""", close.Arguments["apps"]);
     }
 
     [Fact]
