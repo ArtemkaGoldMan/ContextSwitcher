@@ -22,7 +22,8 @@ public interface IAnalyticsService
     Task StartSessionAsync(string contextId, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Ends the currently tracked session, if any, persists it, and returns the completed record.
+    /// Ends the running session, if any - whichever process started it - persists it, and returns
+    /// the completed record.
     /// </summary>
     /// <param name="reason">Why the session ended.</param>
     /// <param name="cancellationToken">A token that can cancel the operation.</param>
@@ -30,9 +31,10 @@ public interface IAnalyticsService
     Task<ContextSession?> EndCurrentSessionAsync(SessionEndReason reason, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Checks for a session left open by a crash (an active marker with no matching completed
-    /// entry) and, if found, closes and persists it with <see cref="SessionEndReason.RecoveredAfterCrash"/>.
-    /// Call once at startup, before <see cref="StartSessionAsync"/> for the new session.
+    /// Checks for a session left open - by a crash, or by a switch from the command line while the
+    /// app wasn't running - and, if found, closes and persists it with
+    /// <see cref="SessionEndReason.RecoveredAfterCrash"/>. Call once at startup, before
+    /// <see cref="StartSessionAsync"/> for the new session.
     /// </summary>
     Task RecoverFromCrashAsync(CancellationToken cancellationToken);
 
@@ -42,7 +44,8 @@ public interface IAnalyticsService
     Task PruneOldSessionsAsync(int retentionDays, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Computes per-context daily totals for the last <paramref name="days"/> days (including today).
+    /// Computes per-context daily totals for the last <paramref name="days"/> days (including today),
+    /// the running session counted up to now.
     /// </summary>
     Task<IReadOnlyList<BalanceSummary>> GetDailyBalanceAsync(int days, CancellationToken cancellationToken);
 }

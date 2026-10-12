@@ -149,6 +149,50 @@ public sealed class AnalyticsServiceTests
         Assert.Empty(balance);
     }
 
+    /// <summary>
+    /// A switch from Shortcuts, Siri or the command line runs in its own process. It must end the
+    /// session the app started - it used to start its own beside it, and the app kept counting the
+    /// old profile until its own next switch.
+    /// </summary>
+    [Fact]
+    public async Task ASessionStartedInOneProcessIsEndedByAnother()
+    {
+        FakeClock clock = new();
+        InMemoryAnalyticsSessionStore store = new();
+        AnalyticsService app = new(clock, store);
+        AnalyticsService commandLine = new(clock, store);
+
+        await app.StartSessionAsync("work", CancellationToken.None);
+        clock.UtcNow = clock.UtcNow.AddHours(2);
+        ContextSession? ended = await commandLine.EndCurrentSessionAsync(SessionEndReason.Switch, CancellationToken.None);
+        await commandLine.StartSessionAsync("personal", CancellationToken.None);
+        clock.UtcNow = clock.UtcNow.AddHours(1);
+        await app.EndCurrentSessionAsync(SessionEndReason.AppShutdown, CancellationToken.None);
+
+        Assert.Equal(("work", 7200L), (ended?.ContextId, ended?.DurationSeconds));
+        Assert.Equal(
+            [("work", 7200L), ("personal", 3600L)],
+            store.Sessions.Select(session => (session.ContextId, session.DurationSeconds ?? -1)));
+        Assert.Null(await store.ReadActiveMarkerAsync(CancellationToken.None));
+    }
+
+    /// <summary>The profile that is on shows in the totals as it goes, not only once it's switched away from.</summary>
+    [Fact]
+    public async Task TheRunningSessionCountsUpToNow()
+    {
+        (AnalyticsService service, FakeClock clock, InMemoryAnalyticsSessionStore store) = CreateWithClock();
+        await store.ReplaceAllAsync(
+            [new ContextSession { SessionId = "1", ContextId = "work", StartedAt = clock.UtcNow, DurationSeconds = 600 }],
+            CancellationToken.None);
+        await service.StartSessionAsync("work", CancellationToken.None);
+        clock.UtcNow = clock.UtcNow.AddMinutes(30);
+
+        BalanceSummary day = Assert.Single(await service.GetDailyBalanceAsync(1, CancellationToken.None));
+
+        Assert.Equal(600 + 1800, day.SecondsByContextId["work"]);
+        Assert.Single(store.Sessions);
+    }
+
     private static (AnalyticsService Service, InMemoryAnalyticsSessionStore Store) Create()
     {
         (AnalyticsService service, _, InMemoryAnalyticsSessionStore store) = CreateWithClock();
