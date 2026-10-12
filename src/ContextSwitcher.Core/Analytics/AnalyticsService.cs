@@ -3,15 +3,20 @@ using ContextSwitcher.Core.Abstractions;
 namespace ContextSwitcher.Core.Analytics;
 
 /// <summary>
-/// Tracks the current session boundary in memory and persists completed sessions, crash recovery,
-/// retention pruning, and balance summaries through <see cref="IAnalyticsSessionStore"/>.
+/// Tracks the current session boundary and persists completed sessions, crash recovery, retention
+/// pruning, and balance summaries through <see cref="IAnalyticsSessionStore"/>.
+///
+/// The running session is the active marker on disk, not anything held in memory. A switch from
+/// Shortcuts, Siri or the command line runs in a process of its own: when each process kept its own
+/// session, that switch never ended the one the app had running - the app went on counting the old
+/// profile until its own next switch, and the new profile's time was lost when that switch cleared
+/// the marker. Every process ending and starting the one marker keeps the sessions in step with the
+/// switches, whoever makes them.
 /// </summary>
 public sealed class AnalyticsService : IAnalyticsService
 {
     private readonly IClock clock;
     private readonly IAnalyticsSessionStore store;
-    private readonly Lock gate = new();
-    private ContextSession? currentSession;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AnalyticsService"/> class.
@@ -47,11 +52,6 @@ public sealed class AnalyticsService : IAnalyticsService
             StartedAt = this.clock.UtcNow
         };
 
-        lock (this.gate)
-        {
-            this.currentSession = session;
-        }
-
         await this.store.WriteActiveMarkerAsync(session, cancellationToken).ConfigureAwait(false);
     }
 
@@ -63,15 +63,7 @@ public sealed class AnalyticsService : IAnalyticsService
             return null;
         }
 
-        ContextSession? completed = this.CompleteCurrentSession(reason);
-        if (completed is null)
-        {
-            return null;
-        }
-
-        await this.store.AppendCompletedSessionAsync(completed, cancellationToken).ConfigureAwait(false);
-        await this.store.ClearActiveMarkerAsync(cancellationToken).ConfigureAwait(false);
-        return completed;
+        return await this.CompleteRunningSessionAsync(reason, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -82,22 +74,7 @@ public sealed class AnalyticsService : IAnalyticsService
             return;
         }
 
-        ContextSession? stale = await this.store.ReadActiveMarkerAsync(cancellationToken).ConfigureAwait(false);
-        if (stale is null)
-        {
-            return;
-        }
-
-        DateTimeOffset endedAt = this.clock.UtcNow;
-        ContextSession recovered = stale with
-        {
-            EndedAt = endedAt,
-            DurationSeconds = (long)(endedAt - stale.StartedAt).TotalSeconds,
-            EndReason = SessionEndReason.RecoveredAfterCrash
-        };
-
-        await this.store.AppendCompletedSessionAsync(recovered, cancellationToken).ConfigureAwait(false);
-        await this.store.ClearActiveMarkerAsync(cancellationToken).ConfigureAwait(false);
+        await this.CompleteRunningSessionAsync(SessionEndReason.RecoveredAfterCrash, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -126,30 +103,41 @@ public sealed class AnalyticsService : IAnalyticsService
             return [];
         }
 
-        IReadOnlyList<ContextSession> all = await this.store.ReadAllAsync(cancellationToken).ConfigureAwait(false);
+        List<ContextSession> sessions = [.. await this.store.ReadAllAsync(cancellationToken).ConfigureAwait(false)];
+
+        // The profile that is on counts up to now: it used to show only once it was switched away
+        // from, so a whole day in one profile read as nothing at all until evening.
+        if (await this.store.ReadActiveMarkerAsync(cancellationToken).ConfigureAwait(false) is { } running)
+        {
+            sessions.Add(this.EndedNow(running, reason: null));
+        }
+
         DateOnly today = DateOnly.FromDateTime(this.clock.UtcNow.LocalDateTime);
-        return BalanceSummaryCalculator.ComputeDaily(all, today.AddDays(-(days - 1)), today);
+        return BalanceSummaryCalculator.ComputeDaily(sessions, today.AddDays(-(days - 1)), today);
     }
 
-    private ContextSession? CompleteCurrentSession(SessionEndReason reason)
+    /// <summary>Ends whatever session is running, whichever process started it, and records it.</summary>
+    private async Task<ContextSession?> CompleteRunningSessionAsync(SessionEndReason reason, CancellationToken cancellationToken)
     {
-        lock (this.gate)
+        if (await this.store.ReadActiveMarkerAsync(cancellationToken).ConfigureAwait(false) is not { } running)
         {
-            if (this.currentSession is null)
-            {
-                return null;
-            }
-
-            DateTimeOffset endedAt = this.clock.UtcNow;
-            ContextSession completed = this.currentSession with
-            {
-                EndedAt = endedAt,
-                DurationSeconds = (long)(endedAt - this.currentSession.StartedAt).TotalSeconds,
-                EndReason = reason
-            };
-
-            this.currentSession = null;
-            return completed;
+            return null;
         }
+
+        ContextSession completed = this.EndedNow(running, reason);
+        await this.store.AppendCompletedSessionAsync(completed, cancellationToken).ConfigureAwait(false);
+        await this.store.ClearActiveMarkerAsync(cancellationToken).ConfigureAwait(false);
+        return completed;
+    }
+
+    private ContextSession EndedNow(ContextSession running, SessionEndReason? reason)
+    {
+        DateTimeOffset endedAt = this.clock.UtcNow;
+        return running with
+        {
+            EndedAt = endedAt,
+            DurationSeconds = Math.Max(0, (long)(endedAt - running.StartedAt).TotalSeconds),
+            EndReason = reason
+        };
     }
 }
