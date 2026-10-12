@@ -37,4 +37,10 @@ public interface IAnalyticsSessionStore
     /// Deletes the in-progress session marker once a session ends cleanly.
     /// </summary>
     Task ClearActiveMarkerAsync(CancellationToken cancellationToken);
+
+    /// <summary>When the app last recorded that it was running, or null if never.</summary>
+    Task<DateTimeOffset?> ReadLastAliveAsync(CancellationToken cancellationToken);
+
+    /// <summary>Records that the app is running at <paramref name="at"/>.</summary>
+    Task WriteLastAliveAsync(DateTimeOffset at, CancellationToken cancellationToken);
 }

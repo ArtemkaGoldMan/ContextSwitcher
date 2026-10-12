@@ -25,6 +25,7 @@ ContextSwitcher validate-config
 | `state.json` | Which profile is active, and how the last switch went. |
 | `analytics.jsonl` | Local time tracking, one line per session. A session ends at a switch, when the app quits and when the Mac sleeps. |
 | `analytics.current.json` | The session running now, shared by the app and the command line. |
+| `analytics.alive` | When the app was last running. After a crash, the open session ends then rather than at the next launch. |
 | `app.log.jsonl` | Structured log, one line per event. First place to look when something misbehaves. |
 | `backups/` | The last ten copies of each file, written before every save. |
 | `icon-cache/` | Extracted app icons for the picker. Safe to delete. |

@@ -116,6 +116,25 @@ public sealed class AnalyticsSessionStoreTests
         }
     }
 
+    [Fact]
+    public async Task TheLastSignOfLifeIsKeptToTheSecond()
+    {
+        (AnalyticsSessionStore store, string tempDirectory) = Create();
+        try
+        {
+            Assert.Null(await store.ReadLastAliveAsync(CancellationToken.None));
+
+            DateTimeOffset at = new(2026, 10, 12, 21, 15, 30, TimeSpan.FromHours(3));
+            await store.WriteLastAliveAsync(at, CancellationToken.None);
+
+            Assert.Equal(at, await store.ReadLastAliveAsync(CancellationToken.None));
+        }
+        finally
+        {
+            CleanUp(tempDirectory);
+        }
+    }
+
     private static (AnalyticsSessionStore Store, string TempDirectory) Create()
     {
         string tempDirectory = Path.Combine(Path.GetTempPath(), $"ContextSwitcherTests-{Guid.NewGuid():N}");

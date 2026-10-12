@@ -44,4 +44,14 @@ public sealed class InMemoryAnalyticsSessionStore : IAnalyticsSessionStore
         this.activeMarker = null;
         return Task.CompletedTask;
     }
+
+    public DateTimeOffset? LastAlive { get; set; }
+
+    public Task<DateTimeOffset?> ReadLastAliveAsync(CancellationToken cancellationToken) => Task.FromResult(this.LastAlive);
+
+    public Task WriteLastAliveAsync(DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        this.LastAlive = at;
+        return Task.CompletedTask;
+    }
 }

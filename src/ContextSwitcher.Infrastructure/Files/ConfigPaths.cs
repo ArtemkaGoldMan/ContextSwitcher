@@ -43,6 +43,9 @@ public sealed class ConfigPaths
     /// </summary>
     public string AnalyticsMarkerPath => Path.Combine(BaseDirectory, "analytics.current.json");
 
+    /// <summary>When the app last said it was running; see <c>AnalyticsService.RecordAliveAsync</c>.</summary>
+    public string AnalyticsAlivePath => Path.Combine(BaseDirectory, "analytics.alive");
+
     /// <summary>
     /// Gets the path to the append-only application log.
     /// </summary>

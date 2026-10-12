@@ -163,6 +163,33 @@ public sealed class AnalyticsSessionStore : IAnalyticsSessionStore
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
+    public async Task<DateTimeOffset?> ReadLastAliveAsync(CancellationToken cancellationToken)
+    {
+        string path = this.configPaths.AnalyticsAlivePath;
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+
+        string text = await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
+        return DateTimeOffset.TryParse(text.Trim(), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out DateTimeOffset at)
+            ? at
+            : null;
+    }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// A plain timestamp written straight to its file, not through the JSON store: it is written
+    /// every couple of minutes, and the store keeps a backup of each version of what it writes.
+    /// </remarks>
+    public async Task WriteLastAliveAsync(DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        string path = this.configPaths.AnalyticsAlivePath;
+        EnsureDirectoryExists(path);
+        await File.WriteAllTextAsync(path, at.ToString("O", System.Globalization.CultureInfo.InvariantCulture), cancellationToken).ConfigureAwait(false);
+    }
+
     private static void EnsureDirectoryExists(string path)
     {
         string? directory = Path.GetDirectoryName(path);

@@ -33,10 +33,17 @@ public interface IAnalyticsService
     /// <summary>
     /// Checks for a session left open - by a crash, or by a switch from the command line while the
     /// app wasn't running - and, if found, closes and persists it with
-    /// <see cref="SessionEndReason.RecoveredAfterCrash"/>. Call once at startup, before
+    /// <see cref="SessionEndReason.RecoveredAfterCrash"/>: at the last moment the app was known to be
+    /// running during it, or now if it wasn't running then. Call once at startup, before
     /// <see cref="StartSessionAsync"/> for the new session.
     /// </summary>
     Task RecoverFromCrashAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Records that the app is running, so a session left open by a crash can be closed when the
+    /// app was last known to be up rather than when it next starts. Call every few minutes.
+    /// </summary>
+    Task RecordAliveAsync(CancellationToken cancellationToken);
 
     /// <summary>
     /// Removes persisted sessions older than <paramref name="retentionDays"/>.

@@ -294,6 +294,9 @@ public static class AppHost
         // setting exactly once, keeping every session past the cutoff until the next restart.
         StartPeriodicPruning(Services.GetRequiredService<IAnalyticsService>());
 
+        // A sign of life every couple of minutes: after a crash, the session ends at the last one.
+        StartAliveRecording(Services.GetRequiredService<IAnalyticsService>());
+
         // Keeps the UI honest about switches made by Shortcuts, Siri or the CLI, each of which runs
         // in its own process and so cannot raise StateChanged here.
         stateWatcher ??= Services.GetRequiredService<StateFileWatcher>();
@@ -302,6 +305,14 @@ public static class AppHost
         sleepEvents ??= StartSleepPause(Services.GetRequiredService<IAnalyticsService>());
 
         Services.GetRequiredService<UpdatesViewModel>().StartAutomaticChecks();
+    }
+
+    private static void StartAliveRecording(IAnalyticsService analyticsService)
+    {
+        _ = QuietlyAsync(() => analyticsService.RecordAliveAsync(CancellationToken.None));
+        DispatcherTimer timer = new() { Interval = TimeSpan.FromMinutes(2) };
+        timer.Tick += (_, _) => _ = QuietlyAsync(() => analyticsService.RecordAliveAsync(CancellationToken.None));
+        timer.Start();
     }
 
     private static SleepEvents StartSleepPause(IAnalyticsService analyticsService)
