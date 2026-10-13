@@ -194,6 +194,31 @@ public sealed class SystemCatalogTests : IDisposable
         Assert.Contains("title of t", scripts.Scripts[1], StringComparison.Ordinal);
     }
 
+    /// <summary>A browser can be chosen only when it is installed; the default browser always can.</summary>
+    [Fact]
+    public void OnlyInstalledBrowsersCount()
+    {
+        this.Install("Google Chrome");
+        SystemCatalog catalog = this.Catalog();
+
+        Assert.True(catalog.IsBrowserInstalled(BrowserKind.Chrome));
+        Assert.False(catalog.IsBrowserInstalled(BrowserKind.Brave));
+        Assert.False(catalog.IsBrowserInstalled(BrowserKind.Safari));
+        Assert.True(catalog.IsBrowserInstalled(BrowserKind.Default));
+    }
+
+    /// <summary>On this Mac, through the real Applications folder: Safari always comes with macOS.</summary>
+    [Fact]
+    public void SafariIsAlwaysThereOnAMac()
+    {
+        if (!OperatingSystem.IsMacOS())
+        {
+            return;
+        }
+
+        Assert.True(new SystemCatalog(new FakeProcessRunner(), new FakeScriptRunner()).IsBrowserInstalled(BrowserKind.Safari));
+    }
+
     private SystemCatalog Catalog(IProcessRunner? runner = null, IScriptRunner? scripts = null) =>
         new(runner ?? new FakeProcessRunner(), scripts ?? new FakeScriptRunner(), this.home, [this.applications]);
 

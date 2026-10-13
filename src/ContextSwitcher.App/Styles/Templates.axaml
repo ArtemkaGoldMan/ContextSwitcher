@@ -173,7 +173,9 @@
             <Path Classes="glyph" Data="{DynamicResource IconUser}" />
           </Viewbox>
         </Panel>
-        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding ProfileChoices}" SelectedItem="{Binding SelectedProfile}" HorizontalAlignment="Stretch" Margin="0,0,10,0" AutomationProperties.Name="{x:Static r:Strings.Common_BrowserProfile}" />
+        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding ProfileChoices}" SelectedItem="{Binding SelectedProfile}" IsVisible="{Binding HasProfiles}" HorizontalAlignment="Stretch" Margin="0,0,10,0" AutomationProperties.Name="{x:Static r:Strings.Common_BrowserProfile}" />
+        <!-- A browser never opened has no profiles yet; none is made up for it. -->
+        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding NoProfilesText}" IsVisible="{Binding !HasProfiles}" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,10,0" />
         <Button Grid.Row="0" Grid.Column="2" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="{x:Static r:Strings.Common_Remove}" AutomationProperties.Name="{x:Static r:Strings.Common_Remove}">
           <Viewbox Classes="icon rowAction">
             <Path Classes="glyph" Data="{DynamicResource IconX}" />

@@ -94,9 +94,19 @@ public sealed class BrowserProfileRowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Rebuilds the profile list for the current browser and selects <paramref name="keep"/>. A
-    /// saved folder the browser no longer has stays listed, marked, rather than vanishing - and a
-    /// browser with no readable profiles still offers Default, which every Chromium install has.
+    /// Whether the browser has profiles to choose from. One that has never been opened has none yet
+    /// - it makes its first when it first starts - and none is made up for it.
+    /// </summary>
+    public bool HasProfiles => this.ProfileChoices.Count > 0;
+
+    /// <summary>Why there is nothing to choose, when there isn't.</summary>
+    public string NoProfilesText =>
+        Localized.Format(Strings.Browser_NoProfiles, this.Browser == BrowserKind.Brave ? "Brave" : "Google Chrome");
+
+    /// <summary>
+    /// Rebuilds the profile list for the current browser and selects <paramref name="keep"/>: only
+    /// the profiles the browser has. A saved folder the browser no longer has stays listed, marked,
+    /// rather than vanishing.
     /// </summary>
     private void RefreshProfiles(string keep)
     {
@@ -106,11 +116,6 @@ public sealed class BrowserProfileRowViewModel : ViewModelBase
                 profile.Name == profile.Directory ? profile.Name : $"{profile.Name} ({profile.Directory})"))
             .ToList();
 
-        if (choices.Count == 0)
-        {
-            choices.Add(new Choice<string>("Default", "Default"));
-        }
-
         Choice<string>? match = choices.FirstOrDefault(choice => choice.Value == keep);
         if (match is null && keep.Length > 0 && this.selectedProfile is null)
         {
@@ -119,8 +124,10 @@ public sealed class BrowserProfileRowViewModel : ViewModelBase
         }
 
         this.ProfileChoices = choices;
-        this.selectedProfile = match ?? choices[0];
+        this.selectedProfile = match ?? choices.FirstOrDefault();
         this.OnPropertyChanged(nameof(this.SelectedProfile));
         this.OnPropertyChanged(nameof(this.ProfileDirectory));
+        this.OnPropertyChanged(nameof(this.HasProfiles));
+        this.OnPropertyChanged(nameof(this.NoProfilesText));
     }
 }

@@ -1508,4 +1508,12 @@
   <data name="ProfileSetup_OpenFocusSettings" xml:space="preserve">
     <value>Open Focus settings ↗</value>
   </data>
+  <data name="Browser_NotInstalled" xml:space="preserve">
+    <value>{0} (not installed)</value>
+    <comment>Profile Setup → Browser dropdown: the browser this profile uses, which isn't on this Mac any more. {0} = its name.</comment>
+  </data>
+  <data name="Browser_NoProfiles" xml:space="preserve">
+    <value>{0} has no profiles yet. Open it once, then choose one here.</value>
+    <comment>A browser-profile row when the browser has never been opened. {0} = Google Chrome or Brave.</comment>
+  </data>
 </root>

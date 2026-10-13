@@ -500,6 +500,48 @@ public sealed class ProfileSetupViewModelTests
         Assert.All(saved.Profiles, profile => Assert.Equal(BrowserKind.Chrome, profile.Browser));
     }
 
+    /// <summary>
+    /// Only browsers that are on this Mac can be chosen - and the default browser, which always is.
+    /// </summary>
+    [Fact]
+    public void OnlyInstalledBrowsersAreOffered()
+    {
+        FakeSystemCatalog catalog = new();
+        catalog.InstalledBrowsers.Remove(BrowserKind.Brave);
+        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] }, new ConfigurationValidationResult([]));
+
+        ProfileSetupViewModel viewModel = new(
+            CreateStore(out _, out _), new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null,
+            new FakeDefaultBrowser(BrowserKind.Safari, "Safari"));
+
+        Assert.Equal(["Default browser (Safari)", "Safari", "Google Chrome"], viewModel.BrowserKindChoices.Select(choice => choice.Label));
+    }
+
+    /// <summary>
+    /// A profile set to a browser since removed keeps it, marked - quietly switching it to another
+    /// browser would change what the profile does - while every other choice is one that's there.
+    /// </summary>
+    [Fact]
+    public void ABrowserTheProfileUsesButIsGoneIsKeptAndMarked()
+    {
+        ContextDefinition context = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            BrowserManagement = new BrowserManagementConfig { Mode = BrowserManagementMode.Urls, Browser = BrowserKind.Brave, Urls = ["https://github.com/"] }
+        };
+        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        FakeSystemCatalog catalog = new();
+        catalog.InstalledBrowsers.Remove(BrowserKind.Brave);
+        catalog.InstalledBrowsers.Remove(BrowserKind.Chrome);
+
+        ProfileSetupViewModel viewModel = new(
+            CreateStore(out _, out _), new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+
+        Assert.Equal(["Default browser", "Safari", "Brave (not installed)"], viewModel.BrowserKindChoices.Select(choice => choice.Label));
+        Assert.Equal("Brave (not installed)", viewModel.SelectedBrowserKind.Label);
+    }
+
     /// <summary>For Safari, the page opens System Settings' Focus pane, where its Safari filter is set.</summary>
     [Fact]
     public void TheSafariTipOpensFocusSettings()

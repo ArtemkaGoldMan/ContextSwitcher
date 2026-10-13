@@ -1144,4 +1144,10 @@
   <data name="ProfileSetup_OpenFocusSettings" xml:space="preserve">
     <value>Відкрити параметри зосередження ↗</value>
   </data>
+  <data name="Browser_NotInstalled" xml:space="preserve">
+    <value>{0} (не встановлено)</value>
+  </data>
+  <data name="Browser_NoProfiles" xml:space="preserve">
+    <value>У {0} ще немає профілів. Відкрийте його один раз, а потім виберіть профіль тут.</value>
+  </data>
 </root>
