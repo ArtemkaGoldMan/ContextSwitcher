@@ -189,6 +189,46 @@ public sealed class ConfigurationValidatorTests
         Assert.Equal("contexts[0].hideApps", error.Path);
     }
 
+    /// <summary>
+    /// What a hand-edited file most often gets wrong, each named by where it is so the dashboard's
+    /// warning points at the line to fix.
+    /// </summary>
+    [Theory]
+    [InlineData("""{ "id": "Work Profile", "displayName": "Work", "accentColor": "#2F6FED" }""", "contexts[0].id")]
+    [InlineData("""{ "id": "work", "displayName": "Work", "accentColor": "blue" }""", "contexts[0].accentColor")]
+    [InlineData("""{ "id": "work", "displayName": "Work", "accentColor": "#2F6FED", "browser_management": { "mode": "groups", "browser": "Chrome", "tab_groups": [" "] } }""", "contexts[0].browser_management.tab_groups[0]")]
+    [InlineData("""{ "id": "work", "displayName": "Work", "accentColor": "#2F6FED", "browser_management": { "mode": "profiles" } }""", "contexts[0].browser_management.profiles")]
+    [InlineData("""{ "id": "work", "displayName": "Work", "accentColor": "#2F6FED", "browser_management": { "mode": "profiles", "profiles": [ { "browser": "Chrome", "profile_directory": "" } ] } }""", "contexts[0].browser_management.profiles[0].profile_directory")]
+    [InlineData("""{ "id": "work", "displayName": "Work", "accentColor": "#2F6FED", "browser_management": { "mode": "profiles", "profiles": [ { "browser": "Safari", "profile_directory": "Default" } ] } }""", "contexts[0].browser_management.profiles[0].browser")]
+    [InlineData("""{ "id": "work", "displayName": "Work", "accentColor": "#2F6FED", "quickLinks": [ { "title": "Docs", "url": "ftp://example.com/" } ] }""", "contexts[0].quickLinks[0].url")]
+    public void AMistakeIsReportedWhereItIs(string context, string path)
+    {
+        AppConfiguration? configuration = System.Text.Json.JsonSerializer.Deserialize<AppConfiguration>(
+            "{ \"activeContextId\": \"work\", \"contexts\": [ " + context + " ] }", ContextSwitcher.Core.Serialization.ContextSwitcherJson.Options);
+
+        ConfigurationValidationResult result = this.validator.Validate(configuration!);
+
+        Assert.Contains(result.Errors, error => error.Path == path);
+    }
+
+    [Fact]
+    public void TwoProfilesCantShareAnId()
+    {
+        AppConfiguration configuration = new()
+        {
+            ActiveContextId = "work",
+            Contexts =
+            [
+                new ContextDefinition { Id = "work", DisplayName = "Work", AccentColor = "#2F6FED" },
+                new ContextDefinition { Id = "work", DisplayName = "Work again", AccentColor = "#2F6FED" }
+            ]
+        };
+
+        ConfigurationValidationResult result = this.validator.Validate(configuration);
+
+        Assert.Contains(result.Errors, error => error.Path == "contexts[1].id");
+    }
+
     private static AppConfiguration CreateConfiguration(BrowserManagementConfig browserManagement)
     {
         return new AppConfiguration

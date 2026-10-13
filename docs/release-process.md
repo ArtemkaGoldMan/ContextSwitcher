@@ -144,3 +144,23 @@ release note, not just a new field.
 - [ ] A switch completes and `state.json` updates
 - [ ] After publishing: `install.sh` installs it on a Mac that has never run it
 - [ ] After publishing: an installed older version offers the update and installs it
+
+### By hand, on an installed build
+
+These go through macOS itself - its panels, its notification center, the lock screen, another app's
+windows - which no test can drive, so they are checked on a signed build in `/Applications` before a
+release that touches them:
+
+- [ ] **Update notification:** an older installed copy shows "Context Switcher x.y.z is available"
+  within a minute of launch; clicking it opens Settings → Updates with the new version's list
+- [ ] **Open at login:** turning it on adds the app to System Settings → General → Login Items (and
+  macOS says so); turning it off removes it
+- [ ] **Dock:** turning Show in the Dock off and on hides and shows the icon at once
+- [ ] **Hide:** an app ticked Hide is hidden on leaving its profile, and comes back when a profile
+  launches it
+- [ ] **Closing tabs:** a page ticked Close in Chrome or Safari loses its tab on leaving the profile;
+  other tabs stay
+- [ ] **Locked screen:** with a profile on, lock (⌃⌘Q) for a minute and unlock; the last line of
+  `analytics.jsonl` ends with `"endReason":"away"`
+- [ ] **Export and import:** Export saves a file; importing that file asks, then shows the same
+  profiles

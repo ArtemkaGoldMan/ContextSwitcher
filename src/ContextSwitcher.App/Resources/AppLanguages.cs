@@ -49,12 +49,7 @@ public static class AppLanguages
     /// </summary>
     public static void Apply(string code)
     {
-        CultureInfo formats = CultureInfo.CurrentCulture;
-        if (!string.Equals(formats.TwoLetterISOLanguageName, code, StringComparison.OrdinalIgnoreCase))
-        {
-            formats = WithRegion(code, formats);
-        }
-
+        CultureInfo formats = CultureFor(code, CultureInfo.CurrentCulture);
         CultureInfo.DefaultThreadCurrentCulture = formats;
         CultureInfo.CurrentCulture = formats;
         CultureInfo.DefaultThreadCurrentUICulture = formats;
@@ -71,6 +66,20 @@ public static class AppLanguages
 
         string language = name.Split('-', '_')[0];
         return Supported.FirstOrDefault(supported => string.Equals(supported.Code, language, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// The culture <see cref="Apply"/> shows <paramref name="code"/> in, on a Mac set to
+    /// <paramref name="current"/>: that same culture when its language is already
+    /// <paramref name="code"/>, and otherwise <paramref name="code"/> with its region.
+    /// </summary>
+    public static CultureInfo CultureFor(string code, CultureInfo current)
+    {
+        ArgumentNullException.ThrowIfNull(current);
+
+        return string.Equals(current.TwoLetterISOLanguageName, code, StringComparison.OrdinalIgnoreCase)
+            ? current
+            : WithRegion(code, current);
     }
 
     /// <summary>The language with the region of <paramref name="current"/>, or the language alone if that pair doesn't exist.</summary>

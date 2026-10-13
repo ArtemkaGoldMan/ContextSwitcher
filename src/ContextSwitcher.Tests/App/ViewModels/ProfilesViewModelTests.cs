@@ -118,6 +118,42 @@ public sealed class ProfilesViewModelTests
         Assert.Equal("work", saved.Contexts[0].Id);
     }
 
+    /// <summary>
+    /// The last profile can't go, even with none on - turned off - to stop it being the active one:
+    /// an app with no profiles has nothing to switch to.
+    /// </summary>
+    [Fact]
+    public void DeleteCommandKeepsTheLastProfile()
+    {
+        AppConfiguration configuration = new()
+        {
+            ActiveContextId = "work",
+            Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work", AccentColor = "#2F6FED" }]
+        };
+        (ProfilesViewModel viewModel, _, InMemoryJsonStore jsonStore) = CreateViewModel(configuration, activeContextId: string.Empty);
+
+        viewModel.Rows[0].DeleteCommand.Execute(null);
+        viewModel.Rows[0].DeleteCommand.Execute(null);
+
+        Assert.Equal("At least one profile is required.", viewModel.ErrorMessage);
+        Assert.Null(jsonStore.Get<AppConfiguration>(new ConfigPaths("/tmp/context-switcher-tests").SettingsPath));
+    }
+
+    [Fact]
+    public void ACopyOfACopyGetsTheNextFreeId()
+    {
+        AppConfiguration configuration = TwoContexts() with
+        {
+            Contexts = [.. TwoContexts().Contexts, new ContextDefinition { Id = "work-copy", DisplayName = "Work Copy", AccentColor = "#2F6FED" }]
+        };
+        (ProfilesViewModel viewModel, _, InMemoryJsonStore jsonStore) = CreateViewModel(configuration);
+
+        viewModel.Rows[0].DuplicateCommand.Execute(null);
+
+        AppConfiguration saved = jsonStore.Get<AppConfiguration>(new ConfigPaths("/tmp/context-switcher-tests").SettingsPath)!;
+        Assert.Equal(["work", "personal", "work-copy", "work-copy-2"], saved.Contexts.Select(context => context.Id));
+    }
+
     private static AppConfiguration TwoContexts()
     {
         return new AppConfiguration
