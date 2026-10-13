@@ -2,8 +2,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
+using ContextSwitcher.Core.Abstractions;
+using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Infrastructure.MacOS;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App.Views;
 
@@ -65,8 +69,12 @@ public sealed partial class DashboardWindow : Window
     /// </summary>
     public void ShowAsPopover()
     {
+        // On whichever desktop the user is on, and over a full-screen app: by default a window goes
+        // back to the Space it was first shown on, so the popover opened out of sight.
+        WindowSpaces.FollowActiveSpace(this.NativeWindow());
         this.Show();
         this.Activate();
+        this.LogSpaceIfAsked();
 
         this.frontmostBaseline = FrontmostApplication.ProcessId();
 
@@ -76,6 +84,31 @@ public sealed partial class DashboardWindow : Window
         this.frontmostWatch ??= CreateFrontmostWatch();
         this.frontmostWatch.Start();
     }
+
+    /// <summary>
+    /// With <c>CONTEXTSWITCHER_DIAGNOSE=windows</c>, logs which Spaces the popover may appear on and
+    /// whether it opened on the one in front - what a report of it "not opening" comes down to.
+    /// </summary>
+    private void LogSpaceIfAsked()
+    {
+        if (Environment.GetEnvironmentVariable("CONTEXTSWITCHER_DIAGNOSE") != "windows"
+            || WindowSpaces.Describe(this.NativeWindow()) is not { } space)
+        {
+            return;
+        }
+
+        _ = AppHost.Services.GetRequiredService<ILogger>().LogAsync(new LogEntry
+        {
+            Timestamp = DateTimeOffset.UtcNow,
+            Level = LogLevel.Information,
+            Category = "Diagnostics",
+            EventId = "DashboardShown",
+            Message = $"Dashboard shown: collectionBehavior=0x{space.Behavior:x}, onActiveSpace={space.OnActiveSpace}."
+        });
+    }
+
+    private IntPtr NativeWindow() =>
+        this.TryGetPlatformHandle() is { HandleDescriptor: "NSWindow" } handle ? handle.Handle : IntPtr.Zero;
 
     /// <summary>
     /// Checks, every 50ms while the popover is open, for a fresh mouse press outside its card, and
@@ -121,7 +154,7 @@ public sealed partial class DashboardWindow : Window
             return false;
         }
 
-        IntPtr nsWindow = this.TryGetPlatformHandle() is { HandleDescriptor: "NSWindow" } handle ? handle.Handle : IntPtr.Zero;
+        IntPtr nsWindow = this.NativeWindow();
         if (OutsideClick.WindowFrame(nsWindow) is not { } frame || OutsideClick.PointerLocation() is not { } pointer)
         {
             return false;
