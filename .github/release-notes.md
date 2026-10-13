@@ -9,7 +9,8 @@
 ## Install
 
 **Easiest — paste this into Terminal.** It downloads the app, puts it in Applications and opens it.
-Nothing else to do:
+Nothing else to do. Terminal is a built-in app: press ⌘Space, type *Terminal*, press Return, paste
+with ⌘V and press Return — [step by step](https://github.com/ArtemkaGoldMan/ContextSwitcher#never-used-terminal):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ArtemkaGoldMan/ContextSwitcher/main/install.sh | bash

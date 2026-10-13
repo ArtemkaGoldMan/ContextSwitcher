@@ -33,6 +33,10 @@ ContextSwitcher $version
 
        xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
 
+   How: press Cmd+Space, type Terminal and press Return (it's also in Applications >
+   Utilities). Copy the line above, click in the Terminal window, paste with Cmd+V and press
+   Return. It prints nothing when it works; then close Terminal with Cmd+Q.
+
    Why: your browser marked this download as "from the internet", and macOS only opens such
    an app without asking if its developer pays Apple \$99 a year to have it notarised.
    ContextSwitcher is a free hobby project and \$99 a year is too much for me, so it isn't.

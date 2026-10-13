@@ -54,9 +54,13 @@ You need a Mac with **Apple silicon** (M1 or later) and **macOS 13 Ventura or la
 Pick one of the three. Options 1 and 2 are one command and nothing else. Option 3 is a download
 **plus one Terminal command you can't skip**.
 
+**Never used Terminal?** It's a built-in Mac app, and all you do is paste one line into it —
+[here's how, step by step](#never-used-terminal).
+
 ### Option 1 — one command (recommended)
 
-Open **Terminal** (press ⌘Space, type *Terminal*, press Return), paste this and press Return:
+Open **Terminal** (press ⌘Space, type *Terminal*, press Return), paste this and press Return
+([first time?](#never-used-terminal)):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ArtemkaGoldMan/ContextSwitcher/main/install.sh | bash
@@ -67,11 +71,14 @@ Nothing else to do: macOS doesn't ask you to approve it.
 
 ### Option 2 — Homebrew
 
-If you use [Homebrew](https://brew.sh):
+If you use [Homebrew](https://brew.sh) — if you don't know what that is, use Option 1:
 
 ```bash
 brew install --cask artemkagoldman/tap/contextswitcher
 ```
+
+Homebrew installs the latest release. Later versions come from the app itself (Settings → Updates);
+`brew upgrade` leaves it alone unless you add `--greedy`.
 
 ### Option 3 — download it yourself
 
@@ -83,7 +90,7 @@ brew install --cask artemkagoldman/tap/contextswitcher
 1. Download **ContextSwitcher-x.y.z.dmg** from the [latest release](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/latest).
 2. Open it and drag **ContextSwitcher** onto **Applications**.
 3. **Required: run this in Terminal** (press ⌘Space, type *Terminal*, press Return), then press
-   Return once more:
+   Return once more ([first time?](#never-used-terminal)):
 
    ```bash
    xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
@@ -91,6 +98,37 @@ brew install --cask artemkagoldman/tap/contextswitcher
 
    It prints nothing when it works.
 4. Open **ContextSwitcher** from Applications. It lives in the menu bar.
+
+### Never used Terminal?
+
+Terminal is an app that comes with every Mac. Instead of clicking, you type a command and press
+Return. You don't need to know anything about it — you copy one line from this page and paste it in.
+
+1. **Open Terminal.** Press **⌘ Command + Space**, type **Terminal**, and press **Return**. (It's
+   also in Finder → Applications → Utilities.) A small window opens with a line of text and a
+   blinking cursor.
+2. **Copy the command.** Point at the grey box with the command on this page and click the copy
+   button (⧉) at its right edge — or select the whole line and press **⌘C**.
+3. **Paste it.** Click inside the Terminal window and press **⌘V**. The command appears after the
+   text that was already there.
+4. **Press Return.**
+5. **Wait for it to finish** — when the blinking cursor is back on a new line. Option 1 shows a
+   progress bar and ends with *Installed ContextSwitcher …*, then opens the app. The command in
+   Option 3 prints nothing at all when it works.
+6. **Close Terminal** (**⌘Q**). You won't need it again: updates install from inside the app.
+
+If something looks wrong:
+
+- **It asks for a password.** None of these commands does — stop and check that what you pasted is
+  exactly the line from this page.
+- ***command not found*, or a line starting with `>`**: only part of the command was pasted. Press
+  **Control + C**, then copy and paste it again.
+- ***couldn't put the app in /Applications***: your Mac account isn't an administrator. Ask whoever
+  manages the Mac to install it.
+
+A command pasted into Terminal can do anything you can, so only paste ones from a source you trust.
+These only download ContextSwitcher, put it in Applications and remove the *"from the internet"*
+label — Option 1's whole script is [install.sh](install.sh), short enough to read first.
 
 ### Why the Terminal command?
 
