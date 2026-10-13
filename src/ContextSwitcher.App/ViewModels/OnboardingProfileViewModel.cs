@@ -90,7 +90,8 @@ public sealed class OnboardingProfileViewModel : ViewModelBase
             AccentColor = this.AccentColor,
             Icon = this.Icon,
             LaunchApps = this.Apps.Where(a => a.LaunchOnEnter).Select(a => a.Name).ToList(),
-            CloseApps = this.Apps.Where(a => a.CloseOnLeave).Select(a => a.Name).ToList()
+            CloseApps = this.Apps.Where(a => a.CloseOnLeave).Select(a => a.Name).ToList(),
+            HideApps = this.Apps.Where(a => a.HideOnLeave).Select(a => a.Name).ToList()
         };
     }
 

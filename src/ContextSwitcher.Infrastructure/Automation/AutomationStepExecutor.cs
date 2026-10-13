@@ -8,6 +8,7 @@ using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Core.Serialization;
 using ContextSwitcher.Infrastructure.AppleScript;
 using ContextSwitcher.Infrastructure.Browser;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Core.Messages;
 using System.Globalization;
 
@@ -38,6 +39,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
     private readonly IScriptRunner scriptRunner;
     private readonly BrowserLauncher browserLauncher;
     private readonly IClock clock;
+    private readonly IApplicationHider hider;
     private readonly TimeSpan quitConfirmInterval;
 
     /// <summary>
@@ -49,7 +51,8 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         IScriptRunner scriptRunner,
         BrowserLauncher browserLauncher,
         IClock clock,
-        TimeSpan? quitConfirmInterval = null)
+        TimeSpan? quitConfirmInterval = null,
+        IApplicationHider? hider = null)
     {
         ArgumentNullException.ThrowIfNull(processRunner);
         ArgumentNullException.ThrowIfNull(scriptRunner);
@@ -61,6 +64,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         this.browserLauncher = browserLauncher;
         this.clock = clock;
         this.quitConfirmInterval = quitConfirmInterval ?? DefaultQuitConfirmInterval;
+        this.hider = hider ?? new MacApplicationHider();
     }
 
     /// <inheritdoc />
@@ -72,6 +76,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         {
             AutomationStepType.CloseApplications => this.CloseApplicationsAsync(step, cancellationToken),
             AutomationStepType.LaunchApplications => this.LaunchApplicationsAsync(step, cancellationToken),
+            AutomationStepType.HideApplications => Task.FromResult(this.HideApplications(step)),
             AutomationStepType.ManageBrowserContext => this.ManageBrowserContextAsync(step, cancellationToken),
             AutomationStepType.CloseBrowserTabs => this.CloseBrowserTabsAsync(step, cancellationToken),
             AutomationStepType.StartDockerResources => this.RunDockerCommandAsync(step, "start", cancellationToken),
@@ -180,6 +185,17 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Hides the listed apps that are running. Instant, with no app able to refuse the way one can
+    /// refuse to quit over unsaved work, so it needs none of the waiting closing does.
+    /// </summary>
+    private AutomationResult HideApplications(AutomationStep step)
+    {
+        DateTimeOffset startedAt = this.clock.UtcNow;
+        int asked = this.hider.Hide(SplitArgument(step.Arguments, "apps"));
+        return Succeeded(step, $"Asked {asked} running app(s) to hide.", startedAt, this.clock.UtcNow);
     }
 
     private async Task<AutomationResult> LaunchApplicationsAsync(AutomationStep step, CancellationToken cancellationToken)

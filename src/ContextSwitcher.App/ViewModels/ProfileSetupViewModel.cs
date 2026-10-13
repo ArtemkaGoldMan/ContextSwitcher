@@ -80,13 +80,14 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.IconChoices = ProfileIcons.All.Select(icon => new IconChoiceViewModel(icon)).ToList();
 
         this.Apps = new ObservableCollection<AppRowViewModel>(
-            source.LaunchApps.Concat(source.CloseApps)
+            source.LaunchApps.Concat(source.CloseApps).Concat(source.HideApps)
                 .Distinct(StringComparer.Ordinal)
                 .Select(name => new AppRowViewModel(
                     name,
                     source.LaunchApps.Contains(name),
                     source.CloseApps.Contains(name),
-                    this.RemoveApp)));
+                    this.RemoveApp,
+                    hideOnLeave: source.HideApps.Contains(name))));
 
         // Constructed after Apps, since its "already added" callback reads that collection.
         this.AppPicker = new AppPickerViewModel(
@@ -672,6 +673,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             Icon = this.Icon.Trim(),
             LaunchApps = this.Apps.Where(a => a.LaunchOnEnter && !string.IsNullOrWhiteSpace(a.Name)).Select(a => a.Name.Trim()).ToList(),
             CloseApps = this.Apps.Where(a => a.CloseOnLeave && !string.IsNullOrWhiteSpace(a.Name)).Select(a => a.Name.Trim()).ToList(),
+            HideApps = this.Apps.Where(a => a.HideOnLeave && !string.IsNullOrWhiteSpace(a.Name)).Select(a => a.Name.Trim()).ToList(),
             BrowserManagement = new BrowserManagementConfig
             {
                 Mode = this.BrowserMode,

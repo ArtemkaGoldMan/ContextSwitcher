@@ -174,6 +174,21 @@ public sealed class ConfigurationValidatorTests
 
         Assert.Contains(result.Errors, error => error.Path == "contexts[0].browser_management.close_urls[0]");
     }
+    [Fact]
+    public void ValidateRejectsAnAppBothClosedAndHidden()
+    {
+        AppConfiguration configuration = CreateConfiguration(new BrowserManagementConfig()) with { };
+        configuration = configuration with
+        {
+            Contexts = [configuration.Contexts[0] with { CloseApps = ["Slack"], HideApps = ["slack", "Notion"] }]
+        };
+
+        ConfigurationValidationResult result = this.validator.Validate(configuration);
+
+        ConfigurationValidationError error = Assert.Single(result.Errors);
+        Assert.Equal("contexts[0].hideApps", error.Path);
+    }
+
     private static AppConfiguration CreateConfiguration(BrowserManagementConfig browserManagement)
     {
         return new AppConfiguration

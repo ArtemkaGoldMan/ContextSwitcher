@@ -412,6 +412,45 @@ public sealed class ProfileSetupViewModelTests
         Assert.Equal("Needs Chrome, Brave or Safari - Firefox can't be checked for open tabs.", viewModel.AvoidDuplicateTabsHint);
     }
 
+    /// <summary>An app is quit or hidden on leaving, never both: ticking one unticks the other.</summary>
+    [Fact]
+    public void CloseAndHideTakeTurns()
+    {
+        AppRowViewModel row = new("Slack", launchOnEnter: true, closeOnLeave: true, _ => { });
+
+        row.HideOnLeave = true;
+        Assert.Equal((false, true), (row.CloseOnLeave, row.HideOnLeave));
+
+        row.CloseOnLeave = true;
+        Assert.Equal((true, false), (row.CloseOnLeave, row.HideOnLeave));
+    }
+
+    [Fact]
+    public void HiddenAppsAreReadAndSavedWithTheirRows()
+    {
+        ContextDefinition context = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            LaunchApps = ["Visual Studio Code"],
+            HideApps = ["Visual Studio Code", "Notion"]
+        };
+        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+
+        Assert.Equal(
+            [("Visual Studio Code", true, false, true), ("Notion", false, false, true)],
+            viewModel.Apps.Select(row => (row.Name, row.LaunchOnEnter, row.CloseOnLeave, row.HideOnLeave)));
+
+        viewModel.Apps[1].CloseOnLeave = true;
+        viewModel.SaveCommand.Execute(null);
+
+        ContextDefinition saved = Assert.Single(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!.Contexts);
+        Assert.Equal(["Visual Studio Code"], saved.HideApps);
+        Assert.Equal(["Notion"], saved.CloseApps);
+    }
+
     private static ConfigurationStore CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths)
     {
         jsonStore = new InMemoryJsonStore();

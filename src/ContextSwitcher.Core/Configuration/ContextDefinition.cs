@@ -38,6 +38,13 @@ public sealed record ContextDefinition
     public IReadOnlyList<string> CloseApps { get; init; } = [];
 
     /// <summary>
+    /// Applications hidden, rather than quit, when leaving this context: they keep running with their
+    /// windows and come back the moment they are opened again. An app is in this list or in
+    /// <see cref="CloseApps"/>, not both.
+    /// </summary>
+    public IReadOnlyList<string> HideApps { get; init; } = [];
+
+    /// <summary>
     /// Gets or sets the applications that should be launched when entering this context.
     /// </summary>
     public IReadOnlyList<string> LaunchApps { get; init; } = [];

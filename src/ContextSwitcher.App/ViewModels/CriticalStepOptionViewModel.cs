@@ -23,6 +23,7 @@ public sealed class CriticalStepOptionViewModel(AutomationStepType stepType, str
         (AutomationStepType.StopDockerResources, Strings.Step_StopDockerResources),
         (AutomationStepType.CloseBrowserTabs, Strings.Step_CloseBrowserTabs),
         (AutomationStepType.CloseApplications, Strings.Step_CloseApplications),
+        (AutomationStepType.HideApplications, Strings.Step_HideApplications),
         (AutomationStepType.SetFocusMode, Strings.Step_SetFocusMode),
         (AutomationStepType.LaunchApplications, Strings.Step_LaunchApplications),
         (AutomationStepType.ManageBrowserContext, Strings.Step_ManageBrowserContext),

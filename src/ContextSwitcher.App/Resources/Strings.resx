@@ -24,6 +24,14 @@
     <value>Launch</value>
     <comment>Templates.axaml: Content</comment>
   </data>
+  <data name="Common_Hide" xml:space="preserve">
+    <value>Hide</value>
+    <comment>Templates.axaml: an app row's checkbox - hide the app when leaving the profile.</comment>
+  </data>
+  <data name="Common_HideTip" xml:space="preserve">
+    <value>Hide it instead of quitting: it stays open and comes back with its windows.</value>
+    <comment>Tooltip on that checkbox.</comment>
+  </data>
   <data name="Common_Close" xml:space="preserve">
     <value>Close</value>
     <comment>Templates.axaml: Content</comment>
@@ -265,7 +273,7 @@
     <comment>ProfileSetupPage.axaml: Text</comment>
   </data>
   <data name="ProfileSetup_LaunchOpensTheAppWhen" xml:space="preserve">
-    <value>Launch opens the app when you enter this profile. Close quits it when you leave.</value>
+    <value>Launch opens the app when you enter this profile. Close quits it when you leave; Hide only hides it, so it comes back at once with its windows.</value>
     <comment>ProfileSetupPage.axaml: Text</comment>
   </data>
   <data name="ProfileSetup_NoAppsYetAddThe" xml:space="preserve">
@@ -836,6 +844,10 @@
     <value>Stopping containers</value>
     <comment>Profile Setup → If a step fails: a step that can be marked as one that must work.</comment>
   </data>
+  <data name="Step_HideApplications" xml:space="preserve">
+    <value>Hiding apps</value>
+    <comment>Profile Setup → If a step fails: a step that can be marked as one that must work.</comment>
+  </data>
   <data name="Step_CloseApplications" xml:space="preserve">
     <value>Quitting apps</value>
     <comment>Profile Setup → If a step fails: a step that can be marked as one that must work.</comment>
@@ -1239,6 +1251,10 @@
   <data name="Msg_Config_ActiveContextMissing" xml:space="preserve">
     <value>Active context must reference an existing context.</value>
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
+  </data>
+  <data name="Msg_Config_AppClosedAndHidden" xml:space="preserve">
+    <value>{0} is set both to close and to hide when leaving the profile; choose one.</value>
+    <comment>A setting that isn't valid. {0} = app name.</comment>
   </data>
   <data name="Msg_Config_UrlModeNeedsUrl" xml:space="preserve">
     <value>URL mode requires at least one URL.</value>

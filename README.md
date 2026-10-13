@@ -169,7 +169,8 @@ The **Profiles** page lists every profile: **Activate** switches to it, **Edit**
 
 Editing a profile is mostly picking from lists: apps from the apps you have installed, web pages
 from the tabs you have open, playlists from your library, containers from Docker. Apps and pages
-each have two ticks — open when you enter the profile, close when you leave it.
+each have two ticks — open when you enter the profile, close when you leave it — and an app can be
+**hidden** instead of quit, so it comes back at once with its windows.
 
 <div align="center">
 <picture>
