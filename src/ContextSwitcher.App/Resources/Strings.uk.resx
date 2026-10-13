@@ -445,6 +445,45 @@
   <data name="Settings_OpenAtLogin_Failed" xml:space="preserve">
     <value>macOS не дозволила: {0}</value>
   </data>
+  <data name="Settings_Transfer_Section" xml:space="preserve">
+    <value>ЕКСПОРТ І ІМПОРТ</value>
+  </data>
+  <data name="Settings_Transfer_Description" xml:space="preserve">
+    <value>Збережіть профілі й параметри у файл — щоб мати копію або налаштувати інший Mac так само. Історія обліку часу у файл не потрапляє.</value>
+  </data>
+  <data name="Settings_Export" xml:space="preserve">
+    <value>Експортувати…</value>
+  </data>
+  <data name="Settings_Import" xml:space="preserve">
+    <value>Імпортувати…</value>
+  </data>
+  <data name="Settings_ExportFileName" xml:space="preserve">
+    <value>Параметри Context Switcher.json</value>
+  </data>
+  <data name="Settings_Exported" xml:space="preserve">
+    <value>Збережено у «{0}».</value>
+  </data>
+  <data name="Settings_ExportFailed" xml:space="preserve">
+    <value>Не вдалося зберегти файл: {0}</value>
+  </data>
+  <data name="Settings_ImportConfirm" xml:space="preserve">
+    <value>Замінити всі ваші профілі й параметри тими, що у «{0}»? Поточні збережуться як резервна копія.</value>
+  </data>
+  <data name="Settings_ImportReplace" xml:space="preserve">
+    <value>Замінити</value>
+  </data>
+  <data name="Settings_ImportCancel" xml:space="preserve">
+    <value>Скасувати</value>
+  </data>
+  <data name="Settings_Imported" xml:space="preserve">
+    <value>Імпортовано: ваші профілі й параметри тепер з «{0}».</value>
+  </data>
+  <data name="Settings_ImportNotSettings" xml:space="preserve">
+    <value>«{0}» — не файл параметрів Context Switcher.</value>
+  </data>
+  <data name="Settings_ImportInvalid" xml:space="preserve">
+    <value>«{0}» не можна використати: {1}</value>
+  </data>
   <data name="Settings_ShowInTheDock" xml:space="preserve">
     <value>Показувати в Dock</value>
   </data>

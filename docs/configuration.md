@@ -17,6 +17,13 @@ Run this any time to check a hand-edit:
 ContextSwitcher validate-config
 ```
 
+## Export and import
+
+**Settings → Export and import** saves `settings.json` as it is to a file you choose, and loads one
+back. An import is checked first — a file with no profiles, or one this page would refuse, is turned
+down with the reason — then asked about, as it replaces every profile and setting; the replaced
+`settings.json` goes to `backups/` like any save. Time tracking history isn't part of it.
+
 ## What lives where
 
 | File | Contents |

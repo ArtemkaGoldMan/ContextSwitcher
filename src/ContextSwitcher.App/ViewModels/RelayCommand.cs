@@ -27,7 +27,10 @@ public sealed class AsyncRelayCommand(Func<Task> execute, Func<bool>? canExecute
 
     public bool CanExecute(object? parameter) => !this.isExecuting && (canExecute?.Invoke() ?? true);
 
-    public async void Execute(object? parameter)
+    public async void Execute(object? parameter) => await this.ExecuteAsync(parameter).ConfigureAwait(true);
+
+    /// <summary>Runs the command and finishes when it does - for a caller that has to wait, as a test.</summary>
+    public async Task ExecuteAsync(object? parameter)
     {
         this.isExecuting = true;
         this.RaiseCanExecuteChanged();
