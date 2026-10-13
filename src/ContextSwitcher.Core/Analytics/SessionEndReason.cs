@@ -10,5 +10,8 @@ public enum SessionEndReason
     RecoveredAfterCrash,
 
     /// <summary>The Mac went to sleep; a new session starts when it wakes.</summary>
-    Sleep
+    Sleep,
+
+    /// <summary>The screen was locked, or another user's session came to the front.</summary>
+    Away
 }

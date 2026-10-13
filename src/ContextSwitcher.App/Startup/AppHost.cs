@@ -56,7 +56,7 @@ public static class AppHost
     public static bool ConfigurationWasQuarantined { get; private set; }
 
     private static StateFileWatcher? stateWatcher;
-    private static SleepEvents? sleepEvents;
+    private static AwayEvents? awayEvents;
 
     /// <summary>
     /// Gets the runtime state loaded during startup, or a fresh default when none was persisted.
@@ -304,8 +304,8 @@ public static class AppHost
         // in its own process and so cannot raise StateChanged here.
         stateWatcher ??= Services.GetRequiredService<StateFileWatcher>();
 
-        // No time counts while the Mac sleeps.
-        sleepEvents ??= StartSleepPause(Services.GetRequiredService<IAnalyticsService>());
+        // No time counts while the Mac sleeps, its screen is locked, or another user is in front.
+        awayEvents ??= StartAwayPause(Services.GetRequiredService<IAnalyticsService>());
 
         Services.GetRequiredService<UpdatesViewModel>().StartAutomaticChecks();
     }
@@ -318,12 +318,12 @@ public static class AppHost
         timer.Start();
     }
 
-    private static SleepEvents StartSleepPause(IAnalyticsService analyticsService)
+    private static AwayEvents StartAwayPause(IAnalyticsService analyticsService)
     {
-        SleepPause pause = new(analyticsService, () => State.CurrentContextId);
-        SleepEvents events = new();
-        events.WillSleep += (_, _) => _ = QuietlyAsync(() => pause.OnWillSleepAsync(CancellationToken.None));
-        events.DidWake += (_, _) => _ = QuietlyAsync(() => pause.OnDidWakeAsync(CancellationToken.None));
+        AwayPause pause = new(analyticsService, () => State.CurrentContextId);
+        AwayEvents events = new();
+        events.Away += (_, reason) => _ = QuietlyAsync(() => pause.OnAwayAsync(reason, CancellationToken.None));
+        events.Back += (_, reason) => _ = QuietlyAsync(() => pause.OnBackAsync(reason, CancellationToken.None));
         return events;
     }
 
