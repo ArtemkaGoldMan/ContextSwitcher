@@ -154,4 +154,46 @@ public sealed class OnboardingViewModelTests
         Assert.Contains("Calculator", context.CloseApps);
     }
 
+
+    /// <summary>
+    /// The last step offers opening at login, ticked; finishing with it ticked adds the login item,
+    /// and unticking it leaves macOS alone.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void FinishingOpensAtLoginOnlyIfLeftTicked(bool ticked)
+    {
+        FakeLoginItem loginItem = new();
+        OnboardingViewModel viewModel = WithLoginItem(loginItem);
+        Assert.True(viewModel.CanOpenAtLogin);
+        Assert.True(viewModel.OpenAtLogin);
+
+        viewModel.OpenAtLogin = ticked;
+        viewModel.FinishCommand.Execute(null);
+
+        Assert.Equal(ticked ? [true] : [], loginItem.Changes);
+    }
+
+    /// <summary>Skipping the wizard changes nothing in macOS, and from source the box isn't offered at all.</summary>
+    [Fact]
+    public void SkippingOrRunningFromSourceAddsNoLoginItem()
+    {
+        FakeLoginItem loginItem = new();
+        WithLoginItem(loginItem).SkipCommand.Execute(null);
+        Assert.Empty(loginItem.Changes);
+
+        OnboardingViewModel fromSource = WithLoginItem(new FakeLoginItem { Status = ContextSwitcher.Core.Abstractions.LoginItemStatus.Unavailable });
+        Assert.False(fromSource.CanOpenAtLogin);
+        Assert.False(fromSource.OpenAtLogin);
+    }
+
+    private static OnboardingViewModel WithLoginItem(FakeLoginItem loginItem)
+    {
+        AppHost.UpdateConfiguration(
+            new AppConfiguration { ActiveContextId = "default", OnboardingCompleted = false, Contexts = [new ContextDefinition { Id = "default", DisplayName = "Default" }] },
+            new ConfigurationValidationResult([]));
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator());
+        return new OnboardingViewModel(store, new FakeInstalledAppsService(), new StubContextSwitchService(), loginItem);
+    }
 }

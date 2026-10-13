@@ -41,7 +41,7 @@ internal static class Program
                 // Read once at startup, not live - MacOSPlatformOptions is AppBuilder configuration,
                 // not a runtime-toggleable property. AppHost.Initialize (called before this) has
                 // already loaded config by the time BuildAvaloniaApp runs.
-                ShowInDock = AppHost.Configuration?.ShowDockIcon ?? false,
+                ShowInDock = AppHost.Configuration?.ShowDockIcon ?? true,
                 DisableDefaultApplicationMenuItems = true
             })
             .LogToTrace();

@@ -47,6 +47,14 @@
           Description="{x:Static r:Strings.Settings_OffContextSwitcherLivesOnly}">
           <ToggleSwitch IsChecked="{Binding ShowDockIcon}" AutomationProperties.Name="{x:Static r:Strings.Settings_ShowInTheDock}" />
         </ctl:FormRow>
+        <Border Classes="divider" />
+        <ctl:FormRow
+          Title="{x:Static r:Strings.Settings_OpenAtLogin}"
+          Description="{x:Static r:Strings.Settings_OpenAtLogin_Description}">
+          <ToggleSwitch IsChecked="{Binding OpenAtLogin}" IsEnabled="{Binding CanOpenAtLogin}" AutomationProperties.Name="{x:Static r:Strings.Settings_OpenAtLogin}" />
+        </ctl:FormRow>
+        <TextBlock Text="{Binding OpenAtLoginHint}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding HasOpenAtLoginHint}" />
+        <Button Classes="linkButton" Content="{x:Static r:Strings.Settings_OpenAtLogin_OpenLoginItems}" Command="{Binding OpenLoginItemsCommand}" IsVisible="{Binding NeedsLoginItemApproval}" />
       </StackPanel>
     </Border>
 

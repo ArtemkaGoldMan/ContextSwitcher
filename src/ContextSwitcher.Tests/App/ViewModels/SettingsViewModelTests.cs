@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.App;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
@@ -33,9 +34,10 @@ public sealed class SettingsViewModelTests
         ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator());
         SettingsViewModel viewModel = new(configurationStore, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
 
-        viewModel.ShowDockIcon = true;
+        // On by default now; turning it off is the change.
+        viewModel.ShowDockIcon = false;
         await viewModel.Saving;
-        Assert.True(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!.ShowDockIcon);
+        Assert.False(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!.ShowDockIcon);
 
         viewModel.AnalyticsEnabled = false;
         viewModel.CheckForUpdates = false;
@@ -44,7 +46,7 @@ public sealed class SettingsViewModelTests
         await viewModel.Saving;
 
         AppConfiguration persisted = jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!;
-        Assert.True(persisted.ShowDockIcon);
+        Assert.False(persisted.ShowDockIcon);
         Assert.False(persisted.Analytics.Enabled);
         Assert.False(persisted.CheckForUpdates);
         Assert.Equal(AppearanceMode.Dark, persisted.Appearance);
@@ -101,6 +103,69 @@ public sealed class SettingsViewModelTests
         ProcessStartOptions call = Assert.Single(processRunner.Calls);
         Assert.Equal("open", call.FileName);
         Assert.Equal([AppLinks.Support], call.Arguments);
+    }
+
+    /// <summary>The switch is macOS's login item: flipping it changes it there at once, and reads it back.</summary>
+    [Fact]
+    public void OpenAtLoginIsTurnedOnAndOffInMacOS()
+    {
+        FakeLoginItem loginItem = new();
+        SettingsViewModel viewModel = WithLoginItem(loginItem);
+        Assert.True(viewModel.CanOpenAtLogin);
+        Assert.False(viewModel.OpenAtLogin);
+
+        viewModel.OpenAtLogin = true;
+        Assert.True(viewModel.OpenAtLogin);
+        Assert.False(viewModel.HasOpenAtLoginHint);
+
+        viewModel.OpenAtLogin = false;
+        Assert.Equal([true, false], loginItem.Changes);
+        Assert.Equal(LoginItemStatus.Off, loginItem.Status);
+    }
+
+    /// <summary>When macOS waits for approval, the page says so and offers the place to give it.</summary>
+    [Fact]
+    public void WaitingForApprovalIsExplainedWithTheWayThere()
+    {
+        FakeLoginItem loginItem = new() { NeedsApproval = true };
+        SettingsViewModel viewModel = WithLoginItem(loginItem);
+
+        viewModel.OpenAtLogin = true;
+
+        Assert.True(viewModel.OpenAtLogin);
+        Assert.True(viewModel.NeedsLoginItemApproval);
+        Assert.Equal("macOS is waiting for you to allow it in System Settings → General → Login Items.", viewModel.OpenAtLoginHint);
+        viewModel.OpenLoginItemsCommand.Execute(null);
+        Assert.Equal(1, loginItem.SettingsOpened);
+    }
+
+    [Fact]
+    public void ARefusalLeavesTheSwitchOffWithMacOSsReason()
+    {
+        SettingsViewModel viewModel = WithLoginItem(new FakeLoginItem { Refusal = "Operation not permitted" });
+
+        viewModel.OpenAtLogin = true;
+
+        Assert.False(viewModel.OpenAtLogin);
+        Assert.Equal("macOS didn't allow it: Operation not permitted", viewModel.OpenAtLoginHint);
+    }
+
+    /// <summary>Run from source there is no login item to add; the switch is off and says why.</summary>
+    [Fact]
+    public void FromSourceOpeningAtLoginIsUnavailable()
+    {
+        SettingsViewModel viewModel = WithLoginItem(new FakeLoginItem { Status = LoginItemStatus.Unavailable });
+
+        Assert.False(viewModel.CanOpenAtLogin);
+        Assert.Equal("Only the installed app can open at login.", viewModel.OpenAtLoginHint);
+    }
+
+    private static SettingsViewModel WithLoginItem(FakeLoginItem loginItem)
+    {
+        AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
+        AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator());
+        return new SettingsViewModel(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(), loginItem: loginItem);
     }
 
     private static UpdatesViewModel Updates() =>

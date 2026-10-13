@@ -145,6 +145,10 @@
             <TextBlock Text="{x:Static r:Strings.Onboarding_ChangeAProfilesColorIcon}" Classes="body" />
           </StackPanel>
         </Border>
+        <StackPanel Spacing="4" IsVisible="{Binding CanOpenAtLogin}">
+          <CheckBox Content="{x:Static r:Strings.Onboarding_OpenAtLogin}" IsChecked="{Binding OpenAtLogin}" />
+          <TextBlock Text="{x:Static r:Strings.Onboarding_OpenAtLogin_Hint}" Classes="caption" TextWrapping="Wrap" Margin="28,0,0,0" />
+        </StackPanel>
       </StackPanel>
     </Panel>
 

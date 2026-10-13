@@ -124,7 +124,8 @@ the same as the command.
 
 The first time it opens, a three-step wizard creates a **Work** and a **Personal** profile. It
 suggests apps you actually have installed: tick **Launch** to open an app when you switch to that
-profile, and **Close** to quit it when you switch away. You can change everything later.
+profile, and **Close** to quit it when you switch away. Its last step offers to open ContextSwitcher
+whenever you log in, so it's always there and counting time. You can change everything later.
 
 > [!IMPORTANT]
 > **Close** starts ticked for the apps it suggests, and finishing the wizard switches you into Work
@@ -140,8 +141,9 @@ profile, and **Close** to quit it when you switch away. You can change everythin
 
 ### 2. Switch from the menu bar
 
-ContextSwitcher lives in the **menu bar** — look for the icon of two overlapping squares. It has no
-Dock icon (you can turn one on in Settings).
+ContextSwitcher lives in the **menu bar** — look for the icon of two overlapping squares — and in
+the **Dock**, where clicking it opens the main window. Rather keep it to the menu bar? Turn off
+**Settings → Show in the Dock**.
 
 - **Click the icon** and pick a profile to switch to it. The active one has a tick; pick it again to
   turn it off — it closes what it closes when you switch away, and no profile is on until you pick
@@ -291,7 +293,7 @@ installed with Homebrew.
 
 On a MacBook with a notch, macOS hides menu bar icons that don't fit beside it. Open
 ContextSwitcher again from Applications or Spotlight (⌘Space, *ContextSwitcher*) and its window
-opens. To keep it reachable, turn on **Settings → Show in the Dock**, or make room in the menu bar:
+opens. To keep it reachable, keep **Settings → Show in the Dock** on, or make room in the menu bar:
 hold ⌘ and drag system icons you don't need (Wi-Fi, battery…) out of it, or quit apps whose icons
 you don't use.
 </details>

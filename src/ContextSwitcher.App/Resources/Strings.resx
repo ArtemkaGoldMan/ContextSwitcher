@@ -196,6 +196,14 @@
     <value>• Add browser tabs, Focus and Docker in Profile Setup</value>
     <comment>OnboardingWindow.axaml: Text</comment>
   </data>
+  <data name="Onboarding_OpenAtLogin" xml:space="preserve">
+    <value>Open Context Switcher when I log in</value>
+    <comment>Setup wizard, last step: checkbox.</comment>
+  </data>
+  <data name="Onboarding_OpenAtLogin_Hint" xml:space="preserve">
+    <value>Turn it off any time in Settings.</value>
+    <comment>Setup wizard, last step: under that checkbox.</comment>
+  </data>
   <data name="Onboarding_ChangeAProfilesColorIcon" xml:space="preserve">
     <value>• Change a profile's color, icon and apps any time from Open App</value>
     <comment>OnboardingWindow.axaml: Text</comment>
@@ -552,12 +560,36 @@
     <value>Match macOS follows the system's light or dark appearance as it changes.</value>
     <comment>SettingsPage.axaml: Description</comment>
   </data>
+  <data name="Settings_OpenAtLogin" xml:space="preserve">
+    <value>Open at login</value>
+    <comment>Settings → Appearance: switch title.</comment>
+  </data>
+  <data name="Settings_OpenAtLogin_Description" xml:space="preserve">
+    <value>Starts Context Switcher when you log in to your Mac, so it's in the menu bar and counting time without you opening it.</value>
+    <comment>Settings → Appearance: under Open at login.</comment>
+  </data>
+  <data name="Settings_OpenAtLogin_NeedsApproval" xml:space="preserve">
+    <value>macOS is waiting for you to allow it in System Settings → General → Login Items.</value>
+    <comment>Under Open at login while macOS waits for approval.</comment>
+  </data>
+  <data name="Settings_OpenAtLogin_OpenLoginItems" xml:space="preserve">
+    <value>Open Login Items ↗</value>
+    <comment>Link under Open at login to System Settings.</comment>
+  </data>
+  <data name="Settings_OpenAtLogin_Unavailable" xml:space="preserve">
+    <value>Only the installed app can open at login.</value>
+    <comment>Under Open at login when the app runs from source.</comment>
+  </data>
+  <data name="Settings_OpenAtLogin_Failed" xml:space="preserve">
+    <value>macOS didn't allow it: {0}</value>
+    <comment>Under Open at login when the change failed. {0} = macOS's own reason.</comment>
+  </data>
   <data name="Settings_ShowInTheDock" xml:space="preserve">
     <value>Show in the Dock</value>
     <comment>SettingsPage.axaml: Title</comment>
   </data>
   <data name="Settings_OffContextSwitcherLivesOnly" xml:space="preserve">
-    <value>Off, Context Switcher lives only in the menu bar. On, it also appears in the Dock and in ⌘-Tab. Applies the next time the app starts.</value>
+    <value>Off, Context Switcher lives only in the menu bar. On, it also appears in the Dock and in ⌘-Tab.</value>
     <comment>SettingsPage.axaml: Description</comment>
   </data>
   <data name="Settings_Permission_Section" xml:space="preserve">

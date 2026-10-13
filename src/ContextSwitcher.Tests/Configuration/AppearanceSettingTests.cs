@@ -44,4 +44,19 @@ public sealed class AppearanceSettingTests
         Assert.Contains($"\"appearance\": \"{word}\"", json, StringComparison.Ordinal);
         Assert.Equal(appearance, JsonSerializer.Deserialize<AppConfiguration>(json, ContextSwitcherJson.Options)!.Appearance);
     }
+
+    /// <summary>
+    /// A new install shows in the Dock; a settings file that says otherwise keeps saying it - the
+    /// app writes every setting out, so an older install's "off" is still there.
+    /// </summary>
+    [Theory]
+    [InlineData("{}", true)]
+    [InlineData("""{ "showDockIcon": false }""", false)]
+    [InlineData("""{ "showDockIcon": true }""", true)]
+    public void TheDockIconIsOnUnlessTheFileSaysOff(string json, bool expected)
+    {
+        AppConfiguration? configuration = System.Text.Json.JsonSerializer.Deserialize<AppConfiguration>(json, ContextSwitcher.Core.Serialization.ContextSwitcherJson.Options);
+
+        Assert.Equal(expected, configuration?.ShowDockIcon);
+    }
 }

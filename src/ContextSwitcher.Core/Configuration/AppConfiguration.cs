@@ -27,9 +27,11 @@ public sealed record AppConfiguration
     public int DefaultSwitchTimeoutSeconds { get; init; } = 45;
 
     /// <summary>
-    /// Gets or sets a value indicating whether the Dock icon should be shown.
+    /// Gets or sets a value indicating whether the Dock icon should be shown. On for a new install:
+    /// on a MacBook with a notch the menu bar icon can be hidden, and the Dock is then the way back to
+    /// the app. A settings file keeps the choice it was written with, so this changes no one's.
     /// </summary>
-    public bool ShowDockIcon { get; init; }
+    public bool ShowDockIcon { get; init; } = true;
 
     /// <summary>
     /// Gets or sets the language the app shows: <c>system</c> for the first of the Mac's preferred
