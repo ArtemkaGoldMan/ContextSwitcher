@@ -28,7 +28,7 @@ public sealed class UiConsistencyTests : UiTest
     /// </summary>
     [Theory]
     [InlineData(BrowserManagementMode.Urls, MediaPlayerKind.AppleMusic)]
-    [InlineData(BrowserManagementMode.Groups, MediaPlayerKind.Spotify)]
+    [InlineData(BrowserManagementMode.Profiles, MediaPlayerKind.Spotify)]
     public async Task ProfileSetupFieldsShareOneWidthAndOneRightEdge(BrowserManagementMode mode, MediaPlayerKind player)
     {
         await OnUiThreadAsync(() =>
@@ -63,7 +63,7 @@ public sealed class UiConsistencyTests : UiTest
         {
             UiScenario scenario = Scenario();
             List<Button> adds = [];
-            foreach (BrowserManagementMode mode in Enum.GetValues<BrowserManagementMode>())
+            foreach (BrowserManagementMode mode in scenario.ProfileSetup(AppHost.Configuration.Contexts[0]).BrowserModeChoices.Select(choice => choice.Value))
             {
                 ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
                 viewModel.BrowserMode = mode;
@@ -81,7 +81,7 @@ public sealed class UiConsistencyTests : UiTest
 
             string[] labels = adds.Select(b => (string)b.Content!).Distinct().Order().ToArray();
             Assert.Equal(
-                ["+ Add app", "+ Add browser profile", "+ Add container", "+ Add quick link", "+ Add tab group", "+ Add URL"],
+                ["+ Add app", "+ Add browser profile", "+ Add container", "+ Add quick link", "+ Add URL"],
                 labels);
             Assert.All(adds, b => Assert.True(b.Classes.Contains("linkButton"), $"\"{b.Content}\" is not a link"));
         });
@@ -89,7 +89,7 @@ public sealed class UiConsistencyTests : UiTest
 
     /// <summary>
     /// One card for every row in every list: the same height for every one-line row - apps, URLs,
-    /// tab groups, containers, quick links - and the remove button always inside the card.
+    /// containers, quick links - and the remove button always inside the card.
     /// </summary>
     [Fact]
     public async Task EveryListRowIsTheSameCard()
@@ -98,7 +98,6 @@ public sealed class UiConsistencyTests : UiTest
         {
             UiScenario scenario = Scenario();
             ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
-            viewModel.AddTabGroupCommand.Execute(null);
             viewModel.AddDockerStopCommand.Execute(null);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2800);
             ExpandSections(window);
@@ -286,8 +285,7 @@ public sealed class UiConsistencyTests : UiTest
                     {
                         Mode = BrowserManagementMode.Urls,
                         Browser = BrowserKind.Chrome,
-                        Urls = ["https://github.com/pulls"],
-                        TabGroups = ["Research"]
+                        Urls = ["https://github.com/pulls"]
                     },
                     Docker = new DockerResourceConfig { Start = ["postgres"] },
                     QuickLinks = [new QuickLinkConfig { Title = "Board", Url = "https://linear.app/board" }]

@@ -40,9 +40,6 @@
   <data name="Common_Https" xml:space="preserve">
     <value>https://…</value>
   </data>
-  <data name="Common_Browser" xml:space="preserve">
-    <value>Браузер</value>
-  </data>
   <data name="Common_BrowserProfile" xml:space="preserve">
     <value>Профіль браузера</value>
   </data>
@@ -249,12 +246,6 @@
   </data>
   <data name="ProfileSetup_TypeAUrl" xml:space="preserve">
     <value>Введіть URL-адресу…</value>
-  </data>
-  <data name="ProfileSetup_TabGroups" xml:space="preserve">
-    <value>Групи вкладок</value>
-  </data>
-  <data name="ProfileSetup_AddTabGroup" xml:space="preserve">
-    <value>+ Додати групу вкладок</value>
   </data>
   <data name="ProfileSetup_BrowserProfiles" xml:space="preserve">
     <value>Профілі браузера</value>
@@ -880,9 +871,6 @@
   <data name="Browser_Mode_Urls" xml:space="preserve">
     <value>Відкривати сторінки</value>
   </data>
-  <data name="Browser_Mode_Groups" xml:space="preserve">
-    <value>Відкривати групи вкладок</value>
-  </data>
   <data name="Browser_Mode_Profiles" xml:space="preserve">
     <value>Відкривати профілі браузера</value>
   </data>
@@ -1003,12 +991,6 @@
   <data name="Msg_Config_BrowserInvalid" xml:space="preserve">
     <value>Браузер має бути Default, Chrome, Brave або Safari.</value>
   </data>
-  <data name="Msg_Config_TabGroupsNeedName" xml:space="preserve">
-    <value>Для груп вкладок потрібна принаймні одна назва групи.</value>
-  </data>
-  <data name="Msg_Config_TabGroupNameEmpty" xml:space="preserve">
-    <value>Назва групи вкладок не може бути порожньою.</value>
-  </data>
   <data name="Msg_Config_ProfilesNeedProfile" xml:space="preserve">
     <value>Для профілів браузера потрібен принаймні один профіль.</value>
   </data>
@@ -1080,9 +1062,6 @@
   </data>
   <data name="Msg_Switch_CouldNotOpenUrl" xml:space="preserve">
     <value>Не вдалося відкрити «{0}»: {1}</value>
-  </data>
-  <data name="Msg_Switch_CouldNotActivateTabGroup" xml:space="preserve">
-    <value>Не вдалося відкрити групу вкладок «{0}». Ця версія macOS може не підтримувати керування групами вкладок.</value>
   </data>
   <data name="Msg_Switch_CouldNotLaunchBrowserProfile" xml:space="preserve">
     <value>Не вдалося відкрити профіль {0} «{1}»: {2}</value>
@@ -1156,10 +1135,13 @@
   <data name="Status_NoOp" xml:space="preserve">
     <value>Уже активний</value>
   </data>
-  <data name="ProfileSetup_TabGroupName" xml:space="preserve">
-    <value>Назва групи вкладок</value>
-  </data>
   <data name="ProfileSetup_ContainerName" xml:space="preserve">
     <value>Назва контейнера</value>
+  </data>
+  <data name="ProfileSetup_SafariFocusTip" xml:space="preserve">
+    <value>Safari не дає іншим застосункам відкривати свої групи вкладок і профілі, але режим зосередження може на них перемкнути: виберіть режим для цього профілю в розділі «Зосередження й музика», а потім у Системних параметрах › Зосередження › цей режим › Фільтри зосередження › Додати фільтр додайте Safari і виберіть групу вкладок або профіль.</value>
+  </data>
+  <data name="ProfileSetup_OpenFocusSettings" xml:space="preserve">
+    <value>Відкрити параметри зосередження ↗</value>
   </data>
 </root>

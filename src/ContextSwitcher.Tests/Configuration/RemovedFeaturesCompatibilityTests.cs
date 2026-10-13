@@ -65,6 +65,54 @@ public sealed class RemovedFeaturesCompatibilityTests
     }
 
     /// <summary>
+    /// Tab groups were dropped too - no browser lets another app open one. A file from before,
+    /// with "groups" profiles and their group names, loads with every profile: each now opens the
+    /// pages it fell back to, or nothing, and passes its check.
+    /// </summary>
+    [Fact]
+    public async Task ASettingsFileWithTabGroupsStillLoadsWithEveryProfile()
+    {
+        string directory = CreateTempDirectory();
+        try
+        {
+            ConfigPaths paths = new(directory);
+            await File.WriteAllTextAsync(paths.SettingsPath, """
+                {
+                  "schemaVersion": 1,
+                  "activeContextId": "work",
+                  "contexts": [
+                    {
+                      "id": "work",
+                      "displayName": "Work",
+                      "browser_management": { "mode": "groups", "browser": "Chrome", "tab_groups": ["Generation", "Work Services", "AI Blogging Tables"] }
+                    },
+                    {
+                      "id": "personal",
+                      "displayName": "Personal",
+                      "browser_management": { "mode": "groups", "browser": "Safari", "urls": ["https://example.com/"], "tab_groups": ["Home"] }
+                    }
+                  ]
+                }
+                """);
+
+            AppConfiguration? loaded = await new JsonFileStore().ReadAsync<AppConfiguration>(paths.SettingsPath);
+
+            Assert.NotNull(loaded);
+            Assert.Equal(["work", "personal"], loaded!.Contexts.Select(c => c.Id));
+            Assert.Equal(
+                [BrowserManagementMode.None, BrowserManagementMode.Urls],
+                loaded.Contexts.Select(c => c.BrowserManagement.Mode));
+            Assert.Equal(["https://example.com/"], loaded.Contexts[1].BrowserManagement.Urls);
+            Assert.Empty(Directory.EnumerateFiles(directory, "settings.json.corrupt.*"));
+            Assert.True(new ConfigurationValidator().Validate(loaded).IsValid);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    /// <summary>
     /// criticalSteps is a free list of step names, so a profile that marked the theme or wallpaper
     /// step critical still names them. They now match nothing - which must not stop the steps that
     /// do still exist from being planned, or from staying critical.

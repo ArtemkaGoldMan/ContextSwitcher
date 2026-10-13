@@ -130,15 +130,19 @@
       <StackPanel Spacing="10">
         <TextBlock Text="{x:Static r:Strings.ProfileSetup_BrowserManagement_Section}" Classes="sectionTitle" />
 
+        <!-- The browser first: what can be asked of it depends on which it is. -->
+        <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_Browser}">
+          <ComboBox ItemsSource="{Binding BrowserKindChoices}" SelectedItem="{Binding SelectedBrowserKind}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Browser}" />
+        </ctl:FormRow>
+        <Border Classes="divider" />
         <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_OnSwitch}">
           <ComboBox ItemsSource="{Binding BrowserModeChoices}" SelectedItem="{Binding SelectedBrowserMode}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_OnSwitch}" />
         </ctl:FormRow>
 
-        <StackPanel Spacing="10" IsVisible="{Binding ShowsBrowserChoice}">
-          <Border Classes="divider" />
-          <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_Browser}">
-            <ComboBox ItemsSource="{Binding BrowserKindChoices}" SelectedItem="{Binding SelectedBrowserKind}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Browser}" />
-          </ctl:FormRow>
+        <!-- Safari's tab groups and profiles can't be opened by another app; a Focus filter can. -->
+        <StackPanel Spacing="4" IsVisible="{Binding ShowsSafariFocusTip}">
+          <TextBlock Text="{x:Static r:Strings.ProfileSetup_SafariFocusTip}" Classes="caption" TextWrapping="Wrap" />
+          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_OpenFocusSettings}" Command="{Binding OpenFocusSettingsCommand}" />
         </StackPanel>
 
         <StackPanel Spacing="10" IsVisible="{Binding IsUrlsMode}">
@@ -171,19 +175,6 @@
               </Flyout>
             </Button.Flyout>
           </Button>
-        </StackPanel>
-
-        <StackPanel Spacing="6" IsVisible="{Binding IsGroupsMode}" Margin="0,6,0,0">
-          <TextBlock Text="{x:Static r:Strings.ProfileSetup_TabGroups}" Classes="caption" />
-          <ItemsControl ItemsSource="{Binding TabGroups}" ItemTemplate="{StaticResource StringRow}">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <StackPanel Spacing="6" />
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-          </ItemsControl>
-          <!-- No picker: browsers don't tell other apps their tab groups' names. -->
-          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddTabGroup}" Command="{Binding AddTabGroupCommand}" />
         </StackPanel>
 
         <StackPanel Spacing="6" IsVisible="{Binding IsProfilesMode}" Margin="0,6,0,0">

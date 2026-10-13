@@ -4,6 +4,7 @@ using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
+using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Tests.TestDoubles;
 
@@ -410,6 +411,108 @@ public sealed class ProfileSetupViewModelTests
         Assert.False(viewModel.CanCloseTabs);
         Assert.Equal("Closing tabs needs Chrome, Brave or Safari - Firefox can't be checked for open tabs.", viewModel.CloseTabsHint);
         Assert.Equal("Needs Chrome, Brave or Safari - Firefox can't be checked for open tabs.", viewModel.AvoidDuplicateTabsHint);
+    }
+
+    /// <summary>
+    /// Opening one of a browser's profiles is offered only for Chrome and Brave - the default
+    /// browser included, when it is one of them. Safari gets pages, and the Focus filter tip.
+    /// </summary>
+    [Theory]
+    [InlineData(BrowserKind.Chrome, BrowserKind.Default, true, false)]
+    [InlineData(BrowserKind.Brave, BrowserKind.Default, true, false)]
+    [InlineData(BrowserKind.Safari, BrowserKind.Default, false, true)]
+    [InlineData(BrowserKind.Default, BrowserKind.Chrome, true, false)]
+    [InlineData(BrowserKind.Default, BrowserKind.Safari, false, true)]
+    [InlineData(BrowserKind.Default, BrowserKind.Default, false, false)]
+    public void EachBrowserOffersWhatItCanDo(BrowserKind chosen, BrowserKind systemDefault, bool offersProfiles, bool showsFocusTip)
+    {
+        ProfileSetupViewModel viewModel = new(
+            CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null,
+            new FakeDefaultBrowser(systemDefault, systemDefault == BrowserKind.Default ? "Firefox" : systemDefault.ToString()));
+        viewModel.BrowserKind = chosen;
+
+        BrowserManagementMode[] expected = offersProfiles
+            ? [BrowserManagementMode.None, BrowserManagementMode.Urls, BrowserManagementMode.Profiles]
+            : [BrowserManagementMode.None, BrowserManagementMode.Urls];
+        Assert.Equal(expected, viewModel.BrowserModeChoices.Select(choice => choice.Value));
+        Assert.DoesNotContain(viewModel.BrowserModeChoices, choice => choice.Value == BrowserManagementMode.Groups);
+        Assert.Equal(showsFocusTip, viewModel.ShowsSafariFocusTip);
+    }
+
+    /// <summary>
+    /// Choosing a browser that can't open profiles while profiles are chosen falls back to pages,
+    /// which every browser opens - rather than keeping a choice the list no longer shows.
+    /// </summary>
+    [Fact]
+    public void ABrowserWithoutProfilesFallsBackToPages()
+    {
+        ProfileSetupViewModel viewModel = NewProfileViewModel();
+        viewModel.BrowserKind = BrowserKind.Chrome;
+        viewModel.BrowserMode = BrowserManagementMode.Profiles;
+
+        viewModel.BrowserKind = BrowserKind.Safari;
+
+        Assert.Equal(BrowserManagementMode.Urls, viewModel.BrowserMode);
+        Assert.Equal(BrowserManagementMode.Urls, viewModel.SelectedBrowserMode.Value);
+
+        // Only code can ask for what the list doesn't offer; it gets pages too.
+        viewModel.BrowserMode = BrowserManagementMode.Groups;
+        Assert.Equal(BrowserManagementMode.Urls, viewModel.BrowserMode);
+    }
+
+    /// <summary>
+    /// The browser is chosen once, for the section: each profile row lists that browser's own
+    /// profiles and is saved as that browser. A profile saved before - each row naming its browser,
+    /// the section's left at Default - opens with the rows' browser chosen.
+    /// </summary>
+    [Fact]
+    public void ProfileRowsFollowTheChosenBrowser()
+    {
+        ContextDefinition context = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Profiles,
+                Browser = BrowserKind.Default,
+                Profiles = [new BrowserProfileConfig { Browser = BrowserKind.Brave, ProfileDirectory = "Default" }]
+            }
+        };
+        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        FakeSystemCatalog catalog = new();
+        catalog.BrowserProfiles[BrowserKind.Chrome] = [new("Default", "Artem"), new("Profile 2", "Client")];
+        ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
+        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+
+        Assert.Equal(BrowserKind.Brave, viewModel.BrowserKind);
+        Assert.Equal(BrowserManagementMode.Profiles, viewModel.BrowserMode);
+
+        viewModel.BrowserKind = BrowserKind.Chrome;
+        viewModel.AddBrowserProfileCommand.Execute(null);
+
+        Assert.All(viewModel.BrowserProfiles, row => Assert.Equal(BrowserKind.Chrome, row.Browser));
+        Assert.Equal(["Default", "Profile 2"], viewModel.BrowserProfiles[0].ProfileChoices.Select(choice => choice.Value));
+
+        viewModel.SaveCommand.Execute(null);
+        BrowserManagementConfig saved = Assert.Single(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!.Contexts).BrowserManagement;
+        Assert.Equal(BrowserKind.Chrome, saved.Browser);
+        Assert.All(saved.Profiles, profile => Assert.Equal(BrowserKind.Chrome, profile.Browser));
+    }
+
+    /// <summary>For Safari, the page opens System Settings' Focus pane, where its Safari filter is set.</summary>
+    [Fact]
+    public void TheSafariTipOpensFocusSettings()
+    {
+        FakeProcessRunner processRunner = new();
+        ProfileSetupViewModel viewModel = new(
+            CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), processRunner, new FakeFocusShortcutInstaller(), existing: null);
+        viewModel.BrowserKind = BrowserKind.Safari;
+
+        viewModel.OpenFocusSettingsCommand.Execute(null);
+
+        ProcessStartOptions call = Assert.Single(processRunner.Calls);
+        Assert.Equal(("open", "x-apple.systempreferences:com.apple.Focus-Settings.extension"), (call.FileName, Assert.Single(call.Arguments)));
     }
 
     /// <summary>An app is quit or hidden on leaving, never both: ticking one unticks the other.</summary>

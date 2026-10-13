@@ -17,7 +17,7 @@ public sealed class BrowserLauncherTests
         BrowserLauncher launcher = new(processRunner, new FakeScriptRunner());
 
         BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Default, ["https://example.com/"], [], false, [], Timeout),
+            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Default, ["https://example.com/"], false, [], Timeout),
             CancellationToken.None);
 
         Assert.Empty(outcome.Warnings);
@@ -33,7 +33,7 @@ public sealed class BrowserLauncherTests
         BrowserLauncher launcher = new(processRunner, new FakeScriptRunner());
 
         await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], [], false, [], Timeout),
+            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], false, [], Timeout),
             CancellationToken.None);
 
         ProcessStartOptions call = Assert.Single(processRunner.Calls);
@@ -54,7 +54,7 @@ public sealed class BrowserLauncherTests
         BrowserLauncher launcher = new(processRunner, scriptRunner);
 
         BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Safari, ["https://example.com/"], [], true, [], Timeout),
+            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Safari, ["https://example.com/"], true, [], Timeout),
             CancellationToken.None);
 
         Assert.Empty(outcome.Warnings);
@@ -81,7 +81,7 @@ public sealed class BrowserLauncherTests
                 BrowserManagementMode.Urls,
                 BrowserKind.Chrome,
                 ["https://a.example/", "https://b.example/", "https://c.example/"],
-                [], true, [], Timeout),
+                true, [], Timeout),
             CancellationToken.None);
 
         Assert.Empty(processRunner.Calls);
@@ -98,7 +98,7 @@ public sealed class BrowserLauncherTests
         BrowserLauncher launcher = new(processRunner, scriptRunner);
 
         await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Safari, ["https://example.com/"], [], true, [], Timeout),
+            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Safari, ["https://example.com/"], true, [], Timeout),
             CancellationToken.None);
 
         Assert.Single(processRunner.Calls);
@@ -119,7 +119,7 @@ public sealed class BrowserLauncherTests
         BrowserLauncher launcher = new(processRunner, scriptRunner);
 
         BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], [], true, [], Timeout),
+            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], true, [], Timeout),
             CancellationToken.None);
 
         ProcessStartOptions call = Assert.Single(processRunner.Calls);
@@ -140,7 +140,7 @@ public sealed class BrowserLauncherTests
         BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
 
         await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], [], true, [], Timeout),
+            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], true, [], Timeout),
             CancellationToken.None);
 
         Assert.True(Assert.Single(scriptRunner.Timeouts) < Timeout);
@@ -164,7 +164,6 @@ public sealed class BrowserLauncherTests
                 BrowserManagementMode.Urls,
                 BrowserKind.Chrome,
                 ["https://example.com/", "https://example.org/", "https://example.net/"],
-                [],
                 true,
                 [],
                 Timeout),
@@ -183,59 +182,30 @@ public sealed class BrowserLauncherTests
         BrowserLauncher launcher = new(processRunner, new FakeScriptRunner());
 
         BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Default, ["https://example.com/"], [], false, [], Timeout),
+            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Default, ["https://example.com/"], false, [], Timeout),
             CancellationToken.None);
 
         Assert.Single(outcome.Warnings);
     }
 
+    /// <summary>
+    /// Tab groups were dropped - no browser lets another app open one. A request still saying
+    /// "groups" (the plan never makes one now) touches nothing rather than trying.
+    /// </summary>
     [Fact]
-    public async Task ManageBrowserContextAsyncGroupsModeSucceedsWithoutFallbackWhenGroupActivated()
+    public async Task ManageBrowserContextAsyncLegacyGroupsModeDoesNothing()
     {
         FakeProcessRunner processRunner = new();
         FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, "true", string.Empty, false));
-
         BrowserLauncher launcher = new(processRunner, scriptRunner);
 
         BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Groups, BrowserKind.Safari, ["https://fallback.example/"], ["Work-Core"], false, [], Timeout),
+            new BrowserContextRequest(BrowserManagementMode.Groups, BrowserKind.Safari, ["https://fallback.example/"], false, [], Timeout),
             CancellationToken.None);
 
         Assert.Empty(outcome.Warnings);
         Assert.Empty(processRunner.Calls);
-    }
-
-    [Fact]
-    public async Task ManageBrowserContextAsyncGroupsModeFallsBackToUrlsWhenGroupActivationFails()
-    {
-        FakeProcessRunner processRunner = new();
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, "false", string.Empty, false));
-
-        BrowserLauncher launcher = new(processRunner, scriptRunner);
-
-        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Groups, BrowserKind.Chrome, ["https://fallback.example/"], ["Work-Core"], false, [], Timeout),
-            CancellationToken.None);
-
-        Assert.Single(outcome.Warnings);
-        ProcessStartOptions call = Assert.Single(processRunner.Calls);
-        Assert.Equal(["-a", "Google Chrome", "https://fallback.example/"], call.Arguments);
-    }
-
-    [Fact]
-    public async Task ManageBrowserContextAsyncGroupsModeUsesChromiumScriptForBrave()
-    {
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, "true", string.Empty, false));
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
-
-        await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Groups, BrowserKind.Brave, [], ["Personal"], false, [], Timeout),
-            CancellationToken.None);
-
-        Assert.Contains("Brave Browser", Assert.Single(scriptRunner.Scripts));
+        Assert.Empty(scriptRunner.Scripts);
     }
 
     [Fact]
@@ -251,7 +221,7 @@ public sealed class BrowserLauncherTests
         ];
 
         BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Profiles, BrowserKind.Default, [], [], false, profiles, Timeout),
+            new BrowserContextRequest(BrowserManagementMode.Profiles, BrowserKind.Default, [], false, profiles, Timeout),
             CancellationToken.None);
 
         Assert.Empty(outcome.Warnings);
@@ -275,7 +245,7 @@ public sealed class BrowserLauncherTests
         BrowserProfileConfig[] profiles = [new() { Browser = BrowserKind.Chrome, ProfileDirectory = "Profile 1" }];
 
         BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Profiles, BrowserKind.Default, [], [], false, profiles, Timeout),
+            new BrowserContextRequest(BrowserManagementMode.Profiles, BrowserKind.Default, [], false, profiles, Timeout),
             CancellationToken.None);
 
         Assert.Single(outcome.Warnings);
@@ -294,7 +264,7 @@ public sealed class BrowserLauncherTests
         BrowserLauncher launcher = new(processRunner, scriptRunner);
 
         await launcher.ManageBrowserContextAsync(
-            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://mail.google.com/"], [], true, [], Timeout),
+            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://mail.google.com/"], true, [], Timeout),
             CancellationToken.None);
 
         Assert.Empty(processRunner.Calls);

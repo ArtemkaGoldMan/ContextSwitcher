@@ -447,6 +447,29 @@ public sealed class AutomationPlanBuilderTests
         Assert.Equal("Safari", opening.Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext).Arguments["browser"]);
     }
 
+    /// <summary>
+    /// Tab groups mode can't come from a settings file any more - it is read as pages or nothing -
+    /// and one made in code is not carried out: no browser lets another app open a tab group.
+    /// </summary>
+    [Fact]
+    public void ATabGroupsProfileOpensAndClosesNothing()
+    {
+        ContextDefinition groups = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            BrowserManagement = new BrowserManagementConfig { Mode = BrowserManagementMode.Groups, Browser = BrowserKind.Safari, Urls = ["https://example.com/"], CloseUrls = ["https://example.com/"] }
+        };
+        ContextDefinition other = new() { Id = "personal", DisplayName = "Personal" };
+
+        AutomationPlan entering = new AutomationPlanBuilder().Build(other, groups);
+        AutomationPlan leaving = new AutomationPlanBuilder().Build(groups, other);
+
+        Assert.DoesNotContain(entering.Steps, step => step.Type is AutomationStepType.ManageBrowserContext or AutomationStepType.CloseBrowserTabs);
+        Assert.DoesNotContain(leaving.Steps, step => step.Type is AutomationStepType.ManageBrowserContext or AutomationStepType.CloseBrowserTabs);
+        Assert.DoesNotContain(entering.Steps.SelectMany(step => step.Arguments.Keys), key => key == "tabGroups");
+    }
+
     /// <summary>A default browser that can't be scripted stays Default, and the closing step says why it did nothing.</summary>
     [Fact]
     public void AnUnscriptableDefaultBrowserStaysDefault()

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
+using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
@@ -130,7 +131,6 @@ public sealed class ProfileSetupInteractionTests : UiTest
     /// </remarks>
     [Theory]
     [InlineData("+ Add URL", "Type a URL…", BrowserManagementMode.Urls)]
-    [InlineData("+ Add tab group", null, BrowserManagementMode.Groups)]
     [InlineData("+ Add browser profile", null, BrowserManagementMode.Profiles)]
     [InlineData("+ Add quick link", "Type a URL…", BrowserManagementMode.None)]
     [InlineData("+ Add container", "Type a name…", BrowserManagementMode.None)]
@@ -139,6 +139,7 @@ public sealed class ProfileSetupInteractionTests : UiTest
         await OnUiThreadAsync(() =>
         {
             (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            viewModel.BrowserKind = BrowserKind.Chrome;
             viewModel.BrowserMode = mode;
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2400);
             ExpandSections(window);
@@ -161,8 +162,8 @@ public sealed class ProfileSetupInteractionTests : UiTest
     }
 
     /// <summary>
-    /// Choosing a browser mode swaps which section is on screen: URLs, tab groups and browser
-    /// profiles are mutually exclusive, and None shows none of them.
+    /// Choosing a browser mode swaps which section is on screen: pages and browser profiles are
+    /// mutually exclusive, and None shows neither.
     /// </summary>
     [Fact]
     public async Task TheBrowserModeDecidesWhichSectionIsShown()
@@ -170,24 +171,63 @@ public sealed class ProfileSetupInteractionTests : UiTest
         await OnUiThreadAsync(() =>
         {
             (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            viewModel.BrowserKind = BrowserKind.Chrome;
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2400);
             ExpandSections(window);
 
             viewModel.BrowserMode = BrowserManagementMode.None;
             Settle(window);
             Assert.Empty(VisibleButtons(window, "+ Add URL"));
+            Assert.Empty(VisibleButtons(window, "+ Add browser profile"));
 
             viewModel.BrowserMode = BrowserManagementMode.Urls;
             Settle(window);
             Assert.NotEmpty(VisibleButtons(window, "+ Add URL"));
-            Assert.Empty(VisibleButtons(window, "+ Add tab group"));
+            Assert.Empty(VisibleButtons(window, "+ Add browser profile"));
 
-            viewModel.BrowserMode = BrowserManagementMode.Groups;
+            viewModel.BrowserMode = BrowserManagementMode.Profiles;
             Settle(window);
-            Assert.NotEmpty(VisibleButtons(window, "+ Add tab group"));
+            Assert.NotEmpty(VisibleButtons(window, "+ Add browser profile"));
             Assert.Empty(VisibleButtons(window, "+ Add URL"));
         });
     }
+
+    /// <summary>
+    /// The browser is chosen first, and the "On switch" list then offers only what that browser
+    /// can be asked to do: Chrome and Brave can open one of their profiles, Safari can't - for
+    /// Safari the page says how a Focus can switch its tab groups and profiles instead.
+    /// </summary>
+    [Fact]
+    public async Task TheBrowserDecidesWhatCanBeAskedOfIt()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2400);
+            ExpandSections(window);
+
+            ComboBox browser = Dropdown(window, "Browser");
+            ComboBox onSwitch = Dropdown(window, "On switch");
+            Assert.True(browser.TranslatePoint(new Point(0, 0), window)!.Value.Y < onSwitch.TranslatePoint(new Point(0, 0), window)!.Value.Y, "the browser comes before what to do with it");
+
+            viewModel.BrowserKind = BrowserKind.Chrome;
+            viewModel.BrowserMode = BrowserManagementMode.Profiles;
+            Settle(window);
+            Assert.Equal(["Don't open anything", "Open web pages", "Open browser profiles"], onSwitch.Items.Cast<Choice<BrowserManagementMode>>().Select(c => c.Label));
+            Assert.False(IsShown(window, Strings.ProfileSetup_SafariFocusTip));
+
+            viewModel.BrowserKind = BrowserKind.Safari;
+            Settle(window);
+            Assert.Equal(["Don't open anything", "Open web pages"], onSwitch.Items.Cast<Choice<BrowserManagementMode>>().Select(c => c.Label));
+            Assert.Equal(BrowserManagementMode.Urls, viewModel.BrowserMode);
+            Assert.Equal("Open web pages", Assert.IsType<Choice<BrowserManagementMode>>(onSwitch.SelectedItem).Label);
+            Assert.True(IsShown(window, Strings.ProfileSetup_SafariFocusTip));
+            Assert.NotEmpty(VisibleButtons(window, "Open Focus settings ↗"));
+        });
+    }
+
+    private static bool IsShown(Window window, string text) =>
+        FindAll<TextBlock>(window).Any(t => t.Text == text && t.IsEffectivelyVisible);
 
     private static IReadOnlyList<Button> VisibleButtons(Window window, string content) =>
         FindAll<Button>(window).Where(b => b.Content as string == content && IsClickable(b)).ToList();
@@ -276,13 +316,13 @@ public sealed class ProfileSetupInteractionTests : UiTest
     /// </summary>
     [Theory]
     [InlineData(BrowserManagementMode.Urls)]
-    [InlineData(BrowserManagementMode.Groups)]
     [InlineData(BrowserManagementMode.Profiles)]
     public async Task EveryAddButtonSharesTheSameLeftEdge(BrowserManagementMode mode)
     {
         await OnUiThreadAsync(() =>
         {
             (ProfileSetupViewModel viewModel, _) = CreateViewModel();
+            viewModel.BrowserKind = BrowserKind.Chrome;
             viewModel.BrowserMode = mode;
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
             ExpandSections(window);
@@ -342,7 +382,7 @@ public sealed class ProfileSetupInteractionTests : UiTest
     }
 
     private static int CountRows(ProfileSetupViewModel viewModel) =>
-        viewModel.BrowserUrls.Count + viewModel.TabGroups.Count + viewModel.BrowserProfiles.Count
+        viewModel.BrowserUrls.Count + viewModel.BrowserProfiles.Count
         + viewModel.QuickLinks.Count + viewModel.DockerStart.Count + viewModel.DockerStop.Count;
 
     private static async Task WaitUntil(Func<bool> condition)

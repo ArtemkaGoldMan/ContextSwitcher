@@ -203,9 +203,11 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
             UiScenario scenario = UiScenario.WithTwoProfiles();
             scenario.Catalog.BrowserProfiles[BrowserKind.Chrome] = [new("Default", "Artem"), new("Profile 2", "Client")];
             ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
-            viewModel.BrowserMode = BrowserManagementMode.Profiles;
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
 
+            // The browser first: only then does "On switch" offer its profiles.
+            ChooseFromDropdown(window, Dropdown(window, "Browser"), "Google Chrome");
+            ChooseFromDropdown(window, Dropdown(window, "On switch"), "Open browser profiles");
             Click(window, FindVisibleButton(window, "+ Add browser profile"));
             ChooseFromDropdown(window, Dropdown(window, "Browser profile"), "Client (Profile 2)");
 

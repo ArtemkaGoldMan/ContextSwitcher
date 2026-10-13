@@ -10,7 +10,6 @@ public sealed record BrowserContextRequest(
     BrowserManagementMode Mode,
     BrowserKind Browser,
     IReadOnlyList<string> Urls,
-    IReadOnlyList<string> TabGroups,
     bool AvoidDuplicateTabs,
     IReadOnlyList<BrowserProfileConfig> Profiles,
     TimeSpan Timeout);

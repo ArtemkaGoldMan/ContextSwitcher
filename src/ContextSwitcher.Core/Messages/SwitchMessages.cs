@@ -46,10 +46,6 @@ public static class SwitchMessages
     /// <summary>{1} is the browser's or macOS's own reason.</summary>
     public static readonly MessageTemplate CouldNotOpenUrl = new("Switch_CouldNotOpenUrl", "Could not open '{0}': {1}");
 
-    public static readonly MessageTemplate CouldNotActivateTabGroup = new(
-        "Switch_CouldNotActivateTabGroup",
-        "Could not activate tab group '{0}'. Browser tab group scripting may not be supported on this macOS version.");
-
     /// <summary>{0} is the browser, {1} the profile folder, {2} the browser's own reason.</summary>
     public static readonly MessageTemplate CouldNotLaunchBrowserProfile = new("Switch_CouldNotLaunchBrowserProfile", "Could not launch {0} profile '{1}': {2}");
 }
