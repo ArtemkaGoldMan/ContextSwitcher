@@ -253,7 +253,15 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         bool avoidDuplicateTabs = step.Arguments.GetValueOrDefault("avoidDuplicateTabs") == "True";
         IReadOnlyList<BrowserProfileConfig> profiles = DeserializeProfiles(step.Arguments.GetValueOrDefault("profilesJson", "[]"));
 
-        BrowserContextRequest request = new(mode, browser, urls, avoidDuplicateTabs, profiles, WithReportingHeadroom(step.Timeout));
+        BrowserContextRequest request = new(
+            mode,
+            browser,
+            urls,
+            avoidDuplicateTabs,
+            profiles,
+            WithReportingHeadroom(step.Timeout),
+            step.Arguments.GetValueOrDefault("contextId"),
+            DeserializeStrings(step.Arguments.GetValueOrDefault("rememberUrlsJson", "[]")));
         BrowserLaunchOutcome outcome = await this.browserLauncher.ManageBrowserContextAsync(request, cancellationToken).ConfigureAwait(false);
 
         DateTimeOffset completedAt = this.clock.UtcNow;
@@ -274,7 +282,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         IReadOnlyList<string> keep = DeserializeStrings(step.Arguments.GetValueOrDefault("keepUrlsJson", "[]"));
 
         TabClosingOutcome outcome = await this.browserLauncher
-            .CloseTabsAsync(browser, pages, keep, WithReportingHeadroom(step.Timeout), cancellationToken)
+            .CloseTabsAsync(browser, pages, keep, step.Arguments.GetValueOrDefault("contextId"), WithReportingHeadroom(step.Timeout), cancellationToken)
             .ConfigureAwait(false);
 
         DateTimeOffset completedAt = this.clock.UtcNow;

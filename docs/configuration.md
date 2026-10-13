@@ -159,6 +159,14 @@ those pages close; every other tab stays. A page the profile you're switching to
 browser is left open rather than closed and loaded again. Closing tabs needs a browser that can be
 scripted, for the reason below, and only applies in `urls` mode.
 
+**In Chrome and Brave, the tab opened for a page also closes, wherever it went.** Pages often move
+on from the address they were opened at — to a sign-in page, or to the app's own domain — and then
+no longer match it. When a profile opens a page from `close_urls`, ContextSwitcher remembers that
+tab by the id Chrome gives it (in `opened-tabs.json`) and closes it on leaving even if it's now
+somewhere else. Only tabs ContextSwitcher itself just opened are remembered, never ones you opened;
+and a browser restart forgets them, since Chrome then numbers its tabs afresh. Safari has no tab ids,
+so there it's by address only.
+
 **A tab matches a page when it's on the same site, at the page's path or below it.**
 `https://github.com/ArtemkaGoldMan` matches every page of that account and nothing else on GitHub;
 `https://mail.google.com/` matches all of Gmail, wherever it redirected. `http`/`https`, a leading

@@ -91,13 +91,87 @@ public static class AppleScriptBuilder
     }
 
     /// <summary>
+    /// Builds a script listing every tab of a Chromium browser (Chrome, Brave) as <c>id, separator,
+    /// url</c> per line. A tab keeps its id for as long as the browser runs, wherever it navigates,
+    /// which is what lets a profile find the tabs it opened after they have moved to another site.
+    /// Unless <paramref name="startIfNeeded"/>, returns nothing when the browser is not running,
+    /// rather than starting it - scripting an app starts it.
+    /// </summary>
+    public static string ListChromiumTabs(string appName, bool startIfNeeded)
+    {
+        string escapedApp = EscapeStringLiteral(appName);
+        List<string> lines = [];
+        if (!startIfNeeded)
+        {
+            lines.Add($"if application \"{escapedApp}\" is not running then return \"\"");
+        }
+
+        return string.Join(
+            '\n',
+            [
+            .. lines,
+            $"set separator to character id {(int)OpenTabFieldSeparator}",
+            "set collected to \"\"",
+            $"tell application \"{escapedApp}\"",
+            "    repeat with w in windows",
+            "        try",
+            "            repeat with t in tabs of w",
+            "                set collected to collected & ((id of t) as text) & separator & (URL of t) & linefeed",
+            "            end repeat",
+            "        end try",
+            "    end repeat",
+            "end tell",
+            "return collected"
+            ]);
+    }
+
+    /// <summary>
+    /// Builds a script that closes the Chromium tabs with the given ids and prints how many it closed.
+    /// Closing by id rather than by address means a tab whose address changes between being listed and
+    /// being closed - a page still redirecting, an app rewriting its URL - is closed all the same.
+    /// Windows are visited by id and tabs from the last one back, as in <see cref="CloseTabsWithUrls"/>.
+    /// A tab's id is text in Chrome's dictionary, so the ids are compared as text: a number never
+    /// equals it, and nothing would close.
+    /// </summary>
+    public static string CloseChromiumTabsWithIds(string appName, IReadOnlyList<int> tabIds)
+    {
+        ArgumentNullException.ThrowIfNull(tabIds);
+
+        string escapedApp = EscapeStringLiteral(appName);
+        string list = string.Join(", ", tabIds.Select(id => $"\"{id.ToString(System.Globalization.CultureInfo.InvariantCulture)}\""));
+        return string.Join(
+            '\n',
+            $"if application \"{escapedApp}\" is not running then return 0",
+            $"set doomed to {{{list}}}",
+            "set closed to 0",
+            $"tell application \"{escapedApp}\"",
+            "    set windowIds to id of every window",
+            "    repeat with windowId in windowIds",
+            "        try",
+            "            set w to window id (contents of windowId)",
+            "            repeat with i from (count of tabs of w) to 1 by -1",
+            "                if doomed contains ((id of tab i of w) as text) then",
+            "                    close tab i of w",
+            "                    set closed to closed + 1",
+            "                end if",
+            "            end repeat",
+            "        end try",
+            "    end repeat",
+            "end tell",
+            "return closed");
+    }
+
+    /// <summary>
     /// Builds a script that closes every tab whose URL is exactly one of <paramref name="urls"/> - the
     /// addresses <see cref="ListOpenTabs"/> reported, the matching having been done before - and
     /// prints how many it closed. A browser that isn't running is left that way: there is nothing to
     /// close, and scripting it would start it.
     ///
     /// Windows are visited by id and tabs from the last one back, because closing a tab renumbers
-    /// the ones after it and closing a window's last tab closes the window.
+    /// the ones after it and closing a window's last tab closes the window. The ids are fetched into
+    /// a list first: looping straight over <c>id of every window</c> hands Chrome a reference ("item 1
+    /// of id of every window") it can't resolve, and the <c>try</c> then skipped every window - so
+    /// no tab ever closed in Chrome.
     /// </summary>
     public static string CloseTabsWithUrls(string appName, IReadOnlyList<string> urls)
     {
@@ -111,7 +185,8 @@ public static class AppleScriptBuilder
             $"set doomed to {{{list}}}",
             "set closed to 0",
             $"tell application \"{escapedApp}\"",
-            "    repeat with windowId in (id of every window)",
+            "    set windowIds to id of every window",
+            "    repeat with windowId in windowIds",
             "        try",
             "            set w to window id (contents of windowId)",
             "            repeat with i from (count of tabs of w) to 1 by -1",

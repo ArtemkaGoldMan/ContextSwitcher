@@ -17,7 +17,8 @@ end. Check again before building on any of it: browsers change, and some of this
 
 What ContextSwitcher does today:
 - **Pages** in any browser: opens them, and checks for duplicates and closes them on leaving in
-  Chrome, Brave and Safari.
+  Chrome, Brave and Safari. In Chrome and Brave it also remembers each tab it opened for a page that
+  closes, by the tab's `id`, and closes it by that id on leaving, wherever the page has gone.
 - **Chrome and Brave profiles** with `--profile-directory`.
 - **Safari's tab groups and profiles**: it doesn't open them itself. Profile Setup explains how a
   Focus filter does it.
@@ -49,7 +50,12 @@ The dictionary is `Google Chrome.app/Contents/Resources/scripting.sdef`. Everyth
   - `execute javascript`, which runs JavaScript in a tab's page.
 
 Not in the dictionary: tab groups, profiles, and which profile a window belongs to. AppleScript sees
-the windows of every open profile and can't tell them apart.
+the windows of every open profile, including installed web apps' windows, and can't tell them apart.
+
+A tab's `id` is its `SessionID`. It stays the same wherever the tab navigates, but it is only unique
+within one run of the browser, which numbers its tabs afresh when it starts. Each new tab gets a
+higher id than the last. ContextSwitcher relies on all three facts (`ProcessBrowserRuns`,
+`BrowserLauncher`).
 
 Scripting a browser that isn't running starts it. ContextSwitcher's scripts check
 `application "…" is running` first wherever starting the browser would be wrong.

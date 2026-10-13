@@ -268,11 +268,12 @@ public sealed class AutomationStepExecutorTests
     public async Task ExecuteAsyncCloseBrowserTabsReportsWhatItClosed()
     {
         FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, "https://linear.app/a\nhttps://linear.app/b\n", string.Empty, false));
+        scriptRunner.Enqueue(new ProcessResult(0, "4\u001fhttps://linear.app/a\n5\u001fhttps://linear.app/b\n", string.Empty, false));
         scriptRunner.Enqueue(new ProcessResult(0, "2", string.Empty, false));
         AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
         Dictionary<string, string> arguments = new()
         {
+            ["contextId"] = "work",
             ["browser"] = "Chrome",
             ["closeUrlsJson"] = "[\"https://linear.app/\"]",
             ["keepUrlsJson"] = "[]"
@@ -283,6 +284,7 @@ public sealed class AutomationStepExecutorTests
 
         Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
         Assert.Equal("Closed 2 tab(s).", result.Message);
+        Assert.Contains("set doomed to {\"4\", \"5\"}", scriptRunner.Scripts[1], StringComparison.Ordinal);
     }
     /// <summary>
     /// A comma belongs to the address: a map's coordinates used to split it into pieces that

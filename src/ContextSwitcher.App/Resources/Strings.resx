@@ -305,7 +305,7 @@
     <comment>ProfileSetupPage.axaml: Title</comment>
   </data>
   <data name="ProfileSetup_PagesOpenClose" xml:space="preserve">
-    <value>Open opens the page when you enter this profile. Close closes its tabs when you leave - the page and anything under it, never other tabs.</value>
+    <value>Open opens the page when you enter this profile. Close closes its tabs when you leave - the page and anything under it, and in Chrome or Brave the tab opened for it, wherever it went. Never other tabs.</value>
     <comment>ProfileSetupPage.axaml: above the list of pages.</comment>
   </data>
   <data name="ProfileSetup_CloseTabsNeedsBrowser" xml:space="preserve">

@@ -97,7 +97,13 @@ public static class AppHost
         services.AddSingleton(provider => new AutomationPlanBuilder(provider.GetRequiredService<IDefaultBrowser>()));
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IScriptRunner, AppleScriptRunner>();
-        services.AddSingleton<BrowserLauncher>();
+        services.AddSingleton<IOpenedTabsStore, OpenedTabsStore>();
+        services.AddSingleton<IBrowserRuns, ProcessBrowserRuns>();
+        services.AddSingleton(provider => new BrowserLauncher(
+            provider.GetRequiredService<IProcessRunner>(),
+            provider.GetRequiredService<IScriptRunner>(),
+            provider.GetRequiredService<IOpenedTabsStore>(),
+            provider.GetRequiredService<IBrowserRuns>()));
         services.AddSingleton<IApplicationHider, MacApplicationHider>();
         services.AddSingleton<IAutomationStepExecutor, AutomationStepExecutor>();
         services.AddSingleton<IContextSwitchService>(provider => new ContextSwitchService(

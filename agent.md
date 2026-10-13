@@ -818,7 +818,11 @@ apps are quit:
 - Only with a browser that can be scripted - Chrome, Brave, Safari, or the default browser when it
   is one of them (`IDefaultBrowser`) - and only a running one, as scripting a browser starts it.
 - List the tabs, choose in C# the ones that show a page in `close_urls` (`PageMatch`), and close
-  exactly those addresses. No other tab is ever closed.
+  exactly those - in Chrome and Brave by tab id, in Safari by address. No other tab is ever closed.
+- In Chrome and Brave, also close the tabs the context opened for its `close_urls` pages, wherever
+  they have navigated since: on entering, the tabs that appear after its `open` calls are remembered
+  by id in `opened-tabs.json`, with the browser run they belong to; ids from another run are
+  ignored, since a restarted browser numbers its tabs afresh.
 - Spare a page the context being entered opens in the same browser.
 - A browser that won't answer is a warning; nothing else is tried.
 

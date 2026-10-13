@@ -265,6 +265,13 @@ public sealed class AutomationPlanBuilderTests
         Assert.Equal("Chrome", closing.Arguments["browser"]);
         Assert.Equal("""["https://linear.app/","https://mail.google.com/"]""", closing.Arguments["closeUrlsJson"]);
         Assert.Equal("""["https://mail.google.com/"]""", closing.Arguments["keepUrlsJson"]);
+        Assert.Equal("work", closing.Arguments["contextId"]);
+
+        // Entering, the profile says whose pages it opens and which of them close later, so the tabs
+        // opened for those can be remembered - and found again when it is left.
+        AutomationStep entering = new AutomationPlanBuilder().Build(target, previous).Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext);
+        Assert.Equal("work", entering.Arguments["contextId"]);
+        Assert.Equal("""["https://linear.app/","https://mail.google.com/"]""", entering.Arguments["rememberUrlsJson"]);
     }
 
     /// <summary>Only pages in the same browser are spared: a page open in Safari is a different tab.</summary>
