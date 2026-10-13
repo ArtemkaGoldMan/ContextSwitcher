@@ -148,6 +148,12 @@
   <data name="Onboarding_AddBrowserTabsFocusAnd" xml:space="preserve">
     <value>• Додавайте вкладки браузера, зосередження й Docker у налаштуваннях профілю</value>
   </data>
+  <data name="Onboarding_OpenAtLogin" xml:space="preserve">
+    <value>Відкривати Context Switcher, коли я входжу в систему</value>
+  </data>
+  <data name="Onboarding_OpenAtLogin_Hint" xml:space="preserve">
+    <value>Вимкнути можна будь-коли в Параметрах.</value>
+  </data>
   <data name="Onboarding_ChangeAProfilesColorIcon" xml:space="preserve">
     <value>• Змінюйте колір, значок і програми профілю через «Відкрити програму»</value>
   </data>
@@ -415,11 +421,29 @@
   <data name="Settings_MatchMacOSFollowsTheSystems" xml:space="preserve">
     <value>«Як у macOS» повторює світлий чи темний вигляд системи, коли він змінюється.</value>
   </data>
+  <data name="Settings_OpenAtLogin" xml:space="preserve">
+    <value>Відкривати під час входу</value>
+  </data>
+  <data name="Settings_OpenAtLogin_Description" xml:space="preserve">
+    <value>Запускає Context Switcher, коли ви входите в систему на Mac, тож він у смузі меню й рахує час, навіть якщо ви його не відкривали.</value>
+  </data>
+  <data name="Settings_OpenAtLogin_NeedsApproval" xml:space="preserve">
+    <value>macOS чекає, поки ви дозволите це в Системних параметрах → Загальні → Об’єкти входу.</value>
+  </data>
+  <data name="Settings_OpenAtLogin_OpenLoginItems" xml:space="preserve">
+    <value>Відкрити «Об’єкти входу» ↗</value>
+  </data>
+  <data name="Settings_OpenAtLogin_Unavailable" xml:space="preserve">
+    <value>Відкриватися під час входу може лише встановлена програма.</value>
+  </data>
+  <data name="Settings_OpenAtLogin_Failed" xml:space="preserve">
+    <value>macOS не дозволила: {0}</value>
+  </data>
   <data name="Settings_ShowInTheDock" xml:space="preserve">
     <value>Показувати в Dock</value>
   </data>
   <data name="Settings_OffContextSwitcherLivesOnly" xml:space="preserve">
-    <value>Вимкнено: Context Switcher живе лише в смузі меню. Увімкнено: він також є в Dock і в ⌘-Tab. Діє після наступного запуску.</value>
+    <value>Вимкнено: Context Switcher живе лише в смузі меню. Увімкнено: він також є в Dock і в ⌘-Tab.</value>
   </data>
   <data name="Settings_Permission_Section" xml:space="preserve">
     <value>ДОЗВІЛ</value>

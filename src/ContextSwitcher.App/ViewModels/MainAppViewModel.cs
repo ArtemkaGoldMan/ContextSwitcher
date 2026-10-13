@@ -36,7 +36,8 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         IFocusShortcutInstaller focusShortcuts,
         SwitchNoticeViewModel switchNotice,
         UpdatesViewModel updates,
-        IDefaultBrowser? defaultBrowser = null)
+        IDefaultBrowser? defaultBrowser = null,
+        ILoginItem? loginItem = null)
     {
         this.focusShortcuts = focusShortcuts;
         this.defaultBrowser = defaultBrowser;
@@ -46,7 +47,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         this.processRunner = processRunner;
 
         this.Profiles = new ProfilesViewModel(switchService, configurationStore, jsonStore, configPaths, switchNotice);
-        this.Settings = new SettingsViewModel(configurationStore, permissionsChecker, processRunner, updates);
+        this.Settings = new SettingsViewModel(configurationStore, permissionsChecker, processRunner, updates, loginItem: loginItem);
         this.Stats = new StatsViewModel(analyticsService);
 
         this.Profiles.EditRequested += this.OnEditRequested;

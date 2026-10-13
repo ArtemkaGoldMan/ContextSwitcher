@@ -42,8 +42,8 @@ ContextSwitcher $version
    You only do this once: the app updates itself from Settings > Updates, and updates it
    installs open without this step.
 
-3. The app lives in the menu bar. Look for the two-squares icon - there is no Dock icon and no
-   window until you open one.
+3. The app lives in the menu bar - look for the two-squares icon - and in the Dock. Its setup
+   offers to open it whenever you log in.
 
 Docs: https://github.com/ArtemkaGoldMan/ContextSwitcher
 TXT

@@ -49,10 +49,12 @@ public sealed partial class App : Application
             if (this.CheckAccess())
             {
                 this.ApplyAppearance();
+                this.ApplyDockIcon();
             }
             else
             {
                 this.Dispatcher.Post(this.ApplyAppearance);
+                this.Dispatcher.Post(this.ApplyDockIcon);
             }
         };
 
@@ -122,6 +124,22 @@ public sealed partial class App : Application
         {
             this.RequestedThemeVariant = ThemeFor(configuration.Appearance);
         }
+    }
+
+    /// <summary>
+    /// Shows or hides the Dock icon the moment Settings saves the choice, rather than at the next
+    /// start. Leaving the Dock makes an app give up being frontmost, so the main window - where the
+    /// switch was flipped - is brought back.
+    /// </summary>
+    private void ApplyDockIcon()
+    {
+        if (AppHost.Configuration is not { } configuration || Infrastructure.MacOS.DockIcon.IsShown() is not { } shown || shown == configuration.ShowDockIcon)
+        {
+            return;
+        }
+
+        Infrastructure.MacOS.DockIcon.Show(configuration.ShowDockIcon);
+        this.mainAppWindow?.Activate();
     }
 
     private TrayIcon CreateTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)

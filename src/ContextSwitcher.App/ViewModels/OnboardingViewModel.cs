@@ -33,6 +33,7 @@ public sealed class OnboardingViewModel : ViewModelBase
 
     private readonly ConfigurationStore configurationStore;
     private readonly IContextSwitchService switchService;
+    private readonly ILoginItem? loginItem;
 
     private int stepIndex;
     private string? errorMessage;
@@ -41,10 +42,14 @@ public sealed class OnboardingViewModel : ViewModelBase
     public OnboardingViewModel(
         ConfigurationStore configurationStore,
         IInstalledAppsService installedAppsService,
-        IContextSwitchService switchService)
+        IContextSwitchService switchService,
+        ILoginItem? loginItem = null)
     {
         this.configurationStore = configurationStore;
         this.switchService = switchService;
+        this.loginItem = loginItem;
+        this.CanOpenAtLogin = loginItem is not null && loginItem.Status != LoginItemStatus.Unavailable;
+        this.OpenAtLogin = this.CanOpenAtLogin;
 
         this.Work = new OnboardingProfileViewModel(
             "work", Strings.Onboarding_WorkName, Strings.Onboarding_WorkName.ToUpper(CultureInfo.CurrentCulture), "#2F6FED", "briefcase",
@@ -66,6 +71,15 @@ public sealed class OnboardingViewModel : ViewModelBase
     public event EventHandler? Completed;
 
     public OnboardingProfileViewModel Work { get; }
+
+    /// <summary>
+    /// The last step's "Open Context Switcher when I log in": ticked, since a menu bar app that isn't
+    /// running neither switches nor counts time - but asked, not done behind the person's back.
+    /// </summary>
+    public bool OpenAtLogin { get; set; }
+
+    /// <summary>Only an installed copy can open at login, so the box shows only there.</summary>
+    public bool CanOpenAtLogin { get; }
 
     public OnboardingProfileViewModel Personal { get; }
 
@@ -182,6 +196,12 @@ public sealed class OnboardingViewModel : ViewModelBase
             {
                 this.ErrorMessage = string.Join(" ", result.Errors);
                 return;
+            }
+
+            // Should macOS refuse, Settings shows the switch off with macOS's reason; the setup carries on.
+            if (this.OpenAtLogin && this.CanOpenAtLogin)
+            {
+                this.loginItem!.SetEnabled(true);
             }
 
             await this.switchService

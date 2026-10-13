@@ -39,7 +39,7 @@ ContextSwitcher validate-config
   "defaultSwitchTimeoutSeconds": 45,
   "language": "system",
   "appearance": "system",
-  "showDockIcon": false,
+  "showDockIcon": true,
   "checkForUpdates": true,
   "onboardingCompleted": true,
   "analytics": { "enabled": true, "retentionDays": 365 },
@@ -53,10 +53,13 @@ ContextSwitcher validate-config
 | `activeContextId` | Must match a `contexts[].id`. |
 | `language` | `system` (the first of the Mac's languages the app has, the default), or a language code: `en`, `uk`. Read at startup. |
 | `appearance` | `system` (follow macOS, the default), `light` or `dark`. Applies at once. |
-| `showDockIcon` | Read once at startup — changing it needs a restart, and the UI says so. |
+| `showDockIcon` | Shows the app in the Dock and ⌘-Tab as well as the menu bar. On for a new install; absent means on. Applies at once. |
 | `checkForUpdates` | Looks for a new release on GitHub once a day and offers it; never installs by itself. Absent means on. |
 | `onboardingCompleted` | Absent means "already onboarded", so upgrading never re-runs the wizard. |
 | `analytics.retentionDays` | Sessions older than this are pruned at startup. |
+
+Opening at login isn't in this file: macOS keeps it, under **System Settings → General → Login
+Items**, and **Settings → Open at login** turns it on and off there.
 
 ## A profile
 

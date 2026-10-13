@@ -93,6 +93,7 @@ public static class AppHost
         services.AddSingleton<IAnalyticsSessionStore, AnalyticsSessionStore>();
         services.AddSingleton<IAnalyticsService, AnalyticsService>();
         services.AddSingleton<IDefaultBrowser, MacDefaultBrowser>();
+        services.AddSingleton<ILoginItem, MacLoginItem>();
         services.AddSingleton(provider => new AutomationPlanBuilder(provider.GetRequiredService<IDefaultBrowser>()));
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IScriptRunner, AppleScriptRunner>();

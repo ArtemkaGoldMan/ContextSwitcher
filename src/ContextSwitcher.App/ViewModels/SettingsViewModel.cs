@@ -27,6 +27,9 @@ public sealed class SettingsViewModel : ViewModelBase
     private readonly IProcessRunner processRunner;
 
     private readonly Func<IReadOnlyList<string>> preferredLanguages;
+    private readonly ILoginItem? loginItem;
+    private LoginItemStatus loginItemStatus;
+    private string? loginItemProblem;
     private Choice<AppearanceMode> selectedAppearance;
     private Choice<string> selectedLanguage;
     private bool showDockIcon;
@@ -43,8 +46,11 @@ public sealed class SettingsViewModel : ViewModelBase
         IPermissionsChecker permissionsChecker,
         IProcessRunner processRunner,
         UpdatesViewModel updates,
-        Func<IReadOnlyList<string>>? preferredLanguages = null)
+        Func<IReadOnlyList<string>>? preferredLanguages = null,
+        ILoginItem? loginItem = null)
     {
+        this.loginItem = loginItem;
+        this.loginItemStatus = loginItem?.Status ?? LoginItemStatus.Unavailable;
         this.preferredLanguages = preferredLanguages ?? PreferredLanguages.Get;
         this.configurationStore = configurationStore;
         this.permissionsChecker = permissionsChecker;
@@ -68,6 +74,7 @@ public sealed class SettingsViewModel : ViewModelBase
         this.RefreshPermissionsCommand = new AsyncRelayCommand(this.RefreshPermissionsAsync);
         this.OpenAutomationSettingsCommand = new RelayCommand(() => this.OpenUrl(AutomationSettingsUrl));
         this.SupportDeveloperCommand = new RelayCommand(() => this.OpenUrl(AppLinks.Support));
+        this.OpenLoginItemsCommand = new RelayCommand(() => this.loginItem?.OpenSystemSettings());
 
         _ = this.RefreshPermissionsAsync();
     }
@@ -133,6 +140,45 @@ public sealed class SettingsViewModel : ViewModelBase
             }
         }
     }
+
+    /// <summary>
+    /// Whether the app opens when the person logs in. macOS keeps this, not the settings file: it is
+    /// read from macOS and changed there the moment the switch is flipped.
+    /// </summary>
+    public bool OpenAtLogin
+    {
+        get => this.loginItemStatus is LoginItemStatus.On or LoginItemStatus.NeedsApproval;
+        set
+        {
+            if (value == this.OpenAtLogin || this.loginItem is null)
+            {
+                return;
+            }
+
+            this.loginItemProblem = this.loginItem.SetEnabled(value);
+            this.RefreshLoginItem();
+        }
+    }
+
+    /// <summary>Only an installed copy can open at login; run from source, the switch is off and says so.</summary>
+    public bool CanOpenAtLogin => this.loginItemStatus != LoginItemStatus.Unavailable;
+
+    /// <summary>Under the switch: why it didn't change, what macOS still wants, or why it can't be used.</summary>
+    public string? OpenAtLoginHint => this.loginItemProblem is { } problem
+        ? Localized.Format(Strings.Settings_OpenAtLogin_Failed, problem)
+        : this.loginItemStatus switch
+        {
+            LoginItemStatus.NeedsApproval => Strings.Settings_OpenAtLogin_NeedsApproval,
+            LoginItemStatus.Unavailable => Strings.Settings_OpenAtLogin_Unavailable,
+            _ => null
+        };
+
+    public bool HasOpenAtLoginHint => this.OpenAtLoginHint is not null;
+
+    /// <summary>macOS waits for the person to allow it in Login Items; this opens that page.</summary>
+    public bool NeedsLoginItemApproval => this.loginItemStatus == LoginItemStatus.NeedsApproval;
+
+    public RelayCommand OpenLoginItemsCommand { get; }
 
     /// <summary>Whether the daily check for a new version runs; "Check now" works either way.</summary>
     public bool CheckForUpdates
@@ -252,8 +298,24 @@ public sealed class SettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Reads opening at login from macOS again: it can be turned off in System Settings, or approved
+    /// there, while this page is open.
+    /// </summary>
+    private void RefreshLoginItem()
+    {
+        this.loginItemStatus = this.loginItem?.Status ?? LoginItemStatus.Unavailable;
+        this.OnPropertyChanged(nameof(this.OpenAtLogin));
+        this.OnPropertyChanged(nameof(this.CanOpenAtLogin));
+        this.OnPropertyChanged(nameof(this.OpenAtLoginHint));
+        this.OnPropertyChanged(nameof(this.HasOpenAtLoginHint));
+        this.OnPropertyChanged(nameof(this.NeedsLoginItemApproval));
+    }
+
     private async Task RefreshPermissionsAsync()
     {
+        this.loginItemProblem = null;
+        this.RefreshLoginItem();
         this.IsCheckingPermissions = true;
         try
         {
