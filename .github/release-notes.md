@@ -1,11 +1,10 @@
 ## What's new
 
-- **See what an update brings before installing it.** Settings → Updates now lists what's new in a version, right above Install and restart.
-- **"Default browser" works like the browser it is.** When it's Chrome, Brave or Safari, avoiding duplicate tabs and closing a profile's tabs now work with it too.
-- **Apps aren't restarted for nothing.** An app or Docker container the next profile also uses stays open instead of being quit and opened again.
-- **Links with commas open.** Addresses such as map coordinates no longer break.
-- **More accurate time tracking.** Time after midnight counts for the new day, and a crash no longer counts the hours until the app is opened again.
-- **Clearer install instructions.** The manual download needs one Terminal command, and the README and this page now say when, why and what it does.
+- **Open at login.** Turn on Settings → Open at login - the setup offers it too - so Context Switcher is always in the menu bar and counting time.
+- **In the Dock.** New installs show the app in the Dock as well as the menu bar, and Show in the Dock now applies at once.
+- **Hide instead of quit.** Tick Hide for an app and it's hidden when you leave the profile, not quit - it comes back instantly with its windows.
+- **Time stops while the screen is locked.** A lunch break with the Mac locked no longer counts as work.
+- **Export and import.** Save your profiles and settings to a file in Settings, to keep a copy or set up another Mac the same way.
 
 ## Install
 
