@@ -51,6 +51,9 @@ Every part is optional. A profile that only opens two apps is a perfectly good p
 
 You need a Mac with **Apple silicon** (M1 or later) and **macOS 13 Ventura or later**.
 
+Pick one of the three. Options 1 and 2 are one command and nothing else. Option 3 is a download
+**plus one Terminal command you can't skip**.
+
 ### Option 1 — one command (recommended)
 
 Open **Terminal** (press ⌘Space, type *Terminal*, press Return), paste this and press Return:
@@ -72,17 +75,34 @@ brew install --cask artemkagoldman/tap/contextswitcher
 
 ### Option 3 — download it yourself
 
+> [!IMPORTANT]
+> **This option has a required step in Terminal.** macOS blocks a downloaded copy of
+> ContextSwitcher, and the app won't open until you run the command in step 3. Options 1 and 2 do
+> this for you.
+
 1. Download **ContextSwitcher-x.y.z.dmg** from the [latest release](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/latest).
 2. Open it and drag **ContextSwitcher** onto **Applications**.
-3. Allow it to open — once. macOS will say *"Apple could not verify ContextSwitcher is free of
-   malware"*. Either paste this into Terminal:
+3. **Required: run this in Terminal** (press ⌘Space, type *Terminal*, press Return), then press
+   Return once more:
 
    ```bash
    xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
    ```
 
-   or try to open the app, click **Done**, then go to **System Settings → Privacy & Security**,
-   scroll down to *"ContextSwitcher was blocked"* and click **Open Anyway**.
+   It prints nothing when it works. Skip it and macOS only says *"Apple could not verify
+   ContextSwitcher is free of malware"* and won't open the app. You do this once: updates the app
+   installs itself don't need it.
+4. Open **ContextSwitcher** from Applications. It lives in the menu bar.
+
+<details>
+<summary><b>Rather not use Terminal?</b></summary>
+
+<br>
+
+Instead of step 3: try to open the app and click **Done**, then go to **System Settings → Privacy &
+Security**, scroll down to *"ContextSwitcher was blocked"* and click **Open Anyway**.
+
+</details>
 
 <details>
 <summary><b>Why does macOS block it, and is that command safe?</b></summary>
@@ -285,7 +305,14 @@ you don't use.
 
 <br>
 
-You downloaded the `.dmg` in a browser. Allow it once — see [step 3 of Option 3](#option-3--download-it-yourself).
+You installed from the `.dmg` and the required step was skipped. Run this in Terminal, then open the
+app again:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
+```
+
+More in [Option 3](#option-3--download-it-yourself).
 </details>
 
 <details>

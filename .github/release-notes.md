@@ -20,15 +20,16 @@ Or with [Homebrew](https://brew.sh):
 brew install --cask artemkagoldman/tap/contextswitcher
 ```
 
-Or download `ContextSwitcher-*.dmg` below and drag the app to Applications. ContextSwitcher isn't
-notarised by Apple (that needs a paid developer account), so macOS refuses to open it the first time.
-Allow it once with:
+Or download `ContextSwitcher-*.dmg` below and drag the app to Applications — and then **run this in
+Terminal. It's required: the app won't open without it.**
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
 ```
 
-or from **System Settings → Privacy & Security → Open Anyway**.
+ContextSwitcher isn't notarised by Apple (that needs a paid developer account), so macOS blocks a
+downloaded copy until it's allowed once. Instead of the command you can use **System Settings →
+Privacy & Security → Open Anyway**. The two options above don't need this step.
 
 Requires an Apple silicon Mac and macOS 13 or later.
 
