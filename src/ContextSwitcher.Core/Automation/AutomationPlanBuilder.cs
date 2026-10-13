@@ -15,6 +15,7 @@ public sealed class AutomationPlanBuilder
     private static readonly TimeSpan LaunchAppTimeoutPerApp = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan BrowserContextTimeout = TimeSpan.FromSeconds(20);
     private static readonly TimeSpan CloseTabsTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan HideAppsTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan FocusTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan MediaTimeout = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan DockerTimeout = TimeSpan.FromSeconds(45);
@@ -57,6 +58,7 @@ public sealed class AutomationPlanBuilder
             // they don't come back when it next restores its last session.
             AddCloseBrowserTabs(steps, previous, target, Resolve, criticalTypes);
             AddCloseApplications(steps, previous, target, criticalTypes);
+            AddHideApplications(steps, previous, target, criticalTypes);
         }
 
         AddSetFocusMode(steps, previous, target, criticalTypes);
@@ -158,6 +160,33 @@ public sealed class AutomationPlanBuilder
             previous.Id,
             "Close applications",
             QuitAppTimeoutPerApp * apps.Count,
+            criticalTypes,
+            new Dictionary<string, string> { ["apps"] = List(apps) }));
+    }
+
+    /// <summary>
+    /// The apps the profile being left hides rather than quits. One the profile being entered
+    /// launches is left alone: opening it would only bring it straight back.
+    /// </summary>
+    private static void AddHideApplications(
+        List<AutomationStep> steps,
+        ContextDefinition previous,
+        ContextDefinition? target,
+        HashSet<string> criticalTypes)
+    {
+        List<string> apps = previous.HideApps
+            .Except(target?.LaunchApps ?? [], StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (apps.Count == 0)
+        {
+            return;
+        }
+
+        steps.Add(CreateStep(
+            AutomationStepType.HideApplications,
+            previous.Id,
+            "Hide applications",
+            HideAppsTimeout,
             criticalTypes,
             new Dictionary<string, string> { ["apps"] = List(apps) }));
     }

@@ -81,7 +81,7 @@
   <!-- An app in a profile: its icon, its name (typed only when added by hand), Launch and Close. -->
   <DataTemplate x:Key="AppRow" x:DataType="vm:AppRowViewModel">
     <Border Classes="listRow">
-      <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
         <Panel Grid.Column="0" Classes="leadingIcon">
           <Border CornerRadius="5" Background="{DynamicResource BorderBrush}" IsVisible="{Binding !HasIcon}" />
           <Image Source="{Binding Icon}" IsVisible="{Binding HasIcon}" />
@@ -90,7 +90,8 @@
         <TextBox Grid.Column="1" Classes="inRow" Text="{Binding Name}" PlaceholderText="{x:Static r:Strings.Common_AppNameAsInApplications}" Margin="0,0,10,0" IsVisible="{Binding IsEditable}" />
         <CheckBox Grid.Column="2" Content="{x:Static r:Strings.Common_Launch}" IsChecked="{Binding LaunchOnEnter}" Margin="8,0" VerticalAlignment="Center" />
         <CheckBox Grid.Column="3" Content="{x:Static r:Strings.Common_Close}" IsChecked="{Binding CloseOnLeave}" Margin="8,0" VerticalAlignment="Center" />
-        <Button Grid.Column="4" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="{x:Static r:Strings.Common_Remove}" AutomationProperties.Name="{x:Static r:Strings.Common_Remove}">
+        <CheckBox Grid.Column="4" Content="{x:Static r:Strings.Common_Hide}" IsChecked="{Binding HideOnLeave}" Margin="8,0" VerticalAlignment="Center" ToolTip.Tip="{x:Static r:Strings.Common_HideTip}" />
+        <Button Grid.Column="5" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="{x:Static r:Strings.Common_Remove}" AutomationProperties.Name="{x:Static r:Strings.Common_Remove}">
           <Viewbox Classes="icon rowAction">
             <Path Classes="glyph" Data="{DynamicResource IconX}" />
           </Viewbox>

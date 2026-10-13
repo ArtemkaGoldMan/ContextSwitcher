@@ -17,5 +17,8 @@ public enum AutomationStepType
     AnalyticsBoundary,
 
     /// <summary>Closes the tabs of the pages the context being left lists to close.</summary>
-    CloseBrowserTabs
+    CloseBrowserTabs,
+
+    /// <summary>Hides the apps the context being left lists to hide.</summary>
+    HideApplications
 }

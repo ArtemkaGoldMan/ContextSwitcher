@@ -539,11 +539,27 @@ public sealed class AutomationStepExecutorTests
         return new AutomationStep("SetFocusMode.work", AutomationStepType.SetFocusMode, "Set Focus mode", isCritical, TimeSpan.FromSeconds(10), arguments);
     }
 
-    private static AutomationStepExecutor CreateExecutor(FakeProcessRunner processRunner, FakeScriptRunner scriptRunner, FakeClock clock)
+    private static AutomationStepExecutor CreateExecutor(FakeProcessRunner processRunner, FakeScriptRunner scriptRunner, FakeClock clock, FakeApplicationHider? hider = null)
     {
         // No wait between "is it still running?" checks, so a test of an app that never quits does
-        // not sit through the real interval.
-        return new AutomationStepExecutor(processRunner, scriptRunner, new BrowserLauncher(processRunner, scriptRunner), clock, quitConfirmInterval: TimeSpan.Zero);
+        // not sit through the real interval. Never the real hider: it would hide this Mac's apps.
+        return new AutomationStepExecutor(
+            processRunner, scriptRunner, new BrowserLauncher(processRunner, scriptRunner), clock, quitConfirmInterval: TimeSpan.Zero, hider: hider ?? new FakeApplicationHider());
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncHideApplicationsAsksEachToHide()
+    {
+        FakeApplicationHider hider = new();
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), new FakeScriptRunner(), new FakeClock(), hider);
+        AutomationStep step = new(
+            "HideApplications.work", AutomationStepType.HideApplications, "Hide applications", false, TimeSpan.FromSeconds(5),
+            new Dictionary<string, string> { ["apps"] = """["Slack","Notion"]""" });
+
+        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(["Slack", "Notion"], hider.Hidden);
+        Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
     }
 
     private static AutomationStep CloseApplicationsStep(IReadOnlyList<string> apps, bool isCritical)

@@ -97,6 +97,7 @@ public static class AppHost
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IScriptRunner, AppleScriptRunner>();
         services.AddSingleton<BrowserLauncher>();
+        services.AddSingleton<IApplicationHider, MacApplicationHider>();
         services.AddSingleton<IAutomationStepExecutor, AutomationStepExecutor>();
         services.AddSingleton<IContextSwitchService>(provider => new ContextSwitchService(
             provider.GetRequiredService<IJsonStore>(),

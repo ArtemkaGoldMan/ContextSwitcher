@@ -462,4 +462,28 @@ public sealed class AutomationPlanBuilderTests
 
         Assert.Equal("Default", plan.Steps.Single(step => step.Type == AutomationStepType.CloseBrowserTabs).Arguments["browser"]);
     }
+
+    /// <summary>
+    /// Leaving hides the apps listed to hide, after quitting those listed to close - except one the
+    /// next profile launches, which opening would only bring straight back.
+    /// </summary>
+    [Fact]
+    public void LeavingHidesTheAppsListedToHide()
+    {
+        ContextDefinition previous = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            CloseApps = ["Slack"],
+            HideApps = ["Visual Studio Code", "Notion"]
+        };
+        ContextDefinition target = new() { Id = "personal", DisplayName = "Personal", LaunchApps = ["Notion"] };
+
+        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
+
+        Assert.Equal(
+            [AutomationStepType.CloseApplications, AutomationStepType.HideApplications, AutomationStepType.LaunchApplications],
+            plan.Steps.Select(step => step.Type));
+        Assert.Equal("""["Visual Studio Code"]""", plan.Steps[1].Arguments["apps"]);
+    }
 }

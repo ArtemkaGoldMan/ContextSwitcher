@@ -22,6 +22,12 @@
   <data name="Common_Open" xml:space="preserve">
     <value>Відкривати</value>
   </data>
+  <data name="Common_Hide" xml:space="preserve">
+    <value>Ховати</value>
+  </data>
+  <data name="Common_HideTip" xml:space="preserve">
+    <value>Сховати замість закрити: програма лишається відкритою й повертається з усіма вікнами.</value>
+  </data>
   <data name="Common_Close" xml:space="preserve">
     <value>Закривати</value>
   </data>
@@ -194,7 +200,7 @@
     <value>ПРОГРАМИ</value>
   </data>
   <data name="ProfileSetup_LaunchOpensTheAppWhen" xml:space="preserve">
-    <value>«Відкривати» відкриває програму, коли ви переходите в цей профіль. «Закривати» закриває її, коли ви з нього виходите.</value>
+    <value>«Відкривати» відкриває програму, коли ви переходите в цей профіль. «Закривати» закриває її, коли ви з нього виходите; «Ховати» лише ховає, тож вона повертається одразу з усіма вікнами.</value>
   </data>
   <data name="ProfileSetup_NoAppsYetAddThe" xml:space="preserve">
     <value>Програм ще немає — додайте ті, які цей профіль має відкривати чи закривати.</value>
@@ -604,6 +610,9 @@
   <data name="Step_StopDockerResources" xml:space="preserve">
     <value>Зупинка контейнерів</value>
   </data>
+  <data name="Step_HideApplications" xml:space="preserve">
+    <value>Приховування програм</value>
+  </data>
   <data name="Step_CloseApplications" xml:space="preserve">
     <value>Закриття програм</value>
   </data>
@@ -918,6 +927,9 @@
   </data>
   <data name="Msg_Config_ActiveContextMissing" xml:space="preserve">
     <value>Активний профіль має бути одним з наявних.</value>
+  </data>
+  <data name="Msg_Config_AppClosedAndHidden" xml:space="preserve">
+    <value>{0} налаштовано і закривати, і ховати під час виходу з профілю; оберіть щось одне.</value>
   </data>
   <data name="Msg_Config_UrlModeNeedsUrl" xml:space="preserve">
     <value>Для відкриття сторінок потрібна принаймні одна URL-адреса.</value>

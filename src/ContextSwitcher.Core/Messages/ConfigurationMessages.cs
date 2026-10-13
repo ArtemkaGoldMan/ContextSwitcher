@@ -22,6 +22,11 @@ public static class ConfigurationMessages
 
     public static readonly MessageTemplate ActiveContextMissing = new("Config_ActiveContextMissing", "Active context must reference an existing context.");
 
+    /// <summary>{0} is the app's name.</summary>
+    public static readonly MessageTemplate AppClosedAndHidden = new(
+        "Config_AppClosedAndHidden",
+        "{0} is set both to close and to hide when leaving the profile; choose one.");
+
     public static readonly MessageTemplate UrlModeNeedsUrl = new("Config_UrlModeNeedsUrl", "URL mode requires at least one URL.");
 
     public static readonly MessageTemplate BrowserModeInvalid = new("Config_BrowserModeInvalid", "Browser management mode is invalid.");

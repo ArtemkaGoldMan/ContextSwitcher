@@ -3,15 +3,17 @@ using Avalonia.Media.Imaging;
 namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
-/// One row in a Profile Setup's app list. Presents the on-disk <c>launchApps</c>/<c>closeApps</c>
-/// flat lists (agent.md section 6.1) as a single row per app with two independent toggles - the
-/// friendlier editing surface described in section 11.1.2.
+/// One row in a Profile Setup's app list. Presents the on-disk <c>launchApps</c>/<c>closeApps</c>/
+/// <c>hideApps</c> flat lists (agent.md section 6.1) as a single row per app: Launch on entering, and
+/// on leaving either Close or Hide - ticking one unticks the other, as an app is quit or hidden, not
+/// both.
 /// </summary>
 public sealed class AppRowViewModel : ViewModelBase
 {
     private string name;
     private bool launchOnEnter;
     private bool closeOnLeave;
+    private bool hideOnLeave;
     private Bitmap? icon;
 
     /// <param name="isEditable">
@@ -19,12 +21,13 @@ public sealed class AppRowViewModel : ViewModelBase
     /// config is shown by name, not as a text box - its name is exactly what <c>open -a</c> needs,
     /// and the only edit to make to it is a typo.
     /// </param>
-    public AppRowViewModel(string name, bool launchOnEnter, bool closeOnLeave, Action<AppRowViewModel> remove, bool isEditable = false)
+    public AppRowViewModel(string name, bool launchOnEnter, bool closeOnLeave, Action<AppRowViewModel> remove, bool isEditable = false, bool hideOnLeave = false)
     {
         this.name = name;
         this.IsEditable = isEditable;
         this.launchOnEnter = launchOnEnter;
         this.closeOnLeave = closeOnLeave;
+        this.hideOnLeave = hideOnLeave && !closeOnLeave;
         this.RemoveCommand = new RelayCommand(() => remove(this));
     }
 
@@ -45,7 +48,26 @@ public sealed class AppRowViewModel : ViewModelBase
     public bool CloseOnLeave
     {
         get => this.closeOnLeave;
-        set => this.SetProperty(ref this.closeOnLeave, value);
+        set
+        {
+            if (this.SetProperty(ref this.closeOnLeave, value) && value)
+            {
+                this.HideOnLeave = false;
+            }
+        }
+    }
+
+    /// <summary>Hidden rather than quit on leaving: it keeps running, and comes back with its windows.</summary>
+    public bool HideOnLeave
+    {
+        get => this.hideOnLeave;
+        set
+        {
+            if (this.SetProperty(ref this.hideOnLeave, value) && value)
+            {
+                this.CloseOnLeave = false;
+            }
+        }
     }
 
     /// <summary>

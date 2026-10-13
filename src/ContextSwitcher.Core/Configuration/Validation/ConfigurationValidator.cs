@@ -79,6 +79,11 @@ public sealed class ConfigurationValidator
                 errors.Add(ConfigurationValidationError.Of($"{path}.accentColor", ConfigurationMessages.AccentColorInvalid.With()));
             }
 
+            foreach (string app in context.HideApps.Intersect(context.CloseApps, StringComparer.OrdinalIgnoreCase))
+            {
+                errors.Add(ConfigurationValidationError.Of($"{path}.hideApps", ConfigurationMessages.AppClosedAndHidden.With(app)));
+            }
+
             ValidateBrowserManagement(context.BrowserManagement, $"{path}.browser_management", errors);
             ValidateQuickLinks(context.QuickLinks, $"{path}.quickLinks", errors);
         }
