@@ -193,6 +193,43 @@ public sealed class AnalyticsServiceTests
         Assert.Single(store.Sessions);
     }
 
+    /// <summary>
+    /// A crash ends the session when the app was last known to be running - not at the next launch,
+    /// which counted the whole time the app was down.
+    /// </summary>
+    [Fact]
+    public async Task ACrashedSessionEndsWhenTheAppWasLastAlive()
+    {
+        (AnalyticsService service, FakeClock clock, InMemoryAnalyticsSessionStore store) = CreateWithClock();
+        await service.StartSessionAsync("work", CancellationToken.None);
+        clock.UtcNow = clock.UtcNow.AddMinutes(40);
+        await service.RecordAliveAsync(CancellationToken.None);
+
+        clock.UtcNow = clock.UtcNow.AddHours(14);
+        await service.RecoverFromCrashAsync(CancellationToken.None);
+
+        ContextSession recovered = Assert.Single(store.Sessions);
+        Assert.Equal(2400, recovered.DurationSeconds);
+    }
+
+    /// <summary>
+    /// A session begun while the app wasn't running - a switch from the command line - has no sign
+    /// of life in it, and counts up to the launch.
+    /// </summary>
+    [Fact]
+    public async Task ASessionTheAppNeverSawRunsUntilItStarts()
+    {
+        (AnalyticsService service, FakeClock clock, InMemoryAnalyticsSessionStore store) = CreateWithClock();
+        await service.RecordAliveAsync(CancellationToken.None);
+        clock.UtcNow = clock.UtcNow.AddHours(1);
+        await service.StartSessionAsync("work", CancellationToken.None);
+
+        clock.UtcNow = clock.UtcNow.AddMinutes(30);
+        await service.RecoverFromCrashAsync(CancellationToken.None);
+
+        Assert.Equal(1800, Assert.Single(store.Sessions).DurationSeconds);
+    }
+
     private static (AnalyticsService Service, InMemoryAnalyticsSessionStore Store) Create()
     {
         (AnalyticsService service, _, InMemoryAnalyticsSessionStore store) = CreateWithClock();

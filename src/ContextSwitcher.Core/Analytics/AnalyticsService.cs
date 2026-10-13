@@ -74,7 +74,32 @@ public sealed class AnalyticsService : IAnalyticsService
             return;
         }
 
-        await this.CompleteRunningSessionAsync(SessionEndReason.RecoveredAfterCrash, cancellationToken).ConfigureAwait(false);
+        // A crash used to count everything up to the next launch - a night, if the app went down in
+        // the evening. The last sign of life during the session is when it really stopped. One from
+        // before the session began means the app wasn't running then, as after a switch from the
+        // command line with the app closed; that session counts up to now.
+        DateTimeOffset now = this.clock.UtcNow;
+        if (await this.store.ReadActiveMarkerAsync(cancellationToken).ConfigureAwait(false) is not { } stale)
+        {
+            return;
+        }
+
+        DateTimeOffset? alive = await this.store.ReadLastAliveAsync(cancellationToken).ConfigureAwait(false);
+        DateTimeOffset endedAt = alive is { } at && at >= stale.StartedAt && at < now ? at : now;
+
+        await this.store.AppendCompletedSessionAsync(Ended(stale, SessionEndReason.RecoveredAfterCrash, endedAt), cancellationToken).ConfigureAwait(false);
+        await this.store.ClearActiveMarkerAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task RecordAliveAsync(CancellationToken cancellationToken)
+    {
+        if (!this.Enabled)
+        {
+            return;
+        }
+
+        await this.store.WriteLastAliveAsync(this.clock.UtcNow, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

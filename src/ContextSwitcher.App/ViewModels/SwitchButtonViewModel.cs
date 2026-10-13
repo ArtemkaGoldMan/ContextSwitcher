@@ -1,5 +1,6 @@
 using System.Windows.Input;
 using Avalonia.Media;
+using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -30,6 +31,18 @@ public sealed class SwitchButtonViewModel : ViewModelBase
     public bool IsCurrent
     {
         get => this.isCurrent;
-        set => this.SetProperty(ref this.isCurrent, value);
+        set
+        {
+            if (this.SetProperty(ref this.isCurrent, value))
+            {
+                this.OnPropertyChanged(nameof(this.ToolTip));
+            }
+        }
     }
+
+    /// <summary>
+    /// Says what clicking does where it isn't obvious: the active profile's button turns it off,
+    /// and nothing on screen said so.
+    /// </summary>
+    public string? ToolTip => this.IsCurrent ? Strings.Dashboard_ClickToTurnOff : null;
 }

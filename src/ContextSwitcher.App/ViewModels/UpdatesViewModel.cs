@@ -86,6 +86,14 @@ public sealed class UpdatesViewModel : ViewModelBase
     /// <summary>"0.2.0", or empty when there is no update.</summary>
     public string AvailableVersionText => this.available is null ? string.Empty : ReleaseVersion.Format(this.available.Version);
 
+    /// <summary>What the waiting update brings, from its release's "What's new" list.</summary>
+    public IReadOnlyList<string> AvailableNotes => this.available?.Notes ?? [];
+
+    public bool HasNotes => this.AvailableNotes.Count > 0;
+
+    /// <summary>"What's new in 0.4.1", over <see cref="AvailableNotes"/>.</summary>
+    public string WhatsNewHeading => Localized.Format(Strings.Updates_WhatsNewHeading, this.AvailableVersionText);
+
     /// <summary>An update is waiting and this copy can put it in place itself.</summary>
     public bool CanInstall => this.available is not null && this.installBlocker is null;
 
@@ -107,10 +115,15 @@ public sealed class UpdatesViewModel : ViewModelBase
 
     public bool HasInstallBlocker => this.IsUpdateAvailable && this.installBlocker is not null;
 
-    /// <summary>The link to the release: its notes when the app installs it, the download when it can't.</summary>
-    public string ReleasePageLinkText => this.installBlocker is null
-        ? Localized.Format(Strings.Updates_WhatsNewIn, this.AvailableVersionText)
-        : Localized.Format(Strings.Updates_DownloadFromGitHub, this.AvailableVersionText);
+    /// <summary>
+    /// The link to the release: the download when this copy can't install it, the full notes under
+    /// the list when there is one, and otherwise the notes themselves.
+    /// </summary>
+    public string ReleasePageLinkText => this.installBlocker is not null
+        ? Localized.Format(Strings.Updates_DownloadFromGitHub, this.AvailableVersionText)
+        : this.HasNotes
+            ? Strings.Updates_ReleaseNotesLink
+            : Localized.Format(Strings.Updates_WhatsNewIn, this.AvailableVersionText);
 
     public bool IsBusy
     {
@@ -258,6 +271,9 @@ public sealed class UpdatesViewModel : ViewModelBase
         this.available = release;
         this.OnPropertyChanged(nameof(this.IsUpdateAvailable));
         this.OnPropertyChanged(nameof(this.AvailableVersionText));
+        this.OnPropertyChanged(nameof(this.AvailableNotes));
+        this.OnPropertyChanged(nameof(this.HasNotes));
+        this.OnPropertyChanged(nameof(this.WhatsNewHeading));
         this.OnPropertyChanged(nameof(this.CanInstall));
         this.OnPropertyChanged(nameof(this.HasInstallBlocker));
         this.OnPropertyChanged(nameof(this.ReleasePageLinkText));

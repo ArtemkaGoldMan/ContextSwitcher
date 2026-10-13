@@ -35,6 +35,10 @@ public static class SwitchMessages
         "Switch_CouldNotCheckTabs",
         "Could not check {0} for existing tabs, so URLs were opened without duplicate checking. Check Automation permissions.");
 
+    public static readonly MessageTemplate CloseTabsNeedsBrowser = new(
+        "Switch_CloseTabsNeedsBrowser",
+        "The profile's tabs weren't closed: that needs Chrome, Brave or Safari as the browser.");
+
     public static readonly MessageTemplate CouldNotCloseTabs = new(
         "Switch_CouldNotCloseTabs",
         "Could not close the profile's tabs in {0}. Check Automation permissions.");

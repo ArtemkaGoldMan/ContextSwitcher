@@ -29,13 +29,15 @@ ContextSwitcher $version
 
 1. Drag ContextSwitcher.app onto the Applications folder in this window.
 
-2. macOS will refuse to open it the first time. ContextSwitcher is not notarised by Apple -
-   that needs a paid Developer ID, and this is a free MIT project. To allow it, run this once
-   in Terminal:
+2. REQUIRED - the app won't open until you do this. Run it once in Terminal:
 
        xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
 
-   Or open it once from System Settings > Privacy & Security > Open Anyway.
+   Why: your browser marked this download as "from the internet", and macOS only opens such
+   an app without asking if its developer pays Apple \$99 a year to have it notarised.
+   ContextSwitcher is a free hobby project and \$99 a year is too much for me, so it isn't.
+   The command removes that label from this one app and changes nothing else. Instead of it,
+   you can open the app once from System Settings > Privacy & Security > Open Anyway.
 
    You only do this once: the app updates itself from Settings > Updates, and updates it
    installs open without this step.

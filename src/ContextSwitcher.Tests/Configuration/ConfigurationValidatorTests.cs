@@ -142,8 +142,12 @@ public sealed class ConfigurationValidatorTests
         Assert.True(this.validator.Validate(configuration).IsValid);
     }
 
+    /// <summary>
+    /// "Default browser" can close tabs when it is Chrome, Brave or Safari, which only the Mac running
+    /// the switch knows - so the configuration is fine, and a switch says if it can't.
+    /// </summary>
     [Fact]
-    public void ValidateRejectsClosingTabsInTheDefaultBrowser()
+    public void ValidateAcceptsClosingTabsInTheDefaultBrowser()
     {
         AppConfiguration configuration = CreateConfiguration(new BrowserManagementConfig
         {
@@ -153,10 +157,7 @@ public sealed class ConfigurationValidatorTests
             CloseUrls = ["https://github.com/"]
         });
 
-        ConfigurationValidationResult result = this.validator.Validate(configuration);
-
-        ConfigurationValidationError error = Assert.Single(result.Errors);
-        Assert.Equal("contexts[0].browser_management.close_urls", error.Path);
+        Assert.True(this.validator.Validate(configuration).IsValid);
     }
 
     [Fact]

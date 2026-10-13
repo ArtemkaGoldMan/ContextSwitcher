@@ -226,6 +226,9 @@
   <data name="ProfileSetup_CloseTabsNeedsBrowser" xml:space="preserve">
     <value>Щоб закривати вкладки, потрібен конкретний браузер — у браузері за замовчуванням не можна перевірити відкриті вкладки.</value>
   </data>
+  <data name="ProfileSetup_CloseTabsUnsupported" xml:space="preserve">
+    <value>Щоб закривати вкладки, потрібен Chrome, Brave або Safari — у {0} не можна перевірити відкриті вкладки.</value>
+  </data>
   <data name="ProfileSetup_StartupURLs" xml:space="preserve">
     <value>Сторінки</value>
   </data>
@@ -655,6 +658,12 @@
   <data name="Updates_Version" xml:space="preserve">
     <value>Версія {0}</value>
   </data>
+  <data name="Updates_WhatsNewHeading" xml:space="preserve">
+    <value>Що нового у версії {0}</value>
+  </data>
+  <data name="Updates_ReleaseNotesLink" xml:space="preserve">
+    <value>Опис релізу на GitHub ↗</value>
+  </data>
   <data name="Updates_WhatsNewIn" xml:space="preserve">
     <value>Що нового у версії {0} ↗</value>
   </data>
@@ -711,6 +720,9 @@
   </data>
   <data name="Dashboard_NoProfile" xml:space="preserve">
     <value>Без профілю</value>
+  </data>
+  <data name="Dashboard_ClickToTurnOff" xml:space="preserve">
+    <value>Натисніть, щоб вимкнути цей профіль</value>
   </data>
   <data name="Dashboard_PickAProfile" xml:space="preserve">
     <value>Натисніть профіль, щоб увімкнути його</value>
@@ -804,6 +816,12 @@
   </data>
   <data name="Browser_Default" xml:space="preserve">
     <value>Браузер за замовчуванням</value>
+  </data>
+  <data name="Browser_DefaultIs" xml:space="preserve">
+    <value>Браузер за замовчуванням ({0})</value>
+  </data>
+  <data name="Browser_AvoidDuplicates_Unsupported" xml:space="preserve">
+    <value>Потрібен Chrome, Brave або Safari — у {0} не можна перевірити відкриті вкладки.</value>
   </data>
   <data name="Browser_AvoidDuplicates_On" xml:space="preserve">
     <value>Переходить на вже відкриту вкладку замість того, щоб відкривати ще одну.</value>
@@ -907,9 +925,6 @@
   <data name="Msg_Config_BrowserModeInvalid" xml:space="preserve">
     <value>Неправильний режим браузера.</value>
   </data>
-  <data name="Msg_Config_CloseTabsNeedsBrowser" xml:space="preserve">
-    <value>Щоб закривати вкладки, потрібен Chrome, Brave або Safari: у браузера за замовчуванням не можна дізнатися, які вкладки відкриті.</value>
-  </data>
   <data name="Msg_Config_BrowserInvalid" xml:space="preserve">
     <value>Браузер має бути Default, Chrome, Brave або Safari.</value>
   </data>
@@ -978,6 +993,9 @@
   </data>
   <data name="Msg_Switch_StepTimedOut" xml:space="preserve">
     <value>Крок не завершився за {0} с.</value>
+  </data>
+  <data name="Msg_Switch_CloseTabsNeedsBrowser" xml:space="preserve">
+    <value>Вкладки профілю не закрито: для цього браузером має бути Chrome, Brave або Safari.</value>
   </data>
   <data name="Msg_Switch_CouldNotCloseTabs" xml:space="preserve">
     <value>Не вдалося закрити вкладки профілю в {0}. Перевірте дозволи «Автоматизації».</value>

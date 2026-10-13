@@ -26,6 +26,9 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     private readonly AccentChoiceViewModel customAccent;
 
+    /// <summary>The browser macOS opens links in, which "Default browser" stands for.</summary>
+    private readonly DefaultBrowser? systemDefault;
+
     private string displayName;
     private string accentColor;
     private bool customAccentChosen;
@@ -49,10 +52,21 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         ISystemCatalog catalog,
         IProcessRunner processRunner,
         IFocusShortcutInstaller focusShortcuts,
-        ContextDefinition? existing)
+        ContextDefinition? existing,
+        IDefaultBrowser? defaultBrowser = null)
     {
         this.configurationStore = configurationStore;
         this.catalog = catalog;
+        this.systemDefault = defaultBrowser?.Get();
+        this.BrowserKindChoices =
+        [
+            new(BrowserKind.Default, this.systemDefault is { Name.Length: > 0 } known
+                ? Localized.Format(Strings.Browser_DefaultIs, known.Name)
+                : Strings.Browser_Default),
+            new(BrowserKind.Safari, "Safari"),
+            new(BrowserKind.Chrome, "Google Chrome"),
+            new(BrowserKind.Brave, "Brave")
+        ];
         this.IsNew = existing is null;
 
         ContextDefinition source = existing ?? CreateDefaultContext(AppHost.Configuration.Contexts);
@@ -312,13 +326,8 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         new(BrowserManagementMode.Profiles, Strings.Browser_Mode_Profiles)
     ];
 
-    public IReadOnlyList<Choice<BrowserKind>> BrowserKindChoices { get; } =
-    [
-        new(BrowserKind.Default, Strings.Browser_Default),
-        new(BrowserKind.Safari, "Safari"),
-        new(BrowserKind.Chrome, "Google Chrome"),
-        new(BrowserKind.Brave, "Brave")
-    ];
+    /// <summary>"Default browser" names the browser it is, when known: "Default browser (Google Chrome)".</summary>
+    public IReadOnlyList<Choice<BrowserKind>> BrowserKindChoices { get; }
 
     public BrowserManagementMode BrowserMode
     {
@@ -372,6 +381,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 this.OnPropertyChanged(nameof(this.CanAvoidDuplicateTabs));
                 this.OnPropertyChanged(nameof(this.AvoidDuplicateTabsHint));
                 this.OnPropertyChanged(nameof(this.CanCloseTabs));
+                this.OnPropertyChanged(nameof(this.CloseTabsHint));
                 foreach (BrowserPageRowViewModel row in this.BrowserUrls)
                 {
                     row.CanClose = this.CanCloseTabs;
@@ -393,22 +403,43 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Whether duplicate-tab avoidance can do anything at all. Finding an already-open tab means
-    /// scripting a named browser, and the default browser cannot be named ahead of time - so with
-    /// <see cref="BrowserKind.Default"/> the setting is inert and a new tab opens every switch.
-    /// Surfacing that here is the difference between a toggle that lies and one that explains.
+    /// The browser the profile's pages open in: the chosen one, or for "Default browser" the one
+    /// macOS opens links in - <see cref="BrowserKind.Default"/> still when that can't be scripted.
     /// </summary>
-    public bool CanAvoidDuplicateTabs => this.BrowserKind != BrowserKind.Default;
+    private BrowserKind EffectiveBrowser => this.BrowserKind == BrowserKind.Default
+        ? this.systemDefault?.Kind ?? BrowserKind.Default
+        : this.BrowserKind;
+
+    /// <summary>
+    /// Whether duplicate-tab avoidance can do anything at all. Finding an already-open tab means
+    /// scripting the browser, which works for Chrome, Brave and Safari - chosen, or the default -
+    /// and not for others, such as Firefox. Surfacing that here is the difference between a toggle
+    /// that lies and one that explains.
+    /// </summary>
+    public bool CanAvoidDuplicateTabs => this.EffectiveBrowser != BrowserKind.Default;
 
     public string AvoidDuplicateTabsHint => this.CanAvoidDuplicateTabs
         ? Strings.Browser_AvoidDuplicates_On
-        : Strings.Browser_AvoidDuplicates_NeedsBrowser;
+        : this.UnscriptableDefault is { } name
+            ? Localized.Format(Strings.Browser_AvoidDuplicates_Unsupported, name)
+            : Strings.Browser_AvoidDuplicates_NeedsBrowser;
+
+    /// <summary>Why Close is off, under the list of pages.</summary>
+    public string CloseTabsHint => this.UnscriptableDefault is { } name
+        ? Localized.Format(Strings.ProfileSetup_CloseTabsUnsupported, name)
+        : Strings.ProfileSetup_CloseTabsNeedsBrowser;
+
+    /// <summary>The default browser's name when it is the one in use and can't be scripted.</summary>
+    private string? UnscriptableDefault =>
+        this.BrowserKind == BrowserKind.Default && this.systemDefault is { Kind: BrowserKind.Default, Name.Length: > 0 } known
+            ? known.Name
+            : null;
 
     /// <summary>
     /// Whether pages can be closed on leaving: as with duplicates, it takes asking a named browser
     /// for its tabs. The rows' Close stays visible but off, with the reason under the list.
     /// </summary>
-    public bool CanCloseTabs => this.BrowserKind != BrowserKind.Default;
+    public bool CanCloseTabs => this.EffectiveBrowser != BrowserKind.Default;
 
     public bool AvoidDuplicateTabs
     {

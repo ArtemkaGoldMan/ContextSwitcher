@@ -300,6 +300,10 @@
     <value>Closing tabs needs a specific browser - the default browser can't be checked for open tabs.</value>
     <comment>ProfileSetupPage.axaml: under the list of pages while the browser is Default.</comment>
   </data>
+  <data name="ProfileSetup_CloseTabsUnsupported" xml:space="preserve">
+    <value>Closing tabs needs Chrome, Brave or Safari - {0} can't be checked for open tabs.</value>
+    <comment>Under the list of pages when the default browser can't be scripted. {0} = its name, e.g. Firefox.</comment>
+  </data>
   <data name="ProfileSetup_StartupURLs" xml:space="preserve">
     <value>Pages</value>
     <comment>ProfileSetupPage.axaml: Text</comment>
@@ -888,6 +892,14 @@
     <value>Version {0}</value>
     <comment>Settings → Updates: the installed version. {0} = e.g. 0.2.1.</comment>
   </data>
+  <data name="Updates_WhatsNewHeading" xml:space="preserve">
+    <value>What's new in {0}</value>
+    <comment>Settings → Updates: over the list of what a waiting update brings. {0} = version, e.g. 0.4.1.</comment>
+  </data>
+  <data name="Updates_ReleaseNotesLink" xml:space="preserve">
+    <value>Release notes on GitHub ↗</value>
+    <comment>Settings → Updates: link under that list to the release's page.</comment>
+  </data>
   <data name="Updates_WhatsNewIn" xml:space="preserve">
     <value>What's new in {0} ↗</value>
     <comment>Link to a waiting release's notes. {0} = version.</comment>
@@ -963,6 +975,10 @@
   <data name="Dashboard_NoProfile" xml:space="preserve">
     <value>No profile</value>
     <comment>Dashboard header when no profile is active - none yet, or the active one was turned off.</comment>
+  </data>
+  <data name="Dashboard_ClickToTurnOff" xml:space="preserve">
+    <value>Click to turn this profile off</value>
+    <comment>Tooltip on the active profile's button in the dashboard.</comment>
   </data>
   <data name="Dashboard_PickAProfile" xml:space="preserve">
     <value>Click a profile to turn it on</value>
@@ -1088,6 +1104,14 @@
     <value>Default browser</value>
     <comment>Profile Setup → Browser: whichever browser macOS opens links in.</comment>
   </data>
+  <data name="Browser_DefaultIs" xml:space="preserve">
+    <value>Default browser ({0})</value>
+    <comment>Profile Setup → Browser dropdown. {0} = the browser macOS opens links in, e.g. Google Chrome.</comment>
+  </data>
+  <data name="Browser_AvoidDuplicates_Unsupported" xml:space="preserve">
+    <value>Needs Chrome, Brave or Safari - {0} can't be checked for open tabs.</value>
+    <comment>Under Avoid duplicate tabs when the default browser can't be scripted. {0} = its name, e.g. Firefox.</comment>
+  </data>
   <data name="Browser_AvoidDuplicates_On" xml:space="preserve">
     <value>Focuses a matching tab instead of opening a second one.</value>
     <comment>Profile Setup → Avoid duplicate tabs, when it can work.</comment>
@@ -1192,10 +1216,6 @@
     <value>Browser management mode is invalid.</value>
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
   </data>
-  <data name="Msg_Config_CloseTabsNeedsBrowser" xml:space="preserve">
-    <value>Closing tabs needs Chrome, Brave, or Safari: the default browser can't be asked which tabs are open.</value>
-    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
-  </data>
   <data name="Msg_Config_BrowserInvalid" xml:space="preserve">
     <value>Browser must be Default, Chrome, Brave, or Safari.</value>
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
@@ -1289,6 +1309,10 @@
   <data name="Msg_Switch_StepTimedOut" xml:space="preserve">
     <value>Step timed out after {0} seconds.</value>
     <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
+  </data>
+  <data name="Msg_Switch_CloseTabsNeedsBrowser" xml:space="preserve">
+    <value>The profile's tabs weren't closed: that needs Chrome, Brave or Safari as the browser.</value>
+    <comment>A step of a switch that didn't fully work: closing tabs with a default browser that can't be scripted, such as Firefox.</comment>
   </data>
   <data name="Msg_Switch_CouldNotCloseTabs" xml:space="preserve">
     <value>Could not close the profile's tabs in {0}. Check Automation permissions.</value>

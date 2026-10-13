@@ -25,6 +25,7 @@ ContextSwitcher validate-config
 | `state.json` | Which profile is active, and how the last switch went. |
 | `analytics.jsonl` | Local time tracking, one line per session. A session ends at a switch, when the app quits and when the Mac sleeps. |
 | `analytics.current.json` | The session running now, shared by the app and the command line. |
+| `analytics.alive` | When the app was last running. After a crash, the open session ends then rather than at the next launch. |
 | `app.log.jsonl` | Structured log, one line per event. First place to look when something misbehaves. |
 | `backups/` | The last ten copies of each file, written before every save. |
 | `icon-cache/` | Extracted app icons for the picker. Safe to delete. |
@@ -116,6 +117,9 @@ UI shows one row per app with two checkboxes, and why both are ticked by default
 To have an app quit as you *arrive* somewhere, put it in the `closeApps` of the profile you're
 arriving **from** — not the one you're arriving at.
 
+An app the profile you're arriving at launches is left running rather than quit and opened again,
+so its windows survive the switch.
+
 Quitting is a graceful AppleScript quit, the same as pressing `Cmd+Q`. An app with unsaved work will
 show its save dialog and refuse; that's reported as a warning naming the app, and the switch carries
 on. ContextSwitcher never force-kills anything.
@@ -135,8 +139,8 @@ on. ContextSwitcher never force-kills anything.
 `closeApps`. A page can be in both lists (opened on the way in, closed on the way out) or only in
 `close_urls`. Profile Setup shows each page as one row with **Open** and **Close**. Only tabs of
 those pages close; every other tab stays. A page the profile you're switching to opens in the same
-browser is left open rather than closed and loaded again. Closing tabs needs a named browser, for
-the reason below, and only applies in `urls` mode.
+browser is left open rather than closed and loaded again. Closing tabs needs a browser that can be
+scripted, for the reason below, and only applies in `urls` mode.
 
 **A tab matches a page when it's on the same site, at the page's path or below it.**
 `https://github.com/ArtemkaGoldMan` matches every page of that account and nothing else on GitHub;
@@ -145,11 +149,12 @@ the reason below, and only applies in `urls` mode.
 only tabs with that query. The same rule decides what `avoid_duplicate_tabs` counts as already
 open.
 
-**`avoid_duplicate_tabs` needs a named browser.** Finding an already-open tab means scripting a
-specific browser, and the *default* browser can't be identified ahead of time — so with
-`"browser": "Default"` the setting has no effect and every switch opens a fresh tab. Profile Setup
-disables the toggle and explains this when the browser is `Default`. Pick a concrete browser if you
-want it.
+**Finding and closing tabs needs Chrome, Brave or Safari.** It means scripting the browser.
+`"browser": "Default"` is whichever browser macOS opens links in, looked up at each switch, so it
+works when that is one of the three — Profile Setup shows it as *Default browser (Google Chrome)*.
+With another default browser (Firefox, Arc…) `avoid_duplicate_tabs` has no effect, Profile Setup
+turns it and **Close** off and names the browser, and a profile that still lists pages to close says
+on switching that it couldn't.
 
 Chrome's scripting dictionary doesn't reliably expose tab groups, so `groups` mode against Chrome
 generally falls back to opening `urls[]`. That's expected, and the fallback is why you should set
@@ -167,7 +172,8 @@ in [shortcuts-integration.md](shortcuts-integration.md).
 **`media.player`** is `AppleMusic`, `Spotify` or `None`. Nothing plays unless `autoPlay` is `true`.
 
 **`docker.start` / `docker.stop`** take container names. `start` runs on entering the profile,
-`stop` on leaving it — the same direction as the app lists.
+`stop` on leaving it — the same direction as the app lists. A container the next profile starts is
+left running.
 
 ## Switch policy
 

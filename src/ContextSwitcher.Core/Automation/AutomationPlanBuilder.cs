@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Serialization;
 
@@ -18,6 +19,17 @@ public sealed class AutomationPlanBuilder
     private static readonly TimeSpan MediaTimeout = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan DockerTimeout = TimeSpan.FromSeconds(45);
 
+    private readonly IDefaultBrowser? defaultBrowser;
+
+    /// <param name="defaultBrowser">
+    /// Which browser "Default browser" means. A profile set to it is planned as that browser when
+    /// it is one that can be scripted, so its tabs can be checked for duplicates and closed.
+    /// </param>
+    public AutomationPlanBuilder(IDefaultBrowser? defaultBrowser = null)
+    {
+        this.defaultBrowser = defaultBrowser;
+    }
+
     /// <summary>
     /// Builds the automation plan for switching from <paramref name="previous"/> to <paramref name="target"/>.
     /// </summary>
@@ -33,14 +45,18 @@ public sealed class AutomationPlanBuilder
         HashSet<string> criticalTypes = new(policy.CriticalSteps, StringComparer.Ordinal);
         List<AutomationStep> steps = [];
 
+        // Asked once a switch; Default stays Default for a browser that can't be scripted.
+        BrowserKind systemDefault = this.defaultBrowser?.Get()?.Kind ?? BrowserKind.Default;
+        BrowserKind Resolve(BrowserKind browser) => browser == BrowserKind.Default ? systemDefault : browser;
+
         if (previous is not null)
         {
-            AddStopDockerResources(steps, previous, criticalTypes);
+            AddStopDockerResources(steps, previous, target, criticalTypes);
 
             // Before the apps: if the browser itself is quit as well, its tabs are closed first, so
             // they don't come back when it next restores its last session.
-            AddCloseBrowserTabs(steps, previous, target, criticalTypes);
-            AddCloseApplications(steps, previous, criticalTypes);
+            AddCloseBrowserTabs(steps, previous, target, Resolve, criticalTypes);
+            AddCloseApplications(steps, previous, target, criticalTypes);
         }
 
         AddSetFocusMode(steps, previous, target, criticalTypes);
@@ -48,7 +64,7 @@ public sealed class AutomationPlanBuilder
         if (target is not null)
         {
             AddLaunchApplications(steps, target, criticalTypes);
-            AddManageBrowserContext(steps, target, criticalTypes);
+            AddManageBrowserContext(steps, target, Resolve, criticalTypes);
             AddStartDockerResources(steps, target, criticalTypes);
             AddControlMedia(steps, target, criticalTypes);
         }
@@ -56,9 +72,17 @@ public sealed class AutomationPlanBuilder
         return new AutomationPlan(target?.Id ?? string.Empty, previous?.Id, steps);
     }
 
-    private static void AddStopDockerResources(List<AutomationStep> steps, ContextDefinition previous, HashSet<string> criticalTypes)
+    /// <summary>A container the profile being entered starts again is left running.</summary>
+    private static void AddStopDockerResources(
+        List<AutomationStep> steps,
+        ContextDefinition previous,
+        ContextDefinition? target,
+        HashSet<string> criticalTypes)
     {
-        if (previous.Docker.Stop.Count == 0)
+        List<string> containers = previous.Docker.Stop
+            .Except(target?.Docker.Start ?? [], StringComparer.Ordinal)
+            .ToList();
+        if (containers.Count == 0)
         {
             return;
         }
@@ -69,28 +93,31 @@ public sealed class AutomationPlanBuilder
             "Stop Docker resources",
             DockerTimeout,
             criticalTypes,
-            new Dictionary<string, string> { ["containers"] = string.Join(',', previous.Docker.Stop) }));
+            new Dictionary<string, string> { ["containers"] = List(containers) }));
     }
 
     /// <summary>
-    /// The tabs the profile being left lists to close - in its own browser, so only with a named
-    /// one. A page the profile being entered opens in the same browser is spared: closing it would
-    /// only make it load again, losing whatever was done in it.
+    /// The tabs the profile being left lists to close, in its own browser. A page the profile being
+    /// entered opens in the same browser is spared: closing it would only make it load again,
+    /// losing whatever was done in it. A default browser that can't be scripted is still planned -
+    /// the step then says why nothing closed.
     /// </summary>
     private static void AddCloseBrowserTabs(
         List<AutomationStep> steps,
         ContextDefinition previous,
         ContextDefinition? target,
+        Func<BrowserKind, BrowserKind> resolve,
         HashSet<string> criticalTypes)
     {
         BrowserManagementConfig leaving = previous.BrowserManagement;
-        if (leaving.Mode != BrowserManagementMode.Urls || leaving.Browser == BrowserKind.Default || leaving.CloseUrls.Count == 0)
+        if (leaving.Mode != BrowserManagementMode.Urls || leaving.CloseUrls.Count == 0)
         {
             return;
         }
 
+        BrowserKind browser = resolve(leaving.Browser);
         BrowserManagementConfig? entering = target?.BrowserManagement;
-        IReadOnlyList<string> keep = entering is { Mode: BrowserManagementMode.Urls } && entering.Browser == leaving.Browser
+        IReadOnlyList<string> keep = entering is { Mode: BrowserManagementMode.Urls } && resolve(entering.Browser) == browser
             ? entering.Urls
             : [];
 
@@ -102,15 +129,26 @@ public sealed class AutomationPlanBuilder
             criticalTypes,
             new Dictionary<string, string>
             {
-                ["browser"] = leaving.Browser.ToString(),
+                ["browser"] = browser.ToString(),
                 ["closeUrlsJson"] = JsonSerializer.Serialize(leaving.CloseUrls, ContextSwitcherJson.CompactOptions),
                 ["keepUrlsJson"] = JsonSerializer.Serialize(keep, ContextSwitcherJson.CompactOptions)
             }));
     }
 
-    private static void AddCloseApplications(List<AutomationStep> steps, ContextDefinition previous, HashSet<string> criticalTypes)
+    /// <summary>
+    /// An app the profile being entered launches is left running: quitting it only to open it
+    /// again lost its windows and work, and made the switch wait for both.
+    /// </summary>
+    private static void AddCloseApplications(
+        List<AutomationStep> steps,
+        ContextDefinition previous,
+        ContextDefinition? target,
+        HashSet<string> criticalTypes)
     {
-        if (previous.CloseApps.Count == 0)
+        List<string> apps = previous.CloseApps
+            .Except(target?.LaunchApps ?? [], StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (apps.Count == 0)
         {
             return;
         }
@@ -119,9 +157,9 @@ public sealed class AutomationPlanBuilder
             AutomationStepType.CloseApplications,
             previous.Id,
             "Close applications",
-            QuitAppTimeoutPerApp * previous.CloseApps.Count,
+            QuitAppTimeoutPerApp * apps.Count,
             criticalTypes,
-            new Dictionary<string, string> { ["apps"] = string.Join(',', previous.CloseApps) }));
+            new Dictionary<string, string> { ["apps"] = List(apps) }));
     }
 
     private static void AddSetFocusMode(
@@ -181,10 +219,14 @@ public sealed class AutomationPlanBuilder
             "Launch applications",
             LaunchAppTimeoutPerApp * target.LaunchApps.Count,
             criticalTypes,
-            new Dictionary<string, string> { ["apps"] = string.Join(',', target.LaunchApps) }));
+            new Dictionary<string, string> { ["apps"] = List(target.LaunchApps) }));
     }
 
-    private static void AddManageBrowserContext(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
+    private static void AddManageBrowserContext(
+        List<AutomationStep> steps,
+        ContextDefinition target,
+        Func<BrowserKind, BrowserKind> resolve,
+        HashSet<string> criticalTypes)
     {
         BrowserManagementConfig browser = target.BrowserManagement;
 
@@ -203,9 +245,9 @@ public sealed class AutomationPlanBuilder
             new Dictionary<string, string>
             {
                 ["mode"] = browser.Mode.ToString(),
-                ["browser"] = browser.Browser.ToString(),
-                ["urls"] = string.Join(',', browser.Urls),
-                ["tabGroups"] = string.Join(',', browser.TabGroups),
+                ["browser"] = resolve(browser.Browser).ToString(),
+                ["urls"] = List(browser.Urls),
+                ["tabGroups"] = List(browser.TabGroups),
                 ["avoidDuplicateTabs"] = browser.AvoidDuplicateTabs.ToString(),
                 ["profilesJson"] = JsonSerializer.Serialize(browser.Profiles, ContextSwitcherJson.CompactOptions)
             }));
@@ -224,7 +266,7 @@ public sealed class AutomationPlanBuilder
             "Start Docker resources",
             DockerTimeout,
             criticalTypes,
-            new Dictionary<string, string> { ["containers"] = string.Join(',', target.Docker.Start) }));
+            new Dictionary<string, string> { ["containers"] = List(target.Docker.Start) }));
     }
 
     private static void AddControlMedia(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
@@ -247,6 +289,13 @@ public sealed class AutomationPlanBuilder
                 ["autoPlay"] = target.Media.AutoPlay.ToString()
             }));
     }
+
+    /// <summary>
+    /// A list argument, as JSON. Lists used to be joined with commas, which split any address that
+    /// held one - a map's coordinates, a query's values - into pieces that opened nothing.
+    /// </summary>
+    private static string List(IReadOnlyList<string> values) =>
+        JsonSerializer.Serialize(values, ContextSwitcherJson.CompactOptions);
 
     private static AutomationStep CreateStep(
         AutomationStepType type,

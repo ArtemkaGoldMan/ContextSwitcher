@@ -51,6 +51,9 @@ Every part is optional. A profile that only opens two apps is a perfectly good p
 
 You need a Mac with **Apple silicon** (M1 or later) and **macOS 13 Ventura or later**.
 
+Pick one of the three. Options 1 and 2 are one command and nothing else. Option 3 is a download
+**plus one Terminal command you can't skip**.
+
 ### Option 1 — one command (recommended)
 
 Open **Terminal** (press ⌘Space, type *Terminal*, press Return), paste this and press Return:
@@ -72,35 +75,48 @@ brew install --cask artemkagoldman/tap/contextswitcher
 
 ### Option 3 — download it yourself
 
+> [!IMPORTANT]
+> **This option has a required step in Terminal.** macOS blocks a downloaded copy of
+> ContextSwitcher, and the app won't open until you run the command in step 3 —
+> [why](#why-the-terminal-command). Options 1 and 2 don't need it.
+
 1. Download **ContextSwitcher-x.y.z.dmg** from the [latest release](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/latest).
 2. Open it and drag **ContextSwitcher** onto **Applications**.
-3. Allow it to open — once. macOS will say *"Apple could not verify ContextSwitcher is free of
-   malware"*. Either paste this into Terminal:
+3. **Required: run this in Terminal** (press ⌘Space, type *Terminal*, press Return), then press
+   Return once more:
 
    ```bash
    xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
    ```
 
-   or try to open the app, click **Done**, then go to **System Settings → Privacy & Security**,
-   scroll down to *"ContextSwitcher was blocked"* and click **Open Anyway**.
+   It prints nothing when it works.
+4. Open **ContextSwitcher** from Applications. It lives in the menu bar.
 
-<details>
-<summary><b>Why does macOS block it, and is that command safe?</b></summary>
+### Why the Terminal command?
 
-<br>
+**When you need it.** Only when you downloaded the app in a browser — Option 3. Not with Options 1
+or 2, and never for updates: the app installs those itself, and they open straight away.
 
-macOS only opens downloaded apps without asking if the developer has paid Apple for a Developer
-ID ($99 a year) and had the app *notarised*. ContextSwitcher is a free hobby project, so it isn't.
+**Why.** Your browser marks everything it downloads as *"from the internet"*. macOS opens such an
+app without asking only if its developer pays Apple **$99 a year** for a Developer ID and has every
+release *notarised* — checked by Apple. ContextSwitcher is a free hobby project, and **$99 a year is
+too much for me**, so it isn't notarised, and macOS blocks it until you allow it once.
 
-The command doesn't change any security settings. It removes the *"downloaded from the internet"*
-label from this one app, which has the same effect as **Open Anyway**. Options 1 and 2 take care of
-that label for you, so they skip this step.
+**What it does.** The command removes the *"from the internet"* label from this one app. It doesn't
+change any security setting on your Mac. Options 1 and 2 never put the label on, which is why they
+skip this step.
 
-What you install is built by GitHub from the public source code in this repository, and every
-release is signed with the project's own certificate. The app checks that signature before it
-installs any update.
+**What happens without it.** Nothing breaks — the app just doesn't open. macOS shows *"Apple could not
+verify ContextSwitcher is free of malware"* with only **Done** and **Move to Trash**. Since macOS 15
+there is no right-click → **Open** way around it any more.
 
-</details>
+**Is it safe?** The app is built by GitHub from the public source code in this repository, which
+anyone can read, and every release is signed with the project's own certificate. The app checks that
+signature before it installs an update, and refuses one that didn't come from this project.
+
+**Rather not use Terminal?** Try to open the app and click **Done**, then go to **System Settings →
+Privacy & Security**, scroll down to *"ContextSwitcher was blocked"* and click **Open Anyway**. It does
+the same as the command.
 
 ## Getting started
 
@@ -150,12 +166,13 @@ The **Profiles** page lists every profile: **Activate** switches to it, **Edit**
 </div>
 
 Editing a profile is mostly picking from lists: apps from the apps you have installed, web pages
-from the tabs you have open, playlists from your library, containers from Docker.
+from the tabs you have open, playlists from your library, containers from Docker. Apps and pages
+each have two ticks — open when you enter the profile, close when you leave it.
 
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/profile-setup-dark.png">
-  <img src="docs/images/profile-setup-light.png" width="720" alt="Editing the Work profile: its name, color and icon, its apps and its browser pages">
+  <img src="docs/images/profile-setup-light.png" width="720" alt="Editing the Work profile: its apps with Launch and Close, and its pages with Open and Close">
 </picture>
 </div>
 
@@ -284,7 +301,14 @@ you don't use.
 
 <br>
 
-You downloaded the `.dmg` in a browser. Allow it once — see [step 3 of Option 3](#option-3--download-it-yourself).
+You installed from the `.dmg` and the required step was skipped. Run this in Terminal, then open the
+app again:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
+```
+
+Why it's needed: [Why the Terminal command?](#why-the-terminal-command)
 </details>
 
 <details>

@@ -367,6 +367,51 @@ public sealed class ProfileSetupViewModelTests
         Assert.True(row.OpenOnEnter);
         Assert.False(row.CloseOnLeave);
     }
+    /// <summary>
+    /// "Default browser" says which browser it is, and when that is Chrome, Brave or Safari it can
+    /// close tabs and avoid duplicates like a named one - and saves that way.
+    /// </summary>
+    [Fact]
+    public void TheDefaultBrowserWorksLikeTheBrowserItIs()
+    {
+        ContextDefinition context = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            BrowserManagement = new BrowserManagementConfig { Mode = BrowserManagementMode.Urls, Browser = BrowserKind.Default, Urls = ["https://github.com/"] }
+        };
+        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
+        ProfileSetupViewModel viewModel = new(
+            store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context,
+            new FakeDefaultBrowser(BrowserKind.Chrome, "Google Chrome"));
+
+        Assert.Equal("Default browser (Google Chrome)", viewModel.SelectedBrowserKind.Label);
+        Assert.True(viewModel.CanAvoidDuplicateTabs);
+        Assert.True(viewModel.CanCloseTabs);
+
+        viewModel.BrowserUrls[0].CloseOnLeave = true;
+        viewModel.SaveCommand.Execute(null);
+
+        BrowserManagementConfig saved = Assert.Single(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!.Contexts).BrowserManagement;
+        Assert.Equal(BrowserKind.Default, saved.Browser);
+        Assert.Equal(["https://github.com/"], saved.CloseUrls);
+    }
+
+    /// <summary>A default browser that can't be scripted is named in the reason, rather than left unexplained.</summary>
+    [Fact]
+    public void AnUnscriptableDefaultBrowserIsNamedInTheReason()
+    {
+        ProfileSetupViewModel viewModel = new(
+            CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null,
+            new FakeDefaultBrowser(BrowserKind.Default, "Firefox"));
+        viewModel.BrowserKind = BrowserKind.Default;
+
+        Assert.False(viewModel.CanCloseTabs);
+        Assert.Equal("Closing tabs needs Chrome, Brave or Safari - Firefox can't be checked for open tabs.", viewModel.CloseTabsHint);
+        Assert.Equal("Needs Chrome, Brave or Safari - Firefox can't be checked for open tabs.", viewModel.AvoidDuplicateTabsHint);
+    }
+
     private static ConfigurationStore CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths)
     {
         jsonStore = new InMemoryJsonStore();

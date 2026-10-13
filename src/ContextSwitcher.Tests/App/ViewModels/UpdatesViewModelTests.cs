@@ -60,6 +60,21 @@ public sealed class UpdatesViewModelTests
         Assert.StartsWith("Up to date.", updates.StatusText, StringComparison.Ordinal);
     }
 
+    /// <summary>What an update brings is shown before it's installed; the link then leads to the rest.</summary>
+    [Fact]
+    public async Task AnUpdatesNotesAreOfferedWithIt()
+    {
+        this.releases.Latest = NewRelease with { Notes = ["Update notifications.", "Turn a profile off."] };
+        UpdatesViewModel updates = this.Create();
+
+        await updates.CheckAsync(userAsked: true);
+
+        Assert.True(updates.HasNotes);
+        Assert.Equal("What's new in 0.2.0", updates.WhatsNewHeading);
+        Assert.Equal(["Update notifications.", "Turn a profile off."], updates.AvailableNotes);
+        Assert.Equal("Release notes on GitHub ↗", updates.ReleasePageLinkText);
+    }
+
     /// <summary>A copy that cannot replace itself still hears about the update - as a download.</summary>
     [Fact]
     public async Task AnUpdateThisCopyCannotInstallIsOfferedAsADownload()
