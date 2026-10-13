@@ -32,6 +32,11 @@ public sealed class ConfigPaths
     public string StatePath => Path.Combine(BaseDirectory, "state.json");
 
     /// <summary>
+    /// Gets the path to the tabs each profile opened in Chrome or Brave for pages it closes on leaving.
+    /// </summary>
+    public string OpenedTabsPath => Path.Combine(BaseDirectory, "opened-tabs.json");
+
+    /// <summary>
     /// Gets the path to the append-only analytics log.
     /// </summary>
     public string AnalyticsLogPath => Path.Combine(BaseDirectory, "analytics.jsonl");

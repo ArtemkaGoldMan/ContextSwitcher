@@ -23,19 +23,36 @@ public sealed class BrowserLauncher
     /// </summary>
     private static readonly TimeSpan TabProbeTimeout = TimeSpan.FromSeconds(3);
 
+    /// <summary>How many times to look for the tabs just opened before settling for what has appeared.</summary>
+    private const int OpenedTabLooks = 8;
+
     private readonly IProcessRunner processRunner;
     private readonly IScriptRunner scriptRunner;
+    private readonly IOpenedTabsStore? openedTabs;
+    private readonly IBrowserRuns? browserRuns;
+    private readonly TimeSpan openedTabPollInterval;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BrowserLauncher"/> class.
     /// </summary>
-    public BrowserLauncher(IProcessRunner processRunner, IScriptRunner scriptRunner)
+    /// <param name="openedTabs">Where the tabs a profile opened are remembered; without it, tabs close by address alone.</param>
+    /// <param name="browserRuns">Tells one run of Chrome or Brave from the next, so remembered tab ids are never another run's.</param>
+    /// <param name="openedTabPollInterval">How long to wait between looks for the tabs just opened.</param>
+    public BrowserLauncher(
+        IProcessRunner processRunner,
+        IScriptRunner scriptRunner,
+        IOpenedTabsStore? openedTabs = null,
+        IBrowserRuns? browserRuns = null,
+        TimeSpan? openedTabPollInterval = null)
     {
         ArgumentNullException.ThrowIfNull(processRunner);
         ArgumentNullException.ThrowIfNull(scriptRunner);
 
         this.processRunner = processRunner;
         this.scriptRunner = scriptRunner;
+        this.openedTabs = openedTabs;
+        this.browserRuns = browserRuns;
+        this.openedTabPollInterval = openedTabPollInterval ?? TimeSpan.FromMilliseconds(250);
     }
 
     /// <summary>
@@ -47,51 +64,53 @@ public sealed class BrowserLauncher
 
         return request.Mode switch
         {
-            BrowserManagementMode.Urls => this.OpenUrlsAsync(request.Browser, request.Urls, request.AvoidDuplicateTabs, request.Timeout, cancellationToken),
+            BrowserManagementMode.Urls => this.OpenUrlsAsync(request, cancellationToken),
             BrowserManagementMode.Profiles => this.LaunchProfilesAsync(request.Profiles, request.Timeout, cancellationToken),
             _ => Task.FromResult(BrowserLaunchOutcome.Empty)
         };
     }
 
-    private async Task<BrowserLaunchOutcome> OpenUrlsAsync(
-        BrowserKind browser,
-        IReadOnlyList<string> urls,
-        bool avoidDuplicateTabs,
-        TimeSpan timeout,
-        CancellationToken cancellationToken)
+    private async Task<BrowserLaunchOutcome> OpenUrlsAsync(BrowserContextRequest request, CancellationToken cancellationToken)
     {
         List<UserMessage> warnings = [];
+        BrowserKind browser = request.Browser;
+        TimeSpan timeout = request.Timeout;
+        IReadOnlyList<string> closeLater = request.RememberUrls ?? [];
 
         // The default browser is unknown ahead of time, so it cannot be targeted by AppleScript.
-        bool probeTabs = avoidDuplicateTabs && browser != BrowserKind.Default;
+        bool probeTabs = request.AvoidDuplicateTabs && browser != BrowserKind.Default;
         TimeSpan probeTimeout = timeout < TabProbeTimeout ? timeout : TabProbeTimeout;
+
+        // A page that closes on leaving is remembered by the tab it opened in, in Chrome and Brave,
+        // whose tabs keep an id wherever they navigate - see RememberOpenedTabsAsync.
+        bool remember = IsChromium(browser)
+            && request.ContextId is not null
+            && this.openedTabs is not null
+            && this.browserRuns is not null
+            && request.Urls.Any(url => closeLater.Contains(url, StringComparer.Ordinal));
 
         // One sweep of the browser's tabs for the whole context. This used to be a tab sweep per
         // URL, which is what made a three-URL context spend about 490ms deciding what to open even
         // when every tab was already there; a single listing costs about 130ms and does not grow
         // with the URL count.
-        List<string> openTabs = [];
-        if (probeTabs)
+        List<BrowserTab> openTabs = [];
+        if (probeTabs || remember)
         {
-            ProcessResult listing = await this.scriptRunner
-                .RunAsync(AppleScriptBuilder.ListTabUrls(BrowserAppName(browser)), probeTimeout, cancellationToken)
-                .ConfigureAwait(false);
-
             // A non-zero exit means the inspection itself did not run - a timeout, a denied
             // Automation prompt, or a browser without tab scripting - which is different from
             // "no matching tab". Section 9.3 says to fall back to a plain `open` for everything.
-            if (listing.ExitCode == 0)
+            if (await this.ListTabsAsync(browser, startIfNeeded: true, probeTimeout, cancellationToken).ConfigureAwait(false) is { } tabs)
             {
-                foreach (string tabUrl in listing.StandardOutput
-                    .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                {
-                    openTabs.Add(tabUrl);
-                }
+                openTabs = tabs;
             }
             else
             {
-                probeTabs = false;
-                warnings.Add(SwitchMessages.CouldNotCheckTabs.With(BrowserAppName(browser)));
+                remember = false;
+                if (probeTabs)
+                {
+                    probeTabs = false;
+                    warnings.Add(SwitchMessages.CouldNotCheckTabs.With(BrowserAppName(browser)));
+                }
             }
         }
 
@@ -100,14 +119,15 @@ public sealed class BrowserLauncher
         // every match in turn and so ended on the last action, without paying for the ones whose
         // focus a later `open` would immediately have replaced.
         string? tabToFocus = null;
+        List<string> opened = [];
 
-        foreach (string url in urls)
+        foreach (string url in request.Urls)
         {
             // A tab that has moved on from the address it was opened at - redirected, or clicked
             // around in - is still that page; see PageMatch. Focusing goes by the tab's own address.
-            if (probeTabs && openTabs.FirstOrDefault(tab => PageMatch.Matches(url, tab)) is { } openTab)
+            if (probeTabs && openTabs.FirstOrDefault(tab => PageMatch.Matches(url, tab.Url)) is { } openTab)
             {
-                tabToFocus = openTab;
+                tabToFocus = openTab.Url;
                 continue;
             }
 
@@ -118,6 +138,10 @@ public sealed class BrowserLauncher
             {
                 warnings.Add(SwitchMessages.CouldNotOpenUrl.With(url, result.StandardError.Trim()));
             }
+            else
+            {
+                opened.Add(url);
+            }
         }
 
         if (tabToFocus is not null)
@@ -125,26 +149,109 @@ public sealed class BrowserLauncher
             await this.TryFocusExistingTabAsync(browser, tabToFocus, probeTimeout, cancellationToken).ConfigureAwait(false);
         }
 
+        if (remember)
+        {
+            await this.RememberOpenedTabsAsync(request.ContextId!, browser, openTabs, opened, closeLater, probeTimeout, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         return new BrowserLaunchOutcome(warnings);
     }
 
     /// <summary>
-    /// Closes the tabs in <paramref name="browser"/> that show any of <paramref name="pages"/>, except
-    /// those that also show one of <paramref name="keep"/> - the pages the profile being entered is
-    /// about to open, which would only be closed to be loaded again. No other tab is touched, and a
-    /// browser that isn't running is not started.
+    /// Remembers which tabs were just opened for pages that close on leaving, by the ids the browser
+    /// gives them. Pages move on from the address they were opened at - a sign-in page, the app's own
+    /// domain - and a tab found by its address alone was then left open when the profile was left.
+    ///
+    /// Only tabs that weren't there a moment ago are candidates. When exactly as many appeared as
+    /// pages were opened, they are those pages, in order: they were opened one after another and a
+    /// browser numbers each new tab above the last. When the count differs - the browser restored a
+    /// session, or something else opened a tab meanwhile - only a new tab that still shows one of the
+    /// pages is taken to be it, so a tab opened by anyone else is never remembered.
+    /// </summary>
+    private async Task RememberOpenedTabsAsync(
+        string contextId,
+        BrowserKind browser,
+        IReadOnlyList<BrowserTab> before,
+        IReadOnlyList<string> opened,
+        IReadOnlyList<string> closeLater,
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
+    {
+        HashSet<int> known = before.Where(tab => tab.Id is not null).Select(tab => tab.Id!.Value).ToHashSet();
+        List<BrowserTab> fresh = [];
+
+        // `open` returns once the browser has the address; its tab appears a moment later.
+        for (int look = 0; look < OpenedTabLooks && opened.Count > 0 && fresh.Count < opened.Count; look++)
+        {
+            await Task.Delay(this.openedTabPollInterval, cancellationToken).ConfigureAwait(false);
+            if (await this.ListTabsAsync(browser, startIfNeeded: false, timeout, cancellationToken).ConfigureAwait(false) is not { } tabs)
+            {
+                return;
+            }
+
+            fresh = tabs.Where(tab => tab.Id is not null && !known.Contains(tab.Id.Value)).OrderBy(tab => tab.Id).ToList();
+        }
+
+        List<int> ids = [];
+        if (fresh.Count == opened.Count)
+        {
+            for (int i = 0; i < opened.Count; i++)
+            {
+                if (closeLater.Contains(opened[i], StringComparer.Ordinal))
+                {
+                    ids.Add(fresh[i].Id!.Value);
+                }
+            }
+        }
+        else
+        {
+            ids.AddRange(fresh
+                .Where(tab => opened.Any(page => closeLater.Contains(page, StringComparer.Ordinal) && PageMatch.Matches(page, tab.Url)))
+                .Select(tab => tab.Id!.Value));
+        }
+
+        // Without knowing which run of the browser these ids are from, they can't be trusted later.
+        string? run = this.browserRuns!.Current(browser);
+        try
+        {
+            if (ids.Count > 0 && run is not null)
+            {
+                await this.openedTabs!.SetAsync(contextId, new OpenedTabs(browser, run, ids), cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await this.openedTabs!.RemoveAsync(contextId, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // Remembering is a nicety: the tabs still close by address when the profile is left.
+        }
+    }
+
+    /// <summary>
+    /// Closes the tabs in <paramref name="browser"/> that show any of <paramref name="pages"/> - and,
+    /// in Chrome and Brave, the tabs <paramref name="contextId"/> opened for them, wherever they have
+    /// gone since - except those showing one of <paramref name="keep"/>: the pages the profile being
+    /// entered is about to open, which would only be closed to be loaded again. No other tab is
+    /// touched, and a browser that isn't running is not started.
     /// </summary>
     public async Task<TabClosingOutcome> CloseTabsAsync(
         BrowserKind browser,
         IReadOnlyList<string> pages,
         IReadOnlyList<string> keep,
+        string? contextId,
         TimeSpan timeout,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(pages);
         ArgumentNullException.ThrowIfNull(keep);
 
-        if (pages.Count == 0)
+        // Leaving the profile uses up what it opened, whatever happens next.
+        OpenedTabs? mine = await this.TakeOpenedTabsAsync(contextId, browser, cancellationToken).ConfigureAwait(false);
+
+        if (pages.Count == 0 && mine is null)
         {
             return new TabClosingOutcome(0, null);
         }
@@ -159,29 +266,27 @@ public sealed class BrowserLauncher
         string app = BrowserAppName(browser);
 
         // The matching happens here rather than in AppleScript, where it would be unreadable and
-        // untested: list the tabs, pick the ones to close, then close those exact addresses.
-        ProcessResult listing = await this.scriptRunner
-            .RunAsync(AppleScriptBuilder.ListOpenTabs(app, browser == BrowserKind.Safari), timeout / 2, cancellationToken)
-            .ConfigureAwait(false);
-        if (listing.ExitCode != 0)
+        // untested: list the tabs, pick the ones to close, then close exactly those.
+        if (await this.ListTabsAsync(browser, startIfNeeded: false, timeout / 2, cancellationToken).ConfigureAwait(false) is not { } tabs)
         {
             return new TabClosingOutcome(0, SwitchMessages.CouldNotCloseTabs.With(app));
         }
 
-        List<string> doomed = listing.StandardOutput
-            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(line => line.Split(AppleScriptBuilder.OpenTabFieldSeparator)[0].Trim())
-            .Where(url => PageMatch.MatchesAny(pages, url) && !PageMatch.MatchesAny(keep, url))
-            .Distinct(StringComparer.Ordinal)
+        List<BrowserTab> doomed = tabs
+            .Where(tab => (PageMatch.MatchesAny(pages, tab.Url) || (tab.Id is { } id && mine?.TabIds.Contains(id) == true))
+                && !PageMatch.MatchesAny(keep, tab.Url))
             .ToList();
         if (doomed.Count == 0)
         {
             return new TabClosingOutcome(0, null);
         }
 
-        ProcessResult closing = await this.scriptRunner
-            .RunAsync(AppleScriptBuilder.CloseTabsWithUrls(app, doomed), timeout / 2, cancellationToken)
-            .ConfigureAwait(false);
+        // Chrome and Brave close by id, so a tab whose address changes between being listed and being
+        // closed - a page still redirecting, an app rewriting its URL - is still closed.
+        string script = IsChromium(browser)
+            ? AppleScriptBuilder.CloseChromiumTabsWithIds(app, doomed.Select(tab => tab.Id!.Value).Distinct().ToList())
+            : AppleScriptBuilder.CloseTabsWithUrls(app, doomed.Select(tab => tab.Url).Distinct(StringComparer.Ordinal).ToList());
+        ProcessResult closing = await this.scriptRunner.RunAsync(script, timeout / 2, cancellationToken).ConfigureAwait(false);
         if (closing.ExitCode != 0)
         {
             return new TabClosingOutcome(0, SwitchMessages.CouldNotCloseTabs.With(app));
@@ -189,6 +294,77 @@ public sealed class BrowserLauncher
 
         int.TryParse(closing.StandardOutput.Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int closed);
         return new TabClosingOutcome(closed, null);
+    }
+
+    /// <summary>
+    /// What <paramref name="contextId"/> opened in this run of <paramref name="browser"/>, forgetting it.
+    /// Ids from another browser, or an earlier run of this one - which numbers its tabs afresh - are
+    /// dropped: they may now be any tab at all.
+    /// </summary>
+    private async Task<OpenedTabs?> TakeOpenedTabsAsync(string? contextId, BrowserKind browser, CancellationToken cancellationToken)
+    {
+        if (contextId is null || this.openedTabs is null || this.browserRuns is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            OpenedTabs? remembered = await this.openedTabs.GetAsync(contextId, cancellationToken).ConfigureAwait(false);
+            if (remembered is null)
+            {
+                return null;
+            }
+
+            await this.openedTabs.RemoveAsync(contextId, cancellationToken).ConfigureAwait(false);
+            return remembered.Browser == browser && IsChromium(browser) && this.browserRuns.Current(browser) == remembered.BrowserRun
+                ? remembered
+                : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// The browser's tabs, or <see langword="null"/> when it couldn't be asked. Chrome and Brave say
+    /// each tab's id as well as its address; Safari's tabs have no id. Without
+    /// <paramref name="startIfNeeded"/>, a browser that isn't running has no tabs, rather than being
+    /// started to say so.
+    /// </summary>
+    private async Task<List<BrowserTab>?> ListTabsAsync(BrowserKind browser, bool startIfNeeded, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        string app = BrowserAppName(browser);
+        bool chromium = IsChromium(browser);
+        string script = chromium
+            ? AppleScriptBuilder.ListChromiumTabs(app, startIfNeeded)
+            : startIfNeeded ? AppleScriptBuilder.ListTabUrls(app) : AppleScriptBuilder.ListOpenTabs(app, isSafari: true);
+
+        ProcessResult listing = await this.scriptRunner.RunAsync(script, timeout, cancellationToken).ConfigureAwait(false);
+        if (listing.ExitCode != 0)
+        {
+            return null;
+        }
+
+        List<BrowserTab> tabs = [];
+        foreach (string line in listing.StandardOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (chromium)
+            {
+                string[] fields = line.Split(AppleScriptBuilder.OpenTabFieldSeparator, 2);
+                if (fields.Length == 2 && int.TryParse(fields[0], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int id))
+                {
+                    tabs.Add(new BrowserTab(id, fields[1].Trim()));
+                }
+            }
+            else
+            {
+                tabs.Add(new BrowserTab(null, line.Split(AppleScriptBuilder.OpenTabFieldSeparator)[0].Trim()));
+            }
+        }
+
+        return tabs;
     }
 
     private async Task<BrowserLaunchOutcome> LaunchProfilesAsync(
@@ -266,6 +442,8 @@ public sealed class BrowserLauncher
         InspectionFailed
     }
 
+    private static bool IsChromium(BrowserKind browser) => browser is BrowserKind.Chrome or BrowserKind.Brave;
+
     private static string BrowserAppName(BrowserKind browser) => browser switch
     {
         BrowserKind.Chrome => "Google Chrome",
@@ -273,4 +451,7 @@ public sealed class BrowserLauncher
         BrowserKind.Safari => "Safari",
         _ => throw new ArgumentOutOfRangeException(nameof(browser), browser, "Default browser has no fixed application name.")
     };
+
+    /// <summary>A tab: its id where the browser gives one (Chrome, Brave), and its address.</summary>
+    private sealed record BrowserTab(int? Id, string Url);
 }

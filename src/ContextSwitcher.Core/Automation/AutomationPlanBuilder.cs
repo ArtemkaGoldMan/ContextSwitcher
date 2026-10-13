@@ -131,6 +131,7 @@ public sealed class AutomationPlanBuilder
             criticalTypes,
             new Dictionary<string, string>
             {
+                ["contextId"] = previous.Id,
                 ["browser"] = browser.ToString(),
                 ["closeUrlsJson"] = JsonSerializer.Serialize(leaving.CloseUrls, ContextSwitcherJson.CompactOptions),
                 ["keepUrlsJson"] = JsonSerializer.Serialize(keep, ContextSwitcherJson.CompactOptions)
@@ -279,9 +280,14 @@ public sealed class AutomationPlanBuilder
             criticalTypes,
             new Dictionary<string, string>
             {
+                ["contextId"] = target.Id,
                 ["mode"] = browser.Mode.ToString(),
                 ["browser"] = resolve(browser.Browser).ToString(),
                 ["urls"] = List(browser.Urls),
+
+                // The pages that close on leaving: the tabs opened for them are remembered, in a
+                // browser that can say which tab is which, so they close wherever they have gone.
+                ["rememberUrlsJson"] = List(browser.Mode == BrowserManagementMode.Urls ? browser.CloseUrls : []),
                 ["avoidDuplicateTabs"] = browser.AvoidDuplicateTabs.ToString(),
                 ["profilesJson"] = JsonSerializer.Serialize(browser.Profiles, ContextSwitcherJson.CompactOptions)
             }));
