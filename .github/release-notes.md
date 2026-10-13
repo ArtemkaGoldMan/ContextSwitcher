@@ -8,28 +8,31 @@
 
 ## Install
 
-Paste this into Terminal - it downloads the app, puts it in Applications and opens it:
+**Easiest — paste this into Terminal.** It downloads the app, puts it in Applications and opens it.
+Nothing else to do:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ArtemkaGoldMan/ContextSwitcher/main/install.sh | bash
 ```
 
-Or with [Homebrew](https://brew.sh):
+**Or with [Homebrew](https://brew.sh)** — also nothing else to do:
 
 ```bash
 brew install --cask artemkagoldman/tap/contextswitcher
 ```
 
-Or download `ContextSwitcher-*.dmg` below and drag the app to Applications — and then **run this in
-Terminal. It's required: the app won't open without it.**
+**Or download `ContextSwitcher-*.dmg` below** and drag the app to Applications. Then **you must run
+this once in Terminal — the app won't open without it:**
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
 ```
 
-ContextSwitcher isn't notarised by Apple (that needs a paid developer account), so macOS blocks a
-downloaded copy until it's allowed once. Instead of the command you can use **System Settings →
-Privacy & Security → Open Anyway**. The two options above don't need this step.
+Why: your browser marks downloads as *"from the internet"*, and macOS only opens such an app without
+asking if its developer pays Apple **$99 a year** to have every release notarised. ContextSwitcher is a
+free hobby project and **$99 a year is too much for me**, so it isn't. The command removes that label
+from this one app and changes nothing else. **System Settings → Privacy & Security → Open Anyway**
+does the same. You do it once: the two options above and the app's own updates don't need it.
 
 Requires an Apple silicon Mac and macOS 13 or later.
 

@@ -33,9 +33,11 @@ ContextSwitcher $version
 
        xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
 
-   macOS blocks a downloaded copy because ContextSwitcher is not notarised by Apple - that needs
-   a paid Developer ID, and this is a free MIT project. Instead of the command, you can open it
-   once from System Settings > Privacy & Security > Open Anyway.
+   Why: your browser marked this download as "from the internet", and macOS only opens such
+   an app without asking if its developer pays Apple \$99 a year to have it notarised.
+   ContextSwitcher is a free hobby project and \$99 a year is too much for me, so it isn't.
+   The command removes that label from this one app and changes nothing else. Instead of it,
+   you can open the app once from System Settings > Privacy & Security > Open Anyway.
 
    You only do this once: the app updates itself from Settings > Updates, and updates it
    installs open without this step.

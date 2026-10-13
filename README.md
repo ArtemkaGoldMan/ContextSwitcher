@@ -77,8 +77,8 @@ brew install --cask artemkagoldman/tap/contextswitcher
 
 > [!IMPORTANT]
 > **This option has a required step in Terminal.** macOS blocks a downloaded copy of
-> ContextSwitcher, and the app won't open until you run the command in step 3. Options 1 and 2 do
-> this for you.
+> ContextSwitcher, and the app won't open until you run the command in step 3 —
+> [why](#why-the-terminal-command). Options 1 and 2 don't need it.
 
 1. Download **ContextSwitcher-x.y.z.dmg** from the [latest release](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/latest).
 2. Open it and drag **ContextSwitcher** onto **Applications**.
@@ -89,38 +89,34 @@ brew install --cask artemkagoldman/tap/contextswitcher
    xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
    ```
 
-   It prints nothing when it works. Skip it and macOS only says *"Apple could not verify
-   ContextSwitcher is free of malware"* and won't open the app. You do this once: updates the app
-   installs itself don't need it.
+   It prints nothing when it works.
 4. Open **ContextSwitcher** from Applications. It lives in the menu bar.
 
-<details>
-<summary><b>Rather not use Terminal?</b></summary>
+### Why the Terminal command?
 
-<br>
+**When you need it.** Only when you downloaded the app in a browser — Option 3. Not with Options 1
+or 2, and never for updates: the app installs those itself, and they open straight away.
 
-Instead of step 3: try to open the app and click **Done**, then go to **System Settings → Privacy &
-Security**, scroll down to *"ContextSwitcher was blocked"* and click **Open Anyway**.
+**Why.** Your browser marks everything it downloads as *"from the internet"*. macOS opens such an
+app without asking only if its developer pays Apple **$99 a year** for a Developer ID and has every
+release *notarised* — checked by Apple. ContextSwitcher is a free hobby project, and **$99 a year is
+too much for me**, so it isn't notarised, and macOS blocks it until you allow it once.
 
-</details>
+**What it does.** The command removes the *"from the internet"* label from this one app. It doesn't
+change any security setting on your Mac. Options 1 and 2 never put the label on, which is why they
+skip this step.
 
-<details>
-<summary><b>Why does macOS block it, and is that command safe?</b></summary>
+**What happens without it.** Nothing breaks — the app just doesn't open. macOS shows *"Apple could not
+verify ContextSwitcher is free of malware"* with only **Done** and **Move to Trash**. Since macOS 15
+there is no right-click → **Open** way around it any more.
 
-<br>
+**Is it safe?** The app is built by GitHub from the public source code in this repository, which
+anyone can read, and every release is signed with the project's own certificate. The app checks that
+signature before it installs an update, and refuses one that didn't come from this project.
 
-macOS only opens downloaded apps without asking if the developer has paid Apple for a Developer
-ID ($99 a year) and had the app *notarised*. ContextSwitcher is a free hobby project, so it isn't.
-
-The command doesn't change any security settings. It removes the *"downloaded from the internet"*
-label from this one app, which has the same effect as **Open Anyway**. Options 1 and 2 take care of
-that label for you, so they skip this step.
-
-What you install is built by GitHub from the public source code in this repository, and every
-release is signed with the project's own certificate. The app checks that signature before it
-installs any update.
-
-</details>
+**Rather not use Terminal?** Try to open the app and click **Done**, then go to **System Settings →
+Privacy & Security**, scroll down to *"ContextSwitcher was blocked"* and click **Open Anyway**. It does
+the same as the command.
 
 ## Getting started
 
@@ -312,7 +308,7 @@ app again:
 xattr -dr com.apple.quarantine /Applications/ContextSwitcher.app
 ```
 
-More in [Option 3](#option-3--download-it-yourself).
+Why it's needed: [Why the Terminal command?](#why-the-terminal-command)
 </details>
 
 <details>
