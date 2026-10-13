@@ -7,6 +7,7 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.App.Resources;
 using System.Globalization;
 
@@ -19,7 +20,25 @@ namespace ContextSwitcher.App.ViewModels;
 /// </summary>
 public sealed class ProfileSetupViewModel : ViewModelBase
 {
+    /// <summary>System Settings' Focus pane, where a Focus's Safari filter is set.</summary>
+    private const string FocusSettingsUrl = "x-apple.systempreferences:com.apple.Focus-Settings.extension";
+
+    /// <summary>What every browser can do on a switch: nothing, or open pages.</summary>
+    private static readonly IReadOnlyList<Choice<BrowserManagementMode>> PageModes =
+    [
+        new(BrowserManagementMode.None, Strings.Browser_Mode_None),
+        new(BrowserManagementMode.Urls, Strings.Browser_Mode_Urls)
+    ];
+
+    /// <summary>Chrome and Brave can also open one of their profiles - a different signed-in person.</summary>
+    private static readonly IReadOnlyList<Choice<BrowserManagementMode>> ProfileModes =
+    [
+        .. PageModes,
+        new(BrowserManagementMode.Profiles, Strings.Browser_Mode_Profiles)
+    ];
+
     private readonly ConfigurationStore configurationStore;
+    private readonly IProcessRunner processRunner;
     private readonly string originalContextId;
 
     private readonly ISystemCatalog catalog;
@@ -56,6 +75,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         IDefaultBrowser? defaultBrowser = null)
     {
         this.configurationStore = configurationStore;
+        this.processRunner = processRunner;
         this.catalog = catalog;
         this.systemDefault = defaultBrowser?.Get();
         this.BrowserKindChoices =
@@ -97,6 +117,21 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
         this.browserMode = source.BrowserManagement.Mode;
         this.browserKind = source.BrowserManagement.Browser;
+
+        // A profiles profile names its browser on each row, and the section's browser was not
+        // asked for; it is now the one the rows open in.
+        if (this.browserMode == BrowserManagementMode.Profiles &&
+            source.BrowserManagement.Profiles.Count > 0 &&
+            this.EffectiveBrowser != source.BrowserManagement.Profiles[0].Browser)
+        {
+            this.browserKind = source.BrowserManagement.Profiles[0].Browser;
+        }
+
+        // Only reachable from settings the editor never wrote - profiles with no rows, say.
+        if (!this.BrowserModeChoices.Any(choice => choice.Value == this.browserMode))
+        {
+            this.browserMode = BrowserManagementMode.Urls;
+        }
         this.avoidDuplicateTabs = source.BrowserManagement.AvoidDuplicateTabs;
         this.BrowserUrls = new ObservableCollection<BrowserPageRowViewModel>(
             source.BrowserManagement.Urls.Concat(source.BrowserManagement.CloseUrls)
@@ -105,8 +140,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                     url,
                     source.BrowserManagement.Urls.Contains(url),
                     source.BrowserManagement.CloseUrls.Contains(url))));
-        this.TabGroups = new ObservableCollection<EditableStringRowViewModel>(
-            source.BrowserManagement.TabGroups.Select(group => this.TabGroupRow(group)));
         this.BrowserProfiles = new ObservableCollection<BrowserProfileRowViewModel>(
             source.BrowserManagement.Profiles.Select(profile => new BrowserProfileRowViewModel(
                 profile.Browser, profile.ProfileDirectory, profile.Urls, catalog.GetBrowserProfiles, this.RemoveBrowserProfile)));
@@ -167,9 +200,10 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
         this.AddAppCommand = new RelayCommand(() => this.Apps.Add(new AppRowViewModel(string.Empty, true, true, this.RemoveApp, isEditable: true)));
         this.AddBrowserUrlCommand = new RelayCommand(() => this.BrowserUrls.Add(this.UrlRow(string.Empty)));
-        this.AddTabGroupCommand = new RelayCommand(() => this.TabGroups.Add(this.TabGroupRow(string.Empty)));
         this.AddBrowserProfileCommand = new RelayCommand(() => this.BrowserProfiles.Add(
-            new BrowserProfileRowViewModel(BrowserKind.Chrome, string.Empty, [], catalog.GetBrowserProfiles, this.RemoveBrowserProfile)));
+            new BrowserProfileRowViewModel(this.ProfilesBrowser, string.Empty, [], catalog.GetBrowserProfiles, this.RemoveBrowserProfile)));
+        this.OpenFocusSettingsCommand = new RelayCommand(() =>
+            _ = this.processRunner.RunAsync(new ProcessStartOptions("open", [FocusSettingsUrl], TimeSpan.FromSeconds(5)), CancellationToken.None));
         this.AddDockerStartCommand = new RelayCommand(() => this.DockerStart.Add(this.ContainerRow(string.Empty, this.RemoveDockerStart, isEditable: true)));
         this.AddDockerStopCommand = new RelayCommand(() => this.DockerStop.Add(this.ContainerRow(string.Empty, this.RemoveDockerStop, isEditable: true)));
         this.AddQuickLinkCommand = new RelayCommand(() => this.QuickLinks.Add(new QuickLinkRowViewModel(string.Empty, string.Empty, "link", this.RemoveQuickLink)));
@@ -319,13 +353,13 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     /// </summary>
     public AppPickerViewModel AppPicker { get; }
 
-    public IReadOnlyList<Choice<BrowserManagementMode>> BrowserModeChoices { get; } =
-    [
-        new(BrowserManagementMode.None, Strings.Browser_Mode_None),
-        new(BrowserManagementMode.Urls, Strings.Browser_Mode_Urls),
-        new(BrowserManagementMode.Groups, Strings.Browser_Mode_Groups),
-        new(BrowserManagementMode.Profiles, Strings.Browser_Mode_Profiles)
-    ];
+    /// <summary>
+    /// What the chosen browser can be asked to do, and nothing it can't: opening one of its
+    /// profiles is Chrome's and Brave's alone. Safari's tab groups and profiles, and either
+    /// browser's tab groups, can't be opened by another app at all (docs/browser-control.md).
+    /// </summary>
+    public IReadOnlyList<Choice<BrowserManagementMode>> BrowserModeChoices =>
+        this.CanOpenBrowserProfiles ? ProfileModes : PageModes;
 
     /// <summary>"Default browser" names the browser it is, when known: "Default browser (Google Chrome)".</summary>
     public IReadOnlyList<Choice<BrowserKind>> BrowserKindChoices { get; }
@@ -335,13 +369,18 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         get => this.browserMode;
         set
         {
+            // Only what the chosen browser can do; anything else - which only code can ask for -
+            // opens pages, as every browser can.
+            if (!this.BrowserModeChoices.Any(choice => choice.Value == value))
+            {
+                value = BrowserManagementMode.Urls;
+            }
+
             if (this.SetProperty(ref this.browserMode, value))
             {
                 this.OnPropertyChanged(nameof(this.SelectedBrowserMode));
                 this.OnPropertyChanged(nameof(this.IsUrlsMode));
-                this.OnPropertyChanged(nameof(this.IsGroupsMode));
                 this.OnPropertyChanged(nameof(this.IsProfilesMode));
-                this.OnPropertyChanged(nameof(this.ShowsBrowserChoice));
             }
         }
     }
@@ -359,17 +398,23 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Which browser only matters for opening pages and tab groups: profiles name their own browser
-    /// per row, and None opens nothing.
-    /// </summary>
-    public bool ShowsBrowserChoice => this.IsUrlsMode || this.IsGroupsMode;
-
     public bool IsUrlsMode => this.BrowserMode == BrowserManagementMode.Urls;
 
-    public bool IsGroupsMode => this.BrowserMode == BrowserManagementMode.Groups;
-
     public bool IsProfilesMode => this.BrowserMode == BrowserManagementMode.Profiles;
+
+    /// <summary>Whether the browser has profiles another app can open: Chrome and Brave do.</summary>
+    public bool CanOpenBrowserProfiles => this.EffectiveBrowser is BrowserKind.Chrome or BrowserKind.Brave;
+
+    /// <summary>
+    /// For Safari, where its tab groups and profiles are wanted: macOS switches Safari to one when
+    /// a Focus with that filter turns on, and this profile can turn the Focus on.
+    /// </summary>
+    public bool ShowsSafariFocusTip => this.EffectiveBrowser == BrowserKind.Safari;
+
+    public RelayCommand OpenFocusSettingsCommand { get; }
+
+    /// <summary>The browser a profiles row opens in: the chosen one, which offers profiles only when it is Chrome or Brave.</summary>
+    private BrowserKind ProfilesBrowser => this.CanOpenBrowserProfiles ? this.EffectiveBrowser : BrowserKind.Chrome;
 
     public BrowserKind BrowserKind
     {
@@ -383,10 +428,30 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 this.OnPropertyChanged(nameof(this.AvoidDuplicateTabsHint));
                 this.OnPropertyChanged(nameof(this.CanCloseTabs));
                 this.OnPropertyChanged(nameof(this.CloseTabsHint));
+                this.OnPropertyChanged(nameof(this.CanOpenBrowserProfiles));
+                this.OnPropertyChanged(nameof(this.ShowsSafariFocusTip));
                 foreach (BrowserPageRowViewModel row in this.BrowserUrls)
                 {
                     row.CanClose = this.CanCloseTabs;
                 }
+
+                // Profiles are opened in the section's browser; a row lists that browser's own.
+                if (this.CanOpenBrowserProfiles)
+                {
+                    foreach (BrowserProfileRowViewModel row in this.BrowserProfiles)
+                    {
+                        row.Browser = this.ProfilesBrowser;
+                    }
+                }
+
+                // A browser that can't open profiles leaves the pages - what every browser can do.
+                if (!this.BrowserModeChoices.Any(choice => choice.Value == this.BrowserMode))
+                {
+                    this.BrowserMode = BrowserManagementMode.Urls;
+                }
+
+                this.OnPropertyChanged(nameof(this.BrowserModeChoices));
+                this.OnPropertyChanged(nameof(this.SelectedBrowserMode));
             }
         }
     }
@@ -450,8 +515,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     public ObservableCollection<BrowserPageRowViewModel> BrowserUrls { get; }
 
-    public ObservableCollection<EditableStringRowViewModel> TabGroups { get; }
-
     public ObservableCollection<BrowserProfileRowViewModel> BrowserProfiles { get; }
 
     /// <summary>"From open tabs" under Startup URLs: the pages open in the chosen browser right now.</summary>
@@ -507,8 +570,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     public RelayCommand AddAppCommand { get; }
 
     public RelayCommand AddBrowserUrlCommand { get; }
-
-    public RelayCommand AddTabGroupCommand { get; }
 
     public RelayCommand AddBrowserProfileCommand { get; }
 
@@ -567,7 +628,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.UrlTabPicker.Refresh();
     }
 
-    private void RemoveTabGroup(EditableStringRowViewModel row) => this.TabGroups.Remove(row);
 
     private void RemoveBrowserProfile(BrowserProfileRowViewModel row) => this.BrowserProfiles.Remove(row);
 
@@ -592,9 +652,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     /// <summary>A page added now opens, as pages always did; closing it is opted into.</summary>
     private BrowserPageRowViewModel UrlRow(string url, bool open = true, bool close = false) =>
         new(url, open, close, this.CanCloseTabs, this.RemoveBrowserUrl);
-
-    private EditableStringRowViewModel TabGroupRow(string name) =>
-        new(name, this.RemoveTabGroup, isEditable: true, "IconLayers", Strings.ProfileSetup_TabGroupName);
 
     private EditableStringRowViewModel ContainerRow(string name, Action<EditableStringRowViewModel> remove, bool isEditable) =>
         new(name, remove, isEditable, "IconBox", Strings.ProfileSetup_ContainerName);
@@ -685,7 +742,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 CloseUrls = this.CanCloseTabs
                     ? this.BrowserUrls.Where(u => u.CloseOnLeave && !string.IsNullOrWhiteSpace(u.Url)).Select(u => u.Url.Trim()).ToList()
                     : [],
-                TabGroups = this.TabGroups.Where(g => !string.IsNullOrWhiteSpace(g.Value)).Select(g => g.Value.Trim()).ToList(),
                 Profiles = this.BrowserProfiles
                     .Where(p => !string.IsNullOrWhiteSpace(p.ProfileDirectory))
                     .Select(p => new BrowserProfileConfig { Browser = p.Browser, ProfileDirectory = p.ProfileDirectory.Trim(), Urls = p.ParseUrls() })

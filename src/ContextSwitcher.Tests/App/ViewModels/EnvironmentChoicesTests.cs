@@ -264,7 +264,7 @@ public sealed class EnvironmentChoicesTests
         catalog.BrowserProfiles[BrowserKind.Chrome] = [new("Default", "Artem"), new("Profile 2", "Client")];
 
         BrowserProfileRowViewModel row = new(BrowserKind.Chrome, "Profile 2", [], catalog.GetBrowserProfiles, _ => { });
-        row.SelectedBrowser = BrowserProfileRowViewModel.BrowserChoices.Single(c => c.Value == BrowserKind.Brave);
+        row.Browser = BrowserKind.Brave;
 
         // Brave has no profiles readable here, but every Chromium install has Default.
         Assert.Equal(["Default"], row.ProfileChoices.Select(c => c.Value));

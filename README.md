@@ -38,7 +38,7 @@ ContextSwitcher keeps a **profile** for each part of your day. Click one, and yo
 | | What a profile can do |
 | --- | --- |
 | **Apps** | Open apps when you switch in, and quit them when you switch out — the polite way, like ⌘Q, never force-quit |
-| **Browser** | Open web pages, Chrome tab groups or a whole browser profile, without duplicating tabs that are already open — and close a profile's pages when you leave it, leaving every other tab alone |
+| **Browser** | Open web pages without duplicating tabs that are already open, or a whole Chrome or Brave profile — and close a profile's pages when you leave it, leaving every other tab alone. Safari can switch to a tab group or profile with the profile's Focus |
 | **Focus** | Turn on a macOS Focus — Do Not Disturb, Work, Sleep… — and turn it off again when you leave |
 | **Music** | Start an Apple Music or Spotify playlist |
 | **Docker** | Start the containers this profile needs, stop the ones it doesn't |

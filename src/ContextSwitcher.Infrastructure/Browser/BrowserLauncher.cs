@@ -7,9 +7,10 @@ using ContextSwitcher.Core.Messages;
 namespace ContextSwitcher.Infrastructure.Browser;
 
 /// <summary>
-/// Implements the three browser management modes from agent.md section 9.3-9.5: opening URLs
-/// (with best-effort duplicate-tab avoidance), activating named tab groups, and launching
-/// Chromium browser profiles - and closing the tabs a profile being left lists to close.
+/// Implements the browser management modes from agent.md section 9.3 and 9.5: opening URLs (with
+/// best-effort duplicate-tab avoidance) and launching Chromium browser profiles - and closing the
+/// tabs a profile being left lists to close. Tab groups are not among them: no browser lets
+/// another app open one (docs/browser-control.md).
 /// </summary>
 public sealed class BrowserLauncher
 {
@@ -47,7 +48,6 @@ public sealed class BrowserLauncher
         return request.Mode switch
         {
             BrowserManagementMode.Urls => this.OpenUrlsAsync(request.Browser, request.Urls, request.AvoidDuplicateTabs, request.Timeout, cancellationToken),
-            BrowserManagementMode.Groups => this.ActivateTabGroupsAsync(request.Browser, request.TabGroups, request.Urls, request.Timeout, cancellationToken),
             BrowserManagementMode.Profiles => this.LaunchProfilesAsync(request.Profiles, request.Timeout, cancellationToken),
             _ => Task.FromResult(BrowserLaunchOutcome.Empty)
         };
@@ -189,42 +189,6 @@ public sealed class BrowserLauncher
 
         int.TryParse(closing.StandardOutput.Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int closed);
         return new TabClosingOutcome(closed, null);
-    }
-
-    private async Task<BrowserLaunchOutcome> ActivateTabGroupsAsync(
-        BrowserKind browser,
-        IReadOnlyList<string> tabGroups,
-        IReadOnlyList<string> fallbackUrls,
-        TimeSpan timeout,
-        CancellationToken cancellationToken)
-    {
-        List<UserMessage> warnings = [];
-        bool anyGroupFailed = false;
-
-        foreach (string group in tabGroups)
-        {
-            string script = browser == BrowserKind.Safari
-                ? AppleScriptBuilder.ActivateSafariTabGroup(group)
-                : AppleScriptBuilder.ActivateChromiumTabGroup(BrowserAppName(browser), group);
-
-            ProcessResult result = await this.scriptRunner.RunAsync(script, timeout, cancellationToken).ConfigureAwait(false);
-            bool activated = result.ExitCode == 0 && result.StandardOutput.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
-
-            if (!activated)
-            {
-                anyGroupFailed = true;
-                warnings.Add(SwitchMessages.CouldNotActivateTabGroup.With(group));
-            }
-        }
-
-        if (anyGroupFailed && fallbackUrls.Count > 0)
-        {
-            BrowserLaunchOutcome fallbackOutcome = await this.OpenUrlsAsync(browser, fallbackUrls, avoidDuplicateTabs: false, timeout, cancellationToken)
-                .ConfigureAwait(false);
-            warnings.AddRange(fallbackOutcome.Warnings);
-        }
-
-        return new BrowserLaunchOutcome(warnings);
     }
 
     private async Task<BrowserLaunchOutcome> LaunchProfilesAsync(

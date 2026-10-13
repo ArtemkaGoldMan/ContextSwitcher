@@ -9,7 +9,7 @@ Context Switcher V2 is an open-source, lightweight macOS menu bar utility for de
 The application must make switching contexts feel instant, reversible, and calm:
 
 - Close or freeze distracting and resource-heavy processes from the previous context.
-- Launch the correct applications, browser URLs, tab groups, optional browser profiles, Docker resources, music, and Focus state for the new context.
+- Launch the correct applications, browser URLs, optional browser profiles, Docker resources, music, and Focus state for the new context.
 - Preserve work-life boundaries by making the current mode obvious from the menu bar and dashboard.
 - Track local context time without cloud storage, telemetry, or account requirements.
 
@@ -347,13 +347,12 @@ Schema versioned configuration:
             "closeApps": ["Slack", "Microsoft Teams", "Visual Studio Code"],
             "launchApps": ["Slack", "Microsoft Teams", "Visual Studio Code"],
             "browser_management": {
-                "mode": "groups",
+                "mode": "urls",
                 "browser": "Chrome",
                 "urls": [
                     "https://mail.google.com/",
                     "https://github.com/notifications"
                 ],
-                "tab_groups": ["Work-Core", "Finance"],
                 "profiles": [
                     {
                         "browser": "Chrome",
@@ -404,7 +403,6 @@ Schema versioned configuration:
                 "mode": "urls",
                 "browser": "Default",
                 "urls": ["https://youtube.com/"],
-                "tab_groups": [],
                 "profiles": [],
                 "avoid_duplicate_tabs": true
             },
@@ -450,10 +448,9 @@ Validation rules:
 - `activeContextId` must match an existing context.
 - `switchPolicy.criticalSteps[]` entries must match an `AutomationStepType` member name exactly (e.g. `LaunchApplications`, `ManageBrowserContext`); criticality is resolved per step *category*, not per individual app or resource.
 - `accentColor` must be a valid 6-digit hex color.
-- `browser_management.mode` allowed values: `urls`, `groups`, `profiles`, `none`.
+- `browser_management.mode` allowed values: `urls`, `profiles`, `none`. A file saying `groups` (section 9.4) is read as `urls` when it has `urls` or `close_urls`, otherwise `none`.
 - `browser_management.browser` allowed values: `Default`, `Chrome`, `Brave`, `Safari`.
 - `browser_management.urls[]` must use `http` or `https`.
-- `browser_management.tab_groups[]` must be non-empty names when `mode == "groups"`.
 - `browser_management.profiles[]` is optional and is used only when `mode == "profiles"` or as a user-selected fallback.
 - `browser_management.profiles[].browser` allowed values: `Chrome`, `Brave`.
 - `browser_management.profiles[].profile_directory` must be non-empty when profile mode is used.
@@ -700,7 +697,7 @@ The switch pipeline must execute in this order:
     - Focus mode.
 9. Execute activation steps:
     - Launch apps.
-    - Manage browser context using URL, tab group, or profile mode.
+    - Manage browser context using URL or profile mode.
     - Start Docker resources for target context.
     - Media action.
 10. Write `state.json`.
@@ -825,28 +822,18 @@ apps are quit:
 - Spare a page the context being entered opens in the same browser.
 - A browser that won't answer is a warning; nothing else is tried.
 
-### 9.4 Browser Tab Groups Mode
+### 9.4 Browser Tab Groups (removed)
 
-Purpose: support users who organize browser state with named tab groups instead of profiles.
+Tab groups mode was removed: neither Safari's nor Chrome's AppleScript dictionary has tab groups,
+so it never activated a group - only its fallback `urls[]` ever opened. docs/browser-control.md
+records what each browser does allow, and the routes left for a later feature: Safari's Shortcuts
+actions (Open Tab Group, Close Windows), ContextSwitcher's own groups as named windows, or a Chrome
+extension.
 
-Supported browsers:
-
-- Safari: use AppleScript where macOS exposes tab group selection/focusing.
-- Chrome: use best-effort AppleScript against Chrome windows/tab groups where available.
-- Brave: use best-effort AppleScript against Brave windows/tab groups where available.
-
-Behavior:
-
-- For every configured `tabGroups[]` name, attempt to focus or activate the existing group.
-- If the group cannot be found or the browser does not expose tab group automation reliably, report a warning.
-- If `urls[]` are also configured, use them as fallback startup URLs after group activation fails.
-- Do not create new tab groups in MVP unless a later specification explicitly adds that behavior.
-
-Rules:
-
-- Group names are user-visible strings and must be AppleScript-escaped.
-- Group activation failures are warnings by default.
-- Browser scripting permission failures must produce actionable dashboard messages.
+- Settings saying `"mode": "groups"` still load: `BrowserManagementConfig` reads them as `urls` when
+  they have `urls` or `close_urls`, otherwise `none`, and `tab_groups` is ignored.
+- For Safari, Profile Setup points to a Focus filter (System Settings › Focus › Focus Filters ›
+  Safari), which switches Safari to a tab group or profile when the context's Focus turns on.
 
 ### 9.5 Browser Profiles Mode
 
@@ -897,7 +884,7 @@ Argument array:
 
 Rules:
 
-- Profiles mode is optional; users may choose URL or tab group workflows instead.
+- Profiles mode is optional; users may choose URL workflows instead. Profile Setup offers it only when the chosen browser is Chrome or Brave, and every row uses that browser.
 - `profiles[]` may contain more than one browser/profile target, but each target must be explicit.
 - Safari does not support Chromium `--profile-directory`; reject Safari profile entries during validation.
 
@@ -1150,8 +1137,9 @@ bar icons that don't fit beside a MacBook's notch, and the icon was otherwise th
   **Launch when entering** and **Close when leaving** - rather than maintaining `launchApps` and
   `closeApps` as separate lists in the UI. The on-disk schema (section 6.1) is unchanged; this is
   purely a friendlier editing surface over the same two flat lists.
-- Browser management: mode (URLs / tab groups / profiles / none), URLs, tab groups, browser
-  profiles, avoid-duplicate-tabs toggle - matching `browser_management` exactly (section 6.1).
+- Browser management: the browser first, then what to do with it - none, URLs, or (Chrome and
+  Brave only) browser profiles - with the URLs, browser profiles and avoid-duplicate-tabs toggle,
+  matching `browser_management` exactly (section 6.1). For Safari, a note on Focus filters.
 - Focus mode, media (player, playlist, autoplay), Docker start/stop lists.
 - Quick links and notes editors (add/remove rows).
 - Switch policy: which step categories are critical for this profile, continue-on-non-critical-
@@ -1458,14 +1446,14 @@ Acceptance criteria:
 Deliverables:
 
 - Default browser URL launcher.
-- Chrome, Brave, and Safari URL/tab group automation.
+- Chrome, Brave, and Safari URL automation.
 - Optional Chrome and Brave profile-directory argument support.
 - URL validation.
-- UI fields for browser management mode, URLs, tab groups, and optional profiles.
+- UI fields for browser management mode, URLs, and optional profiles.
 
 Acceptance criteria:
 
-- Work and personal contexts can use URL, tab group, or profile workflows independently.
+- Work and personal contexts can use URL or profile workflows independently.
 - Invalid URL is rejected during validation.
 - Browser launch failures are visible in dashboard.
 

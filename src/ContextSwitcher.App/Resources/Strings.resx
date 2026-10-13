@@ -52,10 +52,6 @@
     <value>https://…</value>
     <comment>Templates.axaml: PlaceholderText</comment>
   </data>
-  <data name="Common_Browser" xml:space="preserve">
-    <value>Browser</value>
-    <comment>Templates.axaml: AutomationProperties.Name</comment>
-  </data>
   <data name="Common_BrowserProfile" xml:space="preserve">
     <value>Browser profile</value>
     <comment>Templates.axaml: AutomationProperties.Name</comment>
@@ -330,14 +326,6 @@
   </data>
   <data name="ProfileSetup_TypeAUrl" xml:space="preserve">
     <value>Type a URL…</value>
-    <comment>ProfileSetupPage.axaml: Content</comment>
-  </data>
-  <data name="ProfileSetup_TabGroups" xml:space="preserve">
-    <value>Tab groups</value>
-    <comment>ProfileSetupPage.axaml: Text</comment>
-  </data>
-  <data name="ProfileSetup_AddTabGroup" xml:space="preserve">
-    <value>+ Add tab group</value>
     <comment>ProfileSetupPage.axaml: Content</comment>
   </data>
   <data name="ProfileSetup_BrowserProfiles" xml:space="preserve">
@@ -1188,10 +1176,6 @@
     <value>Open web pages</value>
     <comment>Profile Setup → Browser → On switch.</comment>
   </data>
-  <data name="Browser_Mode_Groups" xml:space="preserve">
-    <value>Open tab groups</value>
-    <comment>Profile Setup → Browser → On switch.</comment>
-  </data>
   <data name="Browser_Mode_Profiles" xml:space="preserve">
     <value>Open browser profiles</value>
     <comment>Profile Setup → Browser → On switch.</comment>
@@ -1320,14 +1304,6 @@
     <value>Browser must be Default, Chrome, Brave, or Safari.</value>
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
   </data>
-  <data name="Msg_Config_TabGroupsNeedName" xml:space="preserve">
-    <value>Tab groups mode requires at least one tab group name.</value>
-    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
-  </data>
-  <data name="Msg_Config_TabGroupNameEmpty" xml:space="preserve">
-    <value>Tab group name cannot be empty.</value>
-    <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
-  </data>
   <data name="Msg_Config_ProfilesNeedProfile" xml:space="preserve">
     <value>Profiles mode requires at least one browser profile.</value>
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
@@ -1426,10 +1402,6 @@
     <value>Could not open '{0}': {1}</value>
     <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. {1} is the browser's or macOS's own reason.</comment>
   </data>
-  <data name="Msg_Switch_CouldNotActivateTabGroup" xml:space="preserve">
-    <value>Could not activate tab group '{0}'. Browser tab group scripting may not be supported on this macOS version.</value>
-    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card.</comment>
-  </data>
   <data name="Msg_Switch_CouldNotLaunchBrowserProfile" xml:space="preserve">
     <value>Could not launch {0} profile '{1}': {2}</value>
     <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. {0} is the browser, {1} the profile folder, {2} the browser's own reason.</comment>
@@ -1526,12 +1498,14 @@
     <value>Already there</value>
     <comment>Dashboard → Last switch: the profile was already active.</comment>
   </data>
-  <data name="ProfileSetup_TabGroupName" xml:space="preserve">
-    <value>Tab group name</value>
-    <comment>Placeholder of a tab group row in Profile Setup → Browser.</comment>
-  </data>
   <data name="ProfileSetup_ContainerName" xml:space="preserve">
     <value>Container name</value>
     <comment>Placeholder of a Docker container row in Profile Setup → Docker.</comment>
+  </data>
+  <data name="ProfileSetup_SafariFocusTip" xml:space="preserve">
+    <value>Safari doesn't let other apps open its tab groups or profiles, but a Focus can switch it to one: choose a Focus for this profile under Focus &amp; music, then in System Settings › Focus › that Focus › Focus Filters › Add Filter, add Safari and pick the tab group or profile.</value>
+  </data>
+  <data name="ProfileSetup_OpenFocusSettings" xml:space="preserve">
+    <value>Open Focus settings ↗</value>
   </data>
 </root>

@@ -163,7 +163,8 @@
     </Border>
   </DataTemplate>
 
-  <!-- A browser profile: which browser and which of its profiles, then the pages to open in it. -->
+  <!-- A browser profile: which of the browser's profiles, then the pages to open in it. The browser
+       is chosen once, above the list. -->
   <DataTemplate x:Key="BrowserProfileRow" x:DataType="vm:BrowserProfileRowViewModel">
     <Border Classes="listRow">
       <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
@@ -172,10 +173,7 @@
             <Path Classes="glyph" Data="{DynamicResource IconUser}" />
           </Viewbox>
         </Panel>
-        <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,*" Margin="0,0,10,0">
-          <ComboBox Grid.Column="0" ItemsSource="{x:Static vm:BrowserProfileRowViewModel.BrowserChoices}" SelectedItem="{Binding SelectedBrowser}" HorizontalAlignment="Stretch" Margin="0,0,8,0" AutomationProperties.Name="{x:Static r:Strings.Common_Browser}" />
-          <ComboBox Grid.Column="1" ItemsSource="{Binding ProfileChoices}" SelectedItem="{Binding SelectedProfile}" HorizontalAlignment="Stretch" AutomationProperties.Name="{x:Static r:Strings.Common_BrowserProfile}" />
-        </Grid>
+        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding ProfileChoices}" SelectedItem="{Binding SelectedProfile}" HorizontalAlignment="Stretch" Margin="0,0,10,0" AutomationProperties.Name="{x:Static r:Strings.Common_BrowserProfile}" />
         <Button Grid.Row="0" Grid.Column="2" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="{x:Static r:Strings.Common_Remove}" AutomationProperties.Name="{x:Static r:Strings.Common_Remove}">
           <Viewbox Classes="icon rowAction">
             <Path Classes="glyph" Data="{DynamicResource IconX}" />

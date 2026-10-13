@@ -9,22 +9,14 @@ namespace ContextSwitcher.App.ViewModels;
 /// agent.md section 6.1). The profile is chosen from the ones the browser actually has, by the
 /// name the browser shows for it, rather than typed as a folder name like "Profile 2". Chromium
 /// profile URLs are edited as one URL per line rather than a nested add/remove list, since a
-/// profile row already nests inside the browser-management section.
+/// profile row already nests inside the browser-management section. The browser is the section's:
+/// Profile Setup sets it on every row.
 /// </summary>
 public sealed class BrowserProfileRowViewModel : ViewModelBase
 {
-    /// <summary>
-    /// The only browsers <see cref="ConfigurationValidator"/> accepts for profile-directory mode.
-    /// </summary>
-    public static IReadOnlyList<Choice<BrowserKind>> BrowserChoices { get; } =
-    [
-        new(BrowserKind.Chrome, "Google Chrome"),
-        new(BrowserKind.Brave, "Brave")
-    ];
-
     private readonly Func<BrowserKind, IReadOnlyList<BrowserProfile>> profilesOf;
 
-    private Choice<BrowserKind> selectedBrowser;
+    private BrowserKind browser;
     private IReadOnlyList<Choice<string>> profileChoices = [];
     private Choice<string>? selectedProfile;
     private string urlsText;
@@ -39,28 +31,27 @@ public sealed class BrowserProfileRowViewModel : ViewModelBase
         Action<BrowserProfileRowViewModel> remove)
     {
         this.profilesOf = profilesOf;
-        this.selectedBrowser = BrowserChoices.FirstOrDefault(choice => choice.Value == browser) ?? BrowserChoices[0];
+
+        // The only browsers ConfigurationValidator accepts for profile-directory mode.
+        this.browser = browser == BrowserKind.Brave ? BrowserKind.Brave : BrowserKind.Chrome;
         this.urlsText = string.Join(Environment.NewLine, urls);
         this.RefreshProfiles(profileDirectory.Trim());
         this.RemoveCommand = new RelayCommand(() => remove(this));
     }
 
-    public Choice<BrowserKind> SelectedBrowser
+    /// <summary>Chrome or Brave: the browser whose profile this is.</summary>
+    public BrowserKind Browser
     {
-        get => this.selectedBrowser;
+        get => this.browser;
         set
         {
-            if (value is not null && this.SetProperty(ref this.selectedBrowser, value))
+            if (value is BrowserKind.Chrome or BrowserKind.Brave && this.SetProperty(ref this.browser, value))
             {
-                this.OnPropertyChanged(nameof(this.Browser));
-
                 // Folder names are per browser; one Chrome has may not exist in Brave.
                 this.RefreshProfiles(this.ProfileDirectory);
             }
         }
     }
-
-    public BrowserKind Browser => this.SelectedBrowser.Value;
 
     /// <summary>The browser's profiles, labelled with the name it shows for each.</summary>
     public IReadOnlyList<Choice<string>> ProfileChoices

@@ -22,20 +22,24 @@ public sealed class ConfigurationValidatorTests
         Assert.True(result.IsValid);
     }
 
+    /// <summary>
+    /// Tab groups mode is only ever read from old files, and turned into pages or nothing as it is;
+    /// one made in code is not a mode the app can carry out.
+    /// </summary>
     [Fact]
-    public void ValidateAcceptsGroupsModeWithTabGroupsAndFallbackUrls()
+    public void ValidateRejectsTabGroupsModeMadeInCode()
     {
         AppConfiguration configuration = CreateConfiguration(new BrowserManagementConfig
         {
             Mode = BrowserManagementMode.Groups,
             Browser = BrowserKind.Safari,
-            TabGroups = ["Work-Core", "Finance"],
             Urls = ["https://github.com/"]
         });
 
         ConfigurationValidationResult result = this.validator.Validate(configuration);
 
-        Assert.True(result.IsValid);
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, error => error.Path == "contexts[0].browser_management.mode");
     }
 
     [Fact]
@@ -72,21 +76,6 @@ public sealed class ConfigurationValidatorTests
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, error => error.Path == "contexts[0].browser_management.urls");
-    }
-
-    [Fact]
-    public void ValidateRejectsGroupsModeWithoutTabGroups()
-    {
-        AppConfiguration configuration = CreateConfiguration(new BrowserManagementConfig
-        {
-            Mode = BrowserManagementMode.Groups,
-            Browser = BrowserKind.Chrome
-        });
-
-        ConfigurationValidationResult result = this.validator.Validate(configuration);
-
-        Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, error => error.Path == "contexts[0].browser_management.tab_groups");
     }
 
     [Fact]
@@ -196,7 +185,7 @@ public sealed class ConfigurationValidatorTests
     [Theory]
     [InlineData("""{ "id": "Work Profile", "displayName": "Work", "accentColor": "#2F6FED" }""", "contexts[0].id")]
     [InlineData("""{ "id": "work", "displayName": "Work", "accentColor": "blue" }""", "contexts[0].accentColor")]
-    [InlineData("""{ "id": "work", "displayName": "Work", "accentColor": "#2F6FED", "browser_management": { "mode": "groups", "browser": "Chrome", "tab_groups": [" "] } }""", "contexts[0].browser_management.tab_groups[0]")]
+    [InlineData("""{ "id": "work", "displayName": "Work", "accentColor": "#2F6FED", "browser_management": { "mode": "urls", "browser": "Chrome", "urls": [] } }""", "contexts[0].browser_management.urls")]
     [InlineData("""{ "id": "work", "displayName": "Work", "accentColor": "#2F6FED", "browser_management": { "mode": "profiles" } }""", "contexts[0].browser_management.profiles")]
     [InlineData("""{ "id": "work", "displayName": "Work", "accentColor": "#2F6FED", "browser_management": { "mode": "profiles", "profiles": [ { "browser": "Chrome", "profile_directory": "" } ] } }""", "contexts[0].browser_management.profiles[0].profile_directory")]
     [InlineData("""{ "id": "work", "displayName": "Work", "accentColor": "#2F6FED", "browser_management": { "mode": "profiles", "profiles": [ { "browser": "Safari", "profile_directory": "Default" } ] } }""", "contexts[0].browser_management.profiles[0].browser")]

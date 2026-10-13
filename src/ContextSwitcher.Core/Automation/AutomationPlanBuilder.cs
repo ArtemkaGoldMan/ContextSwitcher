@@ -260,7 +260,13 @@ public sealed class AutomationPlanBuilder
         BrowserManagementConfig browser = target.BrowserManagement;
 
         // A pages profile can list pages only to close them, with none to open.
-        if (browser.Mode == BrowserManagementMode.None || (browser.Mode == BrowserManagementMode.Urls && browser.Urls.Count == 0))
+        bool opensSomething = browser.Mode switch
+        {
+            BrowserManagementMode.Urls => browser.Urls.Count > 0,
+            BrowserManagementMode.Profiles => true,
+            _ => false
+        };
+        if (!opensSomething)
         {
             return;
         }
@@ -276,7 +282,6 @@ public sealed class AutomationPlanBuilder
                 ["mode"] = browser.Mode.ToString(),
                 ["browser"] = resolve(browser.Browser).ToString(),
                 ["urls"] = List(browser.Urls),
-                ["tabGroups"] = List(browser.TabGroups),
                 ["avoidDuplicateTabs"] = browser.AvoidDuplicateTabs.ToString(),
                 ["profilesJson"] = JsonSerializer.Serialize(browser.Profiles, ContextSwitcherJson.CompactOptions)
             }));

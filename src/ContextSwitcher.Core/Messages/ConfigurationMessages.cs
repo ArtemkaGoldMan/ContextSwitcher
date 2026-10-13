@@ -33,10 +33,6 @@ public static class ConfigurationMessages
 
     public static readonly MessageTemplate BrowserInvalid = new("Config_BrowserInvalid", "Browser must be Default, Chrome, Brave, or Safari.");
 
-    public static readonly MessageTemplate TabGroupsNeedName = new("Config_TabGroupsNeedName", "Tab groups mode requires at least one tab group name.");
-
-    public static readonly MessageTemplate TabGroupNameEmpty = new("Config_TabGroupNameEmpty", "Tab group name cannot be empty.");
-
     public static readonly MessageTemplate ProfilesNeedProfile = new("Config_ProfilesNeedProfile", "Profiles mode requires at least one browser profile.");
 
     public static readonly MessageTemplate ProfileBrowserInvalid = new("Config_ProfileBrowserInvalid", "Profile browser must be Chrome or Brave.");

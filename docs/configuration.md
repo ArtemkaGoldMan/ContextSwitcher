@@ -89,7 +89,6 @@ field has a sensible default, and an omitted section simply does nothing.
     "browser": "Chrome",
     "urls": ["https://mail.google.com/"],
     "close_urls": ["https://mail.google.com/"],
-    "tab_groups": [],
     "profiles": [],
     "avoid_duplicate_tabs": true
   },
@@ -143,10 +142,15 @@ on. ContextSwitcher never force-kills anything.
 | --- | --- |
 | `none` | Don't touch the browser. |
 | `urls` | Open `urls[]` on entering; close the tabs of `close_urls[]` on leaving. |
-| `groups` | Activate the named `tab_groups[]`, falling back to `urls[]` if that fails. |
-| `profiles` | Launch each entry in `profiles[]` with its own `--profile-directory`. |
+| `profiles` | Launch each entry in `profiles[]` (Chrome or Brave) with its own `--profile-directory`. |
 
-`browser` is `Default`, `Chrome`, `Brave` or `Safari`.
+`browser` is `Default`, `Chrome`, `Brave` or `Safari`. Profile Setup asks for the browser first and
+then offers only what it can do: profiles for Chrome and Brave, pages for every browser.
+
+**Tab groups aren't a mode any more.** Neither Safari nor Chrome lets another app open its tab
+groups, so the old `groups` mode never opened one; see [browser-control.md](browser-control.md). A
+file that still says `"mode": "groups"` loads as what it did: `urls` if it has `urls` or
+`close_urls`, otherwise `none`. Its `tab_groups` names are ignored and dropped on the next save.
 
 **`close_urls`** are the pages whose tabs close when you leave the profile — the same direction as
 `closeApps`. A page can be in both lists (opened on the way in, closed on the way out) or only in
@@ -169,9 +173,10 @@ With another default browser (Firefox, Arc…) `avoid_duplicate_tabs` has no eff
 turns it and **Close** off and names the browser, and a profile that still lists pages to close says
 on switching that it couldn't.
 
-Chrome's scripting dictionary doesn't reliably expose tab groups, so `groups` mode against Chrome
-generally falls back to opening `urls[]`. That's expected, and the fallback is why you should set
-`urls[]` even in `groups` mode.
+**Safari's tab groups and profiles** can't be opened by another app either, but macOS can switch
+Safari to them when a Focus turns on. Give the profile a Focus, then in System Settings › Focus ›
+that Focus › Focus Filters › Add Filter › Safari, choose the tab group or profile. Profile Setup
+says this when the browser is Safari, with a button that opens the Focus settings.
 
 ## Focus, media, Docker
 

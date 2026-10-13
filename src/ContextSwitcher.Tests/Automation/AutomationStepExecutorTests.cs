@@ -251,7 +251,6 @@ public sealed class AutomationStepExecutorTests
             ["mode"] = "Profiles",
             ["browser"] = "Default",
             ["urls"] = string.Empty,
-            ["tabGroups"] = string.Empty,
             ["avoidDuplicateTabs"] = "True",
             ["profilesJson"] = "[{\"browser\":\"Chrome\",\"profile_directory\":\"Profile 1\",\"urls\":[\"https://mail.example/\"]}]"
         };
@@ -310,7 +309,6 @@ public sealed class AutomationStepExecutorTests
             ["mode"] = mode,
             ["browser"] = browser,
             ["urls"] = System.Text.Json.JsonSerializer.Serialize(new[] { urls }),
-            ["tabGroups"] = string.Empty,
             ["avoidDuplicateTabs"] = "False",
             ["profilesJson"] = "[]"
         };

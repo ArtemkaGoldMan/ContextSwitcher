@@ -114,9 +114,6 @@ public sealed class ConfigurationValidator
                 }
 
                 break;
-            case BrowserManagementMode.Groups:
-                ValidateTabGroups(browserManagement.TabGroups, $"{path}.tab_groups", errors);
-                break;
             case BrowserManagementMode.Profiles:
                 ValidateProfiles(browserManagement.Profiles, $"{path}.profiles", errors);
                 break;
@@ -125,30 +122,10 @@ public sealed class ConfigurationValidator
                 break;
         }
 
-        if (browserManagement.Mode is BrowserManagementMode.Urls or BrowserManagementMode.Groups &&
+        if (browserManagement.Mode == BrowserManagementMode.Urls &&
             !IsSupportedInteractiveBrowser(browserManagement.Browser))
         {
             errors.Add(ConfigurationValidationError.Of($"{path}.browser", ConfigurationMessages.BrowserInvalid.With()));
-        }
-    }
-
-    private static void ValidateTabGroups(
-        IReadOnlyList<string> tabGroups,
-        string path,
-        List<ConfigurationValidationError> errors)
-    {
-        if (tabGroups.Count == 0)
-        {
-            errors.Add(ConfigurationValidationError.Of(path, ConfigurationMessages.TabGroupsNeedName.With()));
-            return;
-        }
-
-        for (int i = 0; i < tabGroups.Count; i++)
-        {
-            if (string.IsNullOrWhiteSpace(tabGroups[i]))
-            {
-                errors.Add(ConfigurationValidationError.Of($"{path}[{i}]", ConfigurationMessages.TabGroupNameEmpty.With()));
-            }
         }
     }
 

@@ -18,7 +18,10 @@ public enum BrowserManagementMode
     Urls,
 
     /// <summary>
-    /// Activates configured browser tab groups.
+    /// Tab groups, from settings written before they were dropped: neither Safari nor Chrome lets
+    /// another app open its tab groups (docs/browser-control.md). Kept only so such files still
+    /// load - <see cref="BrowserManagementConfig"/> turns it into <see cref="Urls"/> or
+    /// <see cref="None"/> as it is read - and never planned.
     /// </summary>
     [System.Text.Json.Serialization.JsonStringEnumMemberName("groups")]
     Groups,

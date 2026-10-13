@@ -250,11 +250,10 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         BrowserManagementMode mode = Enum.Parse<BrowserManagementMode>(step.Arguments.GetValueOrDefault("mode", nameof(BrowserManagementMode.None)));
         BrowserKind browser = Enum.Parse<BrowserKind>(step.Arguments.GetValueOrDefault("browser", nameof(BrowserKind.Default)));
         string[] urls = SplitArgument(step.Arguments, "urls");
-        string[] tabGroups = SplitArgument(step.Arguments, "tabGroups");
         bool avoidDuplicateTabs = step.Arguments.GetValueOrDefault("avoidDuplicateTabs") == "True";
         IReadOnlyList<BrowserProfileConfig> profiles = DeserializeProfiles(step.Arguments.GetValueOrDefault("profilesJson", "[]"));
 
-        BrowserContextRequest request = new(mode, browser, urls, tabGroups, avoidDuplicateTabs, profiles, WithReportingHeadroom(step.Timeout));
+        BrowserContextRequest request = new(mode, browser, urls, avoidDuplicateTabs, profiles, WithReportingHeadroom(step.Timeout));
         BrowserLaunchOutcome outcome = await this.browserLauncher.ManageBrowserContextAsync(request, cancellationToken).ConfigureAwait(false);
 
         DateTimeOffset completedAt = this.clock.UtcNow;
