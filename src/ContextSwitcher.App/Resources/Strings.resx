@@ -592,6 +592,58 @@
     <value>macOS didn't allow it: {0}</value>
     <comment>Under Open at login when the change failed. {0} = macOS's own reason.</comment>
   </data>
+  <data name="Settings_Transfer_Section" xml:space="preserve">
+    <value>EXPORT AND IMPORT</value>
+    <comment>Settings: section title.</comment>
+  </data>
+  <data name="Settings_Transfer_Description" xml:space="preserve">
+    <value>Save your profiles and settings to a file - to keep a copy, or to set up another Mac the same way. Time tracking history isn't included.</value>
+    <comment>Settings → Export and import: description.</comment>
+  </data>
+  <data name="Settings_Export" xml:space="preserve">
+    <value>Export…</value>
+    <comment>Settings → Export and import: button, and the Save panel's title.</comment>
+  </data>
+  <data name="Settings_Import" xml:space="preserve">
+    <value>Import…</value>
+    <comment>Settings → Export and import: button, and the Open panel's title.</comment>
+  </data>
+  <data name="Settings_ExportFileName" xml:space="preserve">
+    <value>Context Switcher settings.json</value>
+    <comment>The file name the Save panel suggests.</comment>
+  </data>
+  <data name="Settings_Exported" xml:space="preserve">
+    <value>Saved to “{0}”.</value>
+    <comment>After exporting. {0} = file name.</comment>
+  </data>
+  <data name="Settings_ExportFailed" xml:space="preserve">
+    <value>Couldn't save the file: {0}</value>
+    <comment>Exporting failed. {0} = the reason.</comment>
+  </data>
+  <data name="Settings_ImportConfirm" xml:space="preserve">
+    <value>Replace all your profiles and settings with the ones in “{0}”? Your current ones are kept as a backup.</value>
+    <comment>Asked before an import replaces everything. {0} = file name.</comment>
+  </data>
+  <data name="Settings_ImportReplace" xml:space="preserve">
+    <value>Replace</value>
+    <comment>Button that confirms the import.</comment>
+  </data>
+  <data name="Settings_ImportCancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>Button that cancels the import.</comment>
+  </data>
+  <data name="Settings_Imported" xml:space="preserve">
+    <value>Imported: your profiles and settings now come from “{0}”.</value>
+    <comment>After importing. {0} = file name.</comment>
+  </data>
+  <data name="Settings_ImportNotSettings" xml:space="preserve">
+    <value>“{0}” isn't a Context Switcher settings file.</value>
+    <comment>Import refused. {0} = file name.</comment>
+  </data>
+  <data name="Settings_ImportInvalid" xml:space="preserve">
+    <value>“{0}” can't be used: {1}</value>
+    <comment>Import refused. {0} = file name, {1} = why.</comment>
+  </data>
   <data name="Settings_ShowInTheDock" xml:space="preserve">
     <value>Show in the Dock</value>
     <comment>SettingsPage.axaml: Title</comment>

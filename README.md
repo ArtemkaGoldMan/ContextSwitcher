@@ -211,7 +211,9 @@ allowed and opens the right page in System Settings if it isn't. More in
 
 **Settings** has the rest: the **Language** — English or Ukrainian, or whichever of them your Mac
 uses — a light or dark **Theme** (or *Match macOS*, the default), whether the app shows in the
-Dock, how long to keep your history, and updates.
+Dock, whether it opens when you log in, how long to keep your history, and updates. **Export and
+import** saves your profiles and settings to a file — a copy to keep, or the way to set up another
+Mac the same — and loads them back.
 
 <div align="center">
 <picture>

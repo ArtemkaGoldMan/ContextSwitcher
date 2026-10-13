@@ -33,6 +33,9 @@ public sealed class ConfigurationStore
         this.validator = validator;
     }
 
+    /// <summary>Checks <paramref name="configuration"/> as a save would, without saving it.</summary>
+    public ConfigurationValidationResult Validate(AppConfiguration configuration) => this.validator.Validate(configuration);
+
     /// <summary>
     /// Validates <paramref name="configuration"/> and, only if valid, backs up the current
     /// <c>settings.json</c>, writes the new configuration, and publishes it via

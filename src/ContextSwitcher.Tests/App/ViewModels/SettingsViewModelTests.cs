@@ -168,6 +168,29 @@ public sealed class SettingsViewModelTests
         return new SettingsViewModel(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(), loginItem: loginItem);
     }
 
+    /// <summary>After an import the page shows the imported settings, without saving them over again.</summary>
+    [Fact]
+    public async Task AnImportedFilesSettingsShowOnThePage()
+    {
+        AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
+        AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator());
+        SettingsViewModel viewModel = new(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
+        FakeSettingsFilePicker picker = new()
+        {
+            FileToOpen = """{ "activeContextId": "work", "showDockIcon": false, "checkForUpdates": false, "contexts": [ { "id": "work", "displayName": "Work" } ], "analytics": { "enabled": true, "retentionDays": 45 } }"""
+        };
+        viewModel.Transfer.FilePicker = picker;
+
+        await viewModel.Transfer.ImportCommand.ExecuteAsync(null);
+        await viewModel.Transfer.ConfirmImportCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.ShowDockIcon);
+        Assert.False(viewModel.CheckForUpdates);
+        Assert.Equal(45, viewModel.SelectedRetention.Value);
+        Assert.Contains(viewModel.RetentionChoices, choice => choice.Value == 45);
+    }
+
     private static UpdatesViewModel Updates() =>
         new(new FakeReleaseSource(), new FakeAppUpdater(), new FakeProcessRunner(), new FakeSystemNotifications(), new Version(0, 1, 0));
 }

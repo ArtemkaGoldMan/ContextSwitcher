@@ -56,6 +56,8 @@ public sealed class SettingsViewModel : ViewModelBase
         this.permissionsChecker = permissionsChecker;
         this.processRunner = processRunner;
         this.Updates = updates;
+        this.Transfer = new SettingsTransferViewModel(configurationStore);
+        this.Transfer.Imported += (_, _) => this.ReloadFromConfiguration();
 
         this.selectedAppearance = this.AppearanceChoices.First(c => c.Value == AppHost.Configuration.Appearance);
         this.LanguageChoices =
@@ -209,7 +211,7 @@ public sealed class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>How long recorded time is kept, plus the configured period if it is none of these.</summary>
-    public IReadOnlyList<Choice<int>> RetentionChoices { get; }
+    public IReadOnlyList<Choice<int>> RetentionChoices { get; private set; }
 
     public Choice<int> SelectedRetention
     {
@@ -281,6 +283,34 @@ public sealed class SettingsViewModel : ViewModelBase
     public RelayCommand OpenAutomationSettingsCommand { get; }
 
     public RelayCommand SupportDeveloperCommand { get; }
+
+    /// <summary>"Export and import": profiles and settings to and from a file.</summary>
+    public SettingsTransferViewModel Transfer { get; }
+
+    /// <summary>
+    /// Shows the settings as they are now, without saving them again - after an import replaced them.
+    /// </summary>
+    private void ReloadFromConfiguration()
+    {
+        AppConfiguration configuration = AppHost.Configuration;
+        this.selectedAppearance = this.AppearanceChoices.First(c => c.Value == configuration.Appearance);
+        this.selectedLanguage = this.LanguageChoices.FirstOrDefault(c => string.Equals(c.Value, configuration.Language, StringComparison.OrdinalIgnoreCase))
+            ?? this.LanguageChoices[0];
+        this.showDockIcon = configuration.ShowDockIcon;
+        this.checkForUpdates = configuration.CheckForUpdates;
+        this.analyticsEnabled = configuration.Analytics.Enabled;
+        this.RetentionChoices = WithCurrent(RetentionPresets, configuration.Analytics.RetentionDays, FormatDays);
+        this.selectedRetention = this.RetentionChoices.First(c => c.Value == configuration.Analytics.RetentionDays);
+
+        foreach (string property in new[]
+        {
+            nameof(this.SelectedAppearance), nameof(this.SelectedLanguage), nameof(this.IsLanguagePending), nameof(this.LanguagePendingText),
+            nameof(this.ShowDockIcon), nameof(this.CheckForUpdates), nameof(this.AnalyticsEnabled), nameof(this.RetentionChoices), nameof(this.SelectedRetention)
+        })
+        {
+            this.OnPropertyChanged(property);
+        }
+    }
 
     /// <summary>
     /// Saves after whatever save is already under way, so quick changes are written in the order
