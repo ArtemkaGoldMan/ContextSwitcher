@@ -508,10 +508,6 @@
     <value>Active now</value>
     <comment>ProfilesPage.axaml: Text</comment>
   </data>
-  <data name="Profiles_Activate" xml:space="preserve">
-    <value>Activate</value>
-    <comment>ProfilesPage.axaml: Content</comment>
-  </data>
   <data name="Profiles_Edit" xml:space="preserve">
     <value>Edit</value>
     <comment>ProfilesPage.axaml: ToolTip.Tip</comment>
@@ -1515,5 +1511,8 @@
   <data name="Browser_NoProfiles" xml:space="preserve">
     <value>{0} has no profiles yet. Open it once, then choose one here.</value>
     <comment>A browser-profile row when the browser has never been opened. {0} = Google Chrome or Brave.</comment>
+  </data>
+  <data name="Profiles_ClickToTurnOn" xml:space="preserve">
+    <value>Click to turn this profile on</value>
   </data>
 </root>

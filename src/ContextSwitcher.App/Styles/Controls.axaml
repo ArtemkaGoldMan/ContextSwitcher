@@ -1,5 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ContextSwitcher.App.ViewModels"
         xmlns:ctl="using:ContextSwitcher.App.Controls"
         xmlns:r="using:ContextSwitcher.App.Resources">
   <Styles.Resources>
@@ -64,6 +65,54 @@
        the rounding, so the accent colour carries the emphasis on its own. -->
   <Style Selector="Border.panel.current">
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+  <!-- A profile's card on the Profiles page: no padding of its own, so the tint inside covers it
+       edge to edge; the tint carries the usual padding instead. -->
+  <Style Selector="Border.panel.profileCard">
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <!-- The profile that's on is edged in its own colour, not the app's. -->
+  <Style Selector="Border.panel.profileCard.current" x:DataType="vm:ProfileRowViewModel">
+    <Setter Property="BorderBrush" Value="{Binding AccentBrush}" />
+  </Style>
+
+  <Style Selector="Border.profileCardTint">
+    <Setter Property="CornerRadius" Value="13" />
+    <Setter Property="Padding" Value="16" />
+  </Style>
+
+  <!-- The profile itself, as the button that turns it on and off: no chrome of its own, just a
+       soft highlight under the pointer, reaching to the card's padding. -->
+  <Style Selector="Button.profileToggle">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="6" />
+    <Setter Property="Margin" Value="-6" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="Button.profileToggle:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource CardHoverBrush}" />
+  </Style>
+
+  <Style Selector="Button.profileToggle:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource CardHoverBrush}" />
+  </Style>
+
+  <!-- While its switch runs: dimmed, not greyed into a disabled button. -->
+  <Style Selector="Button.profileToggle:disabled /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+  <Style Selector="Button.profileToggle:disabled">
+    <Setter Property="Opacity" Value="0.6" />
   </Style>
 
   <!-- The main window's notice about a switch that had problems: an ordinary card, lifted off the

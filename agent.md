@@ -1566,7 +1566,7 @@ described in section 11.1.2.
 Deliverables:
 
 - `MainAppWindow` (or renamed `SettingsWindow`) with left-hand page navigation: Profiles, Settings, Stats.
-- Profiles page: list, activate-on-click, per-row Edit action, Add new profile, delete/duplicate.
+- Profiles page: list, activate-on-click (clicking the active profile turns it off; no separate Activate button; the active card is tinted and edged in its accent), per-row Edit action, Add new profile, delete/duplicate.
 - Profile Setup editor covering every `ContextDefinition` field: identity, apps (with the
   launch-on-enter/close-on-leave dual-toggle UI over the existing `launchApps`/`closeApps` lists),
   browser management, Focus, media, Docker, quick links, notes, and switch policy.

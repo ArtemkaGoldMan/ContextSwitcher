@@ -382,9 +382,6 @@
   <data name="Profiles_ActiveNow" xml:space="preserve">
     <value>Активний зараз</value>
   </data>
-  <data name="Profiles_Activate" xml:space="preserve">
-    <value>Активувати</value>
-  </data>
   <data name="Profiles_Edit" xml:space="preserve">
     <value>Змінити</value>
   </data>
@@ -1149,5 +1146,8 @@
   </data>
   <data name="Browser_NoProfiles" xml:space="preserve">
     <value>У {0} ще немає профілів. Відкрийте його один раз, а потім виберіть профіль тут.</value>
+  </data>
+  <data name="Profiles_ClickToTurnOn" xml:space="preserve">
+    <value>Натисніть, щоб увімкнути цей профіль</value>
   </data>
 </root>

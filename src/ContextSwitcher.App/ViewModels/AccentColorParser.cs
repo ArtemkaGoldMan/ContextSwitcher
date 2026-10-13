@@ -21,4 +21,14 @@ public static class AccentColorParser
             ? new ImmutableSolidColorBrush(color)
             : Brushes.Gray;
     }
+
+    /// <summary>
+    /// The accent, faint enough to lay over a card as a wash of the profile's colour - immutable, for
+    /// the same reason as <see cref="ToBrush"/>.
+    /// </summary>
+    public static IBrush ToTint(string accentColorHex, byte alpha)
+    {
+        Color color = Color.TryParse(accentColorHex, out Color parsed) ? parsed : Colors.Gray;
+        return new ImmutableSolidColorBrush(Color.FromArgb(alpha, color.R, color.G, color.B));
+    }
 }
