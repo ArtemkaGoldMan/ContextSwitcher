@@ -33,7 +33,7 @@ Non-negotiable product qualities:
 | Menu Bar Integration | Avalonia's built-in `TrayIcon` (native `NSStatusBar` on macOS)           |
 | Charts               | Drawn with the app's own Avalonia controls (see note below)               |
 | DI                   | `Microsoft.Extensions.DependencyInjection`                                |
-| Persistence          | Local JSON under `~/.config/ContextSwitcher/`                             |
+| Persistence          | Local JSON under `~/.config/ContextSwitcher/` (`-dev` for Debug builds)   |
 | Scripts              | `osascript`, `open`, `shortcuts`, `docker`, app-specific CLIs             |
 | License              | MIT                                                                       |
 | Release Packaging    | GitHub Actions on macOS runner, `.app` bundle, `.dmg` release asset       |
@@ -299,6 +299,10 @@ Base directory:
 ```text
 ~/.config/ContextSwitcher/
 ```
+
+A Debug build (`AppBuild.IsDevelopment`) uses `~/.config/ContextSwitcher-dev/` instead, so working on
+the app never touches the installed copy's data, and shows "Context Switcher DEV" as its name. The
+`CONTEXTSWITCHER_CONFIG_DIR` environment variable overrides both (`ConfigPaths.ResolveBaseDirectory`).
 
 Files:
 

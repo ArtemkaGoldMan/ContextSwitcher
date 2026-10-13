@@ -18,7 +18,9 @@ public sealed class AppStartupSmokeTests : IDisposable
         Directory.CreateDirectory(this.home);
     }
 
-    private string ConfigDirectory => Path.Combine(this.home, ".config", "ContextSwitcher");
+    /// <summary>Where this build keeps everything: a development (Debug) build its own folder, apart from the installed app's.</summary>
+    private string ConfigDirectory => Path.Combine(
+        this.home, ".config", AppExecutable().Contains("/bin/Debug/", StringComparison.Ordinal) ? "ContextSwitcher-dev" : "ContextSwitcher");
 
     public void Dispose() => Directory.Delete(this.home, recursive: true);
 
@@ -46,6 +48,33 @@ public sealed class AppStartupSmokeTests : IDisposable
         Assert.Equal(string.Empty, JsonDocument.Parse(statusOutput).RootElement.GetProperty("currentContextId").GetString());
     }
 
+    /// <summary>
+    /// Run from the code, the app keeps to its own folder and never opens the installed app's - which
+    /// is what made a fresh install show the profiles being worked on.
+    /// </summary>
+    [Fact]
+    public async Task ADevelopmentBuildKeepsToItsOwnFolder()
+    {
+        await this.RunAsync("validate-config");
+
+        bool development = AppExecutable().Contains("/bin/Debug/", StringComparison.Ordinal);
+        Assert.Equal(development, File.Exists(Path.Combine(this.home, ".config", "ContextSwitcher-dev", "settings.json")));
+        Assert.Equal(!development, File.Exists(Path.Combine(this.home, ".config", "ContextSwitcher", "settings.json")));
+    }
+
+    /// <summary>CONTEXTSWITCHER_CONFIG_DIR puts everything in another folder, whichever the build.</summary>
+    [Fact]
+    public async Task TheConfigFolderCanBeNamed()
+    {
+        string elsewhere = Path.Combine(this.home, "elsewhere");
+
+        (int exitCode, _) = await this.RunAsync(["validate-config"], new Dictionary<string, string> { ["CONTEXTSWITCHER_CONFIG_DIR"] = elsewhere });
+
+        Assert.Equal(0, exitCode);
+        Assert.True(File.Exists(Path.Combine(elsewhere, "settings.json")));
+        Assert.False(Directory.Exists(Path.Combine(this.home, ".config")));
+    }
+
     /// <summary>A settings file that isn't JSON is moved aside, not lost, and the app still starts.</summary>
     [Fact]
     public async Task ABrokenSettingsFileIsMovedAsideAndSaidSo()
@@ -60,7 +89,10 @@ public sealed class AppStartupSmokeTests : IDisposable
         Assert.Single(Directory.GetFiles(this.ConfigDirectory, "settings.json.corrupt.*"));
     }
 
-    private async Task<(int ExitCode, string Output)> RunAsync(params string[] arguments)
+    private Task<(int ExitCode, string Output)> RunAsync(params string[] arguments) =>
+        this.RunAsync(arguments, new Dictionary<string, string>());
+
+    private async Task<(int ExitCode, string Output)> RunAsync(string[] arguments, Dictionary<string, string> environment)
     {
         ProcessStartInfo start = new(AppExecutable())
         {
@@ -69,6 +101,13 @@ public sealed class AppStartupSmokeTests : IDisposable
             UseShellExecute = false
         };
         start.Environment["HOME"] = this.home;
+
+        // Only what the test asks for: one set in the shell running the tests would send the app elsewhere.
+        start.Environment.Remove("CONTEXTSWITCHER_CONFIG_DIR");
+        foreach ((string name, string value) in environment)
+        {
+            start.Environment[name] = value;
+        }
         foreach (string argument in arguments)
         {
             start.ArgumentList.Add(argument);

@@ -184,7 +184,7 @@ public sealed partial class App : Application
         TrayIcon trayIcon = new()
         {
             Icon = new WindowIcon(AssetLoader.Open(TrayIconUri)),
-            ToolTipText = "Context Switcher",
+            ToolTipText = AppBuild.DisplayName,
             Menu = trayMenu.Menu,
             IsVisible = true
         };
