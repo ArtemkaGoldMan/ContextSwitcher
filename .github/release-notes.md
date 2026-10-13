@@ -1,10 +1,11 @@
 ## What's new
 
-- **Update notifications.** When a new version is out, macOS lets you know. Click the notification to update.
-- **Close a profile's tabs when you leave it.** Each page in a profile now has Open and Close, like apps. Only those pages' tabs close; your other tabs stay open.
-- **Fewer duplicate tabs.** A page you already have open is recognised even after it redirected or you clicked around in it.
-- **Turn a profile off.** Click the active profile again in the menu bar or the dashboard, and no profile is on until you pick one. `ContextSwitcher off` does the same from Shortcuts or Siri.
-- **More accurate time tracking.** Time no longer counts while your Mac sleeps. Switches from Shortcuts, Siri and the command line are counted correctly. Stats shows the profile you're in as the time goes.
+- **See what an update brings before installing it.** Settings → Updates now lists what's new in a version, right above Install and restart.
+- **"Default browser" works like the browser it is.** When it's Chrome, Brave or Safari, avoiding duplicate tabs and closing a profile's tabs now work with it too.
+- **Apps aren't restarted for nothing.** An app or Docker container the next profile also uses stays open instead of being quit and opened again.
+- **Links with commas open.** Addresses such as map coordinates no longer break.
+- **More accurate time tracking.** Time after midnight counts for the new day, and a crash no longer counts the hours until the app is opened again.
+- **Clearer install instructions.** The manual download needs one Terminal command, and the README and this page now say when, why and what it does.
 
 ## Install
 
