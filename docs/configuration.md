@@ -6,6 +6,14 @@ Everything ContextSwitcher does is driven by one file:
 ~/.config/ContextSwitcher/settings.json
 ```
 
+Everything else the app keeps — state, time tracking, logs, backups — sits beside it in that folder.
+
+**Running from the code keeps a separate folder,** `~/.config/ContextSwitcher-dev`: a Debug build
+(`dotnet run`, your IDE) never reads or changes the installed app's profiles and time, and both can
+run at once — the development one says **DEV** in its tooltip and window titles. To use any other
+folder, set `CONTEXTSWITCHER_CONFIG_DIR`, e.g. for a release build you're testing:
+`CONTEXTSWITCHER_CONFIG_DIR=/tmp/cs-test ./ContextSwitcher.app/Contents/MacOS/ContextSwitcher`.
+
 The UI writes it, and you can edit it by hand. The app validates the whole file before saving and
 refuses to write an invalid one, so a typo in the UI can't corrupt your setup. If the file on disk is
 ever unreadable JSON, it's moved aside as `settings.json.corrupt.<timestamp>` and a fresh default is

@@ -431,6 +431,11 @@ cd ContextSwitcher
 dotnet run --project src/ContextSwitcher.App/ContextSwitcher.App.csproj
 ```
 
+Run this way, it's a **development build**: it keeps its settings in `~/.config/ContextSwitcher-dev`,
+apart from an installed copy's `~/.config/ContextSwitcher`, and says *DEV* in its name — so you can
+work on it and use the installed app at the same time without either touching the other's profiles
+or time. `CONTEXTSWITCHER_CONFIG_DIR` points either at another folder.
+
 `dotnet test` runs the tests. [Release process](docs/release-process.md) covers building the `.app`,
 signing and publishing; [agent.md](agent.md) is the engineering spec — read it before changing how
 the app behaves.

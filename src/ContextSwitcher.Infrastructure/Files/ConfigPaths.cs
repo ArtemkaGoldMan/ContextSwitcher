@@ -6,14 +6,46 @@ namespace ContextSwitcher.Infrastructure.Files;
 public sealed class ConfigPaths
 {
     /// <summary>
+    /// An environment variable naming the folder to keep everything in, instead of the usual one -
+    /// for another copy alongside, or a test.
+    /// </summary>
+    public const string DirectoryVariable = "CONTEXTSWITCHER_CONFIG_DIR";
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="ConfigPaths"/> class.
     /// </summary>
     /// <param name="baseDirectory">An optional override for the config root.</param>
     public ConfigPaths(string? baseDirectory = null)
     {
-        BaseDirectory = string.IsNullOrWhiteSpace(baseDirectory)
-            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "ContextSwitcher")
-            : baseDirectory;
+        BaseDirectory = ResolveBaseDirectory(
+            baseDirectory,
+            Environment.GetEnvironmentVariable(DirectoryVariable),
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            AppBuild.IsDevelopment);
+    }
+
+    /// <summary>
+    /// Where everything is kept: the folder given, else the one <see cref="DirectoryVariable"/> names,
+    /// else <c>~/.config/ContextSwitcher</c> - or <c>~/.config/ContextSwitcher-dev</c> for a
+    /// development build, which so never reads or changes the installed app's profiles and time.
+    /// </summary>
+    public static string ResolveBaseDirectory(string? explicitDirectory, string? environmentDirectory, string userHome, bool isDevelopment)
+    {
+        if (!string.IsNullOrWhiteSpace(explicitDirectory))
+        {
+            return explicitDirectory;
+        }
+
+        if (!string.IsNullOrWhiteSpace(environmentDirectory))
+        {
+            // A quoted "~/…" reaches us unexpanded.
+            string directory = environmentDirectory.Trim();
+            return directory == "~" || directory.StartsWith("~/", StringComparison.Ordinal)
+                ? Path.Combine(userHome, directory.TrimStart('~').TrimStart('/'))
+                : directory;
+        }
+
+        return Path.Combine(userHome, ".config", isDevelopment ? "ContextSwitcher-dev" : "ContextSwitcher");
     }
 
     /// <summary>
