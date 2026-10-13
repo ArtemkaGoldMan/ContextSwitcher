@@ -71,10 +71,28 @@ public sealed partial class DashboardWindow : Window
     {
         // On whichever desktop the user is on, and over a full-screen app: by default a window goes
         // back to the Space it was first shown on, so the popover opened out of sight.
-        WindowSpaces.FollowActiveSpace(this.NativeWindow());
+        IntPtr window = this.NativeWindow();
+        WindowSpaces.FollowActiveSpace(window);
+
+        // And without bringing the app forward, as a menu bar popover should: an app with a Dock
+        // icon coming forward made macOS leave a full-screen app for a desktop. So it opens as a
+        // non-activating panel, without focus - taking focus activated the app, whatever the window
+        // (MenuBarPanel). A click in it gives it focus. Should the window not be one that can be made
+        // a panel, it is shown and activated as an ordinary window, as before.
+        bool panel = MenuBarPanel.Make(window);
+        this.ShowActivated = !panel;
         this.Show();
-        this.Activate();
-        this.LogSpaceIfAsked();
+        if (!panel)
+        {
+            this.Activate();
+        }
+
+        // Once as it opens, and again once whatever macOS does in response has happened.
+        if (DiagnosingWindows)
+        {
+            this.LogSpace();
+            DispatcherTimer.RunOnce(this.LogSpace, TimeSpan.FromSeconds(1));
+        }
 
         this.frontmostBaseline = FrontmostApplication.ProcessId();
 
@@ -86,13 +104,15 @@ public sealed partial class DashboardWindow : Window
     }
 
     /// <summary>
-    /// With <c>CONTEXTSWITCHER_DIAGNOSE=windows</c>, logs which Spaces the popover may appear on and
-    /// whether it opened on the one in front - what a report of it "not opening" comes down to.
+    /// <c>CONTEXTSWITCHER_DIAGNOSE=windows</c> logs, as the popover opens, which Spaces it may appear
+    /// on, whether it opened on the one in front, and whether the app came forward - what a report of
+    /// it "not opening", or of being thrown onto another desktop, comes down to.
     /// </summary>
-    private void LogSpaceIfAsked()
+    private static bool DiagnosingWindows => Environment.GetEnvironmentVariable("CONTEXTSWITCHER_DIAGNOSE") == "windows";
+
+    private void LogSpace()
     {
-        if (Environment.GetEnvironmentVariable("CONTEXTSWITCHER_DIAGNOSE") != "windows"
-            || WindowSpaces.Describe(this.NativeWindow()) is not { } space)
+        if (WindowSpaces.Describe(this.NativeWindow()) is not { } space)
         {
             return;
         }
@@ -103,7 +123,7 @@ public sealed partial class DashboardWindow : Window
             Level = LogLevel.Information,
             Category = "Diagnostics",
             EventId = "DashboardShown",
-            Message = $"Dashboard shown: collectionBehavior=0x{space.Behavior:x}, onActiveSpace={space.OnActiveSpace}."
+            Message = $"Dashboard shown: collectionBehavior=0x{space.Behavior:x}, onActiveSpace={space.OnActiveSpace}, {MenuBarPanel.Describe(this.NativeWindow())}."
         });
     }
 
