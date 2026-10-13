@@ -1,30 +1,35 @@
 using System.Runtime.InteropServices;
+using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Infrastructure.MacOS;
 
 namespace ContextSwitcher.Tests.MacOS;
 
-public sealed class SleepEventsTests
+public sealed class AwayEventsTests
 {
     private const string ObjectiveC = "/usr/lib/libobjc.A.dylib";
     private const string AppKit = "/System/Library/Frameworks/AppKit.framework/AppKit";
 
     /// <summary>
-    /// The notifications macOS posts on sleep and wake, posted here in this process only, reach the
-    /// events - through the real NSWorkspace notification center and the observer class made at runtime.
+    /// The notifications macOS posts on sleep and wake and on switching users, posted here in this
+    /// process only, reach the events - through the real NSWorkspace notification center and the
+    /// observer class made at runtime. The lock screen's are distributed to every app on the Mac, so
+    /// they aren't posted from a test.
     /// </summary>
     [Fact]
-    public void SleepAndWakeFromMacOSReachTheEvents()
+    public void SleepWakeAndUserSwitchingFromMacOSReachTheEvents()
     {
-        SleepEvents events = new();
+        AwayEvents events = new();
         Assert.True(events.IsListening);
         List<string> heard = [];
-        events.WillSleep += (_, _) => heard.Add("sleep");
-        events.DidWake += (_, _) => heard.Add("wake");
+        events.Away += (_, reason) => heard.Add($"away {reason}");
+        events.Back += (_, reason) => heard.Add($"back {reason}");
 
         Post("NSWorkspaceWillSleepNotification");
         Post("NSWorkspaceDidWakeNotification");
+        Post("NSWorkspaceSessionDidResignActiveNotification");
+        Post("NSWorkspaceSessionDidBecomeActiveNotification");
 
-        Assert.Equal(["sleep", "wake"], heard);
+        Assert.Equal(["away Sleep", "back Sleep", "away OtherUser", "back OtherUser"], heard);
     }
 
     private static void Post(string symbol)
