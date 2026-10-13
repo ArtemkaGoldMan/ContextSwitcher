@@ -266,10 +266,16 @@ public sealed class EnvironmentChoicesTests
         BrowserProfileRowViewModel row = new(BrowserKind.Chrome, "Profile 2", [], catalog.GetBrowserProfiles, _ => { });
         row.Browser = BrowserKind.Brave;
 
-        // Brave has no profiles readable here, but every Chromium install has Default.
-        Assert.Equal(["Default"], row.ProfileChoices.Select(c => c.Value));
-        Assert.Equal("Default", row.ProfileDirectory);
+        // Brave has no profiles here - never opened - and none is made up: the row says why instead.
+        Assert.Empty(row.ProfileChoices);
+        Assert.False(row.HasProfiles);
+        Assert.Equal(string.Empty, row.ProfileDirectory);
         Assert.Equal(BrowserKind.Brave, row.Browser);
+        Assert.Equal("Brave has no profiles yet. Open it once, then choose one here.", row.NoProfilesText);
+
+        row.Browser = BrowserKind.Chrome;
+        Assert.True(row.HasProfiles);
+        Assert.Equal(["Default", "Profile 2"], row.ProfileChoices.Select(c => c.Value));
     }
 
     [Fact]

@@ -26,6 +26,12 @@ public interface ISystemCatalog
     IReadOnlyList<BrowserProfile> GetBrowserProfiles(BrowserKind browser);
 
     /// <summary>
+    /// Whether <paramref name="browser"/> is installed, so only browsers that are can be chosen. The
+    /// default browser always is: it's whichever one macOS opens links in.
+    /// </summary>
+    bool IsBrowserInstalled(BrowserKind browser);
+
+    /// <summary>
     /// Apple Music's playlists, or <see langword="null"/> when they could not be read. Reading them
     /// means scripting Music, which starts it if it is not running, so that only happens when
     /// <paramref name="startMusicIfNeeded"/> says the user asked for it.

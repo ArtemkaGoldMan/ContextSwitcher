@@ -78,15 +78,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.processRunner = processRunner;
         this.catalog = catalog;
         this.systemDefault = defaultBrowser?.Get();
-        this.BrowserKindChoices =
-        [
-            new(BrowserKind.Default, this.systemDefault is { Name.Length: > 0 } known
-                ? Localized.Format(Strings.Browser_DefaultIs, known.Name)
-                : Strings.Browser_Default),
-            new(BrowserKind.Safari, "Safari"),
-            new(BrowserKind.Chrome, "Google Chrome"),
-            new(BrowserKind.Brave, "Brave")
-        ];
         this.IsNew = existing is null;
 
         ContextDefinition source = existing ?? CreateDefaultContext(AppHost.Configuration.Contexts);
@@ -126,6 +117,8 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         {
             this.browserKind = source.BrowserManagement.Profiles[0].Browser;
         }
+
+        this.BrowserKindChoices = this.BrowserChoices();
 
         // Only reachable from settings the editor never wrote - profiles with no rows, say.
         if (!this.BrowserModeChoices.Any(choice => choice.Value == this.browserMode))
@@ -361,7 +354,11 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     public IReadOnlyList<Choice<BrowserManagementMode>> BrowserModeChoices =>
         this.CanOpenBrowserProfiles ? ProfileModes : PageModes;
 
-    /// <summary>"Default browser" names the browser it is, when known: "Default browser (Google Chrome)".</summary>
+    /// <summary>
+    /// The default browser, naming the one it is when known - "Default browser (Google Chrome)" -
+    /// then each supported browser that is installed. One the profile already uses but that has
+    /// since been removed stays, marked, rather than the profile quietly being changed.
+    /// </summary>
     public IReadOnlyList<Choice<BrowserKind>> BrowserKindChoices { get; }
 
     public BrowserManagementMode BrowserMode
@@ -647,6 +644,30 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     {
         this.QuickLinks.Remove(row);
         this.QuickLinkTabPicker.Refresh();
+    }
+
+    private List<Choice<BrowserKind>> BrowserChoices()
+    {
+        List<Choice<BrowserKind>> choices =
+        [
+            new(BrowserKind.Default, this.systemDefault is { Name.Length: > 0 } known
+                ? Localized.Format(Strings.Browser_DefaultIs, known.Name)
+                : Strings.Browser_Default)
+        ];
+
+        foreach ((BrowserKind kind, string name) in new[] { (BrowserKind.Safari, "Safari"), (BrowserKind.Chrome, "Google Chrome"), (BrowserKind.Brave, "Brave") })
+        {
+            if (this.catalog.IsBrowserInstalled(kind))
+            {
+                choices.Add(new(kind, name));
+            }
+            else if (kind == this.browserKind)
+            {
+                choices.Add(new(kind, Localized.Format(Strings.Browser_NotInstalled, name)));
+            }
+        }
+
+        return choices;
     }
 
     /// <summary>A page added now opens, as pages always did; closing it is opted into.</summary>

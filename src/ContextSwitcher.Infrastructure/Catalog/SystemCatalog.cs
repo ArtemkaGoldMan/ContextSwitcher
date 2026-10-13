@@ -106,6 +106,10 @@ public sealed class SystemCatalog : ISystemCatalog
     }
 
     /// <inheritdoc />
+    public bool IsBrowserInstalled(BrowserKind browser) =>
+        browser == BrowserKind.Default || this.IsInstalled(AppName(browser));
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<string>?> GetMusicPlaylistsAsync(bool startMusicIfNeeded, CancellationToken cancellationToken)
     {
         ProcessResult result = await this.scriptRunner

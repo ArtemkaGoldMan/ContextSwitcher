@@ -17,6 +17,9 @@ public sealed class FakeSystemCatalog : ISystemCatalog
 
     public Dictionary<BrowserKind, List<BrowserProfile>> BrowserProfiles { get; } = [];
 
+    /// <summary>Every supported browser unless a test takes one away.</summary>
+    public HashSet<BrowserKind> InstalledBrowsers { get; } = [BrowserKind.Safari, BrowserKind.Chrome, BrowserKind.Brave];
+
     /// <summary>The playlists Music has; null makes it answer as though it could not be read.</summary>
     public List<string>? MusicPlaylists { get; set; } = [];
 
@@ -55,6 +58,9 @@ public sealed class FakeSystemCatalog : ISystemCatalog
 
     public IReadOnlyList<BrowserProfile> GetBrowserProfiles(BrowserKind browser) =>
         this.BrowserProfiles.TryGetValue(browser, out List<BrowserProfile>? profiles) ? profiles.ToList() : [];
+
+    public bool IsBrowserInstalled(BrowserKind browser) =>
+        browser == BrowserKind.Default || this.InstalledBrowsers.Contains(browser);
 
     public async Task<IReadOnlyList<string>?> GetMusicPlaylistsAsync(bool startMusicIfNeeded, CancellationToken cancellationToken)
     {
