@@ -169,6 +169,56 @@ public sealed class CliCommandRouterTests
         Assert.Equal(ContextSwitchSource.Cli, switchService.LastRequest?.Source);
         Assert.Contains("Turning 'work' off finished with status: Succeeded", output.ToString(), StringComparison.Ordinal);
     }
+    /// <summary>`status` is what a Shortcut reads to know where it is.</summary>
+    [Fact]
+    public async Task RunAsyncStatusReportsTheCurrentContext()
+    {
+        (CliCommandRouter router, _, StringWriter output) = Create();
+        CurrentContextState state = new() { CurrentContextId = "work", PreviousContextId = "personal", LastSwitchStatus = "Succeeded" };
+
+        int exitCode = await router.RunAsync(["status"], TwoContextConfiguration(), Valid, state, output, CancellationToken.None);
+
+        Assert.Equal((int)CliExitCode.Success, exitCode);
+        Assert.Contains("Current context: work", output.ToString(), StringComparison.Ordinal);
+        Assert.Contains("Last switch status: Succeeded", output.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RunAsyncStatusJsonGivesTheStateAsFields()
+    {
+        (CliCommandRouter router, _, StringWriter output) = Create();
+        CurrentContextState state = new() { CurrentContextId = string.Empty, PreviousContextId = "work", LastSwitchStatus = "Succeeded" };
+
+        await router.RunAsync(["status", "--json"], TwoContextConfiguration(), Valid, state, output, CancellationToken.None);
+
+        JsonElement status = JsonDocument.Parse(output.ToString()).RootElement;
+        Assert.Equal((string.Empty, "work", "Succeeded"), (status.GetProperty("currentContextId").GetString(), status.GetProperty("previousContextId").GetString(), status.GetProperty("lastSwitchStatus").GetString()));
+    }
+
+    [Fact]
+    public async Task RunAsyncOffWithNothingActiveSaysSo()
+    {
+        (CliCommandRouter router, StubContextSwitchService switchService, StringWriter output) = Create();
+        switchService.Result = new ContextSwitchResult(string.Empty, null, ContextSwitchStatus.NoOp, [], DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, "id");
+
+        int exitCode = await router.RunAsync(["off"], TwoContextConfiguration(), Valid, new CurrentContextState(), output, CancellationToken.None);
+
+        Assert.Equal((int)CliExitCode.Success, exitCode);
+        Assert.Contains("No context is active, so nothing was turned off.", output.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RunAsyncOffWithInvalidConfigurationChangesNothing()
+    {
+        (CliCommandRouter router, StubContextSwitchService switchService, StringWriter output) = Create();
+        ConfigurationValidationResult invalid = new([new ConfigurationValidationError("contexts", "broken")]);
+
+        int exitCode = await router.RunAsync(["off"], TwoContextConfiguration(), invalid, new CurrentContextState(), output, CancellationToken.None);
+
+        Assert.Equal((int)CliExitCode.ConfigurationInvalid, exitCode);
+        Assert.Null(switchService.LastRequest);
+    }
+
     private static (CliCommandRouter Router, StubContextSwitchService SwitchService, StringWriter Output) Create()
     {
         StubContextSwitchService switchService = new();

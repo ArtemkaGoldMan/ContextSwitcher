@@ -179,6 +179,36 @@ public sealed class AppBundleUpdaterTests : IDisposable
         Assert.False(Directory.Exists(work));
     }
 
+    /// <summary>
+    /// If the new copy can't be moved into place, the old one is put back and opened - the person
+    /// keeps a working app rather than none - and the temporary folder is still cleared away.
+    /// </summary>
+    [Fact]
+    public async Task TheInstallScriptPutsTheOldCopyBackWhenTheNewOneCantGoIn()
+    {
+        if (!OperatingSystem.IsMacOS())
+        {
+            return;
+        }
+
+        string installed = await MakeBundleAsync(Path.Combine(this.root, "Applications"), "0.1.0", signAdHoc: false);
+        string work = Path.Combine(this.root, "work");
+        Directory.CreateDirectory(work);
+        string missing = Path.Combine(work, "unpacked", "ContextSwitcher.app");
+        string opened = Path.Combine(this.root, "opened.txt");
+        string launcher = Path.Combine(this.root, "launcher.sh");
+        await File.WriteAllTextAsync(launcher, $"#!/bin/bash\necho \"$1\" > '{opened}'\n");
+        File.SetUnixFileMode(launcher, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        string script = Path.Combine(work, "install.sh");
+        await File.WriteAllTextAsync(script, AppBundleUpdater.InstallScript);
+
+        await RunScriptAsync(script, ExitedProcessId(), installed, missing, work, launcher);
+
+        Assert.Contains("<string>0.1.0</string>", await File.ReadAllTextAsync(Path.Combine(installed, "Contents", "Info.plist")), StringComparison.Ordinal);
+        Assert.Equal(installed, (await File.ReadAllTextAsync(opened)).Trim());
+        Assert.False(Directory.Exists(work));
+    }
+
     private string Work => Path.Combine(this.root, "tmp");
 
     private async Task<(AppBundleUpdater Updater, CertificateRunner Runner)> UpdaterOfferingAsync(string downloadVersion)

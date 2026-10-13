@@ -311,6 +311,81 @@ public sealed class ContextSwitchServiceTests
         Assert.Equal("work", ContextSwitchRequest.ForClickOn("work", string.Empty, ContextSwitchSource.Dashboard).TargetContextId);
     }
 
+    /// <summary>
+    /// Shortcuts, Siri and the command line each switch in a process of their own; a switch already
+    /// holding the lock beside state.json - another process - turns this one away untouched.
+    /// </summary>
+    [Fact]
+    public async Task ASwitchRunningInAnotherProcessTurnsThisOneAway()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), $"cs-lock-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        try
+        {
+            string statePath = Path.Combine(directory, "state.json");
+            InMemoryJsonStore store = new();
+            FakeAutomationStepExecutor executor = new();
+            TestLogger logger = new();
+            FakeClock clock = new();
+            ContextSwitchService service = new(
+                store, executor, new AutomationPlanBuilder(), new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()), clock, logger, SettingsPath, statePath);
+            store.Seed(SettingsPath, TwoContextConfiguration());
+
+            using (new FileStream(statePath + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+            {
+                ContextSwitchResult result = await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
+
+                Assert.Equal(ContextSwitchStatus.Cancelled, result.Status);
+                Assert.Empty(executor.ExecutedSteps);
+                Assert.Contains(logger.Entries, entry => entry.EventId == "SwitchRejected");
+            }
+
+            // Once that one is done, the next switch goes ahead.
+            ContextSwitchResult after = await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
+            Assert.Equal(ContextSwitchStatus.Succeeded, after.Status);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task ACancelledSwitchStopsAndSaysSo()
+    {
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _, TestLogger logger) = CreateService();
+        store.Seed(SettingsPath, TwoContextConfiguration());
+        executor.Entered = new TaskCompletionSource();
+        executor.Gate = new TaskCompletionSource();
+        using CancellationTokenSource cancellation = new();
+
+        Task<ContextSwitchResult> switching = service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), cancellation.Token);
+        await executor.Entered.Task;
+        await cancellation.CancelAsync();
+        ContextSwitchResult result = await switching;
+
+        Assert.Equal(ContextSwitchStatus.Cancelled, result.Status);
+        Assert.Contains(logger.Entries, entry => entry.EventId == "SwitchCancelled");
+    }
+
+    [Theory]
+    [InlineData(true, "Unknown context 'nowhere'.")]
+    [InlineData(false, "Configuration could not be loaded.")]
+    public async Task ASwitchToNothingKnownFailsWithTheReason(bool withConfiguration, string reason)
+    {
+        (ContextSwitchService service, InMemoryJsonStore store, FakeAutomationStepExecutor executor, _, TestLogger logger) = CreateService();
+        if (withConfiguration)
+        {
+            store.Seed(SettingsPath, TwoContextConfiguration());
+        }
+
+        ContextSwitchResult result = await service.SwitchAsync(new ContextSwitchRequest("nowhere", ContextSwitchSource.Test), CancellationToken.None);
+
+        Assert.Equal(ContextSwitchStatus.Failed, result.Status);
+        Assert.Empty(executor.ExecutedSteps);
+        Assert.Contains(logger.Entries, entry => entry.EventId == "SwitchFailed" && entry.Message == reason);
+    }
+
     private static (ContextSwitchService Service, InMemoryJsonStore Store, FakeAutomationStepExecutor Executor) CreateService(InMemoryAnalyticsSessionStore sessions)
     {
         InMemoryJsonStore store = new();
