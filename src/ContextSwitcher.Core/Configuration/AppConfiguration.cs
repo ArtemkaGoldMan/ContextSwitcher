@@ -54,6 +54,20 @@ public sealed record AppConfiguration
     public bool CheckForUpdates { get; init; } = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether a switch started in the app first asks what to do with
+    /// the apps and browser tabs open that neither profile in the switch has: keep them, close them,
+    /// or add them to one of the two. Off unless turned on.
+    /// </summary>
+    public bool AskOnSwitch { get; init; }
+
+    /// <summary>
+    /// Gets or sets the apps ContextSwitcher never opens, closes, hides or asks about - one used in
+    /// every profile, such as a messenger. Adding one takes it out of every profile; one still listed
+    /// in a profile, by hand, is left alone all the same.
+    /// </summary>
+    public IReadOnlyList<string> IgnoredApps { get; init; } = [];
+
+    /// <summary>
     /// Gets or sets analytics configuration for the app.
     /// </summary>
     public AnalyticsConfiguration Analytics { get; init; } = new();

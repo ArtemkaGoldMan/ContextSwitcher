@@ -48,6 +48,14 @@ public sealed class ConfigurationValidator
 
         ValidateContexts(configuration, errors);
 
+        for (int i = 0; i < configuration.IgnoredApps.Count; i++)
+        {
+            if (string.IsNullOrWhiteSpace(configuration.IgnoredApps[i]))
+            {
+                errors.Add(ConfigurationValidationError.Of($"ignoredApps[{i}]", ConfigurationMessages.IgnoredAppEmpty.With()));
+            }
+        }
+
         return new ConfigurationValidationResult(errors);
     }
 

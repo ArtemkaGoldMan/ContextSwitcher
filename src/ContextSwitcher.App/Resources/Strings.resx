@@ -1512,4 +1512,73 @@
     <value>{0} has no profiles yet. Open it once, then choose one here.</value>
     <comment>A browser-profile row when the browser has never been opened. {0} = Google Chrome or Brave.</comment>
   </data>
+  <data name="Ask_Title_Switch" xml:space="preserve">
+    <value>Switching from {0} to {1}</value>
+  </data>
+  <data name="Ask_Title_Off" xml:space="preserve">
+    <value>Turning {0} off</value>
+  </data>
+  <data name="Ask_Title_On" xml:space="preserve">
+    <value>Turning {0} on</value>
+  </data>
+  <data name="Ask_Subtitle_Two" xml:space="preserve">
+    <value>These apps and tabs aren't part of either profile. What should happen to them?</value>
+  </data>
+  <data name="Ask_Subtitle_One" xml:space="preserve">
+    <value>These apps and tabs aren't part of {0}. What should happen to them?</value>
+  </data>
+  <data name="Ask_Apps" xml:space="preserve">
+    <value>Apps · {0}</value>
+  </data>
+  <data name="Ask_Tabs" xml:space="preserve">
+    <value>Tabs · {0}</value>
+  </data>
+  <data name="Ask_ManyTabs" xml:space="preserve">
+    <value>All tabs: {0}</value>
+  </data>
+  <data name="Ask_Keep" xml:space="preserve">
+    <value>Keep</value>
+  </data>
+  <data name="Ask_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Ask_AddTo" xml:space="preserve">
+    <value>+ {0}</value>
+  </data>
+  <data name="Ask_KeepAll" xml:space="preserve">
+    <value>Keep all</value>
+  </data>
+  <data name="Ask_CloseAll" xml:space="preserve">
+    <value>Close all</value>
+  </data>
+  <data name="Ask_DontAskAgain" xml:space="preserve">
+    <value>Don't ask again</value>
+  </data>
+  <data name="Ask_Skip" xml:space="preserve">
+    <value>Skip</value>
+  </data>
+  <data name="Ask_Continue" xml:space="preserve">
+    <value>Continue</value>
+  </data>
+  <data name="Msg_Config_IgnoredAppEmpty" xml:space="preserve">
+    <value>An app that's never touched needs a name.</value>
+  </data>
+  <data name="Settings_Switching_Section" xml:space="preserve">
+    <value>SWITCHING</value>
+  </data>
+  <data name="Settings_AskOnSwitch" xml:space="preserve">
+    <value>Ask about other apps and tabs</value>
+  </data>
+  <data name="Settings_AskOnSwitch_Description" xml:space="preserve">
+    <value>On each switch, see the apps and tabs that aren't part of either profile, and keep them, close them or add them to one.</value>
+  </data>
+  <data name="Settings_IgnoredApps" xml:space="preserve">
+    <value>Never touch these apps</value>
+  </data>
+  <data name="Settings_IgnoredApps_Description" xml:space="preserve">
+    <value>Never opened, closed, hidden or asked about - like a messenger you use in every profile. Adding one takes it out of every profile.</value>
+  </data>
+  <data name="Settings_IgnoredApp_TakenOut" xml:space="preserve">
+    <value>{0} is never touched now, and was taken out of {1}.</value>
+  </data>
 </root>

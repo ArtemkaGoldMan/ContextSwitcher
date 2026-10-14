@@ -8,12 +8,14 @@ namespace ContextSwitcher.Core.Contexts;
 /// <param name="DryRun">When <see langword="true"/>, builds the automation plan but applies no changes.</param>
 /// <param name="Force">When <see langword="true"/>, re-runs the switch even if the target is already active.</param>
 /// <param name="CorrelationId">An optional correlation id; a new one is generated when omitted.</param>
+/// <param name="Extras">Apps and tabs to close besides what the profiles say, as chosen when asked.</param>
 public sealed record ContextSwitchRequest(
     string TargetContextId,
     ContextSwitchSource Source,
     bool DryRun = false,
     bool Force = false,
-    string? CorrelationId = null)
+    string? CorrelationId = null,
+    SwitchExtras? Extras = null)
 {
     /// <summary>
     /// Leaves the active context without entering another: its half of a switch runs - containers

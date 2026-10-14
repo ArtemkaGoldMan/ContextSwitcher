@@ -205,7 +205,7 @@ public sealed class ContextSwitchService : IContextSwitchService
 
         await this.analyticsService.EndCurrentSessionAsync(SessionEndReason.Switch, cancellationToken).ConfigureAwait(false);
 
-        AutomationPlan plan = this.planBuilder.Build(previous, target);
+        AutomationPlan plan = this.planBuilder.Build(previous, target, request.Extras, configuration.IgnoredApps);
 
         // The steps' log entries go under the profile they act for: the one entered, or the one
         // being turned off.

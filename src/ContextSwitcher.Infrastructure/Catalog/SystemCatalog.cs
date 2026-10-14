@@ -175,6 +175,43 @@ public sealed class SystemCatalog : ISystemCatalog
         return tabs;
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<OpenBrowserTab>> GetBrowserTabsAsync(CancellationToken cancellationToken)
+    {
+        List<OpenBrowserTab> tabs = [];
+        foreach (BrowserKind browser in TabBrowsers)
+        {
+            string appName = AppName(browser);
+
+            // Scripting an app that is not installed makes AppleScript ask the user to locate it.
+            if (!this.IsInstalled(appName))
+            {
+                continue;
+            }
+
+            ProcessResult result = await this.scriptRunner
+                .RunAsync(AppleScriptBuilder.ListOpenTabs(appName, browser == BrowserKind.Safari, skipIncognito: true), ListTimeout, cancellationToken)
+                .ConfigureAwait(false);
+            if (result.ExitCode != 0)
+            {
+                continue;
+            }
+
+            foreach (string line in Lines(result.StandardOutput))
+            {
+                string[] fields = line.Split(AppleScriptBuilder.OpenTabFieldSeparator, 2);
+                string url = fields[0].Trim();
+                if (Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                {
+                    string title = fields.Length > 1 ? fields[1].Trim() : string.Empty;
+                    tabs.Add(new OpenBrowserTab(browser, title.Length > 0 ? title : uri.Host, url));
+                }
+            }
+        }
+
+        return tabs;
+    }
+
     private static IReadOnlyList<BrowserProfile> ReadProfiles(JsonElement root)
     {
         if (!root.TryGetProperty("profile", out JsonElement profile)

@@ -106,7 +106,7 @@ public static class AppHost
             provider.GetRequiredService<IBrowserRuns>()));
         services.AddSingleton<IApplicationHider, MacApplicationHider>();
         services.AddSingleton<IAutomationStepExecutor, AutomationStepExecutor>();
-        services.AddSingleton<IContextSwitchService>(provider => new ContextSwitchService(
+        services.AddSingleton(provider => new ContextSwitchService(
             provider.GetRequiredService<IJsonStore>(),
             provider.GetRequiredService<IAutomationStepExecutor>(),
             provider.GetRequiredService<AutomationPlanBuilder>(),
@@ -115,7 +115,18 @@ public static class AppHost
             provider.GetRequiredService<ILogger>(),
             provider.GetRequiredService<ConfigPaths>().SettingsPath,
             provider.GetRequiredService<ConfigPaths>().StatePath));
-        services.AddSingleton<CliCommandRouter>();
+
+        // Switches started in the app ask, when that's on, about everything else open; the command
+        // line has no window to ask in, so it switches through the service itself.
+        services.AddSingleton<IRunningApplications, MacRunningApplications>();
+        services.AddSingleton<IAskOnSwitchPresenter, WindowAskOnSwitchPresenter>();
+        services.AddSingleton<IContextSwitchService>(provider => new SwitchCoordinator(
+            provider.GetRequiredService<ContextSwitchService>(),
+            provider.GetRequiredService<ConfigurationStore>(),
+            provider.GetRequiredService<IRunningApplications>(),
+            provider.GetRequiredService<ISystemCatalog>(),
+            provider.GetRequiredService<IAskOnSwitchPresenter>()));
+        services.AddSingleton(provider => new CliCommandRouter(provider.GetRequiredService<ContextSwitchService>()));
         services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
         services.AddSingleton<IInstalledAppsService, InstalledAppsService>();
         services.AddSingleton<ISystemCatalog, SystemCatalog>();

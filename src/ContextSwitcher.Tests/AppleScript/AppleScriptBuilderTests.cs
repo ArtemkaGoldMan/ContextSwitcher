@@ -121,7 +121,8 @@ public sealed class AppleScriptBuilderTests
             AppleScriptBuilder.ListChromiumTabs("Google Chrome", startIfNeeded: false),
             AppleScriptBuilder.ListChromiumTabs("Google Chrome", startIfNeeded: true),
             AppleScriptBuilder.CloseChromiumTabsWithIds("Google Chrome", [7, 12]),
-            AppleScriptBuilder.CloseTabsWithUrls("Google Chrome", ["https://a.example/"])
+            AppleScriptBuilder.CloseTabsWithUrls("Google Chrome", ["https://a.example/"]),
+            AppleScriptBuilder.ListOpenTabs("Google Chrome", isSafari: false, skipIncognito: true)
         })
         {
             string source = Path.Combine(Path.GetTempPath(), $"cs-{Guid.NewGuid():N}.applescript");
@@ -142,6 +143,15 @@ public sealed class AppleScriptBuilderTests
                 File.Delete(compiled);
             }
         }
+    }
+
+    /// <summary>Asking about everything else open leaves Chrome's incognito windows out; Safari can't say which windows are private.</summary>
+    [Fact]
+    public void IncognitoWindowsCanBeLeftOut()
+    {
+        Assert.Contains("(mode of w) is not \"incognito\"", AppleScriptBuilder.ListOpenTabs("Google Chrome", isSafari: false, skipIncognito: true), StringComparison.Ordinal);
+        Assert.DoesNotContain("incognito", AppleScriptBuilder.ListOpenTabs("Google Chrome", isSafari: false), StringComparison.Ordinal);
+        Assert.DoesNotContain("incognito", AppleScriptBuilder.ListOpenTabs("Safari", isSafari: true, skipIncognito: true), StringComparison.Ordinal);
     }
 
     [Fact]

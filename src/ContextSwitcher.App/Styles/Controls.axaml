@@ -126,6 +126,39 @@
     <Setter Property="Opacity" Value="0.7" />
   </Style>
 
+  <!-- A row of choices of which one is lit - Keep, Close, + a profile - in a single rounded frame. -->
+  <Style Selector="Border.segments">
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="ClipToBounds" Value="True" />
+    <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+  </Style>
+
+  <Style Selector="Button.segment">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Padding" Value="10,5" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="Button.segment:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource CardHoverBrush}" />
+  </Style>
+
+  <Style Selector="Button.segment.on">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+
+  <Style Selector="Button.segment.on:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+
   <!-- The main window's notice about a switch that had problems: an ordinary card, lifted off the
        page by a shadow because it sits over the bottom of the window rather than in the list. Its
        badge carries the status colour - amber for warnings, red when the switch did not happen. -->

@@ -69,10 +69,13 @@ public static class AppleScriptBuilder
     /// scripting an app starts it, and opening a picker should not launch the user's browser.
     /// Safari calls a tab's title its <c>name</c>; the Chromium browsers call it <c>title</c>.
     /// </summary>
-    public static string ListOpenTabs(string appName, bool isSafari)
+    public static string ListOpenTabs(string appName, bool isSafari, bool skipIncognito = false)
     {
         string escapedApp = EscapeStringLiteral(appName);
         string titleProperty = isSafari ? "name" : "title";
+
+        // Chrome and Brave say which windows are incognito; Safari doesn't say which are private.
+        string onlyRegular = skipIncognito && !isSafari ? " and (mode of w) is not \"incognito\"" : string.Empty;
         return string.Join(
             '\n',
             $"if application \"{escapedApp}\" is not running then return \"\"",
@@ -81,9 +84,11 @@ public static class AppleScriptBuilder
             $"tell application \"{escapedApp}\"",
             "    repeat with w in windows",
             "        try",
-            "            repeat with t in tabs of w",
-            $"                set collected to collected & (URL of t) & separator & ({titleProperty} of t) & linefeed",
-            "            end repeat",
+            $"            if true{onlyRegular} then",
+            "                repeat with t in tabs of w",
+            $"                    set collected to collected & (URL of t) & separator & ({titleProperty} of t) & linefeed",
+            "                end repeat",
+            "            end if",
             "        end try",
             "    end repeat",
             "end tell",

@@ -47,7 +47,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         this.processRunner = processRunner;
 
         this.Profiles = new ProfilesViewModel(switchService, configurationStore, jsonStore, configPaths, switchNotice);
-        this.Settings = new SettingsViewModel(configurationStore, permissionsChecker, processRunner, updates, loginItem: loginItem);
+        this.Settings = new SettingsViewModel(configurationStore, permissionsChecker, processRunner, updates, loginItem: loginItem, installedApps: installedAppsService);
         this.Stats = new StatsViewModel(analyticsService);
 
         this.Profiles.EditRequested += this.OnEditRequested;

@@ -38,6 +38,7 @@ public sealed class SettingsViewModel : ViewModelBase
     private Choice<int> selectedRetention;
     private bool? automationGranted;
     private bool isCheckingPermissions;
+    private bool askOnSwitch;
     private string? errorMessage;
     private Task saving = Task.CompletedTask;
 
@@ -47,7 +48,8 @@ public sealed class SettingsViewModel : ViewModelBase
         IProcessRunner processRunner,
         UpdatesViewModel updates,
         Func<IReadOnlyList<string>>? preferredLanguages = null,
-        ILoginItem? loginItem = null)
+        ILoginItem? loginItem = null,
+        IInstalledAppsService? installedApps = null)
     {
         this.loginItem = loginItem;
         this.loginItemStatus = loginItem?.Status ?? LoginItemStatus.Unavailable;
@@ -57,6 +59,18 @@ public sealed class SettingsViewModel : ViewModelBase
         this.processRunner = processRunner;
         this.Updates = updates;
         this.Transfer = new SettingsTransferViewModel(configurationStore);
+        this.IgnoredApps = new IgnoredAppsViewModel(configurationStore, installedApps);
+        this.askOnSwitch = AppHost.Configuration.AskOnSwitch;
+
+        // "Don't ask again", in the window that asks, turns this off from outside Settings.
+        AppHost.ConfigurationChanged += (_, _) =>
+        {
+            if (this.askOnSwitch != AppHost.Configuration.AskOnSwitch)
+            {
+                this.askOnSwitch = AppHost.Configuration.AskOnSwitch;
+                this.OnPropertyChanged(nameof(this.AskOnSwitch));
+            }
+        };
         this.Transfer.Imported += (_, _) => this.ReloadFromConfiguration();
 
         this.selectedAppearance = this.AppearanceChoices.First(c => c.Value == AppHost.Configuration.Appearance);
@@ -130,6 +144,22 @@ public sealed class SettingsViewModel : ViewModelBase
         Localized.Format(
             Strings.Settings_Language_RestartHint,
             AppLanguages.Supported.First(l => l.Code == AppLanguages.Resolve(this.SelectedLanguage.Value, this.preferredLanguages())).NativeName);
+
+    /// <summary>Whether a switch first asks about the apps and tabs neither profile has.</summary>
+    public bool AskOnSwitch
+    {
+        get => this.askOnSwitch;
+        set
+        {
+            if (this.SetProperty(ref this.askOnSwitch, value))
+            {
+                this.QueueSave();
+            }
+        }
+    }
+
+    /// <summary>The apps never touched, and adding to them.</summary>
+    public IgnoredAppsViewModel IgnoredApps { get; }
 
     public bool ShowDockIcon
     {
@@ -298,6 +328,7 @@ public sealed class SettingsViewModel : ViewModelBase
             ?? this.LanguageChoices[0];
         this.showDockIcon = configuration.ShowDockIcon;
         this.checkForUpdates = configuration.CheckForUpdates;
+        this.askOnSwitch = configuration.AskOnSwitch;
         this.analyticsEnabled = configuration.Analytics.Enabled;
         this.RetentionChoices = WithCurrent(RetentionPresets, configuration.Analytics.RetentionDays, FormatDays);
         this.selectedRetention = this.RetentionChoices.First(c => c.Value == configuration.Analytics.RetentionDays);
@@ -305,7 +336,7 @@ public sealed class SettingsViewModel : ViewModelBase
         foreach (string property in new[]
         {
             nameof(this.SelectedAppearance), nameof(this.SelectedLanguage), nameof(this.IsLanguagePending), nameof(this.LanguagePendingText),
-            nameof(this.ShowDockIcon), nameof(this.CheckForUpdates), nameof(this.AnalyticsEnabled), nameof(this.RetentionChoices), nameof(this.SelectedRetention)
+            nameof(this.ShowDockIcon), nameof(this.CheckForUpdates), nameof(this.AskOnSwitch), nameof(this.AnalyticsEnabled), nameof(this.RetentionChoices), nameof(this.SelectedRetention)
         })
         {
             this.OnPropertyChanged(property);
@@ -376,6 +407,7 @@ public sealed class SettingsViewModel : ViewModelBase
             Language = this.SelectedLanguage.Value,
             ShowDockIcon = this.ShowDockIcon,
             CheckForUpdates = this.CheckForUpdates,
+            AskOnSwitch = this.AskOnSwitch,
             Analytics = new AnalyticsConfiguration { Enabled = this.AnalyticsEnabled, RetentionDays = this.SelectedRetention.Value }
         };
 

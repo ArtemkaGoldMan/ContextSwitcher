@@ -28,6 +28,9 @@ public sealed class FakeSystemCatalog : ISystemCatalog
 
     public List<OpenTab> OpenTabs { get; } = [];
 
+    /// <summary>The tabs every browser has open, with their browsers - what asking on a switch reads.</summary>
+    public List<OpenBrowserTab> BrowserTabs { get; } = [];
+
     public List<BrowserKind> OpenTabRequests { get; } = [];
 
     public List<bool> MusicRequests { get; } = [];
@@ -72,6 +75,12 @@ public sealed class FakeSystemCatalog : ISystemCatalog
 
         await this.MaybeLeaveTheCallersThread().ConfigureAwait(false);
         return this.IsMusicRunning ? this.MusicPlaylists?.ToList() : null;
+    }
+
+    public async Task<IReadOnlyList<OpenBrowserTab>> GetBrowserTabsAsync(CancellationToken cancellationToken)
+    {
+        await this.MaybeLeaveTheCallersThread().ConfigureAwait(false);
+        return this.BrowserTabs.ToList();
     }
 
     public async Task<IReadOnlyList<OpenTab>> GetOpenTabsAsync(BrowserKind browser, CancellationToken cancellationToken)

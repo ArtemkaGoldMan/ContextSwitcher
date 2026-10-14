@@ -191,6 +191,6 @@ public sealed class SettingsViewModelTests
         Assert.Contains(viewModel.RetentionChoices, choice => choice.Value == 45);
     }
 
-    private static UpdatesViewModel Updates() =>
+    internal static UpdatesViewModel Updates() =>
         new(new FakeReleaseSource(), new FakeAppUpdater(), new FakeProcessRunner(), new FakeSystemNotifications(), new Version(0, 1, 0));
 }
