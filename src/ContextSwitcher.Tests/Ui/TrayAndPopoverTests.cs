@@ -172,6 +172,59 @@ public sealed class TrayAndPopoverTests : UiTest
         });
     }
 
+    /// <summary>
+    /// The popover is hidden, not closed, so it stays in memory for the next click - and a clock left
+    /// ticking inside it woke the app every second for text nobody could read. It runs while the
+    /// popover shows and stops when it is hidden.
+    /// </summary>
+    [Fact]
+    public async Task TheElapsedClockTicksOnlyWhileThePopoverIsShowing()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            UiScenario scenario = UiScenario.WithTwoProfiles();
+            AppHost.UpdateState(new CurrentContextState
+            {
+                CurrentContextId = "work",
+                LastSwitchCompletedAt = scenario.Clock.UtcNow.AddMinutes(-5)
+            });
+            DashboardViewModel viewModel = scenario.Dashboard();
+            DashboardWindow popover = new(viewModel, () => { });
+
+            Assert.False(viewModel.IsClockRunning);
+
+            popover.Show();
+            Assert.True(viewModel.IsClockRunning);
+
+            popover.Hide();
+            Assert.False(viewModel.IsClockRunning);
+
+            popover.Show();
+            Assert.True(viewModel.IsClockRunning);
+
+            popover.Close();
+            Assert.False(viewModel.IsClockRunning);
+        });
+    }
+
+    /// <summary>With no profile on there is no time to count, so shown or not, nothing ticks.</summary>
+    [Fact]
+    public async Task NothingTicksWhenNoProfileIsOn()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            UiScenario scenario = UiScenario.WithTwoProfiles();
+            AppHost.UpdateState(new CurrentContextState());
+            DashboardViewModel viewModel = scenario.Dashboard();
+            DashboardWindow popover = new(viewModel, () => { });
+
+            popover.Show();
+
+            Assert.False(viewModel.IsClockRunning);
+            popover.Close();
+        });
+    }
+
     /// <summary>A switch that left something to read keeps the popover open so it can be read.</summary>
     [Fact]
     public async Task ASwitchWithWarningsKeepsThePopoverOpen()

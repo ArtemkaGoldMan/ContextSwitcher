@@ -38,6 +38,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     private IReadOnlyList<QuickLinkViewModel> quickLinks = [];
     private IReadOnlyList<string> notes = [];
     private DateTimeOffset? activeSince;
+    private bool clockWanted;
     private bool isAnyActive;
     private BalanceChartViewModel balanceChart = BalanceChartViewModel.Empty;
     private IReadOnlyList<SwitchButtonViewModel> switchButtons = [];
@@ -58,6 +59,10 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         this.configPaths = configPaths;
         this.clock = clock;
 
+        // Not started here: the elapsed time is only worth keeping fresh while someone can see it.
+        this.elapsedTimer = new DispatcherTimer();
+        this.elapsedTimer.Tick += (_, _) => this.RefreshElapsedDisplay();
+
         this.SupportDeveloperCommand = new RelayCommand(() => this.OpenQuickLink(AppLinks.Support));
         this.OpenAppCommand = new RelayCommand(() => this.OpenAppRequested?.Invoke(this, EventArgs.Empty));
         this.CloseCommand = new RelayCommand(() => this.DismissRequested?.Invoke(this, EventArgs.Empty));
@@ -65,9 +70,6 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         this.RefreshFromConfiguration();
         this.ApplyState(AppHost.State);
 
-        this.elapsedTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        this.elapsedTimer.Tick += (_, _) => this.RefreshElapsedDisplay();
-        this.elapsedTimer.Start();
 
         AppHost.ConfigurationChanged += this.OnConfigurationChanged;
         AppHost.StateChanged += this.OnStateChanged;
@@ -226,6 +228,44 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
 
     public bool HasBalanceData => this.BalanceChart.HasData;
 
+    /// <summary>Whether the elapsed time is being kept fresh - which it is only while the popover is showing.</summary>
+    public bool IsClockRunning => this.elapsedTimer.IsEnabled;
+
+    /// <summary>
+    /// The popover is on screen: bring the elapsed time up to date and keep it so. Hidden, the popover
+    /// stays in memory for the next click, and a clock ticking inside it would wake the app every
+    /// second for text nobody can read.
+    /// </summary>
+    public void StartClock()
+    {
+        this.clockWanted = true;
+        this.RefreshElapsedDisplay();
+    }
+
+    /// <summary>The popover is hidden: stop ticking until it is shown again.</summary>
+    public void StopClock()
+    {
+        this.clockWanted = false;
+        this.elapsedTimer.Stop();
+    }
+
+    /// <summary>
+    /// How long until the elapsed text next reads differently: a second while it counts seconds, then
+    /// until the minute turns over. Ticking every second for a text that changes once a minute was a
+    /// wake-up in 59 of every 60.
+    /// </summary>
+    public static TimeSpan UntilElapsedTextChanges(TimeSpan elapsed)
+    {
+        if (elapsed < TimeSpan.FromMinutes(1))
+        {
+            return TimeSpan.FromSeconds(1);
+        }
+
+        // A hair past the boundary, so the tick lands on the new minute rather than just before it.
+        TimeSpan intoMinute = TimeSpan.FromTicks(elapsed.Ticks % TimeSpan.TicksPerMinute);
+        return TimeSpan.FromMinutes(1) - intoMinute + TimeSpan.FromMilliseconds(50);
+    }
+
     public void Dispose()
     {
         this.elapsedTimer.Stop();
@@ -353,9 +393,18 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
 
     private void RefreshElapsedDisplay()
     {
-        this.ElapsedDisplay = this.activeSince is { } since
-            ? Localized.Format(Strings.Dashboard_ActiveFor, FormatElapsed(this.clock.UtcNow - since))
+        TimeSpan? elapsed = this.activeSince is { } since ? this.clock.UtcNow - since : null;
+        this.ElapsedDisplay = elapsed is { } passed
+            ? Localized.Format(Strings.Dashboard_ActiveFor, FormatElapsed(passed))
             : this.IsAnyActive ? Strings.Dashboard_CurrentProfile : Strings.Dashboard_PickAProfile;
+
+        // The next tick is for the moment the text changes; with nothing counting, there is none.
+        this.elapsedTimer.Stop();
+        if (this.clockWanted && elapsed is { } counted)
+        {
+            this.elapsedTimer.Interval = UntilElapsedTextChanges(counted);
+            this.elapsedTimer.Start();
+        }
     }
 
     private static string FormatElapsed(TimeSpan elapsed)
