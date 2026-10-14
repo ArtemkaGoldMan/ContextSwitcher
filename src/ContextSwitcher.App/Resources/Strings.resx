@@ -1386,6 +1386,18 @@
     <value>The profile's tabs weren't closed: that needs Chrome, Brave or Safari as the browser.</value>
     <comment>A step of a switch that didn't fully work: closing tabs with a default browser that can't be scripted, such as Firefox.</comment>
   </data>
+  <data name="Msg_Switch_BrowserNotAllowed" xml:space="preserve">
+    <value>macOS isn't letting Context Switcher control {0}, so its tabs weren't touched. Turn it on under Context Switcher in System Settings → Privacy &amp; Security → Automation.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. {0} = browser, e.g. Google Chrome. The settings names are macOS's own.</comment>
+  </data>
+  <data name="Msg_Switch_BrowserNotAnswering" xml:space="preserve">
+    <value>{0} didn't answer in time, so its tabs weren't touched.</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. {0} = browser, e.g. Google Chrome.</comment>
+  </data>
+  <data name="Msg_Switch_CouldNotControlBrowser" xml:space="preserve">
+    <value>Could not control {0}: {1}</value>
+    <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. {0} = browser, e.g. Google Chrome; {1} = the reason macOS gave, in the Mac's language.</comment>
+  </data>
   <data name="Msg_Switch_CouldNotCloseTabs" xml:space="preserve">
     <value>Could not close the profile's tabs in {0}. Check Automation permissions.</value>
     <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. {0} = browser, e.g. Google Chrome.</comment>

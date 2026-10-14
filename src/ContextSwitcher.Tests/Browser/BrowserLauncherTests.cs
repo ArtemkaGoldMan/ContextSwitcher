@@ -505,7 +505,79 @@ public sealed class BrowserLauncherTests
         TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Brave, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
 
         Assert.Equal(0, outcome.Closed);
-        Assert.Equal("Could not close the profile's tabs in Brave Browser. Check Automation permissions.", outcome.Problem?.English);
+        Assert.Equal("Switch_BrowserNotAllowed", outcome.Problem?.Key);
+    }
+
+    /// <summary>
+    /// "Check Automation permissions" used to be the answer to every failure, and sent people to
+    /// settings that were fine when the browser had only been slow. Each reason now says what it is.
+    /// </summary>
+    [Fact]
+    public async Task ARefusedPermissionSaysWhereToTurnItOn()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "execution error: Not authorized to send Apple events to Google Chrome. (-1743)", false));
+        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+
+        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+
+        Assert.Contains("System Settings → Privacy & Security → Automation", outcome.Problem?.English, StringComparison.Ordinal);
+        Assert.Contains("Google Chrome", outcome.Problem?.English, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ASlowBrowserIsNotBlamedOnPermissions()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(-1, string.Empty, string.Empty, TimedOut: true));
+        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+
+        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+
+        Assert.Equal("Switch_BrowserNotAnswering", outcome.Problem?.Key);
+        Assert.DoesNotContain("Automation", outcome.Problem?.English, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AnyOtherFailureQuotesItsReason()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "execution error: Google Chrome got an error: Can't get window 1. (-1728)\nsecond line", false));
+        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+
+        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+
+        Assert.Equal("Could not control Google Chrome: execution error: Google Chrome got an error: Can't get window 1. (-1728)", outcome.Problem?.English);
+    }
+
+    /// <summary>A script that failed without a word has nothing to quote, so the general message stands.</summary>
+    [Fact]
+    public async Task AFailureWithNoReasonKeepsTheGeneralMessage()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, string.Empty, false));
+        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+
+        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+
+        Assert.Equal("Switch_CouldNotCloseTabs", outcome.Problem?.Key);
+    }
+
+    /// <summary>The same goes for the check for tabs already open, when a profile is entered.</summary>
+    [Fact]
+    public async Task ARefusedPermissionIsSaidWhenCheckingForOpenTabsToo()
+    {
+        FakeProcessRunner processRunner = new();
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "Not authorized to send Apple events to Google Chrome. (-1743)", false));
+        BrowserLauncher launcher = new(processRunner, scriptRunner);
+
+        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
+            new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], true, [], Timeout),
+            CancellationToken.None);
+
+        Assert.Contains(outcome.Warnings, warning => warning.Key == "Switch_BrowserNotAllowed");
+        Assert.Single(processRunner.Calls);
     }
 
     /// <summary>A Chromium tab listing as <see cref="AppleScriptBuilder.ListChromiumTabs"/> prints it.</summary>
