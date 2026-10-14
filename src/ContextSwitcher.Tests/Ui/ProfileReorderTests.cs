@@ -291,24 +291,6 @@ public sealed class ProfileReorderTests : UiTest
         });
     }
 
-    [Fact]
-    public async Task ThePageSaysThatCardsCanBeDraggedOnlyWhenThereIsAnOrder()
-    {
-        await OnUiThreadAsync(() =>
-        {
-            (ProfilesViewModel viewModel, _, _) = Create();
-            Window window = ShowWindow(Page(viewModel), height: 700);
-
-            Assert.True(IsClickable(FindControl<TextBlock>(window, t => t.Text?.StartsWith("Press and hold a profile", StringComparison.Ordinal) == true)));
-
-            AppConfiguration one = AppHost.Configuration with { Contexts = [AppHost.Configuration.Contexts[0]] };
-            AppHost.UpdateConfiguration(one, new ConfigurationValidationResult([]));
-            Settle(window);
-
-            Assert.False(viewModel.CanReorder);
-        });
-    }
-
     /// <summary>The page with a hold short enough for a test to wait out.</summary>
     private static ProfilesPage Page(ProfilesViewModel viewModel) =>
         new() { DataContext = viewModel, HoldToDrag = TimeSpan.FromMilliseconds(25) };

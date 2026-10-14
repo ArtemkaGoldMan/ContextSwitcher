@@ -54,13 +54,7 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
     public IReadOnlyList<ProfileRowViewModel> Rows
     {
         get => this.rows;
-        private set
-        {
-            if (this.SetProperty(ref this.rows, value))
-            {
-                this.OnPropertyChanged(nameof(this.CanReorder));
-            }
-        }
+        private set => this.SetProperty(ref this.rows, value);
     }
 
     public string? ErrorMessage
@@ -76,9 +70,6 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
     }
 
     public bool HasErrorMessage => !string.IsNullOrEmpty(this.ErrorMessage);
-
-    /// <summary>Whether there is an order to change: more than one profile.</summary>
-    public bool CanReorder => this.Rows.Count > 1;
 
     /// <summary>What went wrong in the last switch, shown at the bottom of the window.</summary>
     public SwitchNoticeViewModel Notice { get; }
