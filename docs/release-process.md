@@ -64,8 +64,9 @@ does not accept a change until its first two checks pass (Settings → Branches)
 
 [`codeql.yml`](../.github/workflows/codeql.yml) scans the C# for the mistakes that become
 vulnerabilities, on pull requests, on `main` and every Monday; its findings are under Security → Code
-scanning. [`dependabot.yml`](../.github/dependabot.yml) opens a pull request a week at most for NuGet
-packages and for the actions the workflows use - Avalonia's packages together, the test packages together.
+scanning. [`dependabot.yml`](../.github/dependabot.yml) opens at most two pull requests a month: one with the NuGet
+minor and patch updates, one with the actions the workflows use. NuGet major versions are left to be
+planned by hand.
 
 To try a pull request's build: open its run, download the `ContextSwitcher-…` artifact, unzip it, and
 `xattr -dr com.apple.quarantine ContextSwitcher.app` as for any download.
