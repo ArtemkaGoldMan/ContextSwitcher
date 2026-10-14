@@ -67,52 +67,63 @@
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
   </Style>
 
-  <!-- A profile's card on the Profiles page: no padding of its own, so the tint inside covers it
-       edge to edge; the tint carries the usual padding instead. -->
-  <Style Selector="Border.panel.profileCard">
-    <Setter Property="Padding" Value="0" />
-  </Style>
-
-  <!-- The profile that's on is edged in its own colour, not the app's. -->
-  <Style Selector="Border.panel.profileCard.current" x:DataType="vm:ProfileRowViewModel">
-    <Setter Property="BorderBrush" Value="{Binding AccentBrush}" />
-  </Style>
-
-  <Style Selector="Border.profileCardTint">
-    <Setter Property="CornerRadius" Value="13" />
-    <Setter Property="Padding" Value="16" />
-  </Style>
-
-  <!-- The profile itself, as the button that turns it on and off: no chrome of its own, just a
-       soft highlight under the pointer, reaching to the card's padding. -->
-  <Style Selector="Button.profileToggle">
+  <!-- A profile on the Profiles page: the card itself is a button that turns the profile on or off.
+       It looks like every other card; under the pointer the whole card lifts, and the profile that's
+       on glows in its own colour, a little more under the pointer. A wash of that colour lies over
+       the card's surface rather than replacing it, so the card keeps its own white (or dark) under
+       the tint. The border stays 1px in every state: a thicker one would shift the row's buttons. -->
+  <Style Selector="Button.profileCard">
     <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="6" />
-    <Setter Property="Margin" Value="-6" />
-    <Setter Property="CornerRadius" Value="10" />
-    <Setter Property="HorizontalAlignment" Value="Stretch" />
-    <Setter Property="HorizontalContentAlignment" Value="Left" />
-    <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Padding" Value="16" />
     <Setter Property="Cursor" Value="Hand" />
+    <!-- The glow lies outside the card; the theme's buttons clip it off at their edges. -->
+    <Setter Property="ClipToBounds" Value="False" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border
+          Name="PART_Card"
+          Background="{DynamicResource CardBrush}"
+          BorderBrush="{DynamicResource BorderBrush}"
+          BorderThickness="1"
+          CornerRadius="14">
+          <Border Name="PART_Tint" Background="{TemplateBinding Background}" CornerRadius="13" Padding="{TemplateBinding Padding}">
+            <!-- Not PART_ContentPresenter: the theme's Button styles paint that one, which drew a
+                 band of colour inside the card. -->
+            <ContentPresenter
+              Name="PART_CardContent"
+              Background="Transparent"
+              Content="{TemplateBinding Content}"
+              ContentTemplate="{TemplateBinding ContentTemplate}"
+              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+          </Border>
+        </Border>
+      </ControlTemplate>
+    </Setter>
   </Style>
 
-  <Style Selector="Button.profileToggle:pointerover /template/ ContentPresenter">
+  <Style Selector="Button.profileCard:pointerover /template/ Border#PART_Card">
     <Setter Property="Background" Value="{DynamicResource CardHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardHoverBorderBrush}" />
+    <Setter Property="BoxShadow" Value="0 4 16 0 #1F000000" />
   </Style>
 
-  <Style Selector="Button.profileToggle:pressed /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource CardHoverBrush}" />
+  <Style Selector="Button.profileCard.current /template/ Border#PART_Card" x:DataType="vm:ProfileRowViewModel">
+    <Setter Property="BorderBrush" Value="{Binding AccentBrush}" />
+    <Setter Property="BoxShadow" Value="{Binding Glow}" />
   </Style>
 
-  <!-- While its switch runs: dimmed, not greyed into a disabled button. -->
-  <Style Selector="Button.profileToggle:disabled /template/ ContentPresenter">
-    <Setter Property="Background" Value="Transparent" />
+  <Style Selector="Button.profileCard.current:pointerover /template/ Border#PART_Card" x:DataType="vm:ProfileRowViewModel">
+    <Setter Property="BoxShadow" Value="{Binding GlowUnderPointer}" />
   </Style>
 
-  <Style Selector="Button.profileToggle:disabled">
-    <Setter Property="Opacity" Value="0.6" />
+  <!-- While its switch runs, the card is dimmed - not greyed out like a disabled button. -->
+  <Style Selector="Button.profileCard:disabled">
+    <Setter Property="Opacity" Value="0.7" />
   </Style>
 
   <!-- The main window's notice about a switch that had problems: an ordinary card, lifted off the

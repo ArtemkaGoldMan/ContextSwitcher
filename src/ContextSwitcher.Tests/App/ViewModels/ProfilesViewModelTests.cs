@@ -91,7 +91,7 @@ public sealed class ProfilesViewModelTests
         Assert.Equal("Couldn't turn off Work", viewModel.Notice.Title);
     }
 
-    /// <summary>The profile that's on stands out: its colour washes and edges the card, and its name is bold.</summary>
+    /// <summary>The profile that's on stands out: it glows and is washed in its own colour, and its name is bold.</summary>
     [Fact]
     public void TheProfileThatsOnIsHighlightedInItsOwnColour()
     {
@@ -103,11 +103,11 @@ public sealed class ProfilesViewModelTests
 
         Assert.Equal(Avalonia.Media.FontWeight.Bold, on.NameWeight);
         Assert.NotEqual(Avalonia.Media.Colors.Transparent, Assert.IsAssignableFrom<Avalonia.Media.ISolidColorBrush>(on.CardTint).Color);
-        Assert.Equal("Click to turn this profile off", on.ToggleToolTip);
+        Assert.Equal(Avalonia.Media.Color.Parse("#2F6FED").R, on.Glow[0].Color.R);
+        Assert.True(on.GlowUnderPointer[0].Color.A > on.Glow[0].Color.A, "the glow grows under the pointer");
 
         Assert.Equal(Avalonia.Media.FontWeight.Medium, off.NameWeight);
         Assert.Equal(Avalonia.Media.Colors.Transparent, Assert.IsAssignableFrom<Avalonia.Media.ISolidColorBrush>(off.CardTint).Color);
-        Assert.Equal("Click to turn this profile on", off.ToggleToolTip);
     }
 
     [Fact]

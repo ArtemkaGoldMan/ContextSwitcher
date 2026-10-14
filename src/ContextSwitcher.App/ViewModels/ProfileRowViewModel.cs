@@ -1,14 +1,13 @@
 using System.Windows.Input;
 using Avalonia.Media;
-using ContextSwitcher.App.Resources;
 using ContextSwitcher.Core.Configuration;
 
 namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
-/// One row on the Profiles page. Clicking the profile turns it on - or, when it is the one on, off,
-/// as its button in the menu bar popover does; there is no separate Activate button. The profile on
-/// is plain to see: its card washed in its own colour, edged in it, and its name in bold. Edit,
+/// One row on the Profiles page. Clicking the profile's card turns it on - or, when it is the one on,
+/// off, as its button in the menu bar popover does; there is no separate Activate button. The profile
+/// on is plain to see: its card glows and is washed in its own colour, and its name is bold. Edit,
 /// Duplicate, and Delete are kept as separate actions so "switch to this" and "edit this" can never
 /// be triggered by the same click (agent.md section 11.1.2). Delete requires a second click to
 /// confirm rather than a modal dialog.
@@ -28,7 +27,9 @@ public sealed class ProfileRowViewModel : ViewModelBase
         this.Context = context;
         this.IsActive = isActive;
         this.AccentBrush = AccentColorParser.ToBrush(context.AccentColor);
-        this.CardTint = isActive ? AccentColorParser.ToTint(context.AccentColor, 0x1F) : Brushes.Transparent;
+        this.CardTint = isActive ? AccentColorParser.ToTint(context.AccentColor, 0x14) : Brushes.Transparent;
+        this.Glow = AccentColorParser.ToGlow(context.AccentColor, alpha: 0x73, blur: 18);
+        this.GlowUnderPointer = AccentColorParser.ToGlow(context.AccentColor, alpha: 0xA6, blur: 24);
         this.Icon = context.Icon;
 
         this.ToggleCommand = new AsyncRelayCommand(() => toggle(context));
@@ -63,9 +64,13 @@ public sealed class ProfileRowViewModel : ViewModelBase
     /// <summary>A wash of the profile's colour over the card while it is on; nothing otherwise.</summary>
     public IBrush CardTint { get; }
 
-    public FontWeight NameWeight => this.IsActive ? FontWeight.Bold : FontWeight.Medium;
+    /// <summary>The light around the card of the profile that's on, in its own colour.</summary>
+    public BoxShadows Glow { get; }
 
-    public string ToggleToolTip => this.IsActive ? Strings.Dashboard_ClickToTurnOff : Strings.Profiles_ClickToTurnOn;
+    /// <summary>The same light, a little stronger, while the pointer is over the card.</summary>
+    public BoxShadows GlowUnderPointer { get; }
+
+    public FontWeight NameWeight => this.IsActive ? FontWeight.Bold : FontWeight.Medium;
 
     public bool IsConfirmingDelete
     {

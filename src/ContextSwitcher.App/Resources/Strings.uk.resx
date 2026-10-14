@@ -1147,7 +1147,4 @@
   <data name="Browser_NoProfiles" xml:space="preserve">
     <value>У {0} ще немає профілів. Відкрийте його один раз, а потім виберіть профіль тут.</value>
   </data>
-  <data name="Profiles_ClickToTurnOn" xml:space="preserve">
-    <value>Натисніть, щоб увімкнути цей профіль</value>
-  </data>
 </root>

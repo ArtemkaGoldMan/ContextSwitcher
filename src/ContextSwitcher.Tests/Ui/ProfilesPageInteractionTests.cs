@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.VisualTree;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
@@ -30,6 +31,29 @@ public sealed class ProfilesPageInteractionTests : UiTest
 
             Assert.NotNull(switchService.LastRequest);
             Assert.Equal("personal", switchService.LastRequest!.TargetContextId);
+        });
+    }
+
+    /// <summary>
+    /// The card is the switch, but its Edit, Duplicate and Delete take their own clicks: editing a
+    /// profile never turns it on or off.
+    /// </summary>
+    [Fact]
+    public async Task EditingAProfileDoesNotSwitchIt()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfilesViewModel viewModel, StubContextSwitchService switchService, _) = Create();
+            ContextDefinition? edited = null;
+            viewModel.EditRequested += (_, context) => edited = context;
+            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 600);
+
+            Button card = FindAll<Button>(window).Single(b => Avalonia.Automation.AutomationProperties.GetName(b) == "Personal" && IsClickable(b));
+            Button edit = card.GetVisualDescendants().OfType<Button>().Single(b => b.Content as string == "Edit");
+            Click(window, edit);
+
+            Assert.Equal("personal", edited?.Id);
+            Assert.Null(switchService.LastRequest);
         });
     }
 
