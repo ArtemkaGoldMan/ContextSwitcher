@@ -1,0 +1,145 @@
+name: CI
+
+# What every pull request - and every push to main - has to pass before it can be merged:
+#   Build and test   the whole solution with warnings as errors, every test, and how much of the code they reach
+#   App bundle       the signed-or-not .app is built the way a release builds it, checked, and run through its
+#                    command line on a machine with no screen; the .app is kept for a week to try by hand
+#   Workflows and scripts   the workflows and the shell scripts are linted
+# They are the checks main's protection waits for (docs/release-process.md).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A new push to a pull request makes the run for the one before it pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Build
+        run: dotnet build --configuration Release -warnaserror --nologo
+
+      - name: Test
+        run: >
+          dotnet test --configuration Release --no-build --nologo
+          --logger "trx;LogFileName=results.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults
+
+      - name: Summarise
+        if: always()
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import glob, re, xml.etree.ElementTree as ET
+          print("### Tests")
+          for trx in glob.glob("TestResults/**/*.trx", recursive=True):
+              counters = ET.parse(trx).getroot().find(".//{*}Counters")
+              if counters is not None:
+                  total, passed, failed = (int(counters.get(k, 0)) for k in ("total", "passed", "failed"))
+                  print(f"{passed} of {total} passed, {failed} failed")
+          rates = []
+          for report in glob.glob("TestResults/**/coverage.cobertura.xml", recursive=True):
+              root = ET.parse(report).getroot()
+              rates.append((float(root.get("line-rate", 0)), float(root.get("branch-rate", 0))))
+          if rates:
+              line, branch = rates[0]
+              print("\n### Coverage")
+              print(f"{line:.1%} of lines, {branch:.1%} of branches")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults
+          retention-days: 14
+
+  app-bundle:
+    name: App bundle
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # Signed with the project's certificate only in a release; here there are no secrets (a fork's pull
+      # request has none), so it is signed ad hoc - fine for trying a build, which is all this one is for.
+      - name: Build the app
+        run: ./scripts/build-app.sh dist
+
+      - name: Check the bundle
+        run: |
+          app=dist/ContextSwitcher.app
+          expected="$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' src/ContextSwitcher.App/ContextSwitcher.App.csproj | head -1)"
+          actual="$(plutil -extract CFBundleShortVersionString raw -o - "$app/Contents/Info.plist")"
+          [ "$actual" = "$expected" ] || { echo "::error::Info.plist says $actual, the project says $expected"; exit 1; }
+          [ "$(plutil -extract CFBundleIdentifier raw -o - "$app/Contents/Info.plist")" = "com.artem.contextswitcher" ] \
+            || { echo "::error::the bundle identifier changed; macOS keys every permission to it"; exit 1; }
+          [ "$(plutil -extract LSUIElement raw -o - "$app/Contents/Info.plist")" = "true" ] \
+            || { echo "::error::LSUIElement is not true, so the app would show in the Dock at launch"; exit 1; }
+          codesign --verify --deep --strict "$app"
+          [ "$(lipo -archs "$app/Contents/MacOS/ContextSwitcher")" = "arm64" ] \
+            || { echo "::error::the app is not an arm64-only build"; exit 1; }
+          size="$(du -sh "$app" | cut -f1)"
+          echo "### App bundle" >> "$GITHUB_STEP_SUMMARY"
+          echo "Version $actual, $size, arm64." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run it through its command line
+        run: ./scripts/smoke-test-app.sh dist/ContextSwitcher.app
+
+      - name: Pack it
+        run: ditto -c -k --keepParent dist/ContextSwitcher.app ContextSwitcher-build.zip
+
+      # To try what a pull request does without building it: unzip, then `xattr -dr com.apple.quarantine`
+      # as for any download. Kept a week.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ContextSwitcher-${{ github.sha }}
+          path: ContextSwitcher-build.zip
+          retention-days: 7
+
+  lint:
+    name: Workflows and scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Lint the workflows
+        run: |
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.7/scripts/download-actionlint.bash) 1.7.7
+          ./actionlint -color
+
+      - name: Lint the shell scripts
+        run: shellcheck --severity=warning scripts/*.sh install.sh

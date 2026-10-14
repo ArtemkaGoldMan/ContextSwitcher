@@ -1,0 +1,42 @@
+name: CodeQL
+
+# GitHub's code scanning for C#: looks for the kinds of mistake that become vulnerabilities - an unchecked
+# path, an injected command, a secret in a string. Findings appear under Security → Code scanning.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Mondays, early: the rules it checks with are updated even when this code is not.
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze C#
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+          build-mode: manual
+          queries: security-and-quality
+
+      - name: Build
+        run: dotnet build --configuration Release --nologo
+
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:csharp"
