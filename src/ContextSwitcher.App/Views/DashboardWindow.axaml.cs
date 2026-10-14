@@ -2,8 +2,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
+using ContextSwitcher.Core.Abstractions;
+using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Infrastructure.MacOS;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App.Views;
 
@@ -65,8 +69,30 @@ public sealed partial class DashboardWindow : Window
     /// </summary>
     public void ShowAsPopover()
     {
+        // On whichever desktop the user is on, and over a full-screen app: by default a window goes
+        // back to the Space it was first shown on, so the popover opened out of sight.
+        IntPtr window = this.NativeWindow();
+        WindowSpaces.FollowActiveSpace(window);
+
+        // And without bringing the app forward, as a menu bar popover should: an app with a Dock
+        // icon coming forward made macOS leave a full-screen app for a desktop. So it opens as a
+        // non-activating panel, without focus - taking focus activated the app, whatever the window
+        // (MenuBarPanel). A click in it gives it focus. Should the window not be one that can be made
+        // a panel, it is shown and activated as an ordinary window, as before.
+        bool panel = MenuBarPanel.Make(window);
+        this.ShowActivated = !panel;
         this.Show();
-        this.Activate();
+        if (!panel)
+        {
+            this.Activate();
+        }
+
+        // Once as it opens, and again once whatever macOS does in response has happened.
+        if (DiagnosingWindows)
+        {
+            this.LogSpace();
+            DispatcherTimer.RunOnce(this.LogSpace, TimeSpan.FromSeconds(1));
+        }
 
         this.frontmostBaseline = FrontmostApplication.ProcessId();
 
@@ -76,6 +102,33 @@ public sealed partial class DashboardWindow : Window
         this.frontmostWatch ??= CreateFrontmostWatch();
         this.frontmostWatch.Start();
     }
+
+    /// <summary>
+    /// <c>CONTEXTSWITCHER_DIAGNOSE=windows</c> logs, as the popover opens, which Spaces it may appear
+    /// on, whether it opened on the one in front, and whether the app came forward - what a report of
+    /// it "not opening", or of being thrown onto another desktop, comes down to.
+    /// </summary>
+    private static bool DiagnosingWindows => Environment.GetEnvironmentVariable("CONTEXTSWITCHER_DIAGNOSE") == "windows";
+
+    private void LogSpace()
+    {
+        if (WindowSpaces.Describe(this.NativeWindow()) is not { } space)
+        {
+            return;
+        }
+
+        _ = AppHost.Services.GetRequiredService<ILogger>().LogAsync(new LogEntry
+        {
+            Timestamp = DateTimeOffset.UtcNow,
+            Level = LogLevel.Information,
+            Category = "Diagnostics",
+            EventId = "DashboardShown",
+            Message = $"Dashboard shown: collectionBehavior=0x{space.Behavior:x}, onActiveSpace={space.OnActiveSpace}, {MenuBarPanel.Describe(this.NativeWindow())}."
+        });
+    }
+
+    private IntPtr NativeWindow() =>
+        this.TryGetPlatformHandle() is { HandleDescriptor: "NSWindow" } handle ? handle.Handle : IntPtr.Zero;
 
     /// <summary>
     /// Checks, every 50ms while the popover is open, for a fresh mouse press outside its card, and
@@ -121,7 +174,7 @@ public sealed partial class DashboardWindow : Window
             return false;
         }
 
-        IntPtr nsWindow = this.TryGetPlatformHandle() is { HandleDescriptor: "NSWindow" } handle ? handle.Handle : IntPtr.Zero;
+        IntPtr nsWindow = this.NativeWindow();
         if (OutsideClick.WindowFrame(nsWindow) is not { } frame || OutsideClick.PointerLocation() is not { } pointer)
         {
             return false;
