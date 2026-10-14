@@ -420,7 +420,7 @@ include:
   tail -50 ~/.config/ContextSwitcher/app.log.jsonl
   ```
 
-  It lists app and profile names, not anything inside them — glance over it before posting.
+  It is empty when nothing went wrong. When something did, it lists the switch step by step, with app and profile names, web addresses cut to their site and no email addresses — glance over it before posting.
 
 ## Build from source
 

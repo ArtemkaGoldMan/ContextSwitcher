@@ -8,40 +8,65 @@ using ContextSwitcher.Infrastructure.Files;
 namespace ContextSwitcher.Infrastructure.Logging;
 
 /// <summary>
-/// Appends structured log entries to the local <c>app.log.jsonl</c> file, one compact JSON object per line.
+/// Appends structured log entries to the local <c>app.log.jsonl</c> file, one compact JSON object per
+/// line. This is the file itself; what is worth writing to it is decided by <see cref="TrailLogger"/>.
 /// </summary>
 public sealed class LocalJsonLogger : ILogger
 {
     /// <summary>
-    /// Roll the log at this size and keep one previous generation, so the audit trail stays useful
-    /// without growing without bound - nothing trimmed it before, and a switch writes about five
-    /// lines, so a daily user added megabytes a year that were never reclaimed.
+    /// Roll the log at this size, whatever its age. With only problems written to it a log stays a few
+    /// kilobytes; this is for the day something repeats without end.
     /// </summary>
-    private const long MaxLogBytes = 5 * 1024 * 1024;
+    public const long MaxLogBytes = 1024 * 1024;
+
+    /// <summary>
+    /// A log starts again from nothing after this long, and the one it replaces is kept for as long
+    /// again: a problem noticed on Monday that happened on Sunday is still in it.
+    /// </summary>
+    public static readonly TimeSpan MaxAge = TimeSpan.FromDays(7);
 
     private const int LockAttempts = 500;
     private static readonly TimeSpan LockRetryDelay = TimeSpan.FromMilliseconds(2);
 
     private readonly string path;
+    private readonly TimeProvider time;
     private readonly SemaphoreSlim writeLock = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LocalJsonLogger"/> class.
     /// </summary>
     /// <param name="configPaths">Resolves the local application log path.</param>
-    public LocalJsonLogger(ConfigPaths configPaths)
+    /// <param name="time">The clock a log's age is read against; the system's, unless a test says otherwise.</param>
+    public LocalJsonLogger(ConfigPaths configPaths, TimeProvider? time = null)
     {
         ArgumentNullException.ThrowIfNull(configPaths);
         this.path = configPaths.AppLogPath;
+        this.time = time ?? TimeProvider.System;
     }
 
     /// <inheritdoc />
-    public async Task LogAsync(LogEntry entry, CancellationToken cancellationToken = default)
+    public Task LogAsync(LogEntry entry, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entry);
+        return this.AppendAsync([entry], cancellationToken);
+    }
 
-        string line = JsonSerializer.Serialize(entry, ContextSwitcherJson.CompactOptions);
-        byte[] bytes = Encoding.UTF8.GetBytes(line + Environment.NewLine);
+    /// <summary>Appends <paramref name="entries"/> in order, under one hold of the file.</summary>
+    public async Task AppendAsync(IReadOnlyList<LogEntry> entries, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        if (entries.Count == 0)
+        {
+            return;
+        }
+
+        StringBuilder text = new();
+        foreach (LogEntry entry in entries)
+        {
+            text.Append(JsonSerializer.Serialize(entry, ContextSwitcherJson.CompactOptions)).Append(Environment.NewLine);
+        }
+
+        byte[] bytes = Encoding.UTF8.GetBytes(text.ToString());
 
         await this.writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -60,7 +85,7 @@ public sealed class LocalJsonLogger : ILogger
             FileStream? processLock = await this.TryAcquireCrossProcessLockAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                RollIfTooLarge();
+                this.RollIfDue();
 
                 FileStream stream = new(
                     this.path,
@@ -88,17 +113,60 @@ public sealed class LocalJsonLogger : ILogger
     }
 
     /// <summary>
-    /// Moves the log aside once it passes <see cref="MaxLogBytes"/>, keeping a single previous
-    /// generation. Runs under the cross-process lock the caller already holds, so two processes
-    /// cannot roll it at the same time. Failures are swallowed deliberately: losing the roll is a
-    /// far better outcome than a switch that fails because its log could not be tidied.
+    /// Starts the log over if its week is up, and lets go of the previous one once it is a week old
+    /// too. Done when the app starts, so a log never holds more than the last week or two even when
+    /// nothing has been written to it for a month.
     /// </summary>
-    private void RollIfTooLarge()
+    public async Task TidyAsync(CancellationToken cancellationToken = default)
+    {
+        await this.writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            FileStream? processLock = await this.TryAcquireCrossProcessLockAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                this.RollIfDue();
+
+                string previous = this.path + ".1";
+                if (File.Exists(previous) && this.time.GetUtcNow() - File.GetLastWriteTimeUtc(previous) >= MaxAge)
+                {
+                    File.Delete(previous);
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Not logged: a log that cannot be tidied is still a log.
+            }
+            finally
+            {
+                processLock?.Dispose();
+            }
+        }
+        finally
+        {
+            this.writeLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Moves the log aside once it is a week old or passes <see cref="MaxLogBytes"/>, keeping a single
+    /// previous generation. Runs under the cross-process lock the caller already holds, so two
+    /// processes cannot roll it at the same time. Failures are swallowed deliberately: losing the roll
+    /// is a far better outcome than a switch that fails because its log could not be tidied.
+    /// </summary>
+    private void RollIfDue()
     {
         try
         {
             FileInfo current = new(this.path);
-            if (!current.Exists || current.Length < MaxLogBytes)
+            if (!current.Exists)
+            {
+                return;
+            }
+
+            bool tooBig = current.Length >= MaxLogBytes;
+            bool tooOld = this.time.GetUtcNow() - File.GetCreationTimeUtc(this.path) >= MaxAge;
+            if (!tooBig && !tooOld)
             {
                 return;
             }
@@ -108,7 +176,7 @@ public sealed class LocalJsonLogger : ILogger
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // Keep appending to the oversized file rather than dropping the entry.
+            // Not logged: keep appending to the oversized file rather than dropping the entry.
         }
     }
 
@@ -136,7 +204,7 @@ public sealed class LocalJsonLogger : ILogger
             }
             catch (UnauthorizedAccessException)
             {
-                // The lock file cannot be created at all - a read-only config directory, say.
+                // Not logged: the lock file cannot be created at all - a read-only config directory, say.
                 return null;
             }
         }

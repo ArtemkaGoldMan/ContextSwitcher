@@ -41,7 +41,7 @@ down with the reason — then asked about, as it replaces every profile and sett
 | `analytics.jsonl` | Local time tracking, one line per session. A session ends at a switch, when the app quits, and while nobody can be using the Mac - asleep, screen locked, or another user in front - starting again for the same profile once they're back. |
 | `analytics.current.json` | The session running now, shared by the app and the command line. |
 | `analytics.alive` | When the app was last running. After a crash, the open session ends then rather than at the next launch. |
-| `app.log.jsonl` | Structured log, one line per event. First place to look when something misbehaves. |
+| `app.log.jsonl` | The log: empty when all is well, and when something goes wrong, what led up to it. First place to look when something misbehaves. Starts again every week; the week before is kept as `app.log.jsonl.1`. |
 | `backups/` | The last ten copies of each file, written before every save. |
 | `icon-cache/` | Extracted app icons for the picker. Safe to delete. |
 
@@ -293,8 +293,12 @@ Focus turns off, Spotify opens and YouTube loads in Chrome.
 
 ## When something doesn't happen
 
-`app.log.jsonl` records every step of every switch with its status, duration, exit code and trimmed
-error output:
+`app.log.jsonl` stays empty while everything works. When a switch has a problem, it records that
+switch from its start: what it meant to do, then every step with its status, duration, exit code and
+trimmed error output, up to the problem and after it. Each run begins with a line saying which
+version and macOS wrote it. The same problem repeating is written once an hour and counted. Web
+addresses are cut to their site and email addresses and the home folder's name are taken out, so the
+file can be sent to someone:
 
 ```bash
 tail -20 ~/.config/ContextSwitcher/app.log.jsonl | python3 -m json.tool --json-lines

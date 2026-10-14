@@ -163,7 +163,13 @@ public sealed class ContextSwitchService : IContextSwitchService
             request.IsTurnOff ? "Turning the active context off." : $"Switching to '{request.TargetContextId}'.",
             request.TargetContextId,
             correlationId,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["source"] = request.Source.ToString(),
+                ["dryRun"] = request.DryRun.ToString(),
+                ["force"] = request.Force.ToString()
+            }).ConfigureAwait(false);
 
         AppConfiguration? configuration = await this.jsonStore.ReadAsync<AppConfiguration>(this.settingsPath, cancellationToken)
             .ConfigureAwait(false);
@@ -211,6 +217,25 @@ public sealed class ContextSwitchService : IContextSwitchService
         // being turned off.
         string subjectId = target?.Id ?? previousContextId ?? string.Empty;
         SwitchPolicyConfig policy = (target ?? previous)?.SwitchPolicy ?? new SwitchPolicyConfig();
+
+        // What was decided, so a log that ends in a problem shows what the switch meant to do as well
+        // as what went wrong: from where to where, which steps, and what the user chose to add.
+        await LogAsync(
+            LogLevel.Information,
+            "SwitchPlanned",
+            $"Planned {plan.Steps.Count} steps: {string.Join(", ", plan.Steps.Select(step => step.Type))}.",
+            subjectId,
+            correlationId,
+            cancellationToken,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["from"] = previousContextId ?? string.Empty,
+                ["to"] = target?.Id ?? string.Empty,
+                ["extraApps"] = (request.Extras?.CloseApps.Count ?? 0).ToString(CultureInfo.InvariantCulture),
+                ["extraTabs"] = (request.Extras?.CloseTabs.Count ?? 0).ToString(CultureInfo.InvariantCulture),
+                ["neverTouch"] = configuration.IgnoredApps.Count.ToString(CultureInfo.InvariantCulture)
+            }).ConfigureAwait(false);
+
         (List<AutomationResult> stepResults, bool criticalFailure) = await ExecutePlanAsync(plan, request.DryRun, policy, subjectId, correlationId, cancellationToken)
             .ConfigureAwait(false);
 
@@ -232,7 +257,12 @@ public sealed class ContextSwitchService : IContextSwitchService
                 : $"Switch to '{target.Id}' finished with status {overallStatus}.",
             subjectId,
             correlationId,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["status"] = overallStatus.ToString(),
+                ["durationMs"] = ((long)(completedAt - startedAt).TotalMilliseconds).ToString(CultureInfo.InvariantCulture)
+            }).ConfigureAwait(false);
 
         return new ContextSwitchResult(target?.Id ?? string.Empty, previousContextId, overallStatus, stepResults, startedAt, completedAt, correlationId);
     }
@@ -457,7 +487,8 @@ public sealed class ContextSwitchService : IContextSwitchService
         string message,
         string? contextId,
         string correlationId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IReadOnlyDictionary<string, string>? data = null)
     {
         await this.logger.LogAsync(
             new LogEntry
@@ -468,7 +499,8 @@ public sealed class ContextSwitchService : IContextSwitchService
                 EventId = eventId,
                 Message = message,
                 ContextId = contextId,
-                CorrelationId = correlationId
+                CorrelationId = correlationId,
+                Data = data
             },
             cancellationToken).ConfigureAwait(false);
     }

@@ -7,8 +7,8 @@ namespace ContextSwitcher.Tests.Logging;
 public sealed class LogRotationTests
 {
     /// <summary>
-    /// Nothing trimmed app.log.jsonl before, so it grew for the life of the install. It now rolls at
-    /// 5MB keeping one previous generation, which bounds it at roughly 10MB.
+    /// A log that something repeats into without end is rolled at 1MB, keeping one previous
+    /// generation, which bounds it at roughly 2MB.
     /// </summary>
     [Fact]
     public async Task AnOversizedLogIsRolledAsideAndANewOneStarted()
@@ -18,7 +18,7 @@ public sealed class LogRotationTests
 
         try
         {
-            await File.WriteAllBytesAsync(path, new byte[(5 * 1024 * 1024) + 1]);
+            await File.WriteAllBytesAsync(path, new byte[LocalJsonLogger.MaxLogBytes + 1]);
             LocalJsonLogger logger = new(new ConfigPaths(directory));
 
             await logger.LogAsync(Entry("AfterRoll"));
@@ -48,6 +48,81 @@ public sealed class LogRotationTests
 
             Assert.False(File.Exists(path + ".1"));
             Assert.Equal(2, (await File.ReadAllLinesAsync(path)).Length);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    /// <summary>A log starts again from nothing after a week; what it held is kept as the previous one.</summary>
+    [Fact]
+    public async Task ALogAWeekOldStartsOverAndKeepsTheOldOneAsPrevious()
+    {
+        string directory = CreateTempDirectory();
+        string path = Path.Combine(directory, "app.log.jsonl");
+
+        try
+        {
+            await File.WriteAllTextAsync(path, "{\"old\":true}\n");
+            File.SetCreationTimeUtc(path, DateTime.UtcNow - LocalJsonLogger.MaxAge - TimeSpan.FromHours(1));
+            LocalJsonLogger logger = new(new ConfigPaths(directory));
+
+            await logger.LogAsync(Entry("New"));
+
+            Assert.Contains("old", await File.ReadAllTextAsync(path + ".1"), StringComparison.Ordinal);
+            string[] lines = await File.ReadAllLinesAsync(path);
+            Assert.Single(lines);
+            Assert.Contains("New", lines[0], StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task ALogUnderAWeekOldIsLeftAlone()
+    {
+        string directory = CreateTempDirectory();
+        string path = Path.Combine(directory, "app.log.jsonl");
+
+        try
+        {
+            await File.WriteAllTextAsync(path, "{\"recent\":true}\n");
+            File.SetCreationTimeUtc(path, DateTime.UtcNow - TimeSpan.FromDays(3));
+            LocalJsonLogger logger = new(new ConfigPaths(directory));
+
+            await logger.LogAsync(Entry("Second"));
+
+            Assert.False(File.Exists(path + ".1"));
+            Assert.Equal(2, (await File.ReadAllLinesAsync(path)).Length);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    /// <summary>Done at start, so a log nothing was written to for a month does not still hold the month before.</summary>
+    [Fact]
+    public async Task TidyingRollsAStaleLogAndLetsGoOfAStalePreviousOne()
+    {
+        string directory = CreateTempDirectory();
+        string path = Path.Combine(directory, "app.log.jsonl");
+
+        try
+        {
+            await File.WriteAllTextAsync(path, "{\"old\":true}\n");
+            File.SetCreationTimeUtc(path, DateTime.UtcNow - TimeSpan.FromDays(20));
+            await File.WriteAllTextAsync(path + ".1", "{\"older\":true}\n");
+            File.SetLastWriteTimeUtc(path + ".1", DateTime.UtcNow - TimeSpan.FromDays(20));
+            LocalJsonLogger logger = new(new ConfigPaths(directory));
+
+            await logger.TidyAsync();
+
+            Assert.False(File.Exists(path));
+            Assert.Contains("old", await File.ReadAllTextAsync(path + ".1"), StringComparison.Ordinal);
         }
         finally
         {

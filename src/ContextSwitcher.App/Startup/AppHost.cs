@@ -88,7 +88,15 @@ public static class AppHost
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<ConfigPaths>();
         services.AddSingleton<IJsonStore, JsonFileStore>();
-        services.AddSingleton<ILogger, LocalJsonLogger>();
+        services.AddSingleton(provider => new LocalJsonLogger(provider.GetRequiredService<ConfigPaths>()));
+
+        // What happens is remembered and only a problem is written, with the trail that led to it - see
+        // TrailLogger. CONTEXTSWITCHER_LOG_LEVEL=information (or debug, trace) writes from that level on
+        // as it happens, for looking into something that is not a failure.
+        services.AddSingleton<ILogger>(provider => new TrailLogger(
+            provider.GetRequiredService<LocalJsonLogger>(),
+            () => RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), AppBuild.IsDevelopment),
+            writeFrom: Enum.TryParse(Environment.GetEnvironmentVariable("CONTEXTSWITCHER_LOG_LEVEL"), ignoreCase: true, out LogLevel from) ? from : null));
         services.AddSingleton<ConfigurationValidator>();
         services.AddSingleton<IAnalyticsSessionStore, AnalyticsSessionStore>();
         services.AddSingleton<IAnalyticsService, AnalyticsService>();
@@ -158,6 +166,13 @@ public static class AppHost
         services.AddTransient<OnboardingViewModel>();
 
         Services = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
+
+        // A log is a week long. Looked at on every start, so one nothing was written to for a month
+        // does not still hold what it did in the month before.
+        if (args.Length == 0 || !CliCommandRouter.IsHeadlessCommand(args[0]))
+        {
+            Services.GetRequiredService<LocalJsonLogger>().TidyAsync().GetAwaiter().GetResult();
+        }
 
         // A headless CLI invocation is a one-shot process that exits immediately; starting an
         // analytics session or a persistent global hook for it would be pointless and wasteful.

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ContextSwitcher.Core.Logging;
 
 /// <summary>
@@ -44,4 +46,12 @@ public sealed record LogEntry
     /// Gets additional structured data associated with the entry.
     /// </summary>
     public IReadOnlyDictionary<string, string>? Data { get; init; }
+
+    /// <summary>
+    /// Whether the entry is written to the file though it is below the level that normally is. For the
+    /// rare notable event that is not a problem - an update about to be installed - which is worth
+    /// finding later even when everything else went well. Not part of what is written.
+    /// </summary>
+    [JsonIgnore]
+    public bool Keep { get; init; }
 }

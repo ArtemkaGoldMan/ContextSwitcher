@@ -537,16 +537,33 @@ Log levels:
 
 - `Trace`: only in debug builds or when explicitly enabled.
 - `Debug`: development diagnostics.
-- `Information`: switch start/finish, app startup, config migration.
+- `Information`: switch start, plan and finish, step results, app startup.
 - `Warning`: recoverable failed step.
 - `Error`: failed switch, corrupt config, permission denial.
-- `Critical`: unrecoverable startup failure.
+- `Critical`: a crash or an unrecoverable startup failure.
 
-Redaction:
+What reaches the file (`TrailLogger`):
+
+- The log is quiet. Entries below `Warning` are remembered in memory, the last 300, and not written.
+- A `Warning` or above is written together with the trail that led to it: the run's header line
+  (version, macOS, architecture), every entry of its own switch (by `correlationId`), and up to 20
+  recent entries that belong to no switch. Those carry `"trail": "true"`. A switch that had a
+  problem is written to its end, so its final status and duration are there too.
+- The same category, event and message is written once an hour; the next one says how many it stood
+  in for (`"repeated"`).
+- An entry with `Keep` set is written whatever its level - for a rare event that is no problem, such
+  as an update about to be installed. Settings → Detailed log, or `CONTEXTSWITCHER_LOG_LEVEL`
+  (`information`, `debug`, `trace`), writes everything from a level on, as it happens.
+- The file starts again after a week (the old one is kept as `app.log.jsonl.1` for another week) and
+  rolls at 1 MB. Both are checked when the app starts.
+
+Redaction (`LogRedactor`, applied to every entry before it is remembered):
 
 - Never log full command lines containing tokens.
 - Never log donation/license key values.
-- Log URLs only as configured quick links or browser startup URLs; do not observe browser state.
+- Web addresses are cut to their site (`https://linear.app/…`), email addresses become `<email>`,
+  and `/Users/<name>` becomes `~`. The tab addresses and profile emails that osascript's output can
+  quote do not reach the file.
 
 ## 7. Domain API Contracts
 
