@@ -56,6 +56,8 @@ down with the reason — then asked about, as it replaces every profile and sett
   "appearance": "system",
   "showDockIcon": true,
   "checkForUpdates": true,
+  "askOnSwitch": false,
+  "ignoredApps": ["Telegram"],
   "onboardingCompleted": true,
   "analytics": { "enabled": true, "retentionDays": 365 },
   "contexts": []
@@ -70,11 +72,27 @@ down with the reason — then asked about, as it replaces every profile and sett
 | `appearance` | `system` (follow macOS, the default), `light` or `dark`. Applies at once. |
 | `showDockIcon` | Shows the app in the Dock and ⌘-Tab as well as the menu bar. On for a new install; absent means on. Applies at once. |
 | `checkForUpdates` | Looks for a new release on GitHub once a day and offers it; never installs by itself. Absent means on. |
+| `askOnSwitch` | Before a switch started in the app, asks what to do with the apps and tabs open that neither profile has — see below. Off unless turned on. |
+| `ignoredApps` | Apps never opened, closed, hidden or asked about, even if a profile still lists them. **Settings → Never touch these apps** takes each one out of every profile as it's added. |
 | `onboardingCompleted` | Absent means "already onboarded", so upgrading never re-runs the wizard. |
 | `analytics.retentionDays` | Sessions older than this are pruned at startup. |
 
 Opening at login isn't in this file: macOS keeps it, under **System Settings → General → Login
 Items**, and **Settings → Open at login** turns it on and off there.
+
+### Asking about everything else
+
+With `askOnSwitch` on, a switch from the menu bar, the popover or the Profiles page first lists what's
+open that neither profile has: apps with a Dock icon (not Finder or ContextSwitcher, nothing in
+`ignoredApps`) and web pages in Chrome, Brave and Safari (not incognito windows; Safari doesn't say which
+of its windows are private). Each can be kept, closed with the switch, or added to the profile you're
+leaving or the one you're entering — added as a full part of it, opened on the way in and closed on the
+way out. Each tab shows its site's icon, fetched from that site itself (its `/favicon.ico`, else the
+icon its home page names) after the window opens, and kept in `icon-cache/sites` — so a site is asked
+once, and no one else learns which sites you have open. More than 13 tabs show as one line: keep or
+close them all. **Skip** switches without touching
+any of it; **Don't ask again** turns `askOnSwitch` off. A switch from the command line or Siri doesn't
+ask: it has no window to ask in.
 
 ## A profile
 

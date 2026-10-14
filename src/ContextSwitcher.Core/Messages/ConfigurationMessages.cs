@@ -12,6 +12,8 @@ public static class ConfigurationMessages
 
     public static readonly MessageTemplate NoContexts = new("Config_NoContexts", "At least one context is required.");
 
+    public static readonly MessageTemplate IgnoredAppEmpty = new("Config_IgnoredAppEmpty", "An app that's never touched needs a name.");
+
     public static readonly MessageTemplate IdNotUrlSafe = new("Config_IdNotUrlSafe", "Context id must be lowercase and URL-safe.");
 
     public static readonly MessageTemplate IdNotUnique = new("Config_IdNotUnique", "Context id must be unique.");

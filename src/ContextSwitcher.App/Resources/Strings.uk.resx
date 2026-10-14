@@ -1147,4 +1147,73 @@
   <data name="Browser_NoProfiles" xml:space="preserve">
     <value>У {0} ще немає профілів. Відкрийте його один раз, а потім виберіть профіль тут.</value>
   </data>
+  <data name="Ask_Title_Switch" xml:space="preserve">
+    <value>Перемикання з «{0}» на «{1}»</value>
+  </data>
+  <data name="Ask_Title_Off" xml:space="preserve">
+    <value>Вимкнення «{0}»</value>
+  </data>
+  <data name="Ask_Title_On" xml:space="preserve">
+    <value>Увімкнення «{0}»</value>
+  </data>
+  <data name="Ask_Subtitle_Two" xml:space="preserve">
+    <value>Ці застосунки й вкладки не належать до жодного з профілів. Що з ними зробити?</value>
+  </data>
+  <data name="Ask_Subtitle_One" xml:space="preserve">
+    <value>Ці застосунки й вкладки не належать до «{0}». Що з ними зробити?</value>
+  </data>
+  <data name="Ask_Apps" xml:space="preserve">
+    <value>Застосунки · {0}</value>
+  </data>
+  <data name="Ask_Tabs" xml:space="preserve">
+    <value>Вкладки · {0}</value>
+  </data>
+  <data name="Ask_ManyTabs" xml:space="preserve">
+    <value>Усі вкладки: {0}</value>
+  </data>
+  <data name="Ask_Keep" xml:space="preserve">
+    <value>Залишити</value>
+  </data>
+  <data name="Ask_Close" xml:space="preserve">
+    <value>Закрити</value>
+  </data>
+  <data name="Ask_AddTo" xml:space="preserve">
+    <value>+ {0}</value>
+  </data>
+  <data name="Ask_KeepAll" xml:space="preserve">
+    <value>Залишити все</value>
+  </data>
+  <data name="Ask_CloseAll" xml:space="preserve">
+    <value>Закрити все</value>
+  </data>
+  <data name="Ask_DontAskAgain" xml:space="preserve">
+    <value>Більше не питати</value>
+  </data>
+  <data name="Ask_Skip" xml:space="preserve">
+    <value>Пропустити</value>
+  </data>
+  <data name="Ask_Continue" xml:space="preserve">
+    <value>Продовжити</value>
+  </data>
+  <data name="Msg_Config_IgnoredAppEmpty" xml:space="preserve">
+    <value>Застосунок, який ніколи не чіпати, має мати назву.</value>
+  </data>
+  <data name="Settings_Switching_Section" xml:space="preserve">
+    <value>ПЕРЕМИКАННЯ</value>
+  </data>
+  <data name="Settings_AskOnSwitch" xml:space="preserve">
+    <value>Питати про інші застосунки й вкладки</value>
+  </data>
+  <data name="Settings_AskOnSwitch_Description" xml:space="preserve">
+    <value>При кожному перемиканні показувати застосунки й вкладки, яких немає в жодному з профілів, щоб залишити, закрити чи додати їх у профіль.</value>
+  </data>
+  <data name="Settings_IgnoredApps" xml:space="preserve">
+    <value>Ніколи не чіпати ці застосунки</value>
+  </data>
+  <data name="Settings_IgnoredApps_Description" xml:space="preserve">
+    <value>Їх ніколи не відкривати, не закривати, не ховати й про них не питати — як месенджер, потрібний у кожному профілі. Додавання прибирає застосунок з усіх профілів.</value>
+  </data>
+  <data name="Settings_IgnoredApp_TakenOut" xml:space="preserve">
+    <value>«{0}» тепер ніколи не чіпається, і його прибрано з: {1}.</value>
+  </data>
 </root>

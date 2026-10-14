@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Serialization;
 
 namespace ContextSwitcher.Core.Automation;
@@ -39,8 +40,17 @@ public sealed class AutomationPlanBuilder
     /// The context being switched to, or <see langword="null"/> to turn <paramref name="previous"/>
     /// off: only the half of a switch that leaves it, with nothing entered after.
     /// </param>
-    public AutomationPlan Build(ContextDefinition? previous, ContextDefinition? target)
+    /// <param name="extras">Apps and tabs to close besides what the profiles say - chosen when asked.</param>
+    /// <param name="ignoredApps">Apps never opened, closed or hidden, even when a profile lists them.</param>
+    public AutomationPlan Build(
+        ContextDefinition? previous,
+        ContextDefinition? target,
+        SwitchExtras? extras = null,
+        IReadOnlyCollection<string>? ignoredApps = null)
     {
+        extras ??= SwitchExtras.None;
+        IReadOnlyCollection<string> ignored = ignoredApps ?? [];
+
         // Which steps must work is the entered profile's call; turning one off, the one being left's.
         SwitchPolicyConfig policy = (target ?? previous)?.SwitchPolicy ?? new SwitchPolicyConfig();
         HashSet<string> criticalTypes = new(policy.CriticalSteps, StringComparer.Ordinal);
@@ -57,15 +67,21 @@ public sealed class AutomationPlanBuilder
             // Before the apps: if the browser itself is quit as well, its tabs are closed first, so
             // they don't come back when it next restores its last session.
             AddCloseBrowserTabs(steps, previous, target, Resolve, criticalTypes);
-            AddCloseApplications(steps, previous, target, criticalTypes);
-            AddHideApplications(steps, previous, target, criticalTypes);
+        }
+
+        // What the user chose to close of everything else open, then the profiles' own.
+        AddCloseOtherTabs(steps, extras, previous?.Id ?? target?.Id ?? string.Empty, criticalTypes);
+        AddCloseApplications(steps, previous, target, extras, ignored, criticalTypes);
+        if (previous is not null)
+        {
+            AddHideApplications(steps, previous, target, ignored, criticalTypes);
         }
 
         AddSetFocusMode(steps, previous, target, criticalTypes);
 
         if (target is not null)
         {
-            AddLaunchApplications(steps, target, criticalTypes);
+            AddLaunchApplications(steps, target, ignored, criticalTypes);
             AddManageBrowserContext(steps, target, Resolve, criticalTypes);
             AddStartDockerResources(steps, target, criticalTypes);
             AddControlMedia(steps, target, criticalTypes);
@@ -144,12 +160,17 @@ public sealed class AutomationPlanBuilder
     /// </summary>
     private static void AddCloseApplications(
         List<AutomationStep> steps,
-        ContextDefinition previous,
+        ContextDefinition? previous,
         ContextDefinition? target,
+        SwitchExtras extras,
+        IReadOnlyCollection<string> ignored,
         HashSet<string> criticalTypes)
     {
-        List<string> apps = previous.CloseApps
+        List<string> apps = (previous?.CloseApps ?? [])
+            .Concat(extras.CloseApps)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .Except(target?.LaunchApps ?? [], StringComparer.OrdinalIgnoreCase)
+            .Except(ignored, StringComparer.OrdinalIgnoreCase)
             .ToList();
         if (apps.Count == 0)
         {
@@ -158,7 +179,7 @@ public sealed class AutomationPlanBuilder
 
         steps.Add(CreateStep(
             AutomationStepType.CloseApplications,
-            previous.Id,
+            previous?.Id ?? target?.Id ?? string.Empty,
             "Close applications",
             QuitAppTimeoutPerApp * apps.Count,
             criticalTypes,
@@ -173,10 +194,12 @@ public sealed class AutomationPlanBuilder
         List<AutomationStep> steps,
         ContextDefinition previous,
         ContextDefinition? target,
+        IReadOnlyCollection<string> ignored,
         HashSet<string> criticalTypes)
     {
         List<string> apps = previous.HideApps
             .Except(target?.LaunchApps ?? [], StringComparer.OrdinalIgnoreCase)
+            .Except(ignored, StringComparer.OrdinalIgnoreCase)
             .ToList();
         if (apps.Count == 0)
         {
@@ -236,9 +259,14 @@ public sealed class AutomationPlanBuilder
     private static bool UsesFocus(ContextDefinition context) =>
         context.Focus.Enabled && !string.IsNullOrWhiteSpace(context.Focus.ModeName);
 
-    private static void AddLaunchApplications(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
+    private static void AddLaunchApplications(
+        List<AutomationStep> steps,
+        ContextDefinition target,
+        IReadOnlyCollection<string> ignored,
+        HashSet<string> criticalTypes)
     {
-        if (target.LaunchApps.Count == 0)
+        List<string> apps = target.LaunchApps.Except(ignored, StringComparer.OrdinalIgnoreCase).ToList();
+        if (apps.Count == 0)
         {
             return;
         }
@@ -247,9 +275,32 @@ public sealed class AutomationPlanBuilder
             AutomationStepType.LaunchApplications,
             target.Id,
             "Launch applications",
-            LaunchAppTimeoutPerApp * target.LaunchApps.Count,
+            LaunchAppTimeoutPerApp * apps.Count,
             criticalTypes,
-            new Dictionary<string, string> { ["apps"] = List(target.LaunchApps) }));
+            new Dictionary<string, string> { ["apps"] = List(apps) }));
+    }
+
+    /// <summary>
+    /// The tabs the user chose to close of the ones no profile had, a step per browser. They go by
+    /// their own addresses, and with no profile's remembered tabs: those are the profile's own step's.
+    /// </summary>
+    private static void AddCloseOtherTabs(List<AutomationStep> steps, SwitchExtras extras, string subjectId, HashSet<string> criticalTypes)
+    {
+        foreach (IGrouping<BrowserKind, TabToClose> browser in extras.CloseTabs.GroupBy(tab => tab.Browser))
+        {
+            steps.Add(CreateStep(
+                AutomationStepType.CloseBrowserTabs,
+                $"{subjectId}.others.{browser.Key}",
+                "Close other browser tabs",
+                CloseTabsTimeout,
+                criticalTypes,
+                new Dictionary<string, string>
+                {
+                    ["browser"] = browser.Key.ToString(),
+                    ["closeUrlsJson"] = JsonSerializer.Serialize(browser.Select(tab => tab.Url).Distinct(StringComparer.Ordinal).ToList(), ContextSwitcherJson.CompactOptions),
+                    ["keepUrlsJson"] = "[]"
+                }));
+        }
     }
 
     private static void AddManageBrowserContext(

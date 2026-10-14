@@ -79,6 +79,56 @@
     </Border>
 
     <!-- Time tracking -->
+    <!-- Switching: asking about everything else open, and the apps never touched -->
+    <Border Classes="panel">
+      <StackPanel Spacing="10">
+        <TextBlock Text="{x:Static r:Strings.Settings_Switching_Section}" Classes="sectionTitle" />
+        <ctl:FormRow Title="{x:Static r:Strings.Settings_AskOnSwitch}" Description="{x:Static r:Strings.Settings_AskOnSwitch_Description}">
+          <ToggleSwitch IsChecked="{Binding AskOnSwitch}" AutomationProperties.Name="{x:Static r:Strings.Settings_AskOnSwitch}" />
+        </ctl:FormRow>
+        <Border Classes="divider" />
+        <StackPanel Spacing="6">
+          <TextBlock Text="{x:Static r:Strings.Settings_IgnoredApps}" Classes="body" />
+          <TextBlock Text="{x:Static r:Strings.Settings_IgnoredApps_Description}" Classes="caption" TextWrapping="Wrap" />
+          <ItemsControl ItemsSource="{Binding IgnoredApps.Apps}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Spacing="6" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:IgnoredAppRowViewModel">
+                <Border Classes="listRow">
+                  <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Panel Grid.Column="0" Width="24" Height="24" Margin="0,0,10,0" VerticalAlignment="Center" IsVisible="{Binding HasIcon}">
+                      <Image Source="{Binding Icon}" IsVisible="{Binding HasIcon}" Width="24" Height="24" />
+                    </Panel>
+                    <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="body" VerticalAlignment="Center" />
+                    <Button Grid.Column="2" Classes="rowAction" Command="{Binding RemoveCommand}" ToolTip.Tip="{x:Static r:Strings.Common_Remove}" AutomationProperties.Name="{x:Static r:Strings.Common_Remove}">
+                      <Viewbox Classes="icon rowAction">
+                        <Path Classes="glyph" Data="{DynamicResource IconX}" />
+                      </Viewbox>
+                    </Button>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Text="{Binding IgnoredApps.Message}" Classes="caption" IsVisible="{Binding IgnoredApps.HasMessage}" TextWrapping="Wrap" />
+          <!-- The picker reads the installed apps and their icons only when it's opened. -->
+          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddApp}" IsVisible="{Binding IgnoredApps.CanAdd}" Command="{Binding IgnoredApps.OpenPickerCommand}">
+            <Button.Flyout>
+              <Flyout Placement="BottomEdgeAlignedLeft">
+                <StackPanel Width="{StaticResource PickerWidth}">
+                  <ContentControl Content="{Binding IgnoredApps.Picker}" ContentTemplate="{StaticResource AppPickerContent}" />
+                </StackPanel>
+              </Flyout>
+            </Button.Flyout>
+          </Button>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
     <Border Classes="panel">
       <StackPanel Spacing="10">
         <TextBlock Text="{x:Static r:Strings.Settings_TimeTracking_Section}" Classes="sectionTitle" />

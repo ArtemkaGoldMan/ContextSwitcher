@@ -1,0 +1,100 @@
+<Window
+  x:Class="ContextSwitcher.App.Views.AskOnSwitchWindow"
+  xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:files="using:ContextSwitcher.Infrastructure.Files"
+  xmlns:r="using:ContextSwitcher.App.Resources"
+  xmlns:vm="using:ContextSwitcher.App.ViewModels"
+  x:DataType="vm:AskOnSwitchViewModel"
+  Title="{x:Static files:AppBuild.DisplayName}"
+  Width="600"
+  SizeToContent="Height"
+  MaxHeight="720"
+  CanResize="False"
+  Topmost="True"
+  WindowStartupLocation="CenterScreen"
+  Background="{DynamicResource AppBackgroundBrush}">
+  <Window.Resources>
+    <!-- An app or a tab: its icon, its name, and a row of choices of which one is lit. -->
+    <DataTemplate x:Key="UnclaimedRow" x:DataType="vm:UnclaimedRowViewModel">
+      <Border Classes="listRow">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Panel Grid.Column="0" Width="28" Height="28" Margin="0,0,10,0" VerticalAlignment="Center">
+            <!-- An app's own icon fills the space; a site's small one sits on a soft square, like the placeholder. -->
+            <Image Source="{Binding Icon}" IsVisible="{Binding HasAppIcon}" Width="28" Height="28" />
+            <Border Classes="badge" Width="28" Height="28" Background="{DynamicResource NeutralSoftBrush}" IsVisible="{Binding !HasAppIcon}">
+              <Panel>
+                <Image Source="{Binding Icon}" IsVisible="{Binding HasSiteIcon}" Width="16" Height="16" />
+                <Viewbox Classes="icon" Width="15" Height="15" IsVisible="{Binding !HasIcon}">
+                  <Panel>
+                    <Path Classes="glyph" Data="{DynamicResource IconLayoutGrid}" Stroke="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding IsApp}" />
+                    <Path Classes="glyph" Data="{DynamicResource IconGlobe}" Stroke="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding !IsApp}" />
+                  </Panel>
+                </Viewbox>
+              </Panel>
+            </Border>
+          </Panel>
+          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+            <TextBlock Text="{Binding Title}" Classes="body" TextTrimming="CharacterEllipsis" />
+            <TextBlock Text="{Binding Subtitle}" Classes="caption" IsVisible="{Binding HasSubtitle}" TextTrimming="CharacterEllipsis" />
+          </StackPanel>
+          <Border Grid.Column="2" Classes="segments" Margin="10,0,0,0" VerticalAlignment="Center">
+            <ItemsControl ItemsSource="{Binding Options}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:UnclaimedOptionViewModel">
+                  <Button Classes="segment" Classes.on="{Binding IsSelected}" Content="{Binding Label}" Command="{Binding SelectCommand}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Border>
+        </Grid>
+      </Border>
+    </DataTemplate>
+  </Window.Resources>
+
+  <DockPanel Margin="22,20,22,18">
+    <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,14">
+      <TextBlock Text="{Binding Title}" Classes="header" FontSize="20" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding Subtitle}" Classes="caption" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+      <Button Classes="switchContext" Content="{x:Static r:Strings.Ask_KeepAll}" Command="{Binding KeepAllCommand}" />
+      <Button Classes="switchContext" Content="{x:Static r:Strings.Ask_CloseAll}" Command="{Binding CloseAllCommand}" />
+    </StackPanel>
+
+    <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto" Margin="0,16,0,0">
+      <CheckBox Grid.Column="0" Content="{x:Static r:Strings.Ask_DontAskAgain}" IsChecked="{Binding DontAskAgain}" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Classes="switchContext" Content="{x:Static r:Strings.Ask_Skip}" Command="{Binding SkipCommand}" Margin="0,0,8,0" />
+      <Button Grid.Column="2" Classes="switchContext current" Content="{x:Static r:Strings.Ask_Continue}" Command="{Binding ContinueCommand}" IsDefault="True" />
+    </Grid>
+
+    <ScrollViewer>
+      <StackPanel Spacing="6">
+        <TextBlock Text="{Binding AppsHeader}" Classes="caption" IsVisible="{Binding HasApps}" />
+        <ItemsControl ItemsSource="{Binding Apps}" ItemTemplate="{StaticResource UnclaimedRow}" IsVisible="{Binding HasApps}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="6" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+        </ItemsControl>
+
+        <TextBlock Text="{Binding TabsHeader}" Classes="caption" IsVisible="{Binding HasTabs}" Margin="0,10,0,0" />
+        <ItemsControl ItemsSource="{Binding Tabs}" ItemTemplate="{StaticResource UnclaimedRow}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="6" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+        </ItemsControl>
+        <ContentControl Content="{Binding AllTabs}" ContentTemplate="{StaticResource UnclaimedRow}" IsVisible="{Binding HasManyTabs}" />
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</Window>

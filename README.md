@@ -44,6 +44,7 @@ ContextSwitcher keeps a **profile** for each part of your day. Click one, and yo
 | **Docker** | Start the containers this profile needs, stop the ones it doesn't |
 | **Dashboard** | Keep a few links and notes for this profile one click away |
 | **Time** | See how your week splits between work and the rest of your life, stored only on your Mac |
+| **Everything else** | Optionally, ask on each switch about the apps and tabs no profile has — keep them, close them, or add them to a profile — and keep a list of apps it never touches, like a messenger |
 
 Every part is optional. A profile that only opens two apps is a perfectly good profile.
 

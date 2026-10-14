@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Automation;
@@ -475,6 +476,59 @@ public sealed class AutomationPlanBuilderTests
         Assert.DoesNotContain(entering.Steps, step => step.Type is AutomationStepType.ManageBrowserContext or AutomationStepType.CloseBrowserTabs);
         Assert.DoesNotContain(leaving.Steps, step => step.Type is AutomationStepType.ManageBrowserContext or AutomationStepType.CloseBrowserTabs);
         Assert.DoesNotContain(entering.Steps.SelectMany(step => step.Arguments.Keys), key => key == "tabGroups");
+    }
+
+    /// <summary>
+    /// What the user chose to close of everything else open joins the profile's own: apps in the one
+    /// closing step - but never one the next profile opens - and tabs a step per browser, by their own
+    /// addresses and with no profile's remembered tabs.
+    /// </summary>
+    [Fact]
+    public void ChosenExtrasAreClosedWithTheProfilesOwn()
+    {
+        ContextDefinition work = new() { Id = "work", DisplayName = "Work", CloseApps = ["Slack"] };
+        ContextDefinition personal = new() { Id = "personal", DisplayName = "Personal", LaunchApps = ["Notes"] };
+        SwitchExtras extras = new(
+            ["Figma", "slack", "Notes"],
+            [new TabToClose(BrowserKind.Chrome, "https://a.example/"), new TabToClose(BrowserKind.Safari, "https://b.example/"), new TabToClose(BrowserKind.Chrome, "https://c.example/")]);
+
+        AutomationPlan plan = new AutomationPlanBuilder().Build(work, personal, extras);
+
+        AutomationStep apps = plan.Steps.Single(step => step.Type == AutomationStepType.CloseApplications);
+        Assert.Equal("""["Slack","Figma"]""", apps.Arguments["apps"]);
+        List<AutomationStep> tabs = plan.Steps.Where(step => step.Type == AutomationStepType.CloseBrowserTabs).ToList();
+        Assert.Equal(2, tabs.Count);
+        Assert.Equal("""["https://a.example/","https://c.example/"]""", tabs.Single(step => step.Arguments["browser"] == "Chrome").Arguments["closeUrlsJson"]);
+        Assert.All(tabs, step => Assert.False(step.Arguments.ContainsKey("contextId")));
+        Assert.Equal(tabs.Count, tabs.Select(step => step.Id).Distinct().Count());
+        List<AutomationStep> order = plan.Steps.ToList();
+        Assert.True(order.IndexOf(tabs[0]) < order.IndexOf(apps), "tabs close before the apps, as the profile's own do");
+    }
+
+    /// <summary>Turning a profile on with none on before: what was chosen to close still closes.</summary>
+    [Fact]
+    public void ExtrasCloseEvenWithNoProfileBeingLeft()
+    {
+        ContextDefinition personal = new() { Id = "personal", DisplayName = "Personal" };
+
+        AutomationPlan plan = new AutomationPlanBuilder().Build(null, personal, new SwitchExtras(["Figma"], []));
+
+        Assert.Equal("""["Figma"]""", plan.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments["apps"]);
+    }
+
+    /// <summary>An app never touched is neither opened, closed nor hidden, even when a profile still lists it by hand.</summary>
+    [Fact]
+    public void IgnoredAppsAreLeftAlone()
+    {
+        ContextDefinition work = new() { Id = "work", DisplayName = "Work", CloseApps = ["Telegram", "Slack"], HideApps = ["telegram"] };
+        ContextDefinition personal = new() { Id = "personal", DisplayName = "Personal", LaunchApps = ["Telegram"] };
+
+        AutomationPlan leaving = new AutomationPlanBuilder().Build(work, personal, ignoredApps: ["Telegram"]);
+        AutomationPlan entering = new AutomationPlanBuilder().Build(null, personal, ignoredApps: ["Telegram"]);
+
+        Assert.Equal("""["Slack"]""", leaving.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments["apps"]);
+        Assert.DoesNotContain(leaving.Steps, step => step.Type == AutomationStepType.HideApplications);
+        Assert.DoesNotContain(entering.Steps, step => step.Type == AutomationStepType.LaunchApplications);
     }
 
     /// <summary>A default browser that can't be scripted stays Default, and the closing step says why it did nothing.</summary>

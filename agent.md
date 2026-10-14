@@ -830,6 +830,26 @@ apps are quit:
 - Spare a page the context being entered opens in the same browser.
 - A browser that won't answer is a warning; nothing else is tried.
 
+### 9.3.1 Asking About Everything Else
+
+With `askOnSwitch` on, every switch started in the app goes through `SwitchCoordinator`, which:
+
+- finds the apps (Dock apps from `IRunningApplications`, not Finder or any ContextSwitcher) and tabs
+  (`ISystemCatalog.GetBrowserTabsAsync`, no incognito windows) that neither the profile being left nor
+  the one being entered opens, closes, hides or lists as a page, and isn't in `ignoredApps`
+  (`UnclaimedItems`);
+- if there are any, asks in `AskOnSwitchWindow`: keep, close, or add to either profile - more than 13
+  tabs are one keep-or-close line; Skip and closing the window touch nothing. App icons come from the
+  installed-apps cache; site icons from the site itself (`SiteIcons`: `/favicon.ico`, else the page's
+  `<link rel="icon">`; 2 s and 100 KB per request, no cookies; a 32×32 PNG cached per site, a site with
+  none re-asked after a week), loaded after the window opens;
+- saves what was added - as launch and close, or as an opened and closed page - before the switch reads
+  the settings, and passes what to close as `ContextSwitchRequest.Extras`, which the plan adds to its
+  close steps (tabs a step per browser, by address, without the profile's remembered tabs).
+
+The command line switches through `ContextSwitchService` directly and never asks. Apps in `ignoredApps`
+are left out of every launch, close and hide step, even when a profile still lists them.
+
 ### 9.4 Browser Tab Groups (removed)
 
 Tab groups mode was removed: neither Safari's nor Chrome's AppleScript dictionary has tab groups,

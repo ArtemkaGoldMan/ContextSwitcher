@@ -43,4 +43,10 @@ public interface ISystemCatalog
     /// running for <see cref="BrowserKind.Default"/>. A browser that is not running is not started.
     /// </summary>
     Task<IReadOnlyList<OpenTab>> GetOpenTabsAsync(BrowserKind browser, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The http(s) tabs open in every supported browser that is running, each with its browser -
+    /// leaving out Chrome's and Brave's incognito windows. A browser that isn't running is not started.
+    /// </summary>
+    Task<IReadOnlyList<OpenBrowserTab>> GetBrowserTabsAsync(CancellationToken cancellationToken);
 }
