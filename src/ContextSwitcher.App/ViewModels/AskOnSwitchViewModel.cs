@@ -157,6 +157,7 @@ public sealed class AskOnSwitchViewModel : ViewModelBase
         }
         catch (Exception e) when (e is IOException or ArgumentException or InvalidOperationException)
         {
+            // Not logged: an icon that cannot be read is left out.
             return null;
         }
     }

@@ -188,6 +188,7 @@ public sealed class InstalledAppsService : IInstalledAppsService
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            // Not logged: an app without a readable icon is shown without one.
             return null;
         }
     }

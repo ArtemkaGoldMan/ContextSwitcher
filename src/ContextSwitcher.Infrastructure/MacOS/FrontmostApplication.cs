@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using System.Runtime.InteropServices;
 
 namespace ContextSwitcher.Infrastructure.MacOS;
@@ -39,6 +40,7 @@ public static class FrontmostApplication
         }
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
         {
+            AppLog.MissingApi("the frontmost application lookup", ex);
             return null;
         }
     }

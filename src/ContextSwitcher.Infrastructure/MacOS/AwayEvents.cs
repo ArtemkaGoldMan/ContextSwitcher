@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using System.Runtime.InteropServices;
 using ContextSwitcher.Core.Analytics;
 
@@ -86,9 +87,10 @@ public sealed class AwayEvents
             }
         }
 #pragma warning disable CA1031 // Nothing may escape into native code.
-        catch (Exception)
+        catch (Exception ex)
 #pragma warning restore CA1031
         {
+            AppLog.Warn("Platform", "AwayEventFailed", "A handler of a sleep, wake or lock event failed, so the time the app counts may be off.", ex);
         }
     }
 

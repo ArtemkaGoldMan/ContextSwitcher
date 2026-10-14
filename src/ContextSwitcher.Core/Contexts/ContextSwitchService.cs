@@ -132,6 +132,7 @@ public sealed class ContextSwitchService : IContextSwitchService
         }
         catch (IOException)
         {
+            // Not logged: held by another switch, which the switch that finds it says.
             // Held by another switch.
             return null;
         }
