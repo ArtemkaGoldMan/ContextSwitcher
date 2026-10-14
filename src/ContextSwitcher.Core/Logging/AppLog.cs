@@ -42,6 +42,13 @@ public static class AppLog
     public static void Note(string category, string eventId, string message, IReadOnlyDictionary<string, string>? data = null) =>
         Write(LogLevel.Information, category, eventId, message, null, data);
 
+    /// <summary>
+    /// A rare event that is no problem but is worth finding later - an update about to be installed. Unlike
+    /// <see cref="Note"/> it is written whatever happens.
+    /// </summary>
+    public static void Record(string category, string eventId, string message, IReadOnlyDictionary<string, string>? data = null) =>
+        Write(LogLevel.Information, category, eventId, message, null, data, keep: true);
+
     /// <summary>A problem the app got past: something did not work, and nothing else was lost with it.</summary>
     public static void Warn(string category, string eventId, string message, Exception? exception = null, IReadOnlyDictionary<string, string>? data = null) =>
         Write(LogLevel.Warning, category, eventId, message, exception, data);
@@ -68,7 +75,7 @@ public static class AppLog
         }
     }
 
-    private static void Write(LogLevel level, string category, string eventId, string message, Exception? exception, IReadOnlyDictionary<string, string>? data)
+    private static void Write(LogLevel level, string category, string eventId, string message, Exception? exception, IReadOnlyDictionary<string, string>? data, bool keep = false)
     {
         ILogger? logger = Scoped.Value ?? shared;
         if (logger is null)
@@ -85,7 +92,8 @@ public static class AppLog
                 Category = category,
                 EventId = eventId,
                 Message = message,
-                Data = exception is null ? data : Describe(exception, data)
+                Data = exception is null ? data : Describe(exception, data),
+                Keep = keep
             }).GetAwaiter().GetResult();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or OperationCanceledException or ObjectDisposedException)

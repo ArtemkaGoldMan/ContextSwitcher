@@ -2,6 +2,7 @@ using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
+using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Infrastructure.Files;
 using System.Collections.Concurrent;
 using ContextSwitcher.Tests.TestDoubles;
@@ -33,6 +34,50 @@ public sealed class ConfigurationStoreTests
         Assert.Equal("work", jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)?.ActiveContextId);
         Assert.Contains(configPaths.SettingsPath, jsonStore.BackedUpPaths);
         Assert.Equal("work", AppHost.Configuration.ActiveContextId);
+    }
+
+    /// <summary>
+    /// A save the editors should not have been able to ask for is refused - and said, by which settings,
+    /// not by what the person typed or named.
+    /// </summary>
+    [Fact]
+    public async Task ARefusedSaveIsLoggedByItsSettingsAndNotByName()
+    {
+        TestLogger logger = new();
+        using IDisposable scope = AppLog.UseForThisFlow(logger);
+        InMemoryJsonStore jsonStore = new();
+        ConfigurationStore store = new(jsonStore, new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator());
+        AppConfiguration invalid = new()
+        {
+            ActiveContextId = "work",
+            Contexts = [new ContextDefinition { Id = "work", DisplayName = "Quarterly secret project", AccentColor = "not a colour" }]
+        };
+
+        ConfigurationSaveResult result = await store.SaveAsync(invalid, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        LogEntry entry = Assert.Single(logger.Entries);
+        Assert.Equal("SaveRejected", entry.EventId);
+        Assert.Equal("A save was refused with 1 problem(s): contexts[].accentColor (Config_AccentColorInvalid)", entry.Message);
+        Assert.DoesNotContain("secret", entry.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>A write that fails still fails - the editors show it - but it is no longer a silent loss: the log says so.</summary>
+    [Fact]
+    public async Task AFailedWriteIsLoggedAndStillThrown()
+    {
+        TestLogger logger = new();
+        using IDisposable scope = AppLog.UseForThisFlow(logger);
+        InMemoryJsonStore jsonStore = new();
+        ConfigPaths configPaths = new("/tmp/context-switcher-tests");
+        jsonStore.WriteFailurePaths.Add(configPaths.SettingsPath);
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator());
+
+        await Assert.ThrowsAsync<IOException>(() => store.SaveAsync(ValidConfiguration, CancellationToken.None));
+
+        LogEntry entry = Assert.Single(logger.Entries);
+        Assert.Equal("SettingsNotSaved", entry.EventId);
+        Assert.Equal(LogLevel.Error, entry.Level);
     }
 
     /// <summary>

@@ -53,9 +53,9 @@ public sealed class JsonFileStore : IJsonStore
                     cancellationToken).ConfigureAwait(false);
             }
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
-            QuarantineCorruptFile(path);
+            QuarantineCorruptFile(path, ex);
             return null;
         }
     }
@@ -176,10 +176,17 @@ public sealed class JsonFileStore : IJsonStore
         }
     }
 
-    private static void QuarantineCorruptFile(string path)
+    private static void QuarantineCorruptFile(string path, JsonException reason)
     {
         string timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMddTHHmmssfffZ");
         string corruptPath = $"{path}.corrupt.{timestamp}";
         File.Move(path, corruptPath, overwrite: false);
+
+        // Where the JSON broke, not what it said: the reason carries a line and a position and no content.
+        AppLog.Warn(
+            "Files",
+            "FileQuarantined",
+            $"{Path.GetFileName(path)} could not be read and was moved aside as {Path.GetFileName(corruptPath)}.",
+            reason);
     }
 }

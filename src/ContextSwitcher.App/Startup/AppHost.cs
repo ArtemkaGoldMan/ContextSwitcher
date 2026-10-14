@@ -269,6 +269,16 @@ public static class AppHost
 
         Configuration = configuration;
         ConfigurationValidation = validator.Validate(configuration);
+        if (!ConfigurationValidation.IsValid)
+        {
+            // Said once a start, by setting and without the profile's number: which, not what was typed.
+            AppLog.Warn(
+                "Configuration",
+                "ConfigurationInvalid",
+                $"The settings have {ConfigurationValidation.Errors.Count} problem(s): "
+                    + string.Join("; ", ConfigurationValidation.Errors.Select(error => $"{System.Text.RegularExpressions.Regex.Replace(error.Path, @"\[\d+\]", "[]")} ({error.Detail?.Key ?? "no key"})")));
+        }
+
         analyticsService.Enabled = Configuration.Analytics.Enabled;
 
         State = await jsonStore.ReadAsync<CurrentContextState>(configPaths.StatePath).ConfigureAwait(false)
