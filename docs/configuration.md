@@ -87,7 +87,10 @@ open that neither profile has: apps with a Dock icon (not Finder or ContextSwitc
 `ignoredApps`) and web pages in Chrome, Brave and Safari (not incognito windows; Safari doesn't say which
 of its windows are private). Each can be kept, closed with the switch, or added to the profile you're
 leaving or the one you're entering — added as a full part of it, opened on the way in and closed on the
-way out. More than 13 tabs show as one line: keep or close them all. **Skip** switches without touching
+way out. Each tab shows its site's icon, fetched from that site itself (its `/favicon.ico`, else the
+icon its home page names) after the window opens, and kept in `icon-cache/sites` — so a site is asked
+once, and no one else learns which sites you have open. More than 13 tabs show as one line: keep or
+close them all. **Skip** switches without touching
 any of it; **Don't ask again** turns `askOnSwitch` off. A switch from the command line or Siri doesn't
 ask: it has no window to ask in.
 

@@ -52,7 +52,7 @@ public sealed class AskOnSwitchViewModel : ViewModelBase
         }
         else
         {
-            this.Tabs = unclaimed.Tabs.Select(tab => new UnclaimedRowViewModel(tab.Title, HostOf(tab.Url), isApp: false, tabOptions)).ToList();
+            this.Tabs = unclaimed.Tabs.Select(tab => new UnclaimedRowViewModel(tab.Title, HostOf(tab.Url), isApp: false, tabOptions, tab.Url)).ToList();
         }
 
         this.KeepAllCommand = new RelayCommand(() => this.ChooseForAll(UnclaimedChoice.Keep));
@@ -118,17 +118,46 @@ public sealed class AskOnSwitchViewModel : ViewModelBase
         foreach (UnclaimedRowViewModel row in this.Apps)
         {
             string? iconPath = installed.FirstOrDefault(app => string.Equals(app.Name, row.Title, StringComparison.OrdinalIgnoreCase))?.IconPath;
-            if (iconPath is not null && File.Exists(iconPath))
+            if (iconPath is not null)
             {
-                try
-                {
-                    row.Icon = new Bitmap(iconPath);
-                }
-                catch (Exception e) when (e is IOException or ArgumentException or InvalidOperationException)
-                {
-                    // No icon is still a row.
-                }
+                row.Icon = TryLoad(iconPath);
             }
+        }
+    }
+
+    /// <summary>
+    /// Shows each tab's site icon once found, from the site itself (<see cref="ISiteIcons"/>) - each site
+    /// asked once however many of its tabs are open, all at once, after the window has opened. A site
+    /// with no icon, or too slow to give one, keeps the globe.
+    /// </summary>
+    public async Task LoadSiteIconsAsync(ISiteIcons siteIcons, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(siteIcons);
+
+        IEnumerable<Task> sites = this.Tabs
+            .Where(row => row.Url is not null)
+            .GroupBy(row => HostOf(row.Url!), StringComparer.OrdinalIgnoreCase)
+            .Select(async site =>
+            {
+                string? path = await siteIcons.GetIconPathAsync(site.First().Url!, cancellationToken).ConfigureAwait(true);
+                Bitmap? icon = path is null ? null : TryLoad(path);
+                foreach (UnclaimedRowViewModel row in site)
+                {
+                    row.Icon = icon;
+                }
+            });
+        await Task.WhenAll(sites).ConfigureAwait(true);
+    }
+
+    private static Bitmap? TryLoad(string path)
+    {
+        try
+        {
+            return File.Exists(path) ? new Bitmap(path) : null;
+        }
+        catch (Exception e) when (e is IOException or ArgumentException or InvalidOperationException)
+        {
+            return null;
         }
     }
 
@@ -182,11 +211,12 @@ public sealed class UnclaimedRowViewModel : ViewModelBase
     private UnclaimedChoice choice = UnclaimedChoice.Keep;
     private Bitmap? icon;
 
-    public UnclaimedRowViewModel(string title, string? subtitle, bool isApp, IEnumerable<(UnclaimedChoice Value, string Label)> options)
+    public UnclaimedRowViewModel(string title, string? subtitle, bool isApp, IEnumerable<(UnclaimedChoice Value, string Label)> options, string? url = null)
     {
         this.Title = title;
         this.Subtitle = subtitle;
         this.IsApp = isApp;
+        this.Url = url;
         this.Options = options.Select(option => new UnclaimedOptionViewModel(this, option.Value, option.Label)).ToList();
     }
 
@@ -198,6 +228,13 @@ public sealed class UnclaimedRowViewModel : ViewModelBase
 
     public bool IsApp { get; }
 
+    /// <summary>A tab's address, whose site's icon it shows.</summary>
+    public string? Url { get; }
+
+    public bool HasAppIcon => this.IsApp && this.HasIcon;
+
+    public bool HasSiteIcon => !this.IsApp && this.HasIcon;
+
     public Bitmap? Icon
     {
         get => this.icon;
@@ -206,6 +243,8 @@ public sealed class UnclaimedRowViewModel : ViewModelBase
             if (this.SetProperty(ref this.icon, value))
             {
                 this.OnPropertyChanged(nameof(this.HasIcon));
+                this.OnPropertyChanged(nameof(this.HasAppIcon));
+                this.OnPropertyChanged(nameof(this.HasSiteIcon));
             }
         }
     }

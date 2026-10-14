@@ -12,8 +12,11 @@ public interface IAskOnSwitchPresenter
     Task<AskOnSwitchResult> AskAsync(AskOnSwitchViewModel viewModel);
 }
 
-/// <summary>Asks in an <see cref="AskOnSwitchWindow"/>, on the UI thread, with the apps' icons filled in once found.</summary>
-public sealed class WindowAskOnSwitchPresenter(IInstalledAppsService installedApps) : IAskOnSwitchPresenter
+/// <summary>
+/// Asks in an <see cref="AskOnSwitchWindow"/>, on the UI thread. The apps' and sites' icons are filled
+/// in once found, after it has opened - it never waits on them.
+/// </summary>
+public sealed class WindowAskOnSwitchPresenter(IInstalledAppsService installedApps, ISiteIcons siteIcons) : IAskOnSwitchPresenter
 {
     /// <inheritdoc />
     public async Task<AskOnSwitchResult> AskAsync(AskOnSwitchViewModel viewModel)
@@ -26,6 +29,7 @@ public sealed class WindowAskOnSwitchPresenter(IInstalledAppsService installedAp
             window.Show();
             window.Activate();
             _ = viewModel.LoadIconsAsync(installedApps, CancellationToken.None);
+            _ = viewModel.LoadSiteIconsAsync(siteIcons, CancellationToken.None);
         });
 
         return await viewModel.Completion.ConfigureAwait(true);

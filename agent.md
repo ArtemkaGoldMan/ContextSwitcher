@@ -839,7 +839,10 @@ With `askOnSwitch` on, every switch started in the app goes through `SwitchCoord
   the one being entered opens, closes, hides or lists as a page, and isn't in `ignoredApps`
   (`UnclaimedItems`);
 - if there are any, asks in `AskOnSwitchWindow`: keep, close, or add to either profile - more than 13
-  tabs are one keep-or-close line; Skip and closing the window touch nothing;
+  tabs are one keep-or-close line; Skip and closing the window touch nothing. App icons come from the
+  installed-apps cache; site icons from the site itself (`SiteIcons`: `/favicon.ico`, else the page's
+  `<link rel="icon">`; 2 s and 100 KB per request, no cookies; a 32×32 PNG cached per site, a site with
+  none re-asked after a week), loaded after the window opens;
 - saves what was added - as launch and close, or as an opened and closed page - before the switch reads
   the settings, and passes what to close as `ContextSwitchRequest.Extras`, which the plan adds to its
   close steps (tabs a step per browser, by address, without the profile's remembered tabs).

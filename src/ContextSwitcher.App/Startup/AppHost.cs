@@ -119,6 +119,7 @@ public static class AppHost
         // Switches started in the app ask, when that's on, about everything else open; the command
         // line has no window to ask in, so it switches through the service itself.
         services.AddSingleton<IRunningApplications, MacRunningApplications>();
+        services.AddSingleton<ISiteIcons>(provider => new SiteIcons(provider.GetRequiredService<IProcessRunner>(), provider.GetRequiredService<ConfigPaths>()));
         services.AddSingleton<IAskOnSwitchPresenter, WindowAskOnSwitchPresenter>();
         services.AddSingleton<IContextSwitchService>(provider => new SwitchCoordinator(
             provider.GetRequiredService<ContextSwitchService>(),

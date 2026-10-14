@@ -20,14 +20,16 @@
       <Border Classes="listRow">
         <Grid ColumnDefinitions="Auto,*,Auto">
           <Panel Grid.Column="0" Width="28" Height="28" Margin="0,0,10,0" VerticalAlignment="Center">
-            <Image Source="{Binding Icon}" IsVisible="{Binding HasIcon}" Width="28" Height="28" />
-            <Border Classes="badge" Width="28" Height="28" Background="{DynamicResource NeutralSoftBrush}" IsVisible="{Binding !HasIcon}">
+            <!-- An app's own icon fills the space; a site's small one sits on a soft square, like the placeholder. -->
+            <Image Source="{Binding Icon}" IsVisible="{Binding HasAppIcon}" Width="28" Height="28" />
+            <Border Classes="badge" Width="28" Height="28" Background="{DynamicResource NeutralSoftBrush}" IsVisible="{Binding !HasAppIcon}">
               <Panel>
-                <Viewbox Classes="icon" Width="15" Height="15" IsVisible="{Binding IsApp}">
-                  <Path Classes="glyph" Data="{DynamicResource IconLayoutGrid}" Stroke="{DynamicResource TextSecondaryBrush}" />
-                </Viewbox>
-                <Viewbox Classes="icon" Width="15" Height="15" IsVisible="{Binding !IsApp}">
-                  <Path Classes="glyph" Data="{DynamicResource IconGlobe}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                <Image Source="{Binding Icon}" IsVisible="{Binding HasSiteIcon}" Width="16" Height="16" />
+                <Viewbox Classes="icon" Width="15" Height="15" IsVisible="{Binding !HasIcon}">
+                  <Panel>
+                    <Path Classes="glyph" Data="{DynamicResource IconLayoutGrid}" Stroke="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding IsApp}" />
+                    <Path Classes="glyph" Data="{DynamicResource IconGlobe}" Stroke="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding !IsApp}" />
+                  </Panel>
                 </Viewbox>
               </Panel>
             </Border>

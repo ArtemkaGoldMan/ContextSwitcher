@@ -114,4 +114,36 @@ public sealed class AskOnSwitchViewModelTests
         Assert.True(skip.Skipped);
         Assert.Empty(skip.Answers.Apps);
     }
+
+    /// <summary>Each site is asked for its icon once, however many of its tabs are open; one with none keeps the globe.</summary>
+    [Fact]
+    public async Task EachSiteIsAskedForItsIconOnce()
+    {
+        Unclaimed unclaimed = new([], [
+            new OpenBrowserTab(BrowserKind.Chrome, "Pulls", "https://github.com/pulls"),
+            new OpenBrowserTab(BrowserKind.Chrome, "Issues", "https://github.com/issues"),
+            new OpenBrowserTab(BrowserKind.Safari, "News", "https://news.example/")]);
+        AskOnSwitchViewModel viewModel = new(unclaimed, Work, null);
+        CountingSiteIcons icons = new();
+
+        await viewModel.LoadSiteIconsAsync(icons, CancellationToken.None);
+
+        Assert.Equal(["https://github.com/pulls", "https://news.example/"], icons.Asked.Order());
+        Assert.All(viewModel.Tabs, row => Assert.False(row.HasIcon));
+    }
+
+    private sealed class CountingSiteIcons : Core.Abstractions.ISiteIcons
+    {
+        public List<string> Asked { get; } = [];
+
+        public Task<string?> GetIconPathAsync(string pageUrl, CancellationToken cancellationToken)
+        {
+            lock (this.Asked)
+            {
+                this.Asked.Add(pageUrl);
+            }
+
+            return Task.FromResult<string?>(null);
+        }
+    }
 }
