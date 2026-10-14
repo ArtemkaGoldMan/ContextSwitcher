@@ -1,24 +1,33 @@
-# Keeps the libraries and the workflows' actions up to date: a pull request a week at most for each,
-# which runs the same checks as any other.
+# Keeps the libraries and the workflows' actions up to date, quietly: once a month, all the NuGet
+# updates in one pull request and all the actions in another. A pull request each, as this was first
+# set up, opened eight at once - eight runs of the checks, eight review requests.
+#
+# NuGet major versions are left alone: moving Avalonia to a new major is a piece of work to plan, not
+# a pull request to merge. Actions move by major version as a matter of course, so those are not.
 version: 2
 updates:
   - package-ecosystem: nuget
     directory: /
     schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
+      interval: monthly
+    open-pull-requests-limit: 1
     groups:
-      # Avalonia and its theme packages move together; one pull request for them.
-      avalonia:
-        patterns: ["Avalonia*", "Semi.Avalonia*"]
-      testing:
-        patterns: ["xunit*", "Microsoft.NET.Test.Sdk", "coverlet*"]
+      nuget:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "deps"
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 1
+    groups:
+      actions:
+        patterns: ["*"]
     commit-message:
       prefix: "ci"
