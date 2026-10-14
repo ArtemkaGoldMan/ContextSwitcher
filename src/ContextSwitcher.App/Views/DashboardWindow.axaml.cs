@@ -63,6 +63,24 @@ public sealed partial class DashboardWindow : Window
         this.Hide();
     }
 
+    // The elapsed time ticks only while the popover is showing: hidden, it stays alive for the next
+    // click, and a clock running inside it woke the app for text nobody could read.
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == IsVisibleProperty && this.viewModel is { } model)
+        {
+            if (this.IsVisible)
+            {
+                model.StartClock();
+            }
+            else
+            {
+                model.StopClock();
+            }
+        }
+    }
+
     /// <summary>
     /// Shows the popover and starts watching which app is frontmost while it is open, so it closes
     /// when the user clicks somewhere else even if it never had focus to lose.
