@@ -37,7 +37,7 @@ public sealed class ProfilesViewModelTests
     }
 
     [Fact]
-    public void ActivateCommandSwitchesAndPublishesNewState()
+    public void ClickingAProfileSwitchesToItAndPublishesNewState()
     {
         AppConfiguration configuration = TwoContexts();
         (ProfilesViewModel viewModel, StubContextSwitchService switchService, InMemoryJsonStore jsonStore) = CreateViewModel(configuration);
@@ -45,7 +45,7 @@ public sealed class ProfilesViewModelTests
         jsonStore.Seed(configPaths.StatePath, new CurrentContextState { CurrentContextId = "personal" });
         switchService.Result = new ContextSwitchResult("personal", "work", ContextSwitchStatus.Succeeded, [], DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, "corr");
 
-        viewModel.Rows[1].ActivateCommand.Execute(null);
+        viewModel.Rows[1].ToggleCommand.Execute(null);
 
         Assert.Equal("personal", switchService.LastRequest?.TargetContextId);
         Assert.Equal(ContextSwitchSource.Dashboard, switchService.LastRequest?.Source);
@@ -54,7 +54,7 @@ public sealed class ProfilesViewModelTests
 
     /// <summary>
     /// A switch turned away because another was running wrote nothing to the state, so the page
-    /// tells the notice itself - otherwise clicking Activate would seem to do nothing at all.
+    /// tells the notice itself - otherwise clicking the profile would seem to do nothing at all.
     /// </summary>
     [Fact]
     public void ARejectedSwitchIsReportedInTheNotice()
@@ -64,11 +64,50 @@ public sealed class ProfilesViewModelTests
         jsonStore.Seed(new ConfigPaths("/tmp/context-switcher-tests").StatePath, new CurrentContextState { CurrentContextId = "work" });
         switchService.Result = new ContextSwitchResult("personal", null, ContextSwitchStatus.Cancelled, [], DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, "corr");
 
-        viewModel.Rows[1].ActivateCommand.Execute(null);
+        viewModel.Rows[1].ToggleCommand.Execute(null);
 
         Assert.True(viewModel.Notice.IsShown);
         Assert.Equal("Couldn't switch to Personal", viewModel.Notice.Title);
         Assert.False(viewModel.HasErrorMessage);
+    }
+
+    /// <summary>
+    /// There is no Activate button any more: clicking the profile that's on turns it off, as its
+    /// button in the menu bar popover does - and a turn-off turned away says so in those words.
+    /// </summary>
+    [Fact]
+    public void ClickingTheProfileThatsOnTurnsItOff()
+    {
+        AppConfiguration configuration = TwoContexts();
+        (ProfilesViewModel viewModel, StubContextSwitchService switchService, InMemoryJsonStore jsonStore) = CreateViewModel(configuration);
+        jsonStore.Seed(new ConfigPaths("/tmp/context-switcher-tests").StatePath, new CurrentContextState { CurrentContextId = "work" });
+        AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
+        switchService.Result = new ContextSwitchResult(string.Empty, "work", ContextSwitchStatus.Cancelled, [], DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, "corr");
+        ProfileRowViewModel work = viewModel.Rows.Single(row => row.Context.Id == "work");
+
+        work.ToggleCommand.Execute(null);
+
+        Assert.True(switchService.LastRequest?.IsTurnOff);
+        Assert.Equal("Couldn't turn off Work", viewModel.Notice.Title);
+    }
+
+    /// <summary>The profile that's on stands out: it glows and is washed in its own colour, and its name is bold.</summary>
+    [Fact]
+    public void TheProfileThatsOnIsHighlightedInItsOwnColour()
+    {
+        AppConfiguration configuration = TwoContexts();
+        AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
+        (ProfilesViewModel viewModel, _, _) = CreateViewModel(configuration);
+        ProfileRowViewModel on = viewModel.Rows.Single(row => row.IsActive);
+        ProfileRowViewModel off = viewModel.Rows.Single(row => !row.IsActive);
+
+        Assert.Equal(Avalonia.Media.FontWeight.Bold, on.NameWeight);
+        Assert.NotEqual(Avalonia.Media.Colors.Transparent, Assert.IsAssignableFrom<Avalonia.Media.ISolidColorBrush>(on.CardTint).Color);
+        Assert.Equal(Avalonia.Media.Color.Parse("#2F6FED").R, on.Glow[0].Color.R);
+        Assert.True(on.GlowUnderPointer[0].Color.A > on.Glow[0].Color.A, "the glow grows under the pointer");
+
+        Assert.Equal(Avalonia.Media.FontWeight.Medium, off.NameWeight);
+        Assert.Equal(Avalonia.Media.Colors.Transparent, Assert.IsAssignableFrom<Avalonia.Media.ISolidColorBrush>(off.CardTint).Color);
     }
 
     [Fact]

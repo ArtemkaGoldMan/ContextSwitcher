@@ -81,7 +81,7 @@
              deliberate column. Left-aligning instead makes the control shrink to its content's
              desired width, which is narrower still. A cap generous enough that it only binds on very
              wide windows keeps the content filling the pane at every size anyone actually uses. -->
-        <ContentControl Content="{Binding CurrentPage}" Margin="28,24" MaxWidth="1100" HorizontalAlignment="Stretch" />
+        <ContentControl Content="{Binding CurrentPage}" Margin="28,24" MaxWidth="1100" HorizontalAlignment="Stretch" ClipToBounds="False" />
       </ScrollViewer>
 
       <!-- What went wrong in the last switch, under the profiles you switch from. Pinned below the

@@ -20,6 +20,7 @@
       <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFFFF" />
       <SolidColorBrush x:Key="CardBrush" Color="#FFFFFFFF" />
       <SolidColorBrush x:Key="CardHoverBrush" Color="#FFF6F6F8" />
+      <SolidColorBrush x:Key="CardHoverBorderBrush" Color="#26000000" />
       <SolidColorBrush x:Key="SelectedNavBrush" Color="#14000000" />
       <SolidColorBrush x:Key="BorderBrush" Color="#12000000" />
       <SolidColorBrush x:Key="DividerBrush" Color="#0C000000" />
@@ -45,6 +46,7 @@
       <SolidColorBrush x:Key="SurfaceBrush" Color="#F0242426" />
       <SolidColorBrush x:Key="CardBrush" Color="#FF29292C" />
       <SolidColorBrush x:Key="CardHoverBrush" Color="#FF303033" />
+      <SolidColorBrush x:Key="CardHoverBorderBrush" Color="#33FFFFFF" />
       <SolidColorBrush x:Key="SelectedNavBrush" Color="#1AFFFFFF" />
       <SolidColorBrush x:Key="BorderBrush" Color="#1AFFFFFF" />
       <SolidColorBrush x:Key="DividerBrush" Color="#12FFFFFF" />

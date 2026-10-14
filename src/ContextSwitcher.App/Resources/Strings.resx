@@ -508,10 +508,6 @@
     <value>Active now</value>
     <comment>ProfilesPage.axaml: Text</comment>
   </data>
-  <data name="Profiles_Activate" xml:space="preserve">
-    <value>Activate</value>
-    <comment>ProfilesPage.axaml: Content</comment>
-  </data>
   <data name="Profiles_Edit" xml:space="preserve">
     <value>Edit</value>
     <comment>ProfilesPage.axaml: ToolTip.Tip</comment>

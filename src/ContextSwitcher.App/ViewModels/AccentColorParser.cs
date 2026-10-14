@@ -21,4 +21,21 @@ public static class AccentColorParser
             ? new ImmutableSolidColorBrush(color)
             : Brushes.Gray;
     }
+
+    /// <summary>
+    /// The accent, faint enough to lay over a card as a wash of the profile's colour - immutable, for
+    /// the same reason as <see cref="ToBrush"/>.
+    /// </summary>
+    public static IBrush ToTint(string accentColorHex, byte alpha)
+    {
+        Color color = Color.TryParse(accentColorHex, out Color parsed) ? parsed : Colors.Gray;
+        return new ImmutableSolidColorBrush(Color.FromArgb(alpha, color.R, color.G, color.B));
+    }
+
+    /// <summary>A soft light all round a card, in the accent - a shadow with no offset. A value, so no thread owns it.</summary>
+    public static BoxShadows ToGlow(string accentColorHex, byte alpha, double blur)
+    {
+        Color color = Color.TryParse(accentColorHex, out Color parsed) ? parsed : Colors.Gray;
+        return new BoxShadows(new BoxShadow { Blur = blur, Spread = 1, Color = Color.FromArgb(alpha, color.R, color.G, color.B) });
+    }
 }

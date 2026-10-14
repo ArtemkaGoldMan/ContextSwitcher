@@ -95,20 +95,25 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
             .Select(context => new ProfileRowViewModel(
                 context,
                 context.Id == activeContextId,
-                this.ActivateAsync,
+                this.ToggleAsync,
                 context => this.EditRequested?.Invoke(this, context),
                 this.DuplicateAsync,
                 this.DeleteAsync))
             .ToList();
     }
 
-    private async Task ActivateAsync(ContextDefinition context)
+    /// <summary>The profile clicked comes on - or, if it is the one on, goes off - as in the menu bar popover.</summary>
+    private async Task ToggleAsync(ContextDefinition context)
     {
         this.ErrorMessage = null;
         DateTimeOffset? lastSwitchBefore = AppHost.State.LastSwitchCompletedAt;
+        ContextSwitchRequest request = ContextSwitchRequest.ForClickOn(context.Id, AppHost.State.CurrentContextId, ContextSwitchSource.Dashboard);
+        string couldNot = request.IsTurnOff
+            ? Localized.Format(Strings.Notice_CouldNotTurnOff, context.DisplayName)
+            : Localized.Format(Strings.Notice_CouldNotSwitchTo, context.DisplayName);
 
         ContextSwitchResult result = await this.switchService
-            .SwitchAsync(new ContextSwitchRequest(context.Id, ContextSwitchSource.Dashboard), CancellationToken.None)
+            .SwitchAsync(request, CancellationToken.None)
             .ConfigureAwait(true);
 
         CurrentContextState? state = await this.jsonStore
@@ -120,11 +125,11 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
         // never got that far, so the notice is told directly.
         if (result.Status is ContextSwitchStatus.Cancelled)
         {
-            this.Notice.ShowRejected(Localized.Format(Strings.Notice_CouldNotSwitchTo, context.DisplayName), Strings.Notice_AnotherSwitchRunning, result.CompletedAt);
+            this.Notice.ShowRejected(couldNot, Strings.Notice_AnotherSwitchRunning, result.CompletedAt);
         }
         else if (result.Status is ContextSwitchStatus.Failed && AppHost.State.LastSwitchCompletedAt == lastSwitchBefore)
         {
-            this.Notice.ShowRejected(Localized.Format(Strings.Notice_CouldNotSwitchTo, context.DisplayName), Strings.Notice_SwitchStopped, result.CompletedAt);
+            this.Notice.ShowRejected(couldNot, Strings.Notice_SwitchStopped, result.CompletedAt);
         }
     }
 
