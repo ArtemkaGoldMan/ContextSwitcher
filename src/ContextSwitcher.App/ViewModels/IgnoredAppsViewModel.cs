@@ -12,25 +12,36 @@ namespace ContextSwitcher.App.ViewModels;
 /// Settings' list of apps ContextSwitcher never touches (<see cref="AppConfiguration.IgnoredApps"/>):
 /// never opened, closed, hidden or asked about. Adding one takes it out of every profile, and says
 /// which; removing one gives it back to no profile.
+///
+/// Light on memory: the picker reads every installed app and its icon only when it is opened, and the
+/// list itself loads the icons of just the apps on it.
 /// </summary>
 public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
 {
     private readonly ConfigurationStore configurationStore;
+    private readonly IInstalledAppsService? installedApps;
+    private readonly Dictionary<string, Bitmap?> icons = new(StringComparer.OrdinalIgnoreCase);
+    private bool pickerLoaded;
     private string? message;
 
     public IgnoredAppsViewModel(ConfigurationStore configurationStore, IInstalledAppsService? installedApps)
     {
         this.configurationStore = configurationStore;
+        this.installedApps = installedApps;
         this.Apps = new ObservableCollection<IgnoredAppRowViewModel>();
         if (installedApps is not null)
         {
             this.Picker = new AppPickerViewModel(installedApps, () => this.Apps.Select(row => row.Name), name => _ = this.AddAsync(name));
         }
 
+        this.OpenPickerCommand = new RelayCommand(() => _ = this.LoadPickerAsync());
         this.Reload();
         AppHost.ConfigurationChanged += this.OnConfigurationChanged;
-        _ = this.LoadPickerAsync();
+        _ = this.LoadListedIconsAsync();
     }
+
+    /// <summary>Opening the picker is when it reads the installed apps - not before.</summary>
+    public RelayCommand OpenPickerCommand { get; }
 
     public ObservableCollection<IgnoredAppRowViewModel> Apps { get; }
 
@@ -76,16 +87,46 @@ public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
 
     private void OnConfigurationChanged(object? sender, EventArgs e) => this.Reload();
 
-    /// <summary>Reads the installed apps for the picker - and, with them, the listed apps' icons.</summary>
+    /// <summary>Reads every installed app and its icon for the picker, the first time it is opened.</summary>
     private async Task LoadPickerAsync()
     {
-        if (this.Picker is null)
+        if (this.Picker is null || this.pickerLoaded)
         {
             return;
         }
 
+        this.pickerLoaded = true;
         await this.Picker.LoadAsync().ConfigureAwait(true);
+    }
+
+    /// <summary>The icons of the apps on the list - only those, whatever else is installed.</summary>
+    private async Task LoadListedIconsAsync()
+    {
+        if (this.installedApps is null || this.Apps.Count == 0)
+        {
+            return;
+        }
+
+        IReadOnlyList<Core.Applications.InstalledApp> installed = await this.installedApps.GetInstalledAppsAsync(CancellationToken.None).ConfigureAwait(true);
+        foreach (IgnoredAppRowViewModel row in this.Apps.Where(row => !this.icons.ContainsKey(row.Name)).ToList())
+        {
+            string? path = installed.FirstOrDefault(app => string.Equals(app.Name, row.Name, StringComparison.OrdinalIgnoreCase))?.IconPath;
+            this.icons[row.Name] = path is not null && File.Exists(path) ? TryLoad(path) : null;
+        }
+
         this.Reload(force: true);
+    }
+
+    private static Bitmap? TryLoad(string path)
+    {
+        try
+        {
+            return new Bitmap(path);
+        }
+        catch (Exception e) when (e is IOException or ArgumentException or InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     private void Reload(bool force = false)
@@ -99,7 +140,13 @@ public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
         this.Apps.Clear();
         foreach (string name in ignored)
         {
-            this.Apps.Add(new IgnoredAppRowViewModel(name, this.Picker?.ResolveIcon(name), row => _ = this.RemoveAsync(row)));
+            Bitmap? icon = this.icons.GetValueOrDefault(name) ?? this.Picker?.ResolveIcon(name);
+            this.Apps.Add(new IgnoredAppRowViewModel(name, icon, row => _ = this.RemoveAsync(row)));
+        }
+
+        if (!force && this.Apps.Any(row => !this.icons.ContainsKey(row.Name)))
+        {
+            _ = this.LoadListedIconsAsync();
         }
     }
 }

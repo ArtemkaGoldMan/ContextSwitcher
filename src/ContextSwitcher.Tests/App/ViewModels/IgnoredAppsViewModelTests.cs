@@ -34,6 +34,28 @@ public sealed class IgnoredAppsViewModelTests
         viewModel.Dispose();
     }
 
+    /// <summary>
+    /// Settings is opened with the main window, so it reads nothing it doesn't need: the installed apps
+    /// for the picker only when the picker is opened - and, with nothing on the list, no icons at all.
+    /// </summary>
+    [Fact]
+    public async Task ThePickerReadsTheInstalledAppsOnlyWhenOpened()
+    {
+        (IgnoredAppsViewModel _, InMemoryJsonStore jsonStore, ConfigPaths paths) = Create();
+        FakeInstalledAppsService installed = new();
+        installed.Apps.Add(new Core.Applications.InstalledApp("Telegram", null));
+        IgnoredAppsViewModel viewModel = new(new ConfigurationStore(jsonStore, paths, new ConfigurationValidator()), installed);
+
+        Assert.Equal(0, installed.Reads);
+
+        viewModel.OpenPickerCommand.Execute(null);
+        viewModel.OpenPickerCommand.Execute(null);
+        await Task.Delay(50);
+
+        Assert.Equal(1, installed.Reads);
+        viewModel.Dispose();
+    }
+
     [Fact]
     public async Task SettingsSavesWhetherToAsk()
     {
