@@ -1,10 +1,8 @@
-## What's new in 0.6.1
+## What's new in 0.6.2
 
-- **Clear reasons when a switch doesn't go fully right.** A step that ran out of time says which. A browser tab that stayed open is named, by its site. An app that didn't quit says why that happens, and one that isn't installed is told apart from one that failed to open. When Chrome, Brave or Safari can't be reached, it says whether macOS refused (and where to turn it on: System Settings → Privacy & Security → Automation) or the browser didn't answer. Problems in the settings name the profile instead of "contexts[1]".
-- **A log that is quiet until something goes wrong, and then tells all of it.** When everything works, nothing is written. A problem is written with the whole switch that led to it, step by step, a header with the version and macOS, and nothing private: web addresses are cut to their site and emails and your user name are taken out. It starts again every week, and a crash is written too.
-- **Settings → Diagnostics.** *Copy diagnostics* puts the version, your macOS, what is switched on (counts, never names) and the recent log on the clipboard to paste into a message. *Detailed log* writes everything the app does for a week, for looking into something that isn't a failure.
+- **Drag profiles into another order.** On the Profiles page, press and hold a profile and drag it where you want it: the menu bar menu and the dashboard list profiles in the same order. A quick click still turns a profile on or off, and holding one without moving it changes nothing. Escape puts a dragged profile back, and Option with ↑ or ↓ moves the selected one a place from the keyboard.
 
-Coming from 0.5? Everything new in [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
+Coming from an older version? Everything new in [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
 
 ## Install
 
