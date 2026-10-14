@@ -1,10 +1,12 @@
 ## What's new
 
-- **Open at login.** Turn on Settings → Open at login - the setup offers it too - so Context Switcher is always in the menu bar and counting time.
-- **In the Dock.** New installs show the app in the Dock as well as the menu bar, and Show in the Dock now applies at once.
-- **Hide instead of quit.** Tick Hide for an app and it's hidden when you leave the profile, not quit - it comes back instantly with its windows.
-- **Time stops while the screen is locked.** A lunch break with the Mac locked no longer counts as work.
-- **Export and import.** Save your profiles and settings to a file in Settings, to keep a copy or set up another Mac the same way.
+- **Ask about everything else.** When you switch profiles, Context Switcher can now ask what to do with the apps and tabs no profile has: keep them, close them, or add them to the profile. Each comes with its icon. It has a Skip button and a "don't ask again" tick, and Settings → Switching lists apps to never touch (Telegram, say) - they are taken out of every profile and left alone.
+- **Click a profile to turn it on or off.** The whole card on the Profiles page is the switch - no Activate button - and the one that is on is bolder, with a glow.
+- **The dashboard opens where you are.** It comes up on the desktop you're on instead of taking you to another one.
+- **Chrome tabs close properly.** Tabs a profile opened are closed when you leave it even after they have redirected to another address (Fusion and the like).
+- **Only what your browser can do.** Browsers and profiles are chosen from the ones installed. Tab groups are gone: neither Chrome nor Safari lets another app open them, so that mode never worked. Pages you had in a group are kept as the profile's pages.
+- **Lighter.** Opening the dashboard costs about 14 MB less memory, and its clock no longer ticks while it is hidden.
+- **Starts on a dark screen.** Launching while the display is asleep (a Shortcut, a restart) waits for it to wake instead of crashing.
 
 ## Install
 
