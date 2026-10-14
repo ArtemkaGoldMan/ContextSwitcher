@@ -21,7 +21,7 @@ jobs:
     # Apple silicon, which is what the app is built for.
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-dotnet@v5
         with:
