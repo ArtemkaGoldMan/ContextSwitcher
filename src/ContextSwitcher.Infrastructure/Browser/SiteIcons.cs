@@ -172,6 +172,7 @@ public sealed partial class SiteIcons : ISiteIcons
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException or IOException or InvalidOperationException)
         {
+            // Not logged: a site's icon is a nicety, and one that can't be had is shown as the globe.
             return null;
         }
     }

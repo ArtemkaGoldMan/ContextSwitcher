@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using System.Text;
 using System.Text.Json;
 using ContextSwitcher.Core.Abstractions;
@@ -83,8 +84,9 @@ public sealed class AnalyticsSessionStore : IAnalyticsSessionStore
                     sessions.Add(session);
                 }
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
+                AppLog.Warn("Analytics", "SessionLineSkipped", "A line of the time history could not be read and was skipped.", ex);
                 // Skip malformed lines rather than failing the whole read.
             }
         }

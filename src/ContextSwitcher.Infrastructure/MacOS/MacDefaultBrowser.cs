@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using System.Runtime.InteropServices;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
@@ -43,6 +44,7 @@ public sealed class MacDefaultBrowser : IDefaultBrowser
         }
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
         {
+            AppLog.MissingApi("the default browser lookup", ex);
             return null;
         }
         finally

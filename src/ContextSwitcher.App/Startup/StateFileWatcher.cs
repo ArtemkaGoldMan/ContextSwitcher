@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using Avalonia.Threading;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Contexts;
@@ -91,6 +92,7 @@ public sealed class StateFileWatcher : IDisposable
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            AppLog.Warn("State", "StateNotReloaded", "state.json could not be read after another process changed it, so the app may show an old state.", ex);
             return;
         }
 

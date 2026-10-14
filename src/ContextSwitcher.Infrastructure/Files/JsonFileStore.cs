@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -169,6 +170,7 @@ public sealed class JsonFileStore : IJsonStore
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            AppLog.Warn("Files", "BackupsNotPruned", "Old backups could not be cleared away.", ex);
             // Housekeeping must never fail the save that triggered it. A backup that outlives its
             // welcome is harmless; losing the write is not.
         }

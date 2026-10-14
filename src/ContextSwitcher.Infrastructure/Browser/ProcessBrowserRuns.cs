@@ -39,7 +39,7 @@ public sealed class ProcessBrowserRuns : IBrowserRuns
         }
         catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException)
         {
-            // It quit between being found and being asked, or its start time can't be read.
+            // Not logged: it quit between being found and being asked, or its start time can't be read.
             return null;
         }
         finally

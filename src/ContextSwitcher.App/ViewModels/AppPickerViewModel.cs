@@ -154,7 +154,7 @@ public sealed class AppPickerViewModel : ViewModelBase
         }
         catch (Exception ex) when (ex is IOException or ArgumentException or NotSupportedException)
         {
-            // A truncated or unreadable cached PNG must not break the picker.
+            // Not logged: a truncated or unreadable cached PNG must not break the picker.
             return null;
         }
     }

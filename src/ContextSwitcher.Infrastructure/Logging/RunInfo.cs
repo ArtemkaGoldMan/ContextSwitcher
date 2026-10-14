@@ -31,7 +31,7 @@ public sealed partial record RunInfo(string AppName, string Version, string MacO
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // Not macOS, or not readable: fall through to what the runtime says.
+            // Not logged: not macOS, or not readable: fall through to what the runtime says.
         }
 
         return Environment.OSVersion.VersionString;

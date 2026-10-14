@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using System.Runtime.InteropServices;
 
 namespace ContextSwitcher.Infrastructure.MacOS;
@@ -54,6 +55,7 @@ public static class DisplayAvailability
         }
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
         {
+            AppLog.MissingApi("the display link check", ex);
             return true;
         }
     }

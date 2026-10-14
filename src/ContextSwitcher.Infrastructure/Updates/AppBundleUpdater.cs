@@ -285,6 +285,7 @@ public sealed class AppBundleUpdater : IAppUpdater
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            // Not logged: only asked to know whether an install can be offered; the answer is the log of it.
             return false;
         }
     }
@@ -297,7 +298,7 @@ public sealed class AppBundleUpdater : IAppUpdater
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // A leftover in the temporary folder; macOS clears those out on its own.
+            // Not logged: a leftover in the temporary folder; macOS clears those out on its own.
         }
     }
 }
