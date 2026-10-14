@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: A security problem
+    url: https://github.com/ArtemkaGoldMan/ContextSwitcher/security/advisories/new
+    about: Please report it privately, not here - see SECURITY.md.
+  - name: How do I…?
+    url: https://github.com/ArtemkaGoldMan/ContextSwitcher#faq
+    about: The README's FAQ covers the questions asked most.

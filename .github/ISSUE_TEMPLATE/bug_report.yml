@@ -1,0 +1,37 @@
+name: Something doesn't work
+description: A switch didn't do what it should, a window looks wrong, the app crashed.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you. The more of this you fill in, the faster it is found - and **Copy diagnostics** (Settings → Diagnostics) fills in most of it for you.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Which profile you switched from and to, and what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: In the app, Settings → Diagnostics → **Copy diagnostics**, then paste here. It has the version, your macOS, what is switched on and the recent log - no profile names, web addresses or emails.
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: How do you run it?
+      options:
+        - The installed app (from the download or the install command)
+        - Built from the source
+    validations:
+      required: true
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: A screenshot, the browser it was about, whether it happens every time.
