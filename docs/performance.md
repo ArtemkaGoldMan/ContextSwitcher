@@ -13,9 +13,15 @@ libraries every Mac app maps.
 | Dashboard opened once | about 111 MB (125 MB before the GPU cache cap) |
 | Dashboard opened once, `CONTEXTSWITCHER_RENDERING=software` | about 97 MB |
 
-Idle CPU is zero: a sample of a running copy shows every thread blocked, and the process wakes a
-handful of times a second, all of it the .NET runtime's own housekeeping. Startup costs about half
-a second of CPU, nearly all of it compiling Avalonia's code the first time it runs.
+Idle CPU is zero. With no window the process wakes about 4-6 times a second, the .NET runtime's own
+housekeeping. Startup costs about half a second of CPU, nearly all of it compiling Avalonia's code
+the first time it runs.
+
+**Not understood yet:** once the popover has been shown and hidden, the process wakes 20-36 times
+a second (`top`'s IDLEW column) instead of 4-6, though CPU stays at 0.0%. It is not the popover's
+50 ms outside-click watcher (it stops when the popover hides - counted) and not its clock (stopping
+that changed nothing measurable). Something in the hidden window keeps a timer or display link
+alive; finding it needs a `sample` of a run with the display awake.
 
 ## Where the 73 MB goes
 
@@ -41,8 +47,8 @@ Two things keep that down:
 - Skia's GPU cache is capped at 2 MB (`Program.GpuCacheBytes`). Its default left 28 MB behind after
   one look at the dashboard; now 15 MB.
 - The popover's elapsed-time clock runs only while the popover is showing, and ticks once a minute
-  after the first minute rather than every second. Hidden, it used to wake the app about twenty
-  times a second.
+  after the first minute rather than every second. It was ticking every second even hidden, for
+  text nobody could read; this alone did not change the wake-up count above.
 
 ### Software rendering
 
