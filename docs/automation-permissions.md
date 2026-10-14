@@ -39,13 +39,17 @@ again for it.)
 A step that macOS blocked doesn't stop the switch. It shows up in the card at the bottom of the
 Profiles page and in the dashboard's **Last switch** section, with a message such as:
 
-> Could not check Google Chrome for existing tabs, so URLs were opened without duplicate checking.
-> Check Automation permissions.
+> macOS isn't letting Context Switcher control Google Chrome, so its tabs weren't touched. Turn it on
+> under Context Switcher in System Settings → Privacy & Security → Automation.
+
+The message says which it was: macOS refusing (the one above), the browser not answering in time, or
+the reason the browser itself gave. A message that doesn't name a reason is the general one.
 
 | What happened | Likely reason | What to do |
 | --- | --- | --- |
 | An app didn't quit | It had unsaved work, or quitting it isn't allowed | Save and switch again; check Automation for that app |
-| Pages opened twice | Reading the browser's tabs isn't allowed | Allow your browser under Automation |
+| Pages opened twice, or a profile's tabs weren't closed | Reading the browser's tabs isn't allowed | Allow your browser under Automation |
+| Tabs weren't closed, and the message says the browser didn't answer | The browser was busy, or hung | Switch again; if it keeps happening, restart the browser |
 | Music didn't start | Music or Spotify isn't allowed, or isn't installed | Allow it under Automation |
 | Focus didn't change | The Focus shortcut is missing | Edit the profile and click **Create it** — see [Focus and Siri](shortcuts-integration.md) |
 | Docker containers didn't start or stop | Docker Desktop isn't running | Start Docker Desktop |

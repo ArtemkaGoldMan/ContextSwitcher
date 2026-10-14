@@ -1051,6 +1051,15 @@
   <data name="Msg_Switch_CloseTabsNeedsBrowser" xml:space="preserve">
     <value>Вкладки профілю не закрито: для цього браузером має бути Chrome, Brave або Safari.</value>
   </data>
+  <data name="Msg_Switch_BrowserNotAllowed" xml:space="preserve">
+    <value>macOS не дозволяє Context Switcher керувати {0}, тож вкладки не чіпалися. Увімкніть це під Context Switcher у Системні параметри → Приватність і безпека → Автоматизація.</value>
+  </data>
+  <data name="Msg_Switch_BrowserNotAnswering" xml:space="preserve">
+    <value>{0} не відповів вчасно, тож вкладки не чіпалися.</value>
+  </data>
+  <data name="Msg_Switch_CouldNotControlBrowser" xml:space="preserve">
+    <value>Не вдалося керувати {0}: {1}</value>
+  </data>
   <data name="Msg_Switch_CouldNotCloseTabs" xml:space="preserve">
     <value>Не вдалося закрити вкладки профілю в {0}. Перевірте дозволи «Автоматизації».</value>
   </data>

@@ -99,7 +99,8 @@ public sealed class BrowserLauncher
             // A non-zero exit means the inspection itself did not run - a timeout, a denied
             // Automation prompt, or a browser without tab scripting - which is different from
             // "no matching tab". Section 9.3 says to fall back to a plain `open` for everything.
-            if (await this.ListTabsAsync(browser, startIfNeeded: true, probeTimeout, cancellationToken).ConfigureAwait(false) is { } tabs)
+            (List<BrowserTab>? tabs, ProcessResult listing) = await this.ListTabsWithResultAsync(browser, startIfNeeded: true, probeTimeout, cancellationToken).ConfigureAwait(false);
+            if (tabs is not null)
             {
                 openTabs = tabs;
             }
@@ -109,7 +110,7 @@ public sealed class BrowserLauncher
                 if (probeTabs)
                 {
                     probeTabs = false;
-                    warnings.Add(SwitchMessages.CouldNotCheckTabs.With(BrowserAppName(browser)));
+                    warnings.Add(WhyNotAsked(browser, listing, SwitchMessages.CouldNotCheckTabs));
                 }
             }
         }
@@ -267,9 +268,10 @@ public sealed class BrowserLauncher
 
         // The matching happens here rather than in AppleScript, where it would be unreadable and
         // untested: list the tabs, pick the ones to close, then close exactly those.
-        if (await this.ListTabsAsync(browser, startIfNeeded: false, timeout / 2, cancellationToken).ConfigureAwait(false) is not { } tabs)
+        (List<BrowserTab>? tabs, ProcessResult listing) = await this.ListTabsWithResultAsync(browser, startIfNeeded: false, timeout / 2, cancellationToken).ConfigureAwait(false);
+        if (tabs is null)
         {
-            return new TabClosingOutcome(0, SwitchMessages.CouldNotCloseTabs.With(app));
+            return new TabClosingOutcome(0, WhyNotAsked(browser, listing, SwitchMessages.CouldNotCloseTabs));
         }
 
         List<BrowserTab> doomed = tabs
@@ -289,7 +291,7 @@ public sealed class BrowserLauncher
         ProcessResult closing = await this.scriptRunner.RunAsync(script, timeout / 2, cancellationToken).ConfigureAwait(false);
         if (closing.ExitCode != 0)
         {
-            return new TabClosingOutcome(0, SwitchMessages.CouldNotCloseTabs.With(app));
+            return new TabClosingOutcome(0, WhyNotAsked(browser, closing, SwitchMessages.CouldNotCloseTabs));
         }
 
         int.TryParse(closing.StandardOutput.Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int closed);
@@ -333,7 +335,11 @@ public sealed class BrowserLauncher
     /// <paramref name="startIfNeeded"/>, a browser that isn't running has no tabs, rather than being
     /// started to say so.
     /// </summary>
-    private async Task<List<BrowserTab>?> ListTabsAsync(BrowserKind browser, bool startIfNeeded, TimeSpan timeout, CancellationToken cancellationToken)
+    private async Task<List<BrowserTab>?> ListTabsAsync(BrowserKind browser, bool startIfNeeded, TimeSpan timeout, CancellationToken cancellationToken) =>
+        (await this.ListTabsWithResultAsync(browser, startIfNeeded, timeout, cancellationToken).ConfigureAwait(false)).Tabs;
+
+    /// <summary>The browser's tabs, or - when it couldn't be asked - why not: what the script said.</summary>
+    private async Task<(List<BrowserTab>? Tabs, ProcessResult Result)> ListTabsWithResultAsync(BrowserKind browser, bool startIfNeeded, TimeSpan timeout, CancellationToken cancellationToken)
     {
         string app = BrowserAppName(browser);
         bool chromium = IsChromium(browser);
@@ -344,7 +350,7 @@ public sealed class BrowserLauncher
         ProcessResult listing = await this.scriptRunner.RunAsync(script, timeout, cancellationToken).ConfigureAwait(false);
         if (listing.ExitCode != 0)
         {
-            return null;
+            return (null, listing);
         }
 
         List<BrowserTab> tabs = [];
@@ -364,7 +370,34 @@ public sealed class BrowserLauncher
             }
         }
 
-        return tabs;
+        return (tabs, listing);
+    }
+
+    /// <summary>
+    /// Says why a browser couldn't be asked about its tabs, from what the script reported. "Check
+    /// Automation permissions" was the answer to every failure, and sent people to settings that were
+    /// fine when the browser had merely been slow. <paramref name="unknown"/> is for when the script
+    /// said nothing to go on.
+    /// </summary>
+    private static UserMessage WhyNotAsked(BrowserKind browser, ProcessResult failure, MessageTemplate unknown)
+    {
+        string app = BrowserAppName(browser);
+        string reason = failure.StandardError.Trim();
+
+        if (failure.TimedOut)
+        {
+            return SwitchMessages.BrowserNotAnswering.With(app);
+        }
+
+        // -1743 is errAEEventNotPermitted: Automation is off for this app, or was refused.
+        if (reason.Contains("-1743", StringComparison.Ordinal) || reason.Contains("Not authorized", StringComparison.OrdinalIgnoreCase))
+        {
+            return SwitchMessages.BrowserNotAllowed.With(app);
+        }
+
+        return reason.Length == 0
+            ? unknown.With(app)
+            : SwitchMessages.CouldNotControlBrowser.With(app, reason.Split('\n')[0].Trim());
     }
 
     private async Task<BrowserLaunchOutcome> LaunchProfilesAsync(

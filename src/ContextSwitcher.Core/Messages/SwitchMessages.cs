@@ -35,6 +35,21 @@ public static class SwitchMessages
         "Switch_CouldNotCheckTabs",
         "Could not check {0} for existing tabs, so URLs were opened without duplicate checking. Check Automation permissions.");
 
+    /// <summary>macOS has not let Context Switcher send Apple events to the browser: Automation is off for it, or was refused.</summary>
+    public static readonly MessageTemplate BrowserNotAllowed = new(
+        "Switch_BrowserNotAllowed",
+        "macOS isn't letting Context Switcher control {0}, so its tabs weren't touched. Turn it on under Context Switcher in System Settings → Privacy & Security → Automation.");
+
+    /// <summary>The browser was asked and did not reply within the step's time.</summary>
+    public static readonly MessageTemplate BrowserNotAnswering = new(
+        "Switch_BrowserNotAnswering",
+        "{0} didn't answer in time, so its tabs weren't touched.");
+
+    /// <summary>{1} is the browser's or macOS's own reason.</summary>
+    public static readonly MessageTemplate CouldNotControlBrowser = new(
+        "Switch_CouldNotControlBrowser",
+        "Could not control {0}: {1}");
+
     public static readonly MessageTemplate CloseTabsNeedsBrowser = new(
         "Switch_CloseTabsNeedsBrowser",
         "The profile's tabs weren't closed: that needs Chrome, Brave or Safari as the browser.");
