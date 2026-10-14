@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
@@ -48,6 +49,13 @@ public sealed class ConfigurationStore
         ConfigurationValidationResult validation = this.validator.Validate(configuration);
         if (!validation.IsValid)
         {
+            // A save the editors should not have been able to ask for. Which settings, by their paths
+            // without the profile's number - nothing the person typed.
+            AppLog.Warn(
+                "Configuration",
+                "SaveRejected",
+                $"A save was refused with {validation.Errors.Count} problem(s): "
+                    + string.Join("; ", validation.Errors.Select(error => $"{System.Text.RegularExpressions.Regex.Replace(error.Path, @"\[\d+\]", "[]")} ({error.Detail?.Key ?? "no key"})")));
             return ConfigurationSaveResult.Invalid(validation.Errors.Select(MessageText.Of).ToList());
         }
 
@@ -56,9 +64,17 @@ public sealed class ConfigurationStore
         // thread pool meant those were built off the UI thread - the brushes among them ended up
         // owned by a pool thread, and the next frame that drew one threw "the calling thread cannot
         // access this object because a different thread owns it" from inside Border.Render.
-        await this.jsonStore.BackupAsync(this.configPaths.SettingsPath, this.configPaths.BackupsDirectory, cancellationToken)
-            .ConfigureAwait(true);
-        await this.jsonStore.WriteAsync(this.configPaths.SettingsPath, configuration, cancellationToken).ConfigureAwait(true);
+        try
+        {
+            await this.jsonStore.BackupAsync(this.configPaths.SettingsPath, this.configPaths.BackupsDirectory, cancellationToken)
+                .ConfigureAwait(true);
+            await this.jsonStore.WriteAsync(this.configPaths.SettingsPath, configuration, cancellationToken).ConfigureAwait(true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            AppLog.Error("Files", "SettingsNotSaved", "settings.json could not be saved, so the change was lost.", ex);
+            throw;
+        }
 
         AppHost.UpdateConfiguration(configuration, validation);
         return ConfigurationSaveResult.Success;

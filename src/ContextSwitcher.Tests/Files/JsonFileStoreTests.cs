@@ -1,5 +1,8 @@
+using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Files;
 
@@ -73,6 +76,31 @@ public sealed class JsonFileStoreTests
             Assert.Null(configuration);
             Assert.False(File.Exists(settingsPath));
             Assert.Single(Directory.EnumerateFiles(tempDirectory, "settings.json.corrupt.*"));
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    /// <summary>A file that could not be read is moved aside - and said so, with where the JSON broke and nothing of what it held.</summary>
+    [Fact]
+    public async Task AQuarantinedFileIsLoggedWithoutItsContent()
+    {
+        string tempDirectory = CreateTempDirectory();
+        string statePath = Path.Combine(tempDirectory, "state.json");
+        await File.WriteAllTextAsync(statePath, "{ \"currentContextId\": \"secret-profile\", broken");
+        TestLogger logger = new();
+        using IDisposable scope = AppLog.UseForThisFlow(logger);
+
+        try
+        {
+            await new JsonFileStore().ReadAsync<CurrentContextState>(statePath);
+
+            LogEntry entry = Assert.Single(logger.Entries);
+            Assert.Equal("FileQuarantined", entry.EventId);
+            Assert.StartsWith("state.json could not be read and was moved aside as state.json.corrupt.", entry.Message, StringComparison.Ordinal);
+            Assert.DoesNotContain("secret-profile", string.Join(' ', entry.Data!.Values), StringComparison.Ordinal);
         }
         finally
         {

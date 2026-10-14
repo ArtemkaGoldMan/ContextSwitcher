@@ -1,4 +1,5 @@
 using ContextSwitcher.App.ViewModels;
+using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Core.Updates;
 using ContextSwitcher.Tests.TestDoubles;
@@ -217,6 +218,66 @@ public sealed class UpdatesViewModelTests
 
         Assert.Empty(this.notifications.Shown);
         Assert.Equal([UpdatesViewModel.NotificationId], this.notifications.Removed);
+    }
+
+    /// <summary>
+    /// The daily check says nothing to the person when it fails, so a log is the only place it is
+    /// said - and it is, with why.
+    /// </summary>
+    [Fact]
+    public async Task AFailedAutomaticCheckIsLoggedThoughNothingIsShown()
+    {
+        TestLogger logger = new();
+        using IDisposable scope = AppLog.UseForThisFlow(logger);
+        this.releases.Failure = new UpdateException(UpdateMessages.GitHubUnreachable.With());
+        UpdatesViewModel updates = this.Create();
+
+        await updates.CheckAsync(userAsked: false);
+
+        LogEntry entry = Assert.Single(logger.Entries, e => e.EventId == "CheckFailed");
+        Assert.Equal(LogLevel.Warning, entry.Level);
+        Assert.Equal("Update_GitHubUnreachable", entry.Data!["key"]);
+        Assert.Equal("False", entry.Data["userAsked"]);
+    }
+
+    [Fact]
+    public async Task ACheckLeavesANoteOfWhatItFound()
+    {
+        TestLogger logger = new();
+        using IDisposable scope = AppLog.UseForThisFlow(logger);
+        this.releases.Latest = NewRelease;
+
+        await this.Create().CheckAsync(userAsked: false);
+
+        LogEntry note = Assert.Single(logger.Entries, e => e.EventId == "CheckFinished");
+        Assert.Equal(LogLevel.Information, note.Level);
+        Assert.Equal("The latest release is 0.2.0; this is 0.1.0.", note.Message);
+    }
+
+    /// <summary>An update about to be installed is written whether or not anything goes wrong - it is what explains a restart.</summary>
+    [Fact]
+    public async Task AnInstallIsWrittenAndAFailedOneIsAnError()
+    {
+        TestLogger logger = new();
+        using IDisposable scope = AppLog.UseForThisFlow(logger);
+        this.releases.Latest = NewRelease;
+        UpdatesViewModel updates = this.Create();
+        await updates.CheckAsync(userAsked: true);
+
+        await updates.InstallCommand.ExecuteAsync(null);
+
+        Assert.All(logger.Entries.Where(e => e.EventId is "UpdateStarted" or "UpdateStaged"), e => Assert.True(e.Keep));
+        Assert.Equal(["UpdateStarted", "UpdateStaged"], logger.Entries.Where(e => e.Keep).Select(e => e.EventId));
+
+        TestLogger failing = new();
+        using IDisposable inner = AppLog.UseForThisFlow(failing);
+        this.updater.StageFailure = new UpdateException(UpdateMessages.NotSigned.With());
+        await updates.CheckAsync(userAsked: true);
+        await updates.InstallCommand.ExecuteAsync(null);
+
+        LogEntry error = Assert.Single(failing.Entries, e => e.EventId == "InstallFailed");
+        Assert.Equal(LogLevel.Error, error.Level);
+        Assert.Equal("Update_NotSigned", error.Data!["key"]);
     }
 
     private UpdatesViewModel Create() =>

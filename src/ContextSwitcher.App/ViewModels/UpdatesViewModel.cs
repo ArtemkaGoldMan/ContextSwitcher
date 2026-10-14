@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using System.Reflection;
 using Avalonia.Threading;
 using ContextSwitcher.App.Startup;
@@ -184,6 +185,11 @@ public sealed class UpdatesViewModel : ViewModelBase
         try
         {
             ReleaseInfo? latest = await this.releaseSource.GetLatestAsync(CancellationToken.None).ConfigureAwait(true);
+            AppLog.Note(
+                "Updates",
+                "CheckFinished",
+                $"The latest release is {(latest is null ? "unknown" : ReleaseVersion.Format(latest.Version))}; this is {ReleaseVersion.Format(this.CurrentVersion)}.",
+                new Dictionary<string, string> { ["userAsked"] = userAsked.ToString() });
             if (latest is null || latest.Version <= this.CurrentVersion)
             {
                 this.SetAvailable(null);
@@ -203,6 +209,12 @@ public sealed class UpdatesViewModel : ViewModelBase
         }
         catch (UpdateException ex)
         {
+            // The daily check says nothing to the person when it fails, so this is the only place it is said.
+            AppLog.Warn(
+                "Updates",
+                "CheckFailed",
+                $"Checking for an update failed: {ex.Detail.English}",
+                data: new Dictionary<string, string> { ["key"] = ex.Detail.Key, ["userAsked"] = userAsked.ToString() });
             if (userAsked)
             {
                 this.StatusText = Localized.Format(Strings.Updates_CouldNotCheck, MessageText.Of(ex.Detail));
@@ -225,13 +237,20 @@ public sealed class UpdatesViewModel : ViewModelBase
         this.StatusText = Localized.Format(Strings.Updates_Downloading, ReleaseVersion.Format(release.Version));
         try
         {
+            AppLog.Record("Updates", "UpdateStarted", $"Installing {ReleaseVersion.Format(release.Version)} over {ReleaseVersion.Format(this.CurrentVersion)}.");
             StagedUpdate staged = await this.updater.StageAsync(release, CancellationToken.None).ConfigureAwait(true);
             this.updater.InstallOnExit(staged);
+            AppLog.Record("Updates", "UpdateStaged", $"{ReleaseVersion.Format(release.Version)} is ready; the app restarts to finish it.");
             this.StatusText = Strings.Updates_Restarting;
             this.RestartRequested?.Invoke(this, EventArgs.Empty);
         }
         catch (UpdateException ex)
         {
+            AppLog.Error(
+                "Updates",
+                "InstallFailed",
+                $"Installing {ReleaseVersion.Format(release.Version)} failed: {ex.Detail.English}",
+                data: new Dictionary<string, string> { ["key"] = ex.Detail.Key });
             this.StatusText = Localized.Format(Strings.Updates_CouldNotInstall, MessageText.Of(ex.Detail));
         }
         finally
