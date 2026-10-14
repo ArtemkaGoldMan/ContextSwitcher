@@ -294,8 +294,58 @@ public sealed class BrowserLauncher
             return new TabClosingOutcome(0, WhyNotAsked(browser, closing, SwitchMessages.CouldNotCloseTabs));
         }
 
-        int.TryParse(closing.StandardOutput.Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int closed);
-        return new TabClosingOutcome(closed, null);
+        bool counted = int.TryParse(closing.StandardOutput.Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int closed);
+
+        // The script says how many it closed. Fewer than were meant to close is a tab that stayed open
+        // - it asked to confirm leaving, say - and that was never reported: the switch said nothing, and
+        // the page was still there. Look again to say which.
+        int meant = IsChromium(browser)
+            ? doomed.Select(tab => tab.Id!.Value).Distinct().Count()
+            : doomed.Select(tab => tab.Url).Distinct(StringComparer.Ordinal).Count();
+        if (!counted || closed >= meant)
+        {
+            return new TabClosingOutcome(closed, null);
+        }
+
+        TimeSpan lookTimeout = timeout / 4 < TabProbeTimeout ? timeout / 4 : TabProbeTimeout;
+        (List<BrowserTab>? after, _) = await this.ListTabsWithResultAsync(browser, startIfNeeded: false, lookTimeout, cancellationToken).ConfigureAwait(false);
+        List<BrowserTab> remaining = after is null
+            ? []
+            : after.Where(tab => IsChromium(browser)
+                ? doomed.Any(gone => gone.Id == tab.Id)
+                : doomed.Any(gone => string.Equals(gone.Url, tab.Url, StringComparison.Ordinal))).ToList();
+
+        UserMessage partial = remaining.Count > 0
+            ? SwitchMessages.SomeTabsStayedOpen.With(
+                closed.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                meant.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                app,
+                DescribePages(remaining.Select(tab => tab.Url)))
+            : SwitchMessages.SomeTabsNotClosed.With(
+                closed.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                meant.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                app);
+        return new TabClosingOutcome(closed, partial);
+    }
+
+    /// <summary>
+    /// The sites of some tabs, for a message: "linear.app, github.com, +2". A site rather than the
+    /// address - a message is read by a person, and an address can run to a hundred characters of
+    /// query - and no more than three, so the line stays one line.
+    /// </summary>
+    public static string DescribePages(IEnumerable<string> addresses)
+    {
+        const int Shown = 3;
+        List<string> sites = addresses
+            .Select(address => Uri.TryCreate(address, UriKind.Absolute, out Uri? uri) && uri.Host.Length > 0
+                ? (uri.Host.StartsWith("www.", StringComparison.OrdinalIgnoreCase) ? uri.Host[4..] : uri.Host)
+                : (address.Length > 40 ? address[..40] + "…" : address))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return sites.Count <= Shown
+            ? string.Join(", ", sites)
+            : $"{string.Join(", ", sites.Take(Shown))}, +{sites.Count - Shown}";
     }
 
     /// <summary>

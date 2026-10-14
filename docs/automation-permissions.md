@@ -50,6 +50,9 @@ the reason the browser itself gave. A message that doesn't name a reason is the 
 | An app didn't quit | It had unsaved work, or quitting it isn't allowed | Save and switch again; check Automation for that app |
 | Pages opened twice, or a profile's tabs weren't closed | Reading the browser's tabs isn't allowed | Allow your browser under Automation |
 | Tabs weren't closed, and the message says the browser didn't answer | The browser was busy, or hung | Switch again; if it keeps happening, restart the browser |
+| Some tabs stayed open (the message names their sites) | A page asked to confirm leaving, or was loading | Close it yourself, or answer the page's prompt and switch again |
+| An app didn't quit | It is asking to save something | Answer it, then close it |
+| An app is "not installed" | No app has that name any more | Edit the profile and pick the app again |
 | Music didn't start | Music or Spotify isn't allowed, or isn't installed | Allow it under Automation |
 | Focus didn't change | The Focus shortcut is missing | Edit the profile and click **Create it** — see [Focus and Siri](shortcuts-integration.md) |
 | Docker containers didn't start or stop | Docker Desktop isn't running | Start Docker Desktop |

@@ -37,10 +37,16 @@ public static class MessageText
         return error.MessageKey is { } key ? Of(new UserMessage(key, error.MessageArguments, error.Message)) : error.Message;
     }
 
-    /// <summary>"contexts[0].accentColor: …" - the setting it is about, then what's wrong with it.</summary>
+    /// <summary>"Work → accentColor: …" - the profile and setting it is about, then what's wrong with it.</summary>
     public static string Of(ConfigurationValidationError error)
     {
         ArgumentNullException.ThrowIfNull(error);
-        return $"{error.Path}: {(error.Detail is { } detail ? Of(detail) : error.Message)}";
+
+        string where = error.Subject is { } profile
+            ? $"{profile} → {ProfilePrefix.Replace(error.Path, string.Empty)}"
+            : error.Path;
+        return $"{where}: {(error.Detail is { } detail ? Of(detail) : error.Message)}";
     }
+
+    private static readonly System.Text.RegularExpressions.Regex ProfilePrefix = new(@"^contexts\[\d+\]\.?");
 }

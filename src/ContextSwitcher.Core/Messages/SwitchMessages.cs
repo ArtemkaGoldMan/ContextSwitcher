@@ -1,3 +1,5 @@
+using ContextSwitcher.Core.Automation;
+
 namespace ContextSwitcher.Core.Messages;
 
 /// <summary>
@@ -6,7 +8,13 @@ namespace ContextSwitcher.Core.Messages;
 /// </summary>
 public static class SwitchMessages
 {
-    public static readonly MessageTemplate CouldNotClose = new("Switch_CouldNotClose", "Could not close: {0}.");
+    /// <summary>{0} is the apps that were still running after being asked to quit.</summary>
+    public static readonly MessageTemplate CouldNotClose = new(
+        "Switch_CouldNotClose",
+        "Didn't quit: {0}. An app stays open if it is asking you to save something.");
+
+    /// <summary>{0} is the apps macOS found no app for.</summary>
+    public static readonly MessageTemplate AppsNotInstalled = new("Switch_AppsNotInstalled", "Not installed, so not opened: {0}.");
 
     public static readonly MessageTemplate CouldNotLaunch = new("Switch_CouldNotLaunch", "Could not launch: {0}.");
 
@@ -34,6 +42,50 @@ public static class SwitchMessages
     public static readonly MessageTemplate CouldNotCheckTabs = new(
         "Switch_CouldNotCheckTabs",
         "Could not check {0} for existing tabs, so URLs were opened without duplicate checking. Check Automation permissions.");
+
+    /// <summary>{0}, {1} and {2}: how many tabs were closed of how many, and in which browser; {3} the pages still open.</summary>
+    public static readonly MessageTemplate SomeTabsStayedOpen = new(
+        "Switch_SomeTabsStayedOpen",
+        "Closed {0} of {1} tabs in {2}; still open: {3}.");
+
+    /// <summary>The same when the pages still open could not be looked up.</summary>
+    public static readonly MessageTemplate SomeTabsNotClosed = new("Switch_SomeTabsNotClosed", "Closed {0} of {1} tabs in {2}.");
+
+    public static readonly MessageTemplate TimedOutClosingApps = new("Switch_TimedOutClosingApps", "Closing apps didn't finish in {0} seconds.");
+
+    public static readonly MessageTemplate TimedOutOpeningApps = new("Switch_TimedOutOpeningApps", "Opening apps didn't finish in {0} seconds.");
+
+    public static readonly MessageTemplate TimedOutHidingApps = new("Switch_TimedOutHidingApps", "Hiding apps didn't finish in {0} seconds.");
+
+    public static readonly MessageTemplate TimedOutBrowserPages = new("Switch_TimedOutBrowserPages", "Opening the browser's pages didn't finish in {0} seconds.");
+
+    public static readonly MessageTemplate TimedOutClosingTabs = new("Switch_TimedOutClosingTabs", "Closing the browser's tabs didn't finish in {0} seconds.");
+
+    public static readonly MessageTemplate TimedOutFocus = new("Switch_TimedOutFocus", "Changing Focus didn't finish in {0} seconds.");
+
+    public static readonly MessageTemplate TimedOutMedia = new("Switch_TimedOutMedia", "Starting the music didn't finish in {0} seconds.");
+
+    public static readonly MessageTemplate TimedOutStartingDocker = new("Switch_TimedOutStartingDocker", "Starting Docker containers didn't finish in {0} seconds.");
+
+    public static readonly MessageTemplate TimedOutStoppingDocker = new("Switch_TimedOutStoppingDocker", "Stopping Docker containers didn't finish in {0} seconds.");
+
+    /// <summary>
+    /// A step that ran out of time, saying which: "Step timed out" left the reader guessing which of
+    /// them it was. A step with nothing more specific to say keeps the general message.
+    /// </summary>
+    public static UserMessage TimedOut(AutomationStepType step, string seconds) => step switch
+    {
+        AutomationStepType.CloseApplications => TimedOutClosingApps.With(seconds),
+        AutomationStepType.LaunchApplications => TimedOutOpeningApps.With(seconds),
+        AutomationStepType.HideApplications => TimedOutHidingApps.With(seconds),
+        AutomationStepType.ManageBrowserContext => TimedOutBrowserPages.With(seconds),
+        AutomationStepType.CloseBrowserTabs => TimedOutClosingTabs.With(seconds),
+        AutomationStepType.SetFocusMode => TimedOutFocus.With(seconds),
+        AutomationStepType.ControlMedia => TimedOutMedia.With(seconds),
+        AutomationStepType.StartDockerResources => TimedOutStartingDocker.With(seconds),
+        AutomationStepType.StopDockerResources => TimedOutStoppingDocker.With(seconds),
+        _ => StepTimedOut.With(seconds)
+    };
 
     /// <summary>macOS has not let Context Switcher send Apple events to the browser: Automation is off for it, or was refused.</summary>
     public static readonly MessageTemplate BrowserNotAllowed = new(

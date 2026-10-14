@@ -1269,7 +1269,7 @@
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
   </data>
   <data name="Msg_Config_IdNotUnique" xml:space="preserve">
-    <value>Context id must be unique.</value>
+    <value>Profile id '{0}' is used by more than one profile.</value>
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
   </data>
   <data name="Msg_Config_DisplayNameRequired" xml:space="preserve">
@@ -1281,7 +1281,7 @@
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
   </data>
   <data name="Msg_Config_ActiveContextMissing" xml:space="preserve">
-    <value>Active context must reference an existing context.</value>
+    <value>The active profile '{0}' doesn't exist.</value>
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
   </data>
   <data name="Msg_Config_AppClosedAndHidden" xml:space="preserve">
@@ -1313,11 +1313,11 @@
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
   </data>
   <data name="Msg_Config_QuickLinkUrlInvalid" xml:space="preserve">
-    <value>Quick link URL must use http or https.</value>
+    <value>Quick link '{0}' must start with http or https.</value>
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
   </data>
   <data name="Msg_Config_UrlInvalid" xml:space="preserve">
-    <value>URL must use http or https.</value>
+    <value>'{0}' must start with http or https.</value>
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
   </data>
   <data name="Msg_Focus_CustomFocus" xml:space="preserve">
@@ -1337,7 +1337,7 @@
     <comment>Profile Setup → Focus, after clicking Create it. {0} is macOS's own reason.</comment>
   </data>
   <data name="Msg_Switch_CouldNotClose" xml:space="preserve">
-    <value>Could not close: {0}.</value>
+    <value>Didn't quit: {0}. An app stays open if it is asking you to save something.</value>
     <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. /// What a switch reports about a step that didn't fully work. Each is also in the app's Strings.resx as
 /// &lt;c&gt;Msg_&amp;lt;Key&amp;gt;&lt;/c&gt;, with the same English - a test keeps the two in step.
 ///</comment>
@@ -1397,6 +1397,54 @@
   <data name="Msg_Switch_CouldNotControlBrowser" xml:space="preserve">
     <value>Could not control {0}: {1}</value>
     <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. {0} = browser, e.g. Google Chrome; {1} = the reason macOS gave, in the Mac's language.</comment>
+  </data>
+  <data name="Msg_Switch_AppsNotInstalled" xml:space="preserve">
+    <value>Not installed, so not opened: {0}.</value>
+    <comment>A step of a switch that didn't fully work. {0} = the apps macOS found no app for.</comment>
+  </data>
+  <data name="Msg_Switch_SomeTabsStayedOpen" xml:space="preserve">
+    <value>Closed {0} of {1} tabs in {2}; still open: {3}.</value>
+    <comment>A step of a switch that didn't fully work. {0} = closed, {1} = of how many, {2} = browser, {3} = the sites still open.</comment>
+  </data>
+  <data name="Msg_Switch_SomeTabsNotClosed" xml:space="preserve">
+    <value>Closed {0} of {1} tabs in {2}.</value>
+    <comment>A step of a switch that didn't fully work. {0} = closed, {1} = of how many, {2} = browser.</comment>
+  </data>
+  <data name="Msg_Switch_TimedOutClosingApps" xml:space="preserve">
+    <value>Closing apps didn't finish in {0} seconds.</value>
+    <comment>A step ran out of time. {0} = seconds.</comment>
+  </data>
+  <data name="Msg_Switch_TimedOutOpeningApps" xml:space="preserve">
+    <value>Opening apps didn't finish in {0} seconds.</value>
+    <comment>A step ran out of time. {0} = seconds.</comment>
+  </data>
+  <data name="Msg_Switch_TimedOutHidingApps" xml:space="preserve">
+    <value>Hiding apps didn't finish in {0} seconds.</value>
+    <comment>A step ran out of time. {0} = seconds.</comment>
+  </data>
+  <data name="Msg_Switch_TimedOutBrowserPages" xml:space="preserve">
+    <value>Opening the browser's pages didn't finish in {0} seconds.</value>
+    <comment>A step ran out of time. {0} = seconds.</comment>
+  </data>
+  <data name="Msg_Switch_TimedOutClosingTabs" xml:space="preserve">
+    <value>Closing the browser's tabs didn't finish in {0} seconds.</value>
+    <comment>A step ran out of time. {0} = seconds.</comment>
+  </data>
+  <data name="Msg_Switch_TimedOutFocus" xml:space="preserve">
+    <value>Changing Focus didn't finish in {0} seconds.</value>
+    <comment>A step ran out of time. {0} = seconds.</comment>
+  </data>
+  <data name="Msg_Switch_TimedOutMedia" xml:space="preserve">
+    <value>Starting the music didn't finish in {0} seconds.</value>
+    <comment>A step ran out of time. {0} = seconds.</comment>
+  </data>
+  <data name="Msg_Switch_TimedOutStartingDocker" xml:space="preserve">
+    <value>Starting Docker containers didn't finish in {0} seconds.</value>
+    <comment>A step ran out of time. {0} = seconds.</comment>
+  </data>
+  <data name="Msg_Switch_TimedOutStoppingDocker" xml:space="preserve">
+    <value>Stopping Docker containers didn't finish in {0} seconds.</value>
+    <comment>A step ran out of time. {0} = seconds.</comment>
   </data>
   <data name="Msg_Switch_CouldNotCloseTabs" xml:space="preserve">
     <value>Could not close the profile's tabs in {0}. Check Automation permissions.</value>

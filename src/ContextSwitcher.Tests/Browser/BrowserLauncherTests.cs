@@ -580,6 +580,75 @@ public sealed class BrowserLauncherTests
         Assert.Single(processRunner.Calls);
     }
 
+    /// <summary>
+    /// A tab that stays open - it asked to confirm leaving the page, say - used to go unreported: the
+    /// switch said nothing and the page was still there. It now says how many, and which.
+    /// </summary>
+    [Fact]
+    public async Task ATabThatStayedOpenIsNamed()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((11, "https://linear.app/team"), (12, "https://www.github.com/pulls"), (13, "https://example.com/")), string.Empty, false));
+        scriptRunner.Enqueue(new ProcessResult(0, "1", string.Empty, false));
+        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((12, "https://www.github.com/pulls"), (13, "https://example.com/")), string.Empty, false));
+        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+
+        TabClosingOutcome outcome = await launcher.CloseTabsAsync(
+            BrowserKind.Chrome, ["https://linear.app/", "https://github.com/"], [], null, Timeout, CancellationToken.None);
+
+        Assert.Equal(1, outcome.Closed);
+        Assert.Equal("Closed 1 of 2 tabs in Google Chrome; still open: github.com.", outcome.Problem?.English);
+    }
+
+    [Fact]
+    public async Task EveryTabClosedIsNotAProblem()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((11, "https://linear.app/team"), (12, "https://github.com/pulls")), string.Empty, false));
+        scriptRunner.Enqueue(new ProcessResult(0, "2", string.Empty, false));
+        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+
+        TabClosingOutcome outcome = await launcher.CloseTabsAsync(
+            BrowserKind.Chrome, ["https://linear.app/", "https://github.com/"], [], null, Timeout, CancellationToken.None);
+
+        Assert.Equal(2, outcome.Closed);
+        Assert.Null(outcome.Problem);
+        Assert.Equal(2, scriptRunner.Scripts.Count);
+    }
+
+    /// <summary>When the look at what is left can't be made, the count still says some stayed open.</summary>
+    [Fact]
+    public async Task ATabThatStayedOpenIsCountedWhenWhichCannotBeSaid()
+    {
+        FakeScriptRunner scriptRunner = new();
+        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((11, "https://linear.app/team"), (12, "https://github.com/pulls")), string.Empty, false));
+        scriptRunner.Enqueue(new ProcessResult(0, "1", string.Empty, false));
+        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "AppleEvent timed out", false));
+        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+
+        TabClosingOutcome outcome = await launcher.CloseTabsAsync(
+            BrowserKind.Chrome, ["https://linear.app/", "https://github.com/"], [], null, Timeout, CancellationToken.None);
+
+        Assert.Equal("Closed 1 of 2 tabs in Google Chrome.", outcome.Problem?.English);
+    }
+
+    [Theory]
+    [InlineData("https://linear.app/team/x?token=abc#frag", "linear.app")]
+    [InlineData("https://www.github.com/pulls", "github.com")]
+    [InlineData("not an address", "not an address")]
+    public void APageIsNamedByItsSite(string address, string expected)
+    {
+        Assert.Equal(expected, BrowserLauncher.DescribePages([address]));
+    }
+
+    [Fact]
+    public void MorePagesThanThreeAreCounted()
+    {
+        string line = BrowserLauncher.DescribePages(["https://a.com/", "https://b.com/", "https://a.com/again", "https://c.com/", "https://d.com/", "https://e.com/"]);
+
+        Assert.Equal("a.com, b.com, c.com, +2", line);
+    }
+
     /// <summary>A Chromium tab listing as <see cref="AppleScriptBuilder.ListChromiumTabs"/> prints it.</summary>
     private static string ChromeTabs(params (int Id, string Url)[] tabs) =>
         string.Concat(tabs.Select(tab => $"{tab.Id}{AppleScriptBuilder.OpenTabFieldSeparator}{tab.Url}\n"));

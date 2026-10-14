@@ -88,7 +88,7 @@ public sealed class SettingsTransferViewModelTests
     [Theory]
     [InlineData("not json at all", "“settings backup.json” isn't a Context Switcher settings file.")]
     [InlineData("""{ "name": "something else" }""", "“settings backup.json” isn't a Context Switcher settings file.")]
-    [InlineData("""{ "activeContextId": "missing", "contexts": [ { "id": "work", "displayName": "Work" } ] }""", "“settings backup.json” can't be used: activeContextId: Active context must reference an existing context.")]
+    [InlineData("""{ "activeContextId": "missing", "contexts": [ { "id": "work", "displayName": "Work" } ] }""", "“settings backup.json” can't be used: activeContextId: The active profile 'missing' doesn't exist.")]
     public async Task AFileThatCantBeUsedIsTurnedDown(string content, string problem)
     {
         this.picker.FileToOpen = content;

@@ -298,7 +298,7 @@ public sealed class ContextSwitchService : IContextSwitchService
         catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
         {
             DateTimeOffset completedAt = this.clock.UtcNow;
-            UserMessage timedOut = SwitchMessages.StepTimedOut.With(((int)step.Timeout.TotalSeconds).ToString(CultureInfo.InvariantCulture));
+            UserMessage timedOut = SwitchMessages.TimedOut(step.Type, ((int)step.Timeout.TotalSeconds).ToString(CultureInfo.InvariantCulture));
             return new AutomationResult(step.Id, step.Type, AutomationResultStatus.TimedOut, timedOut.English, null, null, null, startedAt, completedAt)
             {
                 Problems = [timedOut]

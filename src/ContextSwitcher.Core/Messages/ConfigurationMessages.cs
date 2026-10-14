@@ -16,13 +16,13 @@ public static class ConfigurationMessages
 
     public static readonly MessageTemplate IdNotUrlSafe = new("Config_IdNotUrlSafe", "Context id must be lowercase and URL-safe.");
 
-    public static readonly MessageTemplate IdNotUnique = new("Config_IdNotUnique", "Context id must be unique.");
+    public static readonly MessageTemplate IdNotUnique = new("Config_IdNotUnique", "Profile id '{0}' is used by more than one profile.");
 
     public static readonly MessageTemplate DisplayNameRequired = new("Config_DisplayNameRequired", "Context display name is required.");
 
     public static readonly MessageTemplate AccentColorInvalid = new("Config_AccentColorInvalid", "Accent color must be a 6-digit hex color.");
 
-    public static readonly MessageTemplate ActiveContextMissing = new("Config_ActiveContextMissing", "Active context must reference an existing context.");
+    public static readonly MessageTemplate ActiveContextMissing = new("Config_ActiveContextMissing", "The active profile '{0}' doesn't exist.");
 
     /// <summary>{0} is the app's name.</summary>
     public static readonly MessageTemplate AppClosedAndHidden = new(
@@ -41,7 +41,7 @@ public static class ConfigurationMessages
 
     public static readonly MessageTemplate ProfileDirectoryRequired = new("Config_ProfileDirectoryRequired", "Profile directory is required.");
 
-    public static readonly MessageTemplate QuickLinkUrlInvalid = new("Config_QuickLinkUrlInvalid", "Quick link URL must use http or https.");
+    public static readonly MessageTemplate QuickLinkUrlInvalid = new("Config_QuickLinkUrlInvalid", "Quick link '{0}' must start with http or https.");
 
-    public static readonly MessageTemplate UrlInvalid = new("Config_UrlInvalid", "URL must use http or https.");
+    public static readonly MessageTemplate UrlInvalid = new("Config_UrlInvalid", "'{0}' must start with http or https.");
 }
