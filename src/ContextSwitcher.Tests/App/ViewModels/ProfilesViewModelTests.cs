@@ -268,16 +268,6 @@ public sealed class ProfilesViewModelTests
         Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(context => context.Id));
     }
 
-    [Fact]
-    public void ThereIsAnOrderToChangeOnlyWithMoreThanOneProfile()
-    {
-        (ProfilesViewModel two, _, _) = CreateViewModel(TwoContexts());
-        Assert.True(two.CanReorder);
-
-        (ProfilesViewModel one, _, _) = CreateViewModel(new AppConfiguration { ActiveContextId = "work", Contexts = [TwoContexts().Contexts[0]] });
-        Assert.False(one.CanReorder);
-    }
-
     /// <summary>The save publishes the order the cards are already in; making them all again for that would take the focus with the old ones.</summary>
     [Fact]
     public async Task TheCardsAreNotMadeAgainWhenTheSavePublishesTheOrderTheyAreInAlready()

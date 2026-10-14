@@ -19,13 +19,6 @@
       <Button Grid.Column="2" Classes="switchContext current" Content="{x:Static r:Strings.Profiles_AddNewProfile}" Command="{Binding AddCommand}" />
     </Grid>
 
-    <!-- Said once there is more than one to order: nothing on a card shows that it can be dragged. -->
-    <TextBlock
-      Text="{x:Static r:Strings.Profiles_ReorderHint}"
-      Classes="caption"
-      TextWrapping="Wrap"
-      IsVisible="{Binding CanReorder}" />
-
     <TextBlock
       Text="{Binding ErrorMessage}"
       Classes="caption"
