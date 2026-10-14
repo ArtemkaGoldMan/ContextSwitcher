@@ -1623,6 +1623,10 @@
   <data name="Msg_Config_IgnoredAppEmpty" xml:space="preserve">
     <value>An app that's never touched needs a name.</value>
   </data>
+  <data name="Profiles_ReorderHint" xml:space="preserve">
+    <value>Drag a profile to put it somewhere else. The order is the same in the menu bar and the dashboard.</value>
+    <comment>Profiles page: a line under the title, shown when there is more than one profile.</comment>
+  </data>
   <data name="Settings_Diagnostics_Section" xml:space="preserve">
     <value>DIAGNOSTICS</value>
     <comment>Settings: a section title, in capitals like the others.</comment>

@@ -193,6 +193,109 @@ public sealed class ProfilesViewModelTests
         Assert.Equal(["work", "personal", "work-copy", "work-copy-2"], saved.Contexts.Select(context => context.Id));
     }
 
+    /// <summary>The order of the profiles is the order of the list; moving one rewrites it, and the cards follow at once.</summary>
+    [Fact]
+    public async Task MovingAProfileSavesTheNewOrderAndReordersTheCards()
+    {
+        (ProfilesViewModel viewModel, _, InMemoryJsonStore jsonStore) = CreateViewModel(ThreeContexts());
+
+        await viewModel.MoveAsync("work", 2);
+
+        AppConfiguration saved = jsonStore.Get<AppConfiguration>(new ConfigPaths("/tmp/context-switcher-tests").SettingsPath)!;
+        Assert.Equal(["personal", "study", "work"], saved.Contexts.Select(context => context.Id));
+        Assert.Equal(["personal", "study", "work"], AppHost.Configuration.Contexts.Select(context => context.Id));
+        Assert.Equal(["Personal", "Study", "Work"], viewModel.Rows.Select(row => row.DisplayName));
+    }
+
+    /// <summary>Which profile is on does not change with where it stands in the list.</summary>
+    [Fact]
+    public async Task MovingAProfileKeepsWhichOneIsActive()
+    {
+        (ProfilesViewModel viewModel, _, _) = CreateViewModel(ThreeContexts(), activeContextId: "personal");
+
+        await viewModel.MoveAsync("personal", 0);
+
+        Assert.Equal("personal", AppHost.State.CurrentContextId);
+        Assert.True(viewModel.Rows[0].IsActive);
+    }
+
+    [Theory]
+    [InlineData("work", 0)]
+    [InlineData("nobody", 1)]
+    public async Task MovingToWhereItIsOrOfAProfileThatIsNotThereChangesNothing(string id, int to)
+    {
+        (ProfilesViewModel viewModel, _, InMemoryJsonStore jsonStore) = CreateViewModel(ThreeContexts());
+
+        await viewModel.MoveAsync(id, to);
+
+        Assert.Null(jsonStore.Get<AppConfiguration>(new ConfigPaths("/tmp/context-switcher-tests").SettingsPath));
+        Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(context => context.Id));
+    }
+
+    [Theory]
+    [InlineData(99, "personal", "study", "work")]
+    [InlineData(-5, "work", "personal", "study")]
+    public async Task APlaceBeyondTheEndsIsTheEnd(int to, string first, string second, string third)
+    {
+        (ProfilesViewModel viewModel, _, _) = CreateViewModel(ThreeContexts());
+
+        await viewModel.MoveAsync("work", to);
+
+        Assert.Equal([first, second, third], AppHost.Configuration.Contexts.Select(context => context.Id));
+    }
+
+    [Fact]
+    public async Task MovingByOneGoesUpOrDown()
+    {
+        (ProfilesViewModel viewModel, _, _) = CreateViewModel(ThreeContexts());
+
+        await viewModel.MoveByAsync("personal", +1);
+        Assert.Equal(["work", "study", "personal"], AppHost.Configuration.Contexts.Select(context => context.Id));
+
+        await viewModel.MoveByAsync("personal", -2);
+        Assert.Equal(["personal", "work", "study"], AppHost.Configuration.Contexts.Select(context => context.Id));
+    }
+
+    /// <summary>A move that was not saved leaves the cards in the order the profiles really are in.</summary>
+    [Fact]
+    public async Task AMoveThatCouldNotBeSavedPutsTheCardsBack()
+    {
+        (ProfilesViewModel viewModel, _, InMemoryJsonStore jsonStore) = CreateViewModel(ThreeContexts());
+        jsonStore.WriteFailurePaths.Add(new ConfigPaths("/tmp/context-switcher-tests").SettingsPath);
+
+        await Assert.ThrowsAsync<IOException>(() => viewModel.MoveAsync("work", 2));
+
+        Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(context => context.Id));
+    }
+
+    [Fact]
+    public void ThereIsAnOrderToChangeOnlyWithMoreThanOneProfile()
+    {
+        (ProfilesViewModel two, _, _) = CreateViewModel(TwoContexts());
+        Assert.True(two.CanReorder);
+
+        (ProfilesViewModel one, _, _) = CreateViewModel(new AppConfiguration { ActiveContextId = "work", Contexts = [TwoContexts().Contexts[0]] });
+        Assert.False(one.CanReorder);
+    }
+
+    /// <summary>The save publishes the order the cards are already in; making them all again for that would take the focus with the old ones.</summary>
+    [Fact]
+    public async Task TheCardsAreNotMadeAgainWhenTheSavePublishesTheOrderTheyAreInAlready()
+    {
+        (ProfilesViewModel viewModel, _, _) = CreateViewModel(ThreeContexts());
+
+        await viewModel.MoveAsync("work", 2);
+        IReadOnlyList<ProfileRowViewModel> afterTheMove = viewModel.Rows;
+        AppHost.UpdateConfiguration(AppHost.Configuration, new ConfigurationValidationResult([]));
+
+        Assert.Same(afterTheMove, viewModel.Rows);
+    }
+
+    private static AppConfiguration ThreeContexts() => TwoContexts() with
+    {
+        Contexts = [.. TwoContexts().Contexts, new ContextDefinition { Id = "study", DisplayName = "Study", AccentColor = "#E0A030" }]
+    };
+
     private static AppConfiguration TwoContexts()
     {
         return new AppConfiguration

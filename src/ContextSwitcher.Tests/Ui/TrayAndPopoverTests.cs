@@ -115,6 +115,40 @@ public sealed class TrayAndPopoverTests : UiTest
         });
     }
 
+    /// <summary>The same profiles in another order are listed in it - in the same menu - with the tick still on the one that is on.</summary>
+    [Fact]
+    public async Task ReorderingTheProfilesReordersTheMenu()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            TrayMenu tray = new(_ => { }, () => { }, () => { }, () => { }, () => { });
+            NativeMenu menu = tray.Menu;
+            tray.Update(TwoProfiles, "work");
+
+            tray.Update([TwoProfiles[1], TwoProfiles[0]], "work");
+
+            Assert.Equal(["Personal", "Work [x]", "---", TrayMenu.OpenDashboardLabel, TrayMenu.OpenAppLabel, "---", TrayMenu.QuitLabel], Shape(menu, ticks: true));
+            Assert.Same(menu, tray.Menu);
+        });
+    }
+
+    /// <summary>The dashboard lists its switch buttons in the profiles' order, and follows a change to it.</summary>
+    [Fact]
+    public async Task ReorderingTheProfilesReordersTheDashboard()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            UiScenario scenario = UiScenario.WithTwoProfiles();
+            DashboardViewModel dashboard = scenario.Dashboard();
+            Assert.Equal(["Work", "Personal"], dashboard.SwitchButtons.Select(b => b.DisplayName));
+
+            AppConfiguration swapped = AppHost.Configuration with { Contexts = [.. AppHost.Configuration.Contexts.Reverse()] };
+            AppHost.UpdateConfiguration(swapped, new ContextSwitcher.Core.Configuration.Validation.ConfigurationValidationResult([]));
+
+            Assert.Equal(["Personal", "Work"], dashboard.SwitchButtons.Select(b => b.DisplayName));
+        });
+    }
+
     /// <summary>
     /// A waiting update gets its own entry just above Quit, which leads to it, and the entry goes
     /// once there is nothing waiting - in the same menu, like every other change to it.

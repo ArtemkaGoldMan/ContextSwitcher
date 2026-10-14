@@ -19,6 +19,13 @@
       <Button Grid.Column="2" Classes="switchContext current" Content="{x:Static r:Strings.Profiles_AddNewProfile}" Command="{Binding AddCommand}" />
     </Grid>
 
+    <!-- Said once there is more than one to order: nothing on a card shows that it can be dragged. -->
+    <TextBlock
+      Text="{x:Static r:Strings.Profiles_ReorderHint}"
+      Classes="caption"
+      TextWrapping="Wrap"
+      IsVisible="{Binding CanReorder}" />
+
     <TextBlock
       Text="{Binding ErrorMessage}"
       Classes="caption"
@@ -28,7 +35,7 @@
 
     <!-- Unclipped, like the page and the window's page area, so the glow round the profile that is
          on isn't cut off at the edges; the page's margin inside the scroll view leaves it room. -->
-    <ItemsControl ItemsSource="{Binding Rows}" ClipToBounds="False">
+    <ItemsControl Name="ProfileList" ItemsSource="{Binding Rows}" ClipToBounds="False">
       <ItemsControl.ItemsPanel>
         <ItemsPanelTemplate>
           <StackPanel Spacing="8" />

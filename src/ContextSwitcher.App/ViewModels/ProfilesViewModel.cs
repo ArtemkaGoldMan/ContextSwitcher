@@ -54,7 +54,13 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
     public IReadOnlyList<ProfileRowViewModel> Rows
     {
         get => this.rows;
-        private set => this.SetProperty(ref this.rows, value);
+        private set
+        {
+            if (this.SetProperty(ref this.rows, value))
+            {
+                this.OnPropertyChanged(nameof(this.CanReorder));
+            }
+        }
     }
 
     public string? ErrorMessage
@@ -70,6 +76,9 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
     }
 
     public bool HasErrorMessage => !string.IsNullOrEmpty(this.ErrorMessage);
+
+    /// <summary>Whether there is an order to change: more than one profile.</summary>
+    public bool CanReorder => this.Rows.Count > 1;
 
     /// <summary>What went wrong in the last switch, shown at the bottom of the window.</summary>
     public SwitchNoticeViewModel Notice { get; }
@@ -91,6 +100,17 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
     private void Refresh()
     {
         string activeContextId = AppHost.State.CurrentContextId;
+
+        // Cards that already show exactly these profiles are left as they are. A move puts them in
+        // their new order at once and the save publishes the same order a moment later: making them
+        // all again then would take the keyboard's focus with the old ones for the second time.
+        IReadOnlyList<ContextDefinition> current = AppHost.Configuration.Contexts;
+        if (this.rows.Count == current.Count
+            && this.rows.Select((row, index) => ReferenceEquals(row.Context, current[index]) && row.IsActive == (current[index].Id == activeContextId)).All(same => same))
+        {
+            return;
+        }
+
         this.Rows = AppHost.Configuration.Contexts
             .Select(context => new ProfileRowViewModel(
                 context,
@@ -131,6 +151,51 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
         {
             this.Notice.ShowRejected(couldNot, Strings.Notice_SwitchStopped, result.CompletedAt);
         }
+    }
+
+    /// <summary>
+    /// Puts a profile at <paramref name="newIndex"/> in the list, and so everywhere the list is shown:
+    /// the menu bar menu and the dashboard both read the profiles in this order. Done in the app only
+    /// - nothing else offers it.
+    ///
+    /// The cards change places at once, before the order is saved: a card let go of at its new place
+    /// would otherwise spring back for the moment the save takes, and then jump.
+    /// </summary>
+    public async Task MoveAsync(string contextId, int newIndex)
+    {
+        List<ContextDefinition> contexts = [.. AppHost.Configuration.Contexts];
+        int from = contexts.FindIndex(context => context.Id == contextId);
+        int to = Math.Clamp(newIndex, 0, Math.Max(contexts.Count - 1, 0));
+        if (from < 0 || from == to)
+        {
+            return;
+        }
+
+        this.ErrorMessage = null;
+        ContextDefinition moved = contexts[from];
+        contexts.RemoveAt(from);
+        contexts.Insert(to, moved);
+
+        List<ProfileRowViewModel> reordered = [.. this.rows];
+        ProfileRowViewModel row = reordered[from];
+        reordered.RemoveAt(from);
+        reordered.Insert(to, row);
+        this.Rows = reordered;
+
+        await this.SaveAsync(AppHost.Configuration with { Contexts = contexts }).ConfigureAwait(true);
+
+        // A save that did not happen leaves the cards in an order that is not the profiles'.
+        if (this.HasErrorMessage)
+        {
+            this.Refresh();
+        }
+    }
+
+    /// <summary>One place up (<paramref name="delta"/> -1) or down (+1): the keyboard's way of what dragging does.</summary>
+    public Task MoveByAsync(string contextId, int delta)
+    {
+        int from = AppHost.Configuration.Contexts.ToList().FindIndex(context => context.Id == contextId);
+        return from < 0 ? Task.CompletedTask : this.MoveAsync(contextId, from + delta);
     }
 
     private async Task DuplicateAsync(ContextDefinition context)
