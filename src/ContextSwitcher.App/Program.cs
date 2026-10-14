@@ -18,6 +18,20 @@ internal static class Program
 
     private const string StartAttemptVariable = "CONTEXTSWITCHER_START_ATTEMPT";
 
+    /// <summary>
+    /// How much GPU memory Skia may keep cached for drawing. Its default is tens of megabytes, for an
+    /// app whose whole interface is a few small, mostly still windows; opening the dashboard once left
+    /// 28 MB of it behind for good, and 2 MB leaves 13 MB less with nothing to redraw any slower.
+    /// </summary>
+    private const long GpuCacheBytes = 2 * 1024 * 1024;
+
+    /// <summary>
+    /// Set to <c>software</c> to draw on the CPU rather than the GPU. That leaves no GPU memory behind
+    /// at all - the dashboard then costs about 27 MB less than with Metal - and is off by default only
+    /// because how it looks has not been judged on a real screen yet.
+    /// </summary>
+    internal const string RenderingVariable = "CONTEXTSWITCHER_RENDERING";
+
     [STAThread]
     public static void Main(string[] args)
     {
@@ -106,7 +120,7 @@ internal static class Program
 
     public static AppBuilder BuildAvaloniaApp()
     {
-        return AppBuilder.Configure<App>()
+        AppBuilder builder = AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .With(new MacOSPlatformOptions
             {
@@ -116,6 +130,13 @@ internal static class Program
                 ShowInDock = AppHost.Configuration?.ShowDockIcon ?? true,
                 DisableDefaultApplicationMenuItems = true
             })
-            .LogToTrace();
+            .With(new SkiaOptions { MaxGpuResourceSizeBytes = GpuCacheBytes });
+
+        if (string.Equals(Environment.GetEnvironmentVariable(RenderingVariable), "software", StringComparison.OrdinalIgnoreCase))
+        {
+            builder = builder.With(new AvaloniaNativePlatformOptions { RenderingMode = [AvaloniaNativeRenderingMode.Software] });
+        }
+
+        return builder.LogToTrace();
     }
 }

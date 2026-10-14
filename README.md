@@ -450,6 +450,7 @@ the app behaves.
 | [Configuration](docs/configuration.md) | Every field in `settings.json`, with examples |
 | [Release process](docs/release-process.md) | Signing, publishing and how updates work |
 | [Translating](docs/translating.md) | How the app's text is organised, and adding a language |
+| [Performance](docs/performance.md) | What the app costs in memory and CPU, measured, and what did not help |
 
 ## Support
 
