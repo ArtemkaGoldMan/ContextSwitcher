@@ -67,6 +67,7 @@ public sealed class ConfigurationValidator
         {
             ContextDefinition context = configuration.Contexts[i];
             string path = $"contexts[{i}]";
+            int firstError = errors.Count;
 
             if (string.IsNullOrWhiteSpace(context.Id) || !ContextIdPattern.IsMatch(context.Id))
             {
@@ -74,7 +75,7 @@ public sealed class ConfigurationValidator
             }
             else if (!seenContextIds.Add(context.Id))
             {
-                errors.Add(ConfigurationValidationError.Of($"{path}.id", ConfigurationMessages.IdNotUnique.With()));
+                errors.Add(ConfigurationValidationError.Of($"{path}.id", ConfigurationMessages.IdNotUnique.With(context.Id)));
             }
 
             if (string.IsNullOrWhiteSpace(context.DisplayName))
@@ -94,12 +95,21 @@ public sealed class ConfigurationValidator
 
             ValidateBrowserManagement(context.BrowserManagement, $"{path}.browser_management", errors);
             ValidateQuickLinks(context.QuickLinks, $"{path}.quickLinks", errors);
+
+            // Said by name: "contexts[1]" is no help to someone who never counted their profiles.
+            string subject = !string.IsNullOrWhiteSpace(context.DisplayName) ? context.DisplayName
+                : !string.IsNullOrWhiteSpace(context.Id) ? context.Id
+                : $"#{i + 1}";
+            for (int e = firstError; e < errors.Count; e++)
+            {
+                errors[e] = errors[e] with { Subject = subject };
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(configuration.ActiveContextId) &&
             !seenContextIds.Contains(configuration.ActiveContextId))
         {
-            errors.Add(ConfigurationValidationError.Of("activeContextId", ConfigurationMessages.ActiveContextMissing.With()));
+            errors.Add(ConfigurationValidationError.Of("activeContextId", ConfigurationMessages.ActiveContextMissing.With(configuration.ActiveContextId)));
         }
     }
 
@@ -176,7 +186,7 @@ public sealed class ConfigurationValidator
         {
             if (!IsHttpUrl(quickLinks[i].Url))
             {
-                errors.Add(ConfigurationValidationError.Of($"{path}[{i}].url", ConfigurationMessages.QuickLinkUrlInvalid.With()));
+                errors.Add(ConfigurationValidationError.Of($"{path}[{i}].url", ConfigurationMessages.QuickLinkUrlInvalid.With(quickLinks[i].Url)));
             }
         }
     }
@@ -190,7 +200,7 @@ public sealed class ConfigurationValidator
         {
             if (!IsHttpUrl(urls[i]))
             {
-                errors.Add(ConfigurationValidationError.Of($"{path}[{i}]", ConfigurationMessages.UrlInvalid.With()));
+                errors.Add(ConfigurationValidationError.Of($"{path}[{i}]", ConfigurationMessages.UrlInvalid.With(urls[i])));
             }
         }
     }

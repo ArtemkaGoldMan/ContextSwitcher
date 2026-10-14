@@ -93,7 +93,7 @@ public sealed class AutomationStepExecutorTests
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
         Assert.Equal(AutomationResultStatus.Warning, result.Status);
-        Assert.Equal("Could not close: TextEdit.", result.Message);
+        Assert.Equal("Didn't quit: TextEdit. An app stays open if it is asking you to save something.", result.Message);
         Assert.InRange(scriptRunner.Scripts.Count, 3, 16);
         Assert.All(scriptRunner.Timeouts, timeout => Assert.True(timeout <= step.Timeout * 0.5));
     }
@@ -196,6 +196,25 @@ public sealed class AutomationStepExecutorTests
         ProcessStartOptions call = Assert.Single(processRunner.Calls);
         Assert.Equal("open", call.FileName);
         Assert.Equal(["-a", "Visual Studio Code"], call.Arguments);
+    }
+
+    /// <summary>"Could not launch" for an app that was never installed sent people looking for what went wrong with it.</summary>
+    [Fact]
+    public async Task AnAppThatIsNotInstalledIsSaidApartFromOneThatFailedToOpen()
+    {
+        FakeProcessRunner processRunner = new();
+        processRunner.Enqueue(new ProcessResult(1, string.Empty, "Unable to find application named 'Nonexistent App'", false));
+        processRunner.Enqueue(new ProcessResult(1, string.Empty, "The application cannot be opened for an unexpected reason", false));
+
+        AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
+        AutomationStep step = LaunchApplicationsStep(["Nonexistent App", "Broken App"], isCritical: false);
+
+        AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Warning, result.Status);
+        Assert.Equal(
+            ["Not installed, so not opened: Nonexistent App.", "Could not launch: Broken App."],
+            result.Problems.Select(problem => problem.English));
     }
 
     [Fact]

@@ -218,6 +218,59 @@ public sealed class ConfigurationValidatorTests
         Assert.Contains(result.Errors, error => error.Path == "contexts[1].id");
     }
 
+    /// <summary>"contexts[1]" meant nothing to someone who never counted their profiles; the profile is named.</summary>
+    [Fact]
+    public void AProblemIsAttributedToItsProfileByName()
+    {
+        AppConfiguration configuration = new()
+        {
+            ActiveContextId = "work",
+            Contexts =
+            [
+                new ContextDefinition { Id = "work", DisplayName = "Work", AccentColor = "#2F6FED" },
+                new ContextDefinition { Id = "play", DisplayName = "Evenings", AccentColor = "red" }
+            ]
+        };
+
+        ConfigurationValidationError error = Assert.Single(this.validator.Validate(configuration).Errors);
+
+        Assert.Equal("Evenings", error.Subject);
+        Assert.Equal("contexts[1].accentColor", error.Path);
+    }
+
+    [Fact]
+    public void ADuplicateIdSaysWhichId()
+    {
+        AppConfiguration configuration = new()
+        {
+            ActiveContextId = "work",
+            Contexts =
+            [
+                new ContextDefinition { Id = "work", DisplayName = "Work", AccentColor = "#2F6FED" },
+                new ContextDefinition { Id = "work", DisplayName = "Work again", AccentColor = "#2F6FED" }
+            ]
+        };
+
+        ConfigurationValidationError error = Assert.Single(this.validator.Validate(configuration).Errors);
+
+        Assert.Equal("Profile id 'work' is used by more than one profile.", error.Message);
+    }
+
+    [Fact]
+    public void AnInvalidAddressIsQuoted()
+    {
+        AppConfiguration configuration = CreateConfiguration(new BrowserManagementConfig
+        {
+            Mode = BrowserManagementMode.Urls,
+            Browser = BrowserKind.Chrome,
+            Urls = ["ftp://files.example/x"]
+        });
+
+        ConfigurationValidationError error = Assert.Single(this.validator.Validate(configuration).Errors);
+
+        Assert.Equal("'ftp://files.example/x' must start with http or https.", error.Message);
+    }
+
     private static AppConfiguration CreateConfiguration(BrowserManagementConfig browserManagement)
     {
         return new AppConfiguration

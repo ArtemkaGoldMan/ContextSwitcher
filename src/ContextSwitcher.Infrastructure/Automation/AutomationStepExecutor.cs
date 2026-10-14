@@ -203,6 +203,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         DateTimeOffset startedAt = this.clock.UtcNow;
         string[] apps = SplitArgument(step.Arguments, "apps");
         List<string> failedApps = [];
+        List<string> notInstalled = [];
         StringBuilder standardError = new();
 
         // Same per-app split as CloseApplicationsAsync: the plan builds 15s x app count, so no
@@ -224,23 +225,31 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         {
             if (failed)
             {
-                failedApps.Add(app);
+                // `open -a` says so when no installed app has that name - a typo, or an app since removed.
+                // Said apart from a launch that failed, since what to do about it is different.
+                (error.Contains("Unable to find application", StringComparison.OrdinalIgnoreCase) ? notInstalled : failedApps).Add(app);
                 AppendIfPresent(standardError, app, error);
             }
         }
 
         DateTimeOffset completedAt = this.clock.UtcNow;
-        if (failedApps.Count == 0)
+        if (failedApps.Count == 0 && notInstalled.Count == 0)
         {
             return Succeeded(step, "All applications launched.", startedAt, completedAt);
         }
 
-        return Degraded(
-            step,
-            SwitchMessages.CouldNotLaunch.With(string.Join(", ", failedApps)),
-            standardError.ToString(),
-            startedAt,
-            completedAt);
+        List<UserMessage> problems = [];
+        if (notInstalled.Count > 0)
+        {
+            problems.Add(SwitchMessages.AppsNotInstalled.With(string.Join(", ", notInstalled)));
+        }
+
+        if (failedApps.Count > 0)
+        {
+            problems.Add(SwitchMessages.CouldNotLaunch.With(string.Join(", ", failedApps)));
+        }
+
+        return Degraded(step, problems, standardError.ToString(), startedAt, completedAt);
     }
 
     private async Task<AutomationResult> ManageBrowserContextAsync(AutomationStep step, CancellationToken cancellationToken)
