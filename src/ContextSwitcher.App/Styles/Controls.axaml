@@ -121,6 +121,23 @@
     <Setter Property="BoxShadow" Value="{Binding GlowUnderPointer}" />
   </Style>
 
+  <!-- Dragging a card to another place (RowReorder). The one held lies over the others, follows the
+       pointer at once and lifts off the page; the ones it passes slide aside, not jump. -->
+  <Style Selector="ContentPresenter.reorder">
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.16" Easing="CubicEaseOut" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="ContentPresenter.lifted">
+    <Setter Property="ZIndex" Value="10" />
+  </Style>
+  <Style Selector="ContentPresenter.lifted Button.profileCard /template/ Border#PART_Card">
+    <Setter Property="BoxShadow" Value="0 12 30 0 #47000000" />
+    <Setter Property="Background" Value="{DynamicResource CardHoverBrush}" />
+  </Style>
+
   <!-- While its switch runs, the card is dimmed - not greyed out like a disabled button. -->
   <Style Selector="Button.profileCard:disabled">
     <Setter Property="Opacity" Value="0.7" />
