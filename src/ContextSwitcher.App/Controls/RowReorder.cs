@@ -11,23 +11,35 @@ using Avalonia.VisualTree;
 namespace ContextSwitcher.App.Controls;
 
 /// <summary>
-/// Lets the cards of a list be dragged into a new order. A card is a button - a click on it turns its
-/// profile on - so a press only becomes a drag once the pointer has moved a few pixels; before that it
-/// is still a click, and after it the click is not made.
+/// Lets the cards of a list be dragged into a new order, by pressing one, holding it, and then moving.
+/// A card is a button - a click on it turns its profile on - so a quick press is still a click, and
+/// moving before the hold is up is no drag at all: a card is picked up only by holding it still for a
+/// moment, which it shows by lifting. Letting go then, without moving, puts it back and turns nothing on.
 ///
-/// While one is held it follows the pointer, lifted over the rest, and the cards it passes make room
-/// for it. Letting go puts it where the others have made room; Escape puts it back. Alt with the up or
+/// Once picked up it follows the pointer, lifted over the rest, and the cards it passes make room for
+/// it. Letting go puts it where the others have made room; Escape puts it back. Alt with the up or
 /// down arrow does the same from the keyboard, one place at a time.
 /// </summary>
 public sealed class RowReorder : IDisposable
 {
-    /// <summary>How far the pointer goes before a press is a drag, not a click that wavered.</summary>
-    private const double DragStartsAfter = 6;
+    /// <summary>How long a card has to be held, still, before it is picked up.</summary>
+    public static readonly TimeSpan DefaultHold = TimeSpan.FromMilliseconds(350);
+
+    /// <summary>How far the pointer may drift while a card is being held: more is a hand going somewhere else, not holding.</summary>
+    private const double HoldAllows = 6;
+
+    /// <summary>How far a card that has been picked up must be moved before it is being dragged.</summary>
+    private const double DragStartsAfter = 3;
 
     private readonly ItemsControl list;
     private readonly Func<object?, int, Task> move;
     private readonly Func<object?, string?> idOf;
+    private readonly TimeSpan holdFor;
 
+    private CancellationTokenSource? holdTimer;
+    private int pressNumber;
+    private IPointer? pressedPointer;
+    private bool pickedUp;
     private Control? pressed;
     private Point pressedAt;
     private int from = -1;
@@ -38,7 +50,8 @@ public sealed class RowReorder : IDisposable
     /// <param name="list">The list whose cards are dragged; each item's card is a <c>profileCard</c> button.</param>
     /// <param name="move">Called with an item's data and the place it now goes to.</param>
     /// <param name="idOf">An item's identity, for putting the keyboard's focus back on it after it has moved.</param>
-    public RowReorder(ItemsControl list, Func<object?, int, Task> move, Func<object?, string?> idOf)
+    /// <param name="holdFor">How long a card is held before it is picked up; <see cref="DefaultHold"/> unless a test is in a hurry.</param>
+    public RowReorder(ItemsControl list, Func<object?, int, Task> move, Func<object?, string?> idOf, TimeSpan? holdFor = null)
     {
         ArgumentNullException.ThrowIfNull(list);
         ArgumentNullException.ThrowIfNull(move);
@@ -47,6 +60,7 @@ public sealed class RowReorder : IDisposable
         this.list = list;
         this.move = move;
         this.idOf = idOf;
+        this.holdFor = holdFor ?? DefaultHold;
 
         // Tunnelling, so this sees the press before the button does, and handled events too: a button
         // marks its own press handled.
@@ -62,6 +76,7 @@ public sealed class RowReorder : IDisposable
 
     public void Dispose()
     {
+        this.Forget();
         this.list.RemoveHandler(InputElement.PointerPressedEvent, this.OnPressed);
         this.list.RemoveHandler(InputElement.PointerMovedEvent, this.OnMoved);
         this.list.RemoveHandler(InputElement.PointerReleasedEvent, this.OnReleased);
@@ -97,6 +112,37 @@ public sealed class RowReorder : IDisposable
 
         this.pressed = container;
         this.pressedAt = e.GetPosition(this.list);
+        this.pressedPointer = e.Pointer;
+
+        // Counted off on a thread of its own and handed back to this one, so it does not depend on a
+        // timer that is tied to the display - and each press has its own, so a late one from a press
+        // already over cannot pick up the next.
+        int number = ++this.pressNumber;
+        CancellationTokenSource hold = new();
+        this.holdTimer = hold;
+        _ = Task.Delay(this.holdFor, hold.Token).ContinueWith(
+            finished =>
+            {
+                if (!finished.IsCanceled)
+                {
+                    Dispatcher.UIThread.Post(() => this.OnHeld(number));
+                }
+            },
+            TaskScheduler.Default);
+    }
+
+    /// <summary>The card has been held long enough: it is picked up, and shows it by lifting.</summary>
+    private void OnHeld(int number)
+    {
+        if (number != this.pressNumber || this.pressed is not { } card || this.pickedUp || this.dragging || this.pressedPointer is not { } pointer)
+        {
+            return;
+        }
+
+        // Taking the pointer is what stops the button from making its click when it is let go.
+        pointer.Capture(this.list);
+        this.pickedUp = true;
+        card.Classes.Add("lifted");
     }
 
     private void OnMoved(object? sender, PointerEventArgs e)
@@ -107,15 +153,22 @@ public sealed class RowReorder : IDisposable
         }
 
         Point now = e.GetPosition(this.list);
-        if (!this.dragging)
+        double moved = Math.Abs(now.Y - this.pressedAt.Y) + Math.Abs(now.X - this.pressedAt.X);
+
+        if (!this.pickedUp && !this.dragging)
         {
-            if (!e.GetCurrentPoint(this.list).Properties.IsLeftButtonPressed)
+            // Still being held, not yet picked up: a hand that goes elsewhere first is not holding.
+            if (!e.GetCurrentPoint(this.list).Properties.IsLeftButtonPressed || moved >= HoldAllows)
             {
                 this.Forget();
-                return;
             }
 
-            if (Math.Abs(now.Y - this.pressedAt.Y) + Math.Abs(now.X - this.pressedAt.X) < DragStartsAfter)
+            return;
+        }
+
+        if (!this.dragging)
+        {
+            if (moved < DragStartsAfter)
             {
                 return;
             }
@@ -129,20 +182,21 @@ public sealed class RowReorder : IDisposable
 
     private void OnReleased(object? sender, PointerReleasedEventArgs e)
     {
-        if (!this.dragging)
+        if (!this.pickedUp && !this.dragging)
         {
             this.Forget();
             return;
         }
 
-        // The click that would have turned the profile on is not made: the card was not clicked, it was moved.
+        // The click that would have turned the profile on is not made: the card was not clicked, it
+        // was held - and moved, or put back.
         e.Handled = true;
-        this.Finish(commit: true, e.Pointer);
+        this.Finish(commit: this.dragging, e.Pointer);
     }
 
     private void OnCaptureLost(object? sender, PointerCaptureLostEventArgs e)
     {
-        if (this.dragging)
+        if (this.pickedUp || this.dragging)
         {
             this.Finish(commit: false, pointer: null);
         }
@@ -150,7 +204,7 @@ public sealed class RowReorder : IDisposable
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (this.dragging && e.Key == Key.Escape)
+        if ((this.pickedUp || this.dragging) && e.Key == Key.Escape)
         {
             e.Handled = true;
             this.Finish(commit: false, pointer: null);
@@ -244,6 +298,7 @@ public sealed class RowReorder : IDisposable
 
         this.dragging = false;
         pointer?.Capture(null);
+        this.pressed?.Classes.Remove("lifted");
         this.Reset();
         this.Forget();
 
@@ -267,6 +322,11 @@ public sealed class RowReorder : IDisposable
 
     private void Forget()
     {
+        this.holdTimer?.Cancel();
+        this.holdTimer?.Dispose();
+        this.holdTimer = null;
+        this.pressedPointer = null;
+        this.pickedUp = false;
         this.pressed = null;
         this.from = -1;
         this.target = -1;

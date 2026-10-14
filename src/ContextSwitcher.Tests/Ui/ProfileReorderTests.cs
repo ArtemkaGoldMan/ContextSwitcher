@@ -28,7 +28,7 @@ public sealed class ProfileReorderTests : UiTest
         await OnUiThreadAsync(() =>
         {
             (ProfilesViewModel viewModel, StubContextSwitchService switchService, _) = Create();
-            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 700);
+            Window window = ShowWindow(Page(viewModel), height: 700);
 
             Drag(window, CardOf(window, "Work"), CardOf(window, "Personal"), pastTheMiddle: true);
             PumpUntil(WaitUntil(() => AppHost.Configuration.Contexts[0].Id == "personal"));
@@ -48,7 +48,7 @@ public sealed class ProfileReorderTests : UiTest
         await OnUiThreadAsync(() =>
         {
             (ProfilesViewModel viewModel, _, _) = Create();
-            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 700);
+            Window window = ShowWindow(Page(viewModel), height: 700);
 
             Drag(window, CardOf(window, "Study"), CardOf(window, "Work"), pastTheMiddle: false);
             PumpUntil(WaitUntil(() => AppHost.Configuration.Contexts[0].Id == "study"));
@@ -64,7 +64,7 @@ public sealed class ProfileReorderTests : UiTest
         await OnUiThreadAsync(() =>
         {
             (ProfilesViewModel viewModel, StubContextSwitchService switchService, _) = Create();
-            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 700);
+            Window window = ShowWindow(Page(viewModel), height: 700);
             Button card = CardOf(window, "Personal");
             Point centre = card.TranslatePoint(new Point(card.Bounds.Width / 2, card.Bounds.Height / 2), window)!.Value;
 
@@ -85,13 +85,14 @@ public sealed class ProfileReorderTests : UiTest
         await OnUiThreadAsync(() =>
         {
             (ProfilesViewModel viewModel, StubContextSwitchService switchService, _) = Create();
-            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 700);
+            Window window = ShowWindow(Page(viewModel), height: 700);
             Button card = CardOf(window, "Work");
             Point start = card.TranslatePoint(new Point(card.Bounds.Width / 2, card.Bounds.Height / 2), window)!.Value;
             Point down = start + new Point(0, card.Bounds.Height * 1.6);
 
             window.MouseMove(start, RawInputModifiers.None);
             window.MouseDown(start, MouseButton.Left, RawInputModifiers.None);
+            Hold();
             window.MouseMove(down, RawInputModifiers.LeftMouseButton);
             Settle(window);
             Assert.NotNull(FindAll<ContentPresenter>(window).FirstOrDefault(p => p.Classes.Contains("lifted")));
@@ -113,13 +114,14 @@ public sealed class ProfileReorderTests : UiTest
         await OnUiThreadAsync(() =>
         {
             (ProfilesViewModel viewModel, _, _) = Create();
-            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 700);
+            Window window = ShowWindow(Page(viewModel), height: 700);
             Button work = CardOf(window, "Work");
             Button personal = CardOf(window, "Personal");
             Point start = work.TranslatePoint(new Point(work.Bounds.Width / 2, work.Bounds.Height / 2), window)!.Value;
 
             window.MouseMove(start, RawInputModifiers.None);
             window.MouseDown(start, MouseButton.Left, RawInputModifiers.None);
+            Hold();
             window.MouseMove(start + new Point(0, work.Bounds.Height * 1.2), RawInputModifiers.LeftMouseButton);
             Settle(window);
 
@@ -142,7 +144,7 @@ public sealed class ProfileReorderTests : UiTest
         await OnUiThreadAsync(() =>
         {
             (ProfilesViewModel viewModel, _, _) = Create();
-            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 700);
+            Window window = ShowWindow(Page(viewModel), height: 700);
             CardOf(window, "Work").Focus();
             Settle(window);
 
@@ -168,7 +170,7 @@ public sealed class ProfileReorderTests : UiTest
         await OnUiThreadAsync(() =>
         {
             (ProfilesViewModel viewModel, _, _) = Create();
-            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 700);
+            Window window = ShowWindow(Page(viewModel), height: 700);
             CardOf(window, "Work").Focus();
 
             window.KeyPressQwerty(PhysicalKey.ArrowUp, RawInputModifiers.Alt);
@@ -187,7 +189,7 @@ public sealed class ProfileReorderTests : UiTest
             (ProfilesViewModel viewModel, _, _) = Create();
             ContextDefinition? edited = null;
             viewModel.EditRequested += (_, context) => edited = context;
-            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 700);
+            Window window = ShowWindow(Page(viewModel), height: 700);
             Button edit = FindAll<Button>(window).First(b => b.Content as string == "Edit" && IsClickable(b));
             Point at = edit.TranslatePoint(new Point(edit.Bounds.Width / 2, edit.Bounds.Height / 2), window)!.Value;
 
@@ -202,15 +204,102 @@ public sealed class ProfileReorderTests : UiTest
         });
     }
 
+    /// <summary>A card is picked up by holding it, not by moving it: it lifts once held, and not before.</summary>
+    [Fact]
+    public async Task ACardIsPickedUpOnlyOnceItHasBeenHeld()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfilesViewModel viewModel, _, _) = Create();
+            Window window = ShowWindow(Page(viewModel), height: 700);
+            Button card = CardOf(window, "Personal");
+            Point at = card.TranslatePoint(new Point(card.Bounds.Width / 2, card.Bounds.Height / 2), window)!.Value;
+
+            window.MouseMove(at, RawInputModifiers.None);
+            window.MouseDown(at, MouseButton.Left, RawInputModifiers.None);
+            Assert.DoesNotContain(FindAll<ContentPresenter>(window), p => p.Classes.Contains("lifted"));
+
+            Hold();
+            Assert.Contains(FindAll<ContentPresenter>(window), p => p.Classes.Contains("lifted"));
+
+            window.MouseUp(at, MouseButton.Left, RawInputModifiers.None);
+            Settle(window);
+        });
+    }
+
+    /// <summary>Moving at once, before the hold is up, picks nothing up: the press was going somewhere else.</summary>
+    [Fact]
+    public async Task MovingBeforeTheHoldIsUpDragsNothing()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfilesViewModel viewModel, StubContextSwitchService switchService, _) = Create();
+            Window window = ShowWindow(Page(viewModel), height: 700);
+            Button card = CardOf(window, "Work");
+            Point start = card.TranslatePoint(new Point(card.Bounds.Width / 2, card.Bounds.Height / 2), window)!.Value;
+            Point far = start + new Point(0, card.Bounds.Height * 2.2);
+
+            window.MouseMove(start, RawInputModifiers.None);
+            window.MouseDown(start, MouseButton.Left, RawInputModifiers.None);
+            window.MouseMove(far, RawInputModifiers.LeftMouseButton);
+            Hold();
+            window.MouseMove(far + new Point(0, 4), RawInputModifiers.LeftMouseButton);
+            window.MouseUp(far, MouseButton.Left, RawInputModifiers.None);
+            Settle(window);
+
+            Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(c => c.Id));
+            Assert.DoesNotContain(FindAll<ContentPresenter>(window), p => p.Classes.Contains("lifted") || p.Classes.Contains("reorder"));
+            Assert.Null(switchService.LastRequest);
+        });
+    }
+
+    /// <summary>A card held and let go without moving goes back where it was - and is not clicked, so nothing is turned on.</summary>
+    [Fact]
+    public async Task HoldingACardAndLettingGoWithoutMovingChangesNothingAndTurnsNothingOn()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfilesViewModel viewModel, StubContextSwitchService switchService, _) = Create();
+            Window window = ShowWindow(Page(viewModel), height: 700);
+            Button card = CardOf(window, "Personal");
+            Point at = card.TranslatePoint(new Point(card.Bounds.Width / 2, card.Bounds.Height / 2), window)!.Value;
+
+            window.MouseMove(at, RawInputModifiers.None);
+            window.MouseDown(at, MouseButton.Left, RawInputModifiers.None);
+            Hold();
+            window.MouseUp(at, MouseButton.Left, RawInputModifiers.None);
+            Settle(window);
+
+            Assert.DoesNotContain(FindAll<ContentPresenter>(window), p => p.Classes.Contains("lifted"));
+            Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(c => c.Id));
+            Assert.Null(switchService.LastRequest);
+        });
+    }
+
+    /// <summary>A quick press is a click all the same: only holding is new.</summary>
+    [Fact]
+    public async Task AQuickPressStillTurnsTheProfileOn()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            (ProfilesViewModel viewModel, StubContextSwitchService switchService, _) = Create();
+            Window window = ShowWindow(Page(viewModel), height: 700);
+
+            Click(window, CardOf(window, "Study"));
+
+            Assert.Equal("study", switchService.LastRequest?.TargetContextId);
+        });
+    }
+
     [Fact]
     public async Task ThePageSaysThatCardsCanBeDraggedOnlyWhenThereIsAnOrder()
     {
         await OnUiThreadAsync(() =>
         {
             (ProfilesViewModel viewModel, _, _) = Create();
-            Window window = ShowWindow(new ProfilesPage { DataContext = viewModel }, height: 700);
+            Window window = ShowWindow(Page(viewModel), height: 700);
 
-            Assert.True(IsClickable(FindControl<TextBlock>(window, t => t.Text?.StartsWith("Drag a profile", StringComparison.Ordinal) == true)));
+            Assert.True(IsClickable(FindControl<TextBlock>(window, t => t.Text?.StartsWith("Press and hold a profile", StringComparison.Ordinal) == true)));
 
             AppConfiguration one = AppHost.Configuration with { Contexts = [AppHost.Configuration.Contexts[0]] };
             AppHost.UpdateConfiguration(one, new ConfigurationValidationResult([]));
@@ -219,6 +308,13 @@ public sealed class ProfileReorderTests : UiTest
             Assert.False(viewModel.CanReorder);
         });
     }
+
+    /// <summary>The page with a hold short enough for a test to wait out.</summary>
+    private static ProfilesPage Page(ProfilesViewModel viewModel) =>
+        new() { DataContext = viewModel, HoldToDrag = TimeSpan.FromMilliseconds(25) };
+
+    /// <summary>Lets the time go by that a card has to be held for.</summary>
+    private static void Hold() => PumpUntil(Task.Delay(150));
 
     private static Button CardOf(Window window, string name) =>
         FindAll<Button>(window).Single(b => Avalonia.Automation.AutomationProperties.GetName(b) == name && IsClickable(b));
@@ -232,6 +328,7 @@ public sealed class ProfileReorderTests : UiTest
 
         window.MouseMove(start, RawInputModifiers.None);
         window.MouseDown(start, MouseButton.Left, RawInputModifiers.None);
+        Hold();
         window.MouseMove(start + new Point(0, (end.Y - start.Y) / 2), RawInputModifiers.LeftMouseButton);
         window.MouseMove(end, RawInputModifiers.LeftMouseButton);
         window.MouseUp(end, MouseButton.Left, RawInputModifiers.None);

@@ -1244,7 +1244,7 @@
     <value>Застосунок, який ніколи не чіпати, має мати назву.</value>
   </data>
   <data name="Profiles_ReorderHint" xml:space="preserve">
-    <value>Перетягніть профіль, щоб поставити його в інше місце. Порядок однаковий у меню в рядку меню і на дашборді.</value>
+    <value>Затисніть профіль і потримайте, а тоді перетягніть, щоб поставити його в інше місце. Порядок однаковий у меню в рядку меню і на дашборді.</value>
   </data>
   <data name="Settings_Diagnostics_Section" xml:space="preserve">
     <value>ДІАГНОСТИКА</value>

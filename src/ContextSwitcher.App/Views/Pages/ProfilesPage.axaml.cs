@@ -10,6 +10,9 @@ public sealed partial class ProfilesPage : UserControl
 {
     private RowReorder? reorder;
 
+    /// <summary>How long a card is held before it is picked up to be dragged.</summary>
+    public TimeSpan HoldToDrag { get; set; } = RowReorder.DefaultHold;
+
     public ProfilesPage()
     {
         AvaloniaXamlLoader.Load(this);
@@ -29,7 +32,8 @@ public sealed partial class ProfilesPage : UserControl
                 (row, index) => this.DataContext is ProfilesViewModel profiles && row is ProfileRowViewModel profile
                     ? profiles.MoveAsync(profile.Context.Id, index)
                     : Task.CompletedTask,
-                row => (row as ProfileRowViewModel)?.Context.Id);
+                row => (row as ProfileRowViewModel)?.Context.Id,
+                this.HoldToDrag);
         }
     }
 

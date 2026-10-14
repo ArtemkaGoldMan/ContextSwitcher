@@ -197,7 +197,7 @@ ContextSwitcher again from Applications or Spotlight and its window opens — se
 
 ### 3. Set up your profiles
 
-The **Profiles** page lists every profile: click one to switch to it — or click the one that's on to turn it off — and **Edit** changes what it does. The profile that's on stands out in its own colour. **Drag a profile** to put it somewhere else — or hold Option and press ↑ or ↓ on the one you've selected — and the menu bar and the dashboard list the profiles in that order too. The order can only be changed here.
+The **Profiles** page lists every profile: click one to switch to it — or click the one that's on to turn it off — and **Edit** changes what it does. The profile that's on stands out in its own colour. **Press and hold a profile, then drag it** to put it somewhere else — or hold Option and press ↑ or ↓ on the one you've selected — and the menu bar and the dashboard list the profiles in that order too. The order can only be changed here.
 
 <div align="center">
 <picture>
