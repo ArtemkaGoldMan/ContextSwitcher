@@ -1,8 +1,8 @@
-## What's new in 0.6.2
+## What's new in 0.6.3
 
-- **Drag profiles into another order.** On the Profiles page, press and hold a profile and drag it where you want it: the menu bar menu and the dashboard list profiles in the same order. A quick click still turns a profile on or off, and holding one without moving it changes nothing. Escape puts a dragged profile back, and Option with ↑ or ↓ moves the selected one a place from the keyboard.
+- **A tidier Profiles page.** The line under the title that explained how to drag a profile is gone. Dragging works as before: press and hold a profile, then move it, and the menu bar and the dashboard list the profiles in the same order.
 
-Coming from an older version? Everything new in [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
+Coming from an older version? Everything new in [0.6.2](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.2), [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
 
 ## Install
 
