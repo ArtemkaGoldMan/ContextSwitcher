@@ -154,6 +154,7 @@ public sealed class MacNotifications : ISystemNotifications
         }
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
         {
+            AppLog.MissingApi("the app bundle check", ex);
             return false;
         }
     }
@@ -215,9 +216,10 @@ public sealed class MacNotifications : ISystemNotifications
             active?.Deliver(granted != 0, error);
         }
 #pragma warning disable CA1031 // See above: nothing may escape into native code.
-        catch (Exception)
+        catch (Exception ex)
 #pragma warning restore CA1031
         {
+            AppLog.Warn("Platform", "NotificationCallbackFailed", "macOS answered a notification permission request and the answer could not be handled.", ex);
         }
     }
 
@@ -235,9 +237,10 @@ public sealed class MacNotifications : ISystemNotifications
             }
         }
 #pragma warning disable CA1031 // Nothing may escape into native code.
-        catch (Exception)
+        catch (Exception ex)
 #pragma warning restore CA1031
         {
+            AppLog.Warn("Platform", "NotificationCallbackFailed", "macOS reported on a notification and the report could not be handled.", ex);
         }
     }
 
@@ -261,9 +264,10 @@ public sealed class MacNotifications : ISystemNotifications
             }
         }
 #pragma warning disable CA1031 // Nothing may escape into native code.
-        catch (Exception)
+        catch (Exception ex)
 #pragma warning restore CA1031
         {
+            AppLog.Warn("Platform", "NotificationCallbackFailed", "A click on a notification could not be handled.", ex);
         }
         finally
         {
@@ -282,9 +286,10 @@ public sealed class MacNotifications : ISystemNotifications
             CallBlock(completionHandler, ListAndBanner);
         }
 #pragma warning disable CA1031 // Nothing may escape into native code.
-        catch (Exception)
+        catch (Exception ex)
 #pragma warning restore CA1031
         {
+            AppLog.Warn("Platform", "NotificationCallbackFailed", "A notification arriving with the app in front could not be handled.", ex);
         }
     }
 

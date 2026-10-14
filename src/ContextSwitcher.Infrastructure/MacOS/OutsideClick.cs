@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using System.Runtime.InteropServices;
 
 namespace ContextSwitcher.Infrastructure.MacOS;
@@ -33,6 +34,7 @@ public static class OutsideClick
         }
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
         {
+            AppLog.MissingApi("the mouse button check", ex);
             return null;
         }
     }
@@ -52,6 +54,7 @@ public static class OutsideClick
         }
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
         {
+            AppLog.MissingApi("the pointer location", ex);
             return null;
         }
     }
@@ -70,6 +73,7 @@ public static class OutsideClick
         }
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
         {
+            AppLog.MissingApi("the window frame", ex);
             return null;
         }
     }

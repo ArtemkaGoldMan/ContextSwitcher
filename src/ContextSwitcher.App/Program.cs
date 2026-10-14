@@ -43,6 +43,7 @@ internal static class Program
         TimeSpan waitedForDisplay = interactive ? DisplayAvailability.WaitUntilAvailable() : TimeSpan.Zero;
 
         AppHost.Initialize(args);
+        ReportCrashes();
         if (waitedForDisplay > TimeSpan.Zero)
         {
             LogWaitedForDisplay(waitedForDisplay);
@@ -73,6 +74,26 @@ internal static class Program
             // a second time in this process, so a fresh one takes over once a display is awake.
             StartOver(args);
         }
+    }
+
+    /// <summary>
+    /// A crash leaves only macOS's own report, which says where the app stopped and nothing of what it
+    /// was doing. These write the trail that led to it first - the exception on any thread, and a
+    /// background task that failed with nobody waiting - before the process goes.
+    /// </summary>
+    private static void ReportCrashes()
+    {
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => AppLog.Critical(
+            "Crash",
+            "UnhandledException",
+            e.IsTerminating ? "The app crashed." : "An exception nothing handled.",
+            e.ExceptionObject as Exception);
+
+        TaskScheduler.UnobservedTaskException += (_, e) => AppLog.Error(
+            "Crash",
+            "UnobservedTaskException",
+            "A background task failed and nothing was waiting for its result.",
+            e.Exception);
     }
 
     private static int StartAttempt() =>
@@ -114,7 +135,7 @@ internal static class Program
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // A line in a log is not worth failing the launch for.
+            // Not logged: a line in a log is not worth failing the launch for.
         }
     }
 

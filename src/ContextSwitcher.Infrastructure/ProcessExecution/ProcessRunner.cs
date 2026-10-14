@@ -111,11 +111,11 @@ public sealed class ProcessRunner : IProcessRunner
         }
         catch (InvalidOperationException)
         {
-            // Process already exited between the cancellation firing and the kill attempt.
+            // Not logged: process already exited between the cancellation firing and the kill attempt.
         }
         catch (Win32Exception)
         {
-            // The OS refused the kill (already reaped, or no longer ours). Nothing more to do, and
+            // Not logged: the OS refused the kill (already reaped, or no longer ours). Nothing more to do, and
             // this runs while an exception may already be unwinding, so it must not throw.
         }
     }

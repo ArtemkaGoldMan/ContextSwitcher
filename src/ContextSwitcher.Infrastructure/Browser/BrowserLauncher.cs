@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
@@ -227,6 +228,7 @@ public sealed class BrowserLauncher
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
+            AppLog.Warn("Browser", "OpenedTabsNotRemembered", "Could not remember the tabs just opened, so they will be closed by address only.", e);
             // Remembering is a nicety: the tabs still close by address when the profile is left.
         }
     }
@@ -375,6 +377,7 @@ public sealed class BrowserLauncher
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
+            AppLog.Warn("Browser", "OpenedTabsNotRead", "Could not read the tabs this profile opened, so they are closed by address only.", e);
             return null;
         }
     }

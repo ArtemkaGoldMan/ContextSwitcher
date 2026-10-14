@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using System.ComponentModel;
 using System.Text.Json;
 using ContextSwitcher.Core.Abstractions;
@@ -260,8 +261,9 @@ public sealed class SystemCatalog : ISystemCatalog
                 .RunAsync(new ProcessStartOptions(fileName, arguments, ListTimeout), cancellationToken)
                 .ConfigureAwait(false);
         }
-        catch (Win32Exception)
+        catch (Win32Exception ex)
         {
+            AppLog.Warn("Process", "CouldNotStartProcess", $"Could not start '{fileName}': {ex.Message}", ex);
             return null;
         }
     }

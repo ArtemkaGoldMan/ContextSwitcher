@@ -167,6 +167,9 @@ public static class AppHost
 
         Services = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
+        // For the places that cannot be handed a logger: a callback from macOS, a catch in a static helper.
+        AppLog.Use(Services.GetRequiredService<ILogger>());
+
         // A log is a week long. Looked at on every start, so one nothing was written to for a month
         // does not still hold what it did in the month before.
         if (args.Length == 0 || !CliCommandRouter.IsHeadlessCommand(args[0]))
@@ -369,6 +372,7 @@ public static class AppHost
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            AppLog.Warn("Analytics", "TimeNotRecorded", "The time history could not be written.", ex);
         }
     }
 
@@ -388,6 +392,7 @@ public static class AppHost
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            AppLog.Warn("Analytics", "HistoryNotPruned", "Old time history could not be cleared away.", ex);
             // Nothing to do about it here; the next tick tries again.
         }
     }

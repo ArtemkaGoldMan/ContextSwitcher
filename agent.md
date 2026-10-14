@@ -557,6 +557,15 @@ What reaches the file (`TrailLogger`):
 - The file starts again after a week (the old one is kept as `app.log.jsonl.1` for another week) and
   rolls at 1 MB. Both are checked when the app starts.
 
+Where a class cannot be handed an `ILogger` - a callback from macOS, a static helper - it uses `AppLog`
+(`Warn`, `Error`, `Critical`, `MissingApi`), which does nothing until the app sets it up and never lets a
+failed write reach the caller. A crash on any thread (`AppDomain.UnhandledException`) and a background
+task nobody awaited (`UnobservedTaskException`) are written, with the trail, before the process ends.
+
+An exception is never swallowed without a trace: a `catch` that does nothing or only returns either
+logs, or carries a comment starting `Not logged:` with the reason. `SilentCatchTests` fails the build
+of any that says neither.
+
 Redaction (`LogRedactor`, applied to every entry before it is remembered):
 
 - Never log full command lines containing tokens.

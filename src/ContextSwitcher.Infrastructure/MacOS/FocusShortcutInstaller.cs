@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Logging;
 using System.ComponentModel;
 using System.Text;
 using System.Xml;
@@ -157,8 +158,9 @@ public sealed class FocusShortcutInstaller : IFocusShortcutInstaller
                 .RunAsync(new ProcessStartOptions(fileName, arguments, timeout), cancellationToken)
                 .ConfigureAwait(false);
         }
-        catch (Win32Exception)
+        catch (Win32Exception ex)
         {
+            AppLog.Warn("Process", "CouldNotStartProcess", $"Could not start '{fileName}': {ex.Message}", ex);
             return null;
         }
     }
