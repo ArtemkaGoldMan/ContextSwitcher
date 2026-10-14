@@ -210,6 +210,24 @@
       </StackPanel>
     </Border>
 
+    <!-- Diagnostics: the detailed log, and the report to send when something is wrong -->
+    <Border Classes="panel">
+      <StackPanel Spacing="10">
+        <TextBlock Text="{x:Static r:Strings.Settings_Diagnostics_Section}" Classes="sectionTitle" />
+        <ctl:FormRow Title="{x:Static r:Strings.Settings_DetailedLog}" Description="{x:Static r:Strings.Settings_DetailedLog_Description}">
+          <ToggleSwitch IsChecked="{Binding Diagnostics.DetailedLog}" AutomationProperties.Name="{x:Static r:Strings.Settings_DetailedLog}" />
+        </ctl:FormRow>
+        <TextBlock Text="{Binding Diagnostics.DetailedLogStatus}" Classes="caption" IsVisible="{Binding Diagnostics.HasDetailedLogStatus}" />
+        <Border Classes="divider" />
+        <TextBlock Text="{x:Static r:Strings.Settings_Diagnostics_Description}" Classes="caption" TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" Spacing="18">
+          <Button Classes="switchContext" Content="{x:Static r:Strings.Settings_CopyDiagnostics}" Command="{Binding Diagnostics.CopyCommand}" />
+          <Button Classes="linkButton secondary" Content="{x:Static r:Strings.Settings_ShowLog}" Command="{Binding Diagnostics.ShowLogCommand}" />
+        </StackPanel>
+        <TextBlock Text="{Binding Diagnostics.Message}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding Diagnostics.HasMessage}" />
+      </StackPanel>
+    </Border>
+
     <!-- About -->
     <Border Classes="panel">
       <StackPanel Spacing="10">

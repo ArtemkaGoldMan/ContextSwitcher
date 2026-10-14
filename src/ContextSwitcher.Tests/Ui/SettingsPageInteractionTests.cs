@@ -37,6 +37,50 @@ public sealed class SettingsPageInteractionTests : UiTest
         });
     }
 
+    /// <summary>The detailed log is a switch like the others: flipping it is the change, and it says until when.</summary>
+    [Fact]
+    public async Task TheDetailedLogSwitchTurnsItOnForAWeekAndSaysUntilWhen()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            UiScenario scenario = UiScenario.WithTwoProfiles();
+            SettingsViewModel viewModel = scenario.Settings();
+            Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 2400);
+
+            Assert.Null(AppHost.Configuration.DetailedLogUntil);
+            Click(window, FindControl<ToggleSwitch>(window, t => AutomationProperties.GetName(t) == "Detailed log"));
+            PumpUntil(WaitUntil(() => AppHost.Configuration.DetailedLogUntil is not null));
+
+            Assert.True(AppHost.Configuration.DetailedLogUntil > DateTimeOffset.UtcNow.AddDays(6));
+            Settle(window);
+            Assert.StartsWith("On until", FindControl<TextBlock>(window, t => t.Text?.StartsWith("On until", StringComparison.Ordinal) == true && IsClickable(t)).Text, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
+    public async Task CopyDiagnosticsIsOnThePageAndPutsTheReportOnTheClipboard()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            UiScenario scenario = UiScenario.WithTwoProfiles();
+            SettingsViewModel viewModel = scenario.Settings();
+            string? copied = null;
+            viewModel.Diagnostics.ClipboardWriter = text =>
+            {
+                copied = text;
+                return Task.FromResult(true);
+            };
+            Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 2400);
+
+            Click(window, FindControl<Button>(window, b => b.Content as string == "Copy diagnostics" && IsClickable(b)));
+            PumpUntil(WaitUntil(() => copied is not null));
+
+            Assert.StartsWith("Context Switcher diagnostics", copied, StringComparison.Ordinal);
+            Settle(window);
+            Assert.True(IsClickable(FindControl<TextBlock>(window, t => t.Text == "Copied. Paste it into your message.")));
+        });
+    }
+
     [Fact]
     public async Task ChoosingHowLongToKeepHistorySavesIt()
     {
@@ -110,7 +154,7 @@ public sealed class SettingsPageInteractionTests : UiTest
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
             SettingsViewModel viewModel = scenario.Settings();
-            Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 1400);
+            Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 2400);
             Application app = Application.Current!;
 
             Assert.Equal(ThemeVariant.Default, app.RequestedThemeVariant);
@@ -140,7 +184,7 @@ public sealed class SettingsPageInteractionTests : UiTest
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
             SettingsViewModel viewModel = scenario.Settings();
-            Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 1400);
+            Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 2400);
 
             Assert.Equal(["Match macOS", "English", "Українська"], viewModel.LanguageChoices.Select(c => c.Label));
 
@@ -187,7 +231,7 @@ public sealed class SettingsPageInteractionTests : UiTest
                 Notes = ["Update notifications.", "Turn a profile off."]
             };
             SettingsViewModel viewModel = scenario.Settings();
-            Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 1400);
+            Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 2400);
 
             Assert.True(IsClickable(FindVisibleButton(window, "Check now")));
             Assert.DoesNotContain(FindAll<Button>(window), b => b.Content as string == "Install and restart" && IsClickable(b));
@@ -216,7 +260,7 @@ public sealed class SettingsPageInteractionTests : UiTest
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
             SettingsViewModel viewModel = scenario.Settings();
-            Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 1400);
+            Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 2400);
 
             Assert.True(AppHost.Configuration.CheckForUpdates);
             Click(window, FindControl<ToggleSwitch>(window, t => AutomationProperties.GetName(t) == "Check for updates automatically"));

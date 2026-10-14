@@ -1623,6 +1623,38 @@
   <data name="Msg_Config_IgnoredAppEmpty" xml:space="preserve">
     <value>An app that's never touched needs a name.</value>
   </data>
+  <data name="Settings_Diagnostics_Section" xml:space="preserve">
+    <value>DIAGNOSTICS</value>
+    <comment>Settings: a section title, in capitals like the others.</comment>
+  </data>
+  <data name="Settings_DetailedLog" xml:space="preserve">
+    <value>Detailed log</value>
+    <comment>Settings → Diagnostics: a switch.</comment>
+  </data>
+  <data name="Settings_DetailedLog_Description" xml:space="preserve">
+    <value>Writes everything the app does to the log for a week, not only problems. For looking into something that isn't a failure; it turns itself off.</value>
+  </data>
+  <data name="Settings_DetailedLog_Until" xml:space="preserve">
+    <value>On until {0:d}.</value>
+    <comment>Settings → Diagnostics. {0} = the date the detailed log turns itself off.</comment>
+  </data>
+  <data name="Settings_Diagnostics_Description" xml:space="preserve">
+    <value>Copies the version, your macOS, what is switched on and the recent log to paste into a message. It has no profile names, web addresses or emails.</value>
+  </data>
+  <data name="Settings_CopyDiagnostics" xml:space="preserve">
+    <value>Copy diagnostics</value>
+    <comment>Settings → Diagnostics: a button.</comment>
+  </data>
+  <data name="Settings_ShowLog" xml:space="preserve">
+    <value>Show the log in Finder</value>
+    <comment>Settings → Diagnostics: a link.</comment>
+  </data>
+  <data name="Settings_Diagnostics_Copied" xml:space="preserve">
+    <value>Copied. Paste it into your message.</value>
+  </data>
+  <data name="Settings_Diagnostics_CouldNotCopy" xml:space="preserve">
+    <value>Couldn't copy to the clipboard.</value>
+  </data>
   <data name="Settings_Switching_Section" xml:space="preserve">
     <value>SWITCHING</value>
   </data>

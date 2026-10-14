@@ -183,6 +183,23 @@ public sealed class TrailLoggerTests : IDisposable
         Assert.Equal(2, this.Read().Count(line => line.EventId == "StepCompleted"));
     }
 
+    /// <summary>A report to send shows what has happened that no problem has asked to be written.</summary>
+    [Fact]
+    public async Task WhatIsOnlyRememberedCanBeAskedFor()
+    {
+        TrailLogger logger = this.NewLogger();
+
+        await logger.LogAsync(Entry("One", LogLevel.Information, 0, "a"));
+        await logger.LogAsync(Entry("Two", LogLevel.Information, 1, "a"));
+        Assert.Equal(["One", "Two"], logger.Remembered().Select(entry => entry.EventId));
+
+        await logger.LogAsync(Entry("Problem", LogLevel.Warning, 2, "a"));
+
+        Assert.Empty(logger.Remembered());
+        await logger.LogAsync(Entry("Three", LogLevel.Information, 3, "b"));
+        Assert.Equal(["Three"], logger.Remembered().Select(entry => entry.EventId));
+    }
+
     /// <summary>The rare notable event that is no problem - an update about to be installed - is still found later.</summary>
     [Fact]
     public async Task AnEntryMarkedToKeepIsWrittenThoughNothingWentWrong()

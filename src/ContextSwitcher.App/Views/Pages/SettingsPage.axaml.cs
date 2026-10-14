@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
@@ -23,6 +24,20 @@ public sealed partial class SettingsPage : UserControl
         if (this.DataContext is SettingsViewModel settings && TopLevel.GetTopLevel(this) is { } topLevel)
         {
             settings.Transfer.FilePicker ??= new StorageProviderSettingsFilePicker(topLevel);
+
+            // The clipboard is the window's too.
+            settings.Diagnostics.ClipboardWriter ??= new Func<string, Task<bool>>(text => CopyToClipboardAsync(topLevel, text));
         }
+    }
+
+    private static async Task<bool> CopyToClipboardAsync(TopLevel topLevel, string text)
+    {
+        if (topLevel.Clipboard is not { } clipboard)
+        {
+            return false;
+        }
+
+        await clipboard.SetTextAsync(text).ConfigureAwait(true);
+        return true;
     }
 }

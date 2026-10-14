@@ -1243,6 +1243,33 @@
   <data name="Msg_Config_IgnoredAppEmpty" xml:space="preserve">
     <value>Застосунок, який ніколи не чіпати, має мати назву.</value>
   </data>
+  <data name="Settings_Diagnostics_Section" xml:space="preserve">
+    <value>ДІАГНОСТИКА</value>
+  </data>
+  <data name="Settings_DetailedLog" xml:space="preserve">
+    <value>Детальний журнал</value>
+  </data>
+  <data name="Settings_DetailedLog_Description" xml:space="preserve">
+    <value>Тиждень пише в журнал усе, що робить застосунок, а не лише проблеми. Щоб розібратися з тим, що не є збоєм; сам вимикається.</value>
+  </data>
+  <data name="Settings_DetailedLog_Until" xml:space="preserve">
+    <value>Увімкнено до {0:d}.</value>
+  </data>
+  <data name="Settings_Diagnostics_Description" xml:space="preserve">
+    <value>Копіює версію, вашу macOS, що увімкнено і свіжий журнал, щоб вставити в повідомлення. У ньому немає назв профілів, веб-адрес чи пошти.</value>
+  </data>
+  <data name="Settings_CopyDiagnostics" xml:space="preserve">
+    <value>Скопіювати діагностику</value>
+  </data>
+  <data name="Settings_ShowLog" xml:space="preserve">
+    <value>Показати журнал у Finder</value>
+  </data>
+  <data name="Settings_Diagnostics_Copied" xml:space="preserve">
+    <value>Скопійовано. Вставте в повідомлення.</value>
+  </data>
+  <data name="Settings_Diagnostics_CouldNotCopy" xml:space="preserve">
+    <value>Не вдалося скопіювати в буфер обміну.</value>
+  </data>
   <data name="Settings_Switching_Section" xml:space="preserve">
     <value>ПЕРЕМИКАННЯ</value>
   </data>
