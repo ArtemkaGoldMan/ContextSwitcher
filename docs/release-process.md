@@ -51,6 +51,25 @@ base64 -i ~/.contextswitcher-signing/signing.p12 | gh secret set CS_SIGNING_P12_
 gh secret set CS_SIGNING_PASSWORD < ~/.contextswitcher-signing/signing-password.txt
 ```
 
+## What is checked before a change reaches main
+
+Every pull request, and every push to `main`, runs [`ci.yml`](../.github/workflows/ci.yml), and `main`
+does not accept a change until its first two checks pass (Settings → Branches):
+
+| Check | What it does |
+| --- | --- |
+| **Build and test** | The whole solution with warnings as errors, every test, and how much of the code they reach (shown in the run's summary). The test results are kept for two weeks. |
+| **App bundle** | Builds the `.app` the way a release does (signed ad hoc: pull requests have no secrets), checks its version, bundle identifier, `LSUIElement` and architecture, and runs it through its command line on a machine with no screen - [`scripts/smoke-test-app.sh`](../scripts/smoke-test-app.sh) switches profiles, refuses one that isn't there, and checks the log is silent after clean switches and tells the whole story after a failing one. The `.app` is kept for a week, so a pull request can be tried without building it. |
+| **Workflows and scripts** | Lints the workflows ([actionlint](https://github.com/rhysd/actionlint)) and the shell scripts ([ShellCheck](https://www.shellcheck.net)). |
+
+[`codeql.yml`](../.github/workflows/codeql.yml) scans the C# for the mistakes that become
+vulnerabilities, on pull requests, on `main` and every Monday; its findings are under Security → Code
+scanning. [`dependabot.yml`](../.github/dependabot.yml) opens a pull request a week at most for NuGet
+packages and for the actions the workflows use - Avalonia's packages together, the test packages together.
+
+To try a pull request's build: open its run, download the `ContextSwitcher-…` artifact, unzip it, and
+`xattr -dr com.apple.quarantine ContextSwitcher.app` as for any download.
+
 ## Building locally
 
 ```bash

@@ -1,0 +1,15 @@
+name: An idea
+description: Something Context Switcher could do, or do better.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like it to do?
+      description: What you are trying to get done matters more than how - say what a normal day looks like for you.
+    validations:
+      required: true
+  - type: textarea
+    id: now
+    attributes:
+      label: What do you do instead today?
