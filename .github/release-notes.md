@@ -1,12 +1,10 @@
-## What's new
+## What's new in 0.6.1
 
-- **Ask about everything else.** When you switch profiles, Context Switcher can now ask what to do with the apps and tabs no profile has: keep them, close them, or add them to the profile. Each comes with its icon. It has a Skip button and a "don't ask again" tick, and Settings → Switching lists apps to never touch (Telegram, say) - they are taken out of every profile and left alone.
-- **Click a profile to turn it on or off.** The whole card on the Profiles page is the switch - no Activate button - and the one that is on is bolder, with a glow.
-- **The dashboard opens where you are.** It comes up on the desktop you're on instead of taking you to another one.
-- **Chrome tabs close properly.** Tabs a profile opened are closed when you leave it even after they have redirected to another address (Fusion and the like).
-- **Only what your browser can do.** Browsers and profiles are chosen from the ones installed. Tab groups are gone: neither Chrome nor Safari lets another app open them, so that mode never worked. Pages you had in a group are kept as the profile's pages.
-- **Lighter.** Opening the dashboard costs about 14 MB less memory, and its clock no longer ticks while it is hidden.
-- **Starts on a dark screen.** Launching while the display is asleep (a Shortcut, a restart) waits for it to wake instead of crashing.
+- **Clear reasons when a switch doesn't go fully right.** A step that ran out of time says which. A browser tab that stayed open is named, by its site. An app that didn't quit says why that happens, and one that isn't installed is told apart from one that failed to open. When Chrome, Brave or Safari can't be reached, it says whether macOS refused (and where to turn it on: System Settings → Privacy & Security → Automation) or the browser didn't answer. Problems in the settings name the profile instead of "contexts[1]".
+- **A log that is quiet until something goes wrong, and then tells all of it.** When everything works, nothing is written. A problem is written with the whole switch that led to it, step by step, a header with the version and macOS, and nothing private: web addresses are cut to their site and emails and your user name are taken out. It starts again every week, and a crash is written too.
+- **Settings → Diagnostics.** *Copy diagnostics* puts the version, your macOS, what is switched on (counts, never names) and the recent log on the clipboard to paste into a message. *Detailed log* writes everything the app does for a week, for looking into something that isn't a failure.
+
+Coming from 0.5? Everything new in [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
 
 ## Install
 
