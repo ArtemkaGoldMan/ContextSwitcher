@@ -49,7 +49,8 @@ public sealed class SettingsViewModel : ViewModelBase
         UpdatesViewModel updates,
         Func<IReadOnlyList<string>>? preferredLanguages = null,
         ILoginItem? loginItem = null,
-        IInstalledAppsService? installedApps = null)
+        IInstalledAppsService? installedApps = null,
+        DiagnosticsSources? diagnostics = null)
     {
         this.loginItem = loginItem;
         this.loginItemStatus = loginItem?.Status ?? LoginItemStatus.Unavailable;
@@ -60,6 +61,7 @@ public sealed class SettingsViewModel : ViewModelBase
         this.Updates = updates;
         this.Transfer = new SettingsTransferViewModel(configurationStore);
         this.IgnoredApps = new IgnoredAppsViewModel(configurationStore, installedApps);
+        this.Diagnostics = new SettingsDiagnosticsViewModel(configurationStore, processRunner, diagnostics, () => this.AutomationGranted);
         this.askOnSwitch = AppHost.Configuration.AskOnSwitch;
 
         // "Don't ask again", in the window that asks, turns this off from outside Settings.
@@ -71,7 +73,11 @@ public sealed class SettingsViewModel : ViewModelBase
                 this.OnPropertyChanged(nameof(this.AskOnSwitch));
             }
         };
-        this.Transfer.Imported += (_, _) => this.ReloadFromConfiguration();
+        this.Transfer.Imported += (_, _) =>
+        {
+            this.ReloadFromConfiguration();
+            this.Diagnostics.Refresh();
+        };
 
         this.selectedAppearance = this.AppearanceChoices.First(c => c.Value == AppHost.Configuration.Appearance);
         this.LanguageChoices =
@@ -160,6 +166,9 @@ public sealed class SettingsViewModel : ViewModelBase
 
     /// <summary>The apps never touched, and adding to them.</summary>
     public IgnoredAppsViewModel IgnoredApps { get; }
+
+    /// <summary>The detailed log, and the report to send when something is wrong.</summary>
+    public SettingsDiagnosticsViewModel Diagnostics { get; }
 
     public bool ShowDockIcon
     {

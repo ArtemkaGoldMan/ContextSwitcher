@@ -224,7 +224,7 @@ public sealed class ContextSwitchService : IContextSwitchService
         await LogAsync(
             LogLevel.Information,
             "SwitchPlanned",
-            $"Planned {plan.Steps.Count} steps: {string.Join(", ", plan.Steps.Select(step => step.Type))}.",
+            plan.Steps.Count == 0 ? "Planned no steps." : $"Planned {plan.Steps.Count} steps: {string.Join(", ", plan.Steps.Select(step => step.Type))}.",
             subjectId,
             correlationId,
             cancellationToken,

@@ -61,6 +61,13 @@ public sealed record AppConfiguration
     public bool AskOnSwitch { get; init; }
 
     /// <summary>
+    /// Gets or sets the moment until which everything the app does is written to the log, not only
+    /// problems - turned on in Settings for a week of looking into something that is not a failure.
+    /// Null, or a moment past, is the ordinary quiet log.
+    /// </summary>
+    public DateTimeOffset? DetailedLogUntil { get; init; }
+
+    /// <summary>
     /// Gets or sets the apps ContextSwitcher never opens, closes, hides or asks about - one used in
     /// every profile, such as a messenger. Adding one takes it out of every profile; one still listed
     /// in a profile, by hand, is left alone all the same.

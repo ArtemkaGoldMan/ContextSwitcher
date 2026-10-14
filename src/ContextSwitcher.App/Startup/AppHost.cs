@@ -93,10 +93,19 @@ public static class AppHost
         // What happens is remembered and only a problem is written, with the trail that led to it - see
         // TrailLogger. CONTEXTSWITCHER_LOG_LEVEL=information (or debug, trace) writes from that level on
         // as it happens, for looking into something that is not a failure.
-        services.AddSingleton<ILogger>(provider => new TrailLogger(
+        services.AddSingleton(provider => new TrailLogger(
             provider.GetRequiredService<LocalJsonLogger>(),
             () => RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), AppBuild.IsDevelopment),
+
+            // Settings → Detailed log: everything is written, as it happens, until the week is up.
+            detailed: () => Configuration?.DetailedLogUntil is { } until && until > DateTimeOffset.UtcNow,
             writeFrom: Enum.TryParse(Environment.GetEnvironmentVariable("CONTEXTSWITCHER_LOG_LEVEL"), ignoreCase: true, out LogLevel from) ? from : null));
+        services.AddSingleton<ILogger>(provider => provider.GetRequiredService<TrailLogger>());
+        services.AddSingleton(provider => new DiagnosticsSources(
+            provider.GetRequiredService<ConfigPaths>(),
+            () => RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), AppBuild.IsDevelopment),
+            () => provider.GetRequiredService<TrailLogger>().Remembered(),
+            () => DateTimeOffset.UtcNow));
         services.AddSingleton<ConfigurationValidator>();
         services.AddSingleton<IAnalyticsSessionStore, AnalyticsSessionStore>();
         services.AddSingleton<IAnalyticsService, AnalyticsService>();

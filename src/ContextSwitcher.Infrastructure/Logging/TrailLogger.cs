@@ -98,6 +98,18 @@ public sealed class TrailLogger : ILogger
         await this.file.AppendAsync(lines, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// The latest entries that are only in memory, not in the file, oldest first - what has happened
+    /// that no problem has yet asked to be written. For a diagnostic report, which is made to be sent.
+    /// </summary>
+    public IReadOnlyList<LogEntry> Remembered(int most = 40)
+    {
+        lock (this.gate)
+        {
+            return this.trail.Where(crumb => !crumb.Written).TakeLast(most).Select(crumb => crumb.Entry).ToList();
+        }
+    }
+
     private void Remember(LogEntry entry)
     {
         this.trail.Add(new Crumb(entry));

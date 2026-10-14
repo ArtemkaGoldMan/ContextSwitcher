@@ -72,6 +72,7 @@ down with the reason — then asked about, as it replaces every profile and sett
 | `appearance` | `system` (follow macOS, the default), `light` or `dark`. Applies at once. |
 | `showDockIcon` | Shows the app in the Dock and ⌘-Tab as well as the menu bar. On for a new install; absent means on. Applies at once. |
 | `checkForUpdates` | Looks for a new release on GitHub once a day and offers it; never installs by itself. Absent means on. |
+| `detailedLogUntil` | A date and time. Until then the log holds everything the app does, not only problems — Settings → Diagnostics → Detailed log sets it to a week from now. Absent, or past, is the ordinary quiet log. |
 | `askOnSwitch` | Before a switch started in the app, asks what to do with the apps and tabs open that neither profile has — see below. Off unless turned on. |
 | `ignoredApps` | Apps never opened, closed, hidden or asked about, even if a profile still lists them. **Settings → Never touch these apps** takes each one out of every profile as it's added. |
 | `onboardingCompleted` | Absent means "already onboarded", so upgrading never re-runs the wizard. |
@@ -303,6 +304,11 @@ file can be sent to someone:
 ```bash
 tail -20 ~/.config/ContextSwitcher/app.log.jsonl | python3 -m json.tool --json-lines
 ```
+
+Settings → Diagnostics has **Copy diagnostics**, which puts the version, your macOS, what is switched
+on (counts, never names) and the recent log on the clipboard to paste into a message, and **Detailed
+log**, which writes everything the app does for a week — for looking into something that isn't a
+failure.
 
 Or preview a switch without applying anything:
 
