@@ -105,17 +105,24 @@
               <!-- A bad switch can fail at many steps; past a few lines they scroll here instead of
                    pushing the page out of the window. -->
               <ScrollViewer MaxHeight="132">
-                <ItemsControl ItemsSource="{Binding Profiles.Notice.Messages}">
+                <ItemsControl ItemsSource="{Binding Profiles.Notice.Lines}">
                   <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                       <StackPanel Spacing="4" />
                     </ItemsPanelTemplate>
                   </ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="x:String">
-                      <Grid ColumnDefinitions="Auto,*">
+                    <DataTemplate x:DataType="vm:NoticeLine">
+                      <Grid ColumnDefinitions="Auto,*,Auto">
                         <Ellipse Grid.Column="0" Width="4" Height="4" Fill="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Top" Margin="2,7,10,0" />
-                        <TextBlock Grid.Column="1" Text="{Binding}" Classes="body" TextWrapping="Wrap" />
+                        <TextBlock Grid.Column="1" Text="{Binding Text}" Classes="body" TextWrapping="Wrap" />
+                        <!-- Only for an app still running minutes later with no window on screen - in the
+                             background, or on another desktop, which the tooltip asks to check. -->
+                        <Button Grid.Column="2" Classes="linkButton" Content="{x:Static r:Strings.Notice_ForceQuit}"
+                                Command="{Binding ForceQuitCommand}" IsVisible="{Binding CanForceQuit}"
+                                ToolTip.Tip="{x:Static r:Strings.Notice_ForceQuit_Tip}"
+                                AutomationProperties.Name="{Binding ForceQuitName}"
+                                MinHeight="0" FontSize="13" VerticalAlignment="Top" Margin="12,0,0,0" />
                       </Grid>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>

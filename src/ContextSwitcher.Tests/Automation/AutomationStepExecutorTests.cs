@@ -1,4 +1,5 @@
 using ContextSwitcher.Core.Automation;
+using ContextSwitcher.Core.Messages;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Automation;
 using ContextSwitcher.Infrastructure.Browser;
@@ -93,7 +94,7 @@ public sealed class AutomationStepExecutorTests
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
         Assert.Equal(AutomationResultStatus.Warning, result.Status);
-        Assert.Equal("Didn't quit: TextEdit. An app stays open if it is asking you to save something.", result.Message);
+        Assert.Equal("Didn't quit: TextEdit. It may be asking whether to save changes.", result.Message);
         Assert.InRange(scriptRunner.Scripts.Count, 3, 16);
         Assert.All(scriptRunner.Timeouts, timeout => Assert.True(timeout <= step.Timeout * 0.5));
     }
@@ -558,12 +559,50 @@ public sealed class AutomationStepExecutorTests
         return new AutomationStep("SetFocusMode.work", AutomationStepType.SetFocusMode, "Set Focus mode", isCritical, TimeSpan.FromSeconds(10), arguments);
     }
 
-    private static AutomationStepExecutor CreateExecutor(FakeProcessRunner processRunner, FakeScriptRunner scriptRunner, FakeClock clock, FakeApplicationHider? hider = null)
+    private static AutomationStepExecutor CreateExecutor(FakeProcessRunner processRunner, FakeScriptRunner scriptRunner, FakeClock clock, FakeApplicationHider? hider = null, FakeAppProcesses? processes = null)
     {
         // No wait between "is it still running?" checks, so a test of an app that never quits does
-        // not sit through the real interval. Never the real hider: it would hide this Mac's apps.
+        // not sit through the real interval. Never the real hider: it would hide this Mac's apps -
+        // nor the real processes, whose windows are this Mac's.
         return new AutomationStepExecutor(
-            processRunner, scriptRunner, new BrowserLauncher(processRunner, scriptRunner), clock, quitConfirmInterval: TimeSpan.Zero, hider: hider ?? new FakeApplicationHider());
+            processRunner, scriptRunner, new BrowserLauncher(processRunner, scriptRunner), clock, quitConfirmInterval: TimeSpan.Zero,
+            hider: hider ?? new FakeApplicationHider(), processes: processes ?? new FakeAppProcesses());
+    }
+
+    /// <summary>
+    /// Autodesk Fusion answers being asked to quit with "user canceled" (-128), closes its windows and
+    /// is gone half a minute later; it was told as "it may be asking to save", which it was not. With
+    /// no window on screen it is still closing, which the follow-up watches.
+    /// </summary>
+    [Fact]
+    public async Task AnAppWithNoWindowOnScreenIsStillClosingNotAskingToSave()
+    {
+        FakeScriptRunner scriptRunner = new() { DefaultResult = new ProcessResult(0, "true", string.Empty, false) };
+        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "execution error: Autodesk Fusion got an error: User canceled. (-128)", false));
+        FakeAppProcesses processes = new FakeAppProcesses().Running("Autodesk Fusion", hasWindow: false);
+
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock(), processes: processes);
+        AutomationResult result = await executor.ExecuteAsync(CloseApplicationsStep(["Autodesk Fusion"], isCritical: false), CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Warning, result.Status);
+        UserMessage problem = Assert.Single(result.Problems);
+        Assert.Equal(SwitchMessages.StillClosing.Key, problem.Key);
+        Assert.Equal("Still closing: Autodesk Fusion. This line goes once it has quit.", problem.English);
+    }
+
+    /// <summary>Each app still running has a line of its own, so each can change on its own afterwards.</summary>
+    [Fact]
+    public async Task EachAppStillRunningHasALineOfItsOwn()
+    {
+        FakeScriptRunner scriptRunner = new() { DefaultResult = new ProcessResult(0, "true", string.Empty, false) };
+        FakeAppProcesses processes = new FakeAppProcesses().Running("Autodesk Fusion", hasWindow: false).Running("TextEdit", hasWindow: true);
+
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock(), processes: processes);
+        AutomationResult result = await executor.ExecuteAsync(CloseApplicationsStep(["Autodesk Fusion", "TextEdit", "Notes"], isCritical: false), CancellationToken.None);
+
+        Assert.Equal(
+            [(SwitchMessages.StillClosing.Key, "Autodesk Fusion"), (SwitchMessages.CouldNotClose.Key, "TextEdit"), (SwitchMessages.CouldNotClose.Key, "Notes")],
+            result.Problems.Select(problem => (problem.Key, problem.Arguments[0])));
     }
 
     [Fact]

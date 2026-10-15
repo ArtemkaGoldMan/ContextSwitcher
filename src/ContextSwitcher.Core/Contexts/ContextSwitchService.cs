@@ -108,6 +108,67 @@ public sealed class ContextSwitchService : IContextSwitchService
     }
 
     /// <summary>
+    /// Changes the problems the last switch recorded - an app that was still closing has gone, say -
+    /// as long as the switch that finished at <paramref name="completedAt"/> is still the last one and
+    /// no other is running: it holds the same locks a switch does, so it never writes over a newer
+    /// switch's state. With no problem left, a switch with warnings becomes one without.
+    /// </summary>
+    /// <returns>The state as written, or null when it was left as it was.</returns>
+    public async Task<CurrentContextState?> AmendLastSwitchAsync(
+        DateTimeOffset completedAt,
+        Func<IReadOnlyList<StateError>, IReadOnlyList<StateError>> amend,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(amend);
+
+        if (!await this.switchLock.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
+        FileStream? processLock = this.TryAcquireCrossProcessLock();
+        if (processLock is null)
+        {
+            this.switchLock.Release();
+            return null;
+        }
+
+        try
+        {
+            CurrentContextState? state = await this.jsonStore.ReadAsync<CurrentContextState>(this.statePath, cancellationToken).ConfigureAwait(false);
+            if (state is null || state.LastSwitchCompletedAt != completedAt)
+            {
+                return null;
+            }
+
+            IReadOnlyList<StateError> errors = amend(state.LastErrors);
+            if (errors.SequenceEqual(state.LastErrors))
+            {
+                return null;
+            }
+
+            bool cleared = errors.Count == 0 && state.LastSwitchStatus == nameof(ContextSwitchStatus.SucceededWithWarnings);
+            CurrentContextState amended = state with
+            {
+                LastErrors = errors,
+                LastSwitchStatus = cleared ? nameof(ContextSwitchStatus.Succeeded) : state.LastSwitchStatus
+            };
+            await this.jsonStore.WriteAsync(this.statePath, amended, cancellationToken).ConfigureAwait(false);
+            return amended;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            AppLog.Warn("ContextSwitch", "StateNotAmended", "Could not update the last switch's warnings.", ex);
+            return null;
+        }
+        finally
+        {
+            processLock.Dispose();
+            this.switchLock.Release();
+        }
+    }
+
+    /// <summary>
     /// Takes an exclusive lock on a file beside <c>state.json</c>, or returns <see langword="null"/>
     /// when another process already holds it. <see cref="FileShare.None"/> is enforced with an
     /// advisory lock on Unix, which the kernel drops when the owning process exits.

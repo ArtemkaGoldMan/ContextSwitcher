@@ -364,6 +364,13 @@ Why it's needed: [Why the Terminal command?](#why-the-terminal-command)
 ContextSwitcher asks apps to quit the way ⌘Q does, so an app with unsaved work shows its save
 dialog and stays open. The card on the Profiles page names it. Save your work and switch again, or
 untick **Close** for that app.
+
+Some apps close their windows and take a while longer to go - Autodesk Fusion takes about half a
+minute. The card says it is **still closing**, and the line goes on its own once it has quit. An
+app still running two minutes later with no window on screen is in the background, as Steam
+sometimes stays, or has its window on another desktop; its line has a **Force quit** button, which
+ends it at once, the way Force Quit in macOS does - check first that it isn't asking about saving.
+Nothing is ever ended by force unless you click it.
 </details>
 
 <details>
