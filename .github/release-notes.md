@@ -1,8 +1,12 @@
-## What's new in 0.6.3
+## What's new in 0.6.4
 
-- **A tidier Profiles page.** The line under the title that explained how to drag a profile is gone. Dragging works as before: press and hold a profile, then move it, and the menu bar and the dashboard list the profiles in the same order.
+- **Honest word when an app doesn't quit.** An app that is asked to quit and is still running had one message for everything: *"Didn't quit … it may be asking you to save something"* - even when it wasn't asking anything. Now each app gets its own line:
+  - **Still closing** - it has no window on screen and is finishing up, as Autodesk Fusion does for about half a minute. The line goes by itself once it has quit.
+  - **Still hasn't quit** - two minutes on it is still running with no window on screen, as Steam sometimes stays in the background. Its line has a **Force quit** button. Check first that the app isn't asking about saving: anything unsaved is lost. Nothing is ever ended by force unless you click it.
+  - **Didn't quit, may be asking whether to save changes** - it still has a window on screen. Answer it there.
+- **Newer Avalonia** (12.1.4), the toolkit the app's windows are built with.
 
-Coming from an older version? Everything new in [0.6.2](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.2), [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
+Coming from an older version? Everything new in [0.6.3](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.3), [0.6.2](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.2), [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
 
 ## Install
 
