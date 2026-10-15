@@ -39,7 +39,11 @@ public sealed class UiScenario
         this.Clock = new FakeClock();
         this.Sessions = new InMemoryAnalyticsSessionStore();
         this.Analytics = new AnalyticsService(this.Clock, this.Sessions);
-        this.Notice = new SwitchNoticeViewModel(DateTimeOffset.UtcNow);
+        this.Notice = new SwitchNoticeViewModel(DateTimeOffset.UtcNow, (_, app) =>
+        {
+            this.ForceQuit.Add(app);
+            return Task.CompletedTask;
+        });
         this.Releases = new FakeReleaseSource();
         this.Updater = new FakeAppUpdater();
         this.Updates = new UpdatesViewModel(this.Releases, this.Updater, this.ProcessRunner, new FakeSystemNotifications(), new Version(0, 1, 0), () => new DateTimeOffset(2026, 10, 10, 14, 32, 0, TimeSpan.Zero));
@@ -72,6 +76,9 @@ public sealed class UiScenario
 
     /// <summary>The main window's switch-problems card; counts switches from when the scenario began.</summary>
     public SwitchNoticeViewModel Notice { get; }
+
+    /// <summary>The apps the card's "Force quit" was clicked for - none is ended here.</summary>
+    public List<string> ForceQuit { get; } = [];
 
     /// <summary>What GitHub says the latest release is.</summary>
     public FakeReleaseSource Releases { get; }

@@ -8,10 +8,33 @@ namespace ContextSwitcher.Core.Messages;
 /// </summary>
 public static class SwitchMessages
 {
-    /// <summary>{0} is the apps that were still running after being asked to quit.</summary>
+    /// <summary>
+    /// {0} is an app still running after being asked to quit with a window on screen - or one whose
+    /// windows could not be looked at, so a question to save cannot be ruled out.
+    /// </summary>
     public static readonly MessageTemplate CouldNotClose = new(
         "Switch_CouldNotClose",
-        "Didn't quit: {0}. An app stays open if it is asking you to save something.");
+        "Didn't quit: {0}. It may be asking whether to save changes.");
+
+    /// <summary>
+    /// {0} is an app still running after being asked to quit with no window on screen: some apps
+    /// take half a minute to finish, and the switch does not wait for them. The line goes once it has
+    /// quit (<see cref="Contexts.ClosingAppsFollowUp"/>).
+    /// </summary>
+    public static readonly MessageTemplate StillClosing = new(
+        "Switch_StillClosing",
+        "Still closing: {0}. This line goes once it has quit.");
+
+    /// <summary>
+    /// {0} is an app still running minutes after being asked to quit, with no window on screen: in the
+    /// background, as Steam does, or with its window on another desktop, which can't be told apart.
+    /// </summary>
+    public static readonly MessageTemplate StayedInBackground = new(
+        "Switch_StayedInBackground",
+        "{0} still hasn't quit: it is running in the background, or its window is on another desktop.");
+
+    /// <summary>{0} is an app the person asked to force quit that was still running after.</summary>
+    public static readonly MessageTemplate CouldNotForceQuit = new("Switch_CouldNotForceQuit", "Could not force {0} to quit.");
 
     /// <summary>{0} is the apps macOS found no app for.</summary>
     public static readonly MessageTemplate AppsNotInstalled = new("Switch_AppsNotInstalled", "Not installed, so not opened: {0}.");

@@ -36,10 +36,10 @@ public sealed class MessageTextTests
     [Fact]
     public void AMessageIsShownInTheAppsLanguage()
     {
-        UserMessage message = SwitchMessages.CouldNotClose.With("Slack, Zoom");
+        UserMessage message = SwitchMessages.CouldNotClose.With("Slack");
 
-        Assert.Equal("Didn't quit: Slack, Zoom. An app stays open if it is asking you to save something.", MessageText.Of(message));
-        Assert.Equal("Не закрилось: Slack, Zoom. Застосунок лишається відкритим, якщо питає, чи зберегти зміни.", InUkrainian(() => MessageText.Of(message)));
+        Assert.Equal("Didn't quit: Slack. It may be asking whether to save changes.", MessageText.Of(message));
+        Assert.Equal("Не закрилось: Slack. Можливо, питає, чи зберегти зміни.", InUkrainian(() => MessageText.Of(message)));
     }
 
     /// <summary>A switch recorded before messages had keys still shows - in English, as it was written.</summary>

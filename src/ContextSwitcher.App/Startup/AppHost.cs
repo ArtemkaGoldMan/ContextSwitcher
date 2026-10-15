@@ -57,6 +57,7 @@ public static class AppHost
 
     private static StateFileWatcher? stateWatcher;
     private static AwayEvents? awayEvents;
+    private static ClosingAppsFollowUp? closingFollowUp;
 
     /// <summary>
     /// Gets the runtime state loaded during startup, or a fresh default when none was persisted.
@@ -122,6 +123,7 @@ public static class AppHost
             provider.GetRequiredService<IOpenedTabsStore>(),
             provider.GetRequiredService<IBrowserRuns>()));
         services.AddSingleton<IApplicationHider, MacApplicationHider>();
+        services.AddSingleton<IAppProcesses, MacAppProcesses>();
         services.AddSingleton<IAutomationStepExecutor, AutomationStepExecutor>();
         services.AddSingleton(provider => new ContextSwitchService(
             provider.GetRequiredService<IJsonStore>(),
@@ -132,6 +134,10 @@ public static class AppHost
             provider.GetRequiredService<ILogger>(),
             provider.GetRequiredService<ConfigPaths>().SettingsPath,
             provider.GetRequiredService<ConfigPaths>().StatePath));
+        services.AddSingleton(provider => new ClosingAppsFollowUp(
+            provider.GetRequiredService<ContextSwitchService>(),
+            provider.GetRequiredService<IAppProcesses>(),
+            provider.GetRequiredService<IClock>()));
 
         // Switches started in the app ask, when that's on, about everything else open; the command
         // line has no window to ask in, so it switches through the service itself.
@@ -154,7 +160,10 @@ public static class AppHost
 
         // One for the whole run, created now: it remembers a closed notice across windows, and counts
         // switches from the moment the app started rather than from when a window first asked.
-        services.AddSingleton(new SwitchNoticeViewModel(DateTimeOffset.UtcNow));
+        // Its "Force quit" asks the follow-up, which is only built later - so it is found when clicked.
+        services.AddSingleton(new SwitchNoticeViewModel(
+            DateTimeOffset.UtcNow,
+            (completedAt, app) => Services.GetRequiredService<ClosingAppsFollowUp>().ForceQuitAsync(completedAt, app, CancellationToken.None)));
 
         // Releases are about 50 MB, so the client's own timeout is generous; the API request has a
         // short one of its own.
@@ -362,7 +371,40 @@ public static class AppHost
         // No time counts while the Mac sleeps, its screen is locked, or another user is in front.
         awayEvents ??= StartAwayPause(Services.GetRequiredService<IAnalyticsService>());
 
+        // An app a switch asked to quit that was still going when it finished is watched for a couple
+        // of minutes, and its line in the warnings follows what it does.
+        closingFollowUp ??= StartClosingFollowUp(Services.GetRequiredService<ClosingAppsFollowUp>());
+
         Services.GetRequiredService<UpdatesViewModel>().StartAutomaticChecks();
+    }
+
+    /// <summary>
+    /// Has <paramref name="followUp"/> watch each switch that finishes from now on - wherever it was
+    /// started, the command line included - and shows what it changes, as long as that is still the
+    /// last switch: one that finished meanwhile has warnings of its own.
+    /// </summary>
+    private static ClosingAppsFollowUp StartClosingFollowUp(ClosingAppsFollowUp followUp)
+    {
+        DateTimeOffset since = DateTimeOffset.UtcNow;
+        DateTimeOffset? watched = null;
+        StateChanged += (_, _) =>
+        {
+            if (State.LastSwitchCompletedAt is { } completedAt && completedAt >= since && completedAt != watched)
+            {
+                watched = completedAt;
+                followUp.Watch(State);
+            }
+        };
+
+        followUp.StateAmended += (_, amended) => Dispatcher.UIThread.Post(() =>
+        {
+            if (State.LastSwitchCompletedAt == amended.LastSwitchCompletedAt)
+            {
+                UpdateState(amended);
+            }
+        });
+
+        return followUp;
     }
 
     private static void StartAliveRecording(IAnalyticsService analyticsService)

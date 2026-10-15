@@ -40,6 +40,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
     private readonly BrowserLauncher browserLauncher;
     private readonly IClock clock;
     private readonly IApplicationHider hider;
+    private readonly IAppProcesses processes;
     private readonly TimeSpan quitConfirmInterval;
 
     /// <summary>
@@ -52,7 +53,8 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         BrowserLauncher browserLauncher,
         IClock clock,
         TimeSpan? quitConfirmInterval = null,
-        IApplicationHider? hider = null)
+        IApplicationHider? hider = null,
+        IAppProcesses? processes = null)
     {
         ArgumentNullException.ThrowIfNull(processRunner);
         ArgumentNullException.ThrowIfNull(scriptRunner);
@@ -65,6 +67,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         this.clock = clock;
         this.quitConfirmInterval = quitConfirmInterval ?? DefaultQuitConfirmInterval;
         this.hider = hider ?? new MacApplicationHider();
+        this.processes = processes ?? new MacAppProcesses();
     }
 
     /// <inheritdoc />
@@ -91,7 +94,7 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
     {
         DateTimeOffset startedAt = this.clock.UtcNow;
         string[] apps = SplitArgument(step.Arguments, "apps");
-        List<string> stillRunning = [];
+        List<UserMessage> problems = [];
         StringBuilder standardError = new();
 
         // Section 9.1 budgets ten seconds per app, which the plan builder encodes as
@@ -130,24 +133,26 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         {
             AppendIfPresent(standardError, app, error);
 
+            // One line per app, for what came of it can differ: an app with a window on screen may be
+            // asking to save; one with none is finishing - or staying on in the background, which
+            // ClosingAppsFollowUp tells apart once it has watched a while. Every app answers "user
+            // canceled" (-128) to being asked to quit when it quits its own way, so that answer says
+            // nothing either way; the window does.
             if (isStillRunning)
             {
-                stillRunning.Add(app);
+                problems.Add(this.processes.HasWindowOnScreen(app) == false
+                    ? SwitchMessages.StillClosing.With(app)
+                    : SwitchMessages.CouldNotClose.With(app));
             }
         }
 
         DateTimeOffset completedAt = this.clock.UtcNow;
-        if (stillRunning.Count == 0)
+        if (problems.Count == 0)
         {
             return Succeeded(step, "All applications closed.", startedAt, completedAt);
         }
 
-        return Degraded(
-            step,
-            SwitchMessages.CouldNotClose.With(string.Join(", ", stillRunning)),
-            standardError.ToString(),
-            startedAt,
-            completedAt);
+        return Degraded(step, problems, standardError.ToString(), startedAt, completedAt);
     }
 
     /// <summary>

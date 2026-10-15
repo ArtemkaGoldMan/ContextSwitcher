@@ -3,6 +3,7 @@ using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.Core.Messages;
 using ContextSwitcher.Tests.App;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
@@ -140,6 +141,78 @@ public sealed class SwitchNoticeViewModelTests
         AppHost.UpdateState(Switched(string.Empty, ContextSwitchStatus.Failed, Started.AddMinutes(6), "Could not close Slack.") with { PreviousContextId = "work" });
         Assert.Equal("Couldn't turn off Work", notice.Title);
     }
+    /// <summary>
+    /// An app the switch left closing goes, or stays on in the background, after the card is up: the
+    /// card follows, offers to end the one in the background, and goes when nothing is left.
+    /// </summary>
+    [Fact]
+    public async Task TheOpenCardFollowsItsSwitchAsAppsQuitOrStay()
+    {
+        List<(DateTimeOffset, string)> forceQuit = [];
+        using SwitchNoticeViewModel notice = new(Started, (completedAt, app) =>
+        {
+            forceQuit.Add((completedAt, app));
+            return Task.CompletedTask;
+        });
+        DateTimeOffset completedAt = Started.AddMinutes(5);
+
+        AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StillClosing.With("Autodesk Fusion"), SwitchMessages.StillClosing.With("Steam")));
+        Assert.Equal(2, notice.Lines.Count);
+        Assert.DoesNotContain(notice.Lines, line => line.CanForceQuit);
+
+        AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StayedInBackground.With("Steam")));
+        NoticeLine steam = Assert.Single(notice.Lines);
+        Assert.Equal(["Steam still hasn't quit: it is running in the background, or its window is on another desktop."], notice.Messages);
+        Assert.True(steam.CanForceQuit);
+        Assert.Equal("Force quit Steam", steam.ForceQuitName);
+        await steam.ForceQuitCommand!.ExecuteAsync(null);
+        Assert.Equal([(completedAt, "Steam")], forceQuit);
+
+        AppHost.UpdateState(Keyed(completedAt) with { LastSwitchStatus = nameof(ContextSwitchStatus.Succeeded) });
+        Assert.False(notice.IsShown);
+    }
+
+    [Fact]
+    public void AClosedCardStaysClosedWhenItsSwitchChanges()
+    {
+        using SwitchNoticeViewModel notice = new(Started);
+        DateTimeOffset completedAt = Started.AddMinutes(5);
+        AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StillClosing.With("Steam")));
+
+        notice.DismissCommand.Execute(null);
+        AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StayedInBackground.With("Steam")));
+
+        Assert.False(notice.IsShown);
+    }
+
+    [Fact]
+    public void ACardSayingASwitchWasTurnedAwayKeepsSayingIt()
+    {
+        DateTimeOffset completedAt = Started.AddMinutes(5);
+        AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StillClosing.With("Steam")));
+        using SwitchNoticeViewModel notice = new(Started);
+
+        notice.ShowRejected("Couldn't switch to Work", "Another switch is already running.", Started.AddMinutes(6));
+        AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StayedInBackground.With("Steam")));
+
+        Assert.Equal(["Another switch is already running."], notice.Messages);
+    }
+
+    private static CurrentContextState Keyed(DateTimeOffset completedAt, params UserMessage[] problems) => new()
+    {
+        CurrentContextId = "personal",
+        LastSwitchCompletedAt = completedAt,
+        LastSwitchStatus = nameof(ContextSwitchStatus.SucceededWithWarnings),
+        LastErrors = problems.Select(problem => new StateError
+        {
+            StepId = "CloseApplications.work",
+            Message = problem.English,
+            MessageKey = problem.Key,
+            MessageArguments = problem.Arguments,
+            OccurredAt = completedAt
+        }).ToList()
+    };
+
     private static CurrentContextState Switched(string contextId, ContextSwitchStatus status, DateTimeOffset completedAt, params string[] errors) => new()
     {
         CurrentContextId = contextId,
