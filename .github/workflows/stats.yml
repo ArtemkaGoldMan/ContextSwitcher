@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # The data lives on a branch of its own, with none of the code: a commit a day on main would
       # need a pull request each time.
