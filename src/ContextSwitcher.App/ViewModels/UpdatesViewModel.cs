@@ -228,12 +228,13 @@ public sealed class UpdatesViewModel : ViewModelBase
 
     private async Task InstallAsync()
     {
-        if (this.available is not { } release || this.IsBusy)
+        if (this.available is not { } found || this.IsBusy)
         {
             return;
         }
 
         this.IsBusy = true;
+        ReleaseInfo release = await this.NewestAsync(found).ConfigureAwait(true);
         this.StatusText = Localized.Format(Strings.Updates_Downloading, ReleaseVersion.Format(release.Version));
         try
         {
@@ -278,6 +279,37 @@ public sealed class UpdatesViewModel : ViewModelBase
                 Localized.Format(Strings.Notification_UpdateTitle, ReleaseVersion.Format(version)),
                 Strings.Notification_UpdateBody);
         }
+    }
+
+    /// <summary>
+    /// The newest release, asked for again just before installing. The one the last check found can be
+    /// a day old - with Check now hidden while it is offered - and installing it then found the next
+    /// one straight after: 0.6.4 went in over 0.6.3 with 0.6.5 already out, and the app updated twice in
+    /// a row. When GitHub can't be asked, the release already found is installed.
+    /// </summary>
+    private async Task<ReleaseInfo> NewestAsync(ReleaseInfo found)
+    {
+        try
+        {
+            if (await this.releaseSource.GetLatestAsync(CancellationToken.None).ConfigureAwait(true) is { } latest && latest.Version > found.Version)
+            {
+                AppLog.Note(
+                    "Updates",
+                    "NewerAtInstall",
+                    $"{ReleaseVersion.Format(latest.Version)} came out since {ReleaseVersion.Format(found.Version)} was found; installing it instead.");
+                this.SetAvailable(latest);
+                return latest;
+            }
+        }
+        catch (UpdateException ex)
+        {
+            AppLog.Note(
+                "Updates",
+                "RecheckFailed",
+                $"Couldn't ask for a newer release before installing, so installing {ReleaseVersion.Format(found.Version)}: {ex.Detail.English}");
+        }
+
+        return found;
     }
 
     private void SetAvailable(ReleaseInfo? release)
