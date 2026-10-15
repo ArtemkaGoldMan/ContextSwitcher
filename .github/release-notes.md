@@ -1,12 +1,14 @@
-## What's new in 0.6.4
+## What's new in 0.6.5
 
-- **Honest word when an app doesn't quit.** An app that is asked to quit and is still running had one message for everything: *"Didn't quit … it may be asking you to save something"* - even when it wasn't asking anything. Now each app gets its own line:
-  - **Still closing** - it has no window on screen and is finishing up, as Autodesk Fusion does for about half a minute. The line goes by itself once it has quit.
-  - **Still hasn't quit** - two minutes on it is still running with no window on screen, as Steam sometimes stays in the background. Its line has a **Force quit** button. Check first that the app isn't asking about saving: anything unsaved is lost. Nothing is ever ended by force unless you click it.
-  - **Didn't quit, may be asking whether to save changes** - it still has a window on screen. Answer it there.
-- **Newer Avalonia** (12.1.4), the toolkit the app's windows are built with.
+- **Write to the developer from the app.** Settings has a new **Contact** section:
+  - **Write an email** opens a new message to contextswitcher.app@gmail.com in your mail app. The version is already in it, along with the questions worth answering, and the diagnostics are copied for you to paste in.
+  - **Open an issue on GitHub** opens the bug form, also with the diagnostics copied.
+  - **What to write** says what helps.
 
-Coming from an older version? Everything new in [0.6.3](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.3), [0.6.2](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.2), [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
+  No GitHub account is needed for the email, and nothing is sent until you send it yourself.
+- **Support the developer** now opens [one page with every way to donate](https://artemkagoldman.github.io/support/): Donatello, a Monobank jar and more to come.
+
+Coming from an older version? Everything new in [0.6.4](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.4), [0.6.3](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.3), [0.6.2](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.2), [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
 
 ## Install
 
