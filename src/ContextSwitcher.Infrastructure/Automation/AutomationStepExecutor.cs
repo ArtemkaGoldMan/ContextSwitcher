@@ -133,14 +133,14 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
         {
             AppendIfPresent(standardError, app, error);
 
-            // One line per app, for what came of it can differ: an app with a window left may be asking
-            // to save; one with none closed its windows and is finishing - or staying on in the
-            // background, which ClosingAppsFollowUp tells apart once it has watched a while. Every
-            // app answers "user canceled" (-128) to being asked to quit when it quits its own way, so
-            // that answer says nothing either way; the window does.
+            // One line per app, for what came of it can differ: an app with a window on screen may be
+            // asking to save; one with none is finishing - or staying on in the background, which
+            // ClosingAppsFollowUp tells apart once it has watched a while. Every app answers "user
+            // canceled" (-128) to being asked to quit when it quits its own way, so that answer says
+            // nothing either way; the window does.
             if (isStillRunning)
             {
-                problems.Add(this.processes.HasWindow(app) == false
+                problems.Add(this.processes.HasWindowOnScreen(app) == false
                     ? SwitchMessages.StillClosing.With(app)
                     : SwitchMessages.CouldNotClose.With(app));
             }

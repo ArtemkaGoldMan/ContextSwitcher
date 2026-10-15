@@ -59,8 +59,8 @@ public static class ClosingApps
     }
 
     /// <summary>
-    /// <paramref name="app"/> is still running when the watch is over: with a window it may
-    /// be asking to save; with none it stayed on in the background.
+    /// <paramref name="app"/> is still running when the watch is over: with a window on screen it may
+    /// be asking to save; with none it is in the background, or its window is on another desktop.
     /// </summary>
     public static IReadOnlyList<StateError> Stayed(IReadOnlyList<StateError> errors, string app, bool hasWindow) =>
         Replace(errors, app, hasWindow ? SwitchMessages.CouldNotClose.With(app) : SwitchMessages.StayedInBackground.With(app));

@@ -572,10 +572,10 @@ public sealed class AutomationStepExecutorTests
     /// <summary>
     /// Autodesk Fusion answers being asked to quit with "user canceled" (-128), closes its windows and
     /// is gone half a minute later; it was told as "it may be asking to save", which it was not. With
-    /// no window left it is still closing, which the follow-up watches.
+    /// no window on screen it is still closing, which the follow-up watches.
     /// </summary>
     [Fact]
-    public async Task AnAppWithNoWindowLeftIsStillClosingNotAskingToSave()
+    public async Task AnAppWithNoWindowOnScreenIsStillClosingNotAskingToSave()
     {
         FakeScriptRunner scriptRunner = new() { DefaultResult = new ProcessResult(0, "true", string.Empty, false) };
         scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "execution error: Autodesk Fusion got an error: User canceled. (-128)", false));
@@ -587,7 +587,7 @@ public sealed class AutomationStepExecutorTests
         Assert.Equal(AutomationResultStatus.Warning, result.Status);
         UserMessage problem = Assert.Single(result.Problems);
         Assert.Equal(SwitchMessages.StillClosing.Key, problem.Key);
-        Assert.Equal("Still closing: Autodesk Fusion - its windows are closed. This line goes once it has quit.", problem.English);
+        Assert.Equal("Still closing: Autodesk Fusion. This line goes once it has quit.", problem.English);
     }
 
     /// <summary>Each app still running has a line of its own, so each can change on its own afterwards.</summary>

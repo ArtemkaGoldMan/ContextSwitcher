@@ -97,8 +97,8 @@ public sealed class MainAppWindowInteractionTests : UiTest
     }
 
     /// <summary>
-    /// An app that closed its windows and stayed in the background has "Force quit" beside its line,
-    /// which asks for it to be ended; a line about an app that may be asking to save has none.
+    /// An app still running in the background has "Force quit" beside its line, which asks for it to
+    /// be ended; a line about an app that may be asking to save has none.
     /// </summary>
     [Fact]
     public async Task AnAppLeftInTheBackgroundCanBeForceQuitFromTheCard()
@@ -117,7 +117,7 @@ public sealed class MainAppWindowInteractionTests : UiTest
             Settle(window);
             Border notice = FindControl<Border>(window, b => AutomationProperties.GetName(b) == "Switch problems");
 
-            Assert.True(IsClickable(FindControl<TextBlock>(notice, t => t.Text == "Steam closed its windows but kept running in the background.")));
+            Assert.True(IsClickable(FindControl<TextBlock>(notice, t => t.Text == "Steam still hasn't quit: it is running in the background, or its window is on another desktop.")));
             Assert.Single(FindAll<Button>(notice), b => b.IsEffectivelyVisible && Equals(b.Content, "Force quit"));
             Button forceQuit = FindControl<Button>(notice, b => AutomationProperties.GetName(b) == "Force quit Steam");
             Assert.True(IsClickable(forceQuit));

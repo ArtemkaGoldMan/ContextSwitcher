@@ -10,9 +10,9 @@ namespace ContextSwitcher.Core.Contexts;
 /// take half a minute to go - Autodesk Fusion does - and a switch does not wait that long; some close
 /// their windows and stay on in the background - Steam, at times. Each one that goes has its line
 /// taken off the switch's warnings. Each still running when <see cref="WatchFor"/> is up gets a line
-/// saying which it is: with a window, it may be asking to save; without, it stayed in the background,
-/// and the person can have it ended by force (<see cref="ForceQuitAsync"/>). Nothing is ever ended
-/// without being asked.
+/// saying what can be seen: with a window on screen, it may be asking to save; without, it is in the
+/// background or has its window on another desktop, and the person - who can look - can have it
+/// ended by force (<see cref="ForceQuitAsync"/>). Nothing is ever ended without being asked.
 /// </summary>
 public sealed class ClosingAppsFollowUp
 {
@@ -123,8 +123,9 @@ public sealed class ClosingAppsFollowUp
     private async Task WatchAsync(DateTimeOffset completedAt, IReadOnlyList<string> apps, IReadOnlyList<StateError> errors, CancellationToken cancellationToken)
     {
         // Only an app found running now can be seen going. One the switch said was still closing was
-        // found then - its windows were counted - so not finding it now means it has quit. One it said
-        // didn't quit may simply be called something the running apps don't go by, and is left as is.
+        // found then - its windows were looked at - so not finding it now means it has quit. One it
+        // said didn't quit may simply be called something the running apps don't go by, and is left
+        // as is.
         List<string> pending = apps
             .Where(app => this.processes.IsRunning(app) == true || ClosingApps.WasClosing(errors, app))
             .ToList();
@@ -154,13 +155,13 @@ public sealed class ClosingAppsFollowUp
 
                 // Unknown counts as a window: "may be asking to save" is the safer thing to say, and
                 // offers nothing to end by force.
-                bool hasWindow = this.processes.HasWindow(app) ?? true;
+                bool hasWindow = this.processes.HasWindowOnScreen(app) ?? true;
                 AppLog.Record(
                     "ContextSwitch",
                     "AppStillRunning",
                     hasWindow
                         ? $"{app} was still running {this.SecondsSince(completedAt)} seconds after the switch, with a window open."
-                        : $"{app} was still running {this.SecondsSince(completedAt)} seconds after the switch, with no window: it stayed in the background.");
+                        : $"{app} was still running {this.SecondsSince(completedAt)} seconds after the switch, with no window on screen.");
                 await this.AmendAsync(completedAt, errors => ClosingApps.Stayed(errors, app, hasWindow), cancellationToken).ConfigureAwait(false);
             }
         }

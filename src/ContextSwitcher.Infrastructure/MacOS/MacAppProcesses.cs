@@ -9,16 +9,13 @@ namespace ContextSwitcher.Infrastructure.MacOS;
 /// <list type="bullet">
 /// <item>whether it still runs: <c>kill(pid, 0)</c>, as the workspace's list only changes when the
 /// main run loop turns, and could still list an app that has gone;</item>
-/// <item>whether it has a window the person can get to: <c>CGWindowListCopyWindowInfo</c>, whose
-/// owner, layer, alpha and size need no Screen Recording permission - only window titles do, and
-/// none are read. A window on another desktop counts, not only one on screen: an app asking to save
-/// over there must not look windowless. But many apps keep hidden windows that are on no desktop at
-/// all - VS Code and Claude do - and those don't count, or an app that closed every window would
-/// seem to have one. Which desktop a window is on, macOS only says through the private
-/// <c>CGSCopySpacesForWindows</c>, which window tools rely on; should it ever go, every window
-/// counts, which errs towards "may be asking to save" and never offers to end an app by force.
-/// Windows of the app's child processes are its own: Steam draws every window it shows in a
-/// "Steam Helper" it started, and its own process has only hidden ones;</item>
+/// <item>whether it has a window on screen: <c>CGWindowListCopyWindowInfo</c>, whose owner, layer,
+/// alpha and size need no Screen Recording permission - only window titles do, and none are read.
+/// Only the windows on screen now count. A window on another desktop can't be told from one an app
+/// keeps hidden for later - Steam keeps its menus that way, and they look the same in every way
+/// macOS will say, even through its private desktop calls - so the caller says "or its window is on
+/// another desktop" rather than guess. Windows of the app's child processes are its own: Steam draws
+/// every window it shows in a "Steam Helper" it started, and its own process has only hidden ones;</item>
 /// <item>and ending it: <c>NSRunningApplication.forceTerminate</c>, which any app may ask of another.</item>
 /// </list>
 /// </summary>
@@ -34,17 +31,16 @@ public sealed class MacAppProcesses : IAppProcesses
     /// <summary>More processes than any app starts: a bound on walking its children.</summary>
     private const int MostProcesses = 1024;
 
-    private const uint AllWindows = 0;
+    private const uint OnScreenOnly = 1 << 0;
     private const uint ExcludeDesktopElements = 1 << 4;
-    private const int AllSpaces = 7;
     private const int NumberSInt32 = 3;
     private const int NumberDouble = 13;
     private const uint Utf8 = 0x08000100;
     private const int NoSuchProcess = 3;
 
     /// <summary>
-    /// Smaller than this on either side is not a window anyone works in - the strips and 1×1 helpers
-    /// apps keep along the menu bar - so it does not count. A "save changes?" alert is bigger.
+    /// Smaller than this on either side is not a window anyone works in - the 1×1 and strip helpers
+    /// some apps keep - so it does not count. A "save changes?" alert is bigger.
     /// </summary>
     private const double SmallestWindow = 100;
 
@@ -60,7 +56,7 @@ public sealed class MacAppProcesses : IAppProcesses
     }
 
     /// <inheritdoc />
-    public bool? HasWindow(string app)
+    public bool? HasWindowOnScreen(string app)
     {
         if (Find(app) is not { Count: > 0 } found || !NativeLibrary.TryLoad(CoreGraphics, out _))
         {
@@ -75,18 +71,16 @@ public sealed class MacAppProcesses : IAppProcesses
 
         HashSet<int> pids = WithChildren(alive);
 
-        IntPtr windows = CGWindowListCopyWindowInfo(AllWindows | ExcludeDesktopElements, 0);
+        IntPtr windows = CGWindowListCopyWindowInfo(OnScreenOnly | ExcludeDesktopElements, 0);
         if (windows == IntPtr.Zero)
         {
             return null;
         }
 
         IntPtr ownerKey = Key("kCGWindowOwnerPID");
-        IntPtr numberKey = Key("kCGWindowNumber");
         IntPtr layerKey = Key("kCGWindowLayer");
         IntPtr alphaKey = Key("kCGWindowAlpha");
         IntPtr boundsKey = Key("kCGWindowBounds");
-        IntPtr onScreenKey = Key("kCGWindowIsOnscreen");
         try
         {
             nint count = CFArrayGetCount(windows);
@@ -98,8 +92,7 @@ public sealed class MacAppProcesses : IAppProcesses
                     && (Double(window, alphaKey) ?? 1) > 0
                     && CFDictionaryGetValue(window, boundsKey) is var bounds && bounds != IntPtr.Zero
                     && CGRectMakeWithDictionaryRepresentation(bounds, out Rect rect) != 0
-                    && rect.Width >= SmallestWindow && rect.Height >= SmallestWindow
-                    && (IsTrue(window, onScreenKey) || IsOnADesktop(Int(window, numberKey)) != false))
+                    && rect.Width >= SmallestWindow && rect.Height >= SmallestWindow)
                 {
                     return true;
                 }
@@ -109,50 +102,13 @@ public sealed class MacAppProcesses : IAppProcesses
         }
         finally
         {
-            Release(onScreenKey);
             Release(boundsKey);
             Release(alphaKey);
             Release(layerKey);
-            Release(numberKey);
             Release(ownerKey);
             CFRelease(windows);
         }
     }
-
-    /// <summary>
-    /// Whether a window is on any desktop - this one or another - or null when macOS won't say. A
-    /// window an app ordered out to keep for later is on none.
-    /// </summary>
-    private static bool? IsOnADesktop(int? windowNumber)
-    {
-        if (windowNumber is not { } number || SpaceFunctions.Value is var callBacks && callBacks == IntPtr.Zero)
-        {
-            return null;
-        }
-
-        IntPtr numberValue = CFNumberCreate(IntPtr.Zero, NumberSInt32, ref number);
-        IntPtr list = numberValue == IntPtr.Zero ? IntPtr.Zero : CFArrayCreate(IntPtr.Zero, [numberValue], 1, callBacks);
-        try
-        {
-            IntPtr spaces = list == IntPtr.Zero ? IntPtr.Zero : CGSCopySpacesForWindows(CGSMainConnectionID(), AllSpaces, list);
-            if (spaces == IntPtr.Zero)
-            {
-                return null;
-            }
-
-            bool onOne = CFArrayGetCount(spaces) > 0;
-            CFRelease(spaces);
-            return onOne;
-        }
-        finally
-        {
-            Release(list);
-            Release(numberValue);
-        }
-    }
-
-    private static bool IsTrue(IntPtr dictionary, IntPtr key) =>
-        CFDictionaryGetValue(dictionary, key) is var value && value != IntPtr.Zero && CFBooleanGetValue(value) != 0;
 
     /// <inheritdoc />
     public bool ForceQuit(string app)
@@ -257,19 +213,6 @@ public sealed class MacAppProcesses : IAppProcesses
     private static string? Text(IntPtr text) =>
         text == IntPtr.Zero ? null : Marshal.PtrToStringUTF8(Send(text, sel_registerName("UTF8String")));
 
-    /// <summary>
-    /// <c>kCFTypeArrayCallBacks</c> when the private desktop functions are there to be called, or
-    /// zero when any is missing - looked up once, as a missing one must never be called.
-    /// </summary>
-    private static readonly Lazy<IntPtr> SpaceFunctions = new(() =>
-        NativeLibrary.TryLoad(CoreGraphics, out IntPtr graphics)
-        && NativeLibrary.TryGetExport(graphics, "CGSMainConnectionID", out _)
-        && NativeLibrary.TryGetExport(graphics, "CGSCopySpacesForWindows", out _)
-        && NativeLibrary.TryLoad(CoreFoundation, out IntPtr foundation)
-        && NativeLibrary.TryGetExport(foundation, "kCFTypeArrayCallBacks", out IntPtr callBacks)
-            ? callBacks
-            : IntPtr.Zero);
-
     [StructLayout(LayoutKind.Sequential)]
     private readonly struct Rect
     {
@@ -292,12 +235,6 @@ public sealed class MacAppProcesses : IAppProcesses
     [DllImport(CoreGraphics)]
     private static extern byte CGRectMakeWithDictionaryRepresentation(IntPtr dictionary, out Rect rect);
 
-    [DllImport(CoreGraphics)]
-    private static extern int CGSMainConnectionID();
-
-    [DllImport(CoreGraphics)]
-    private static extern IntPtr CGSCopySpacesForWindows(int connection, int mask, IntPtr windows);
-
     [DllImport(CoreFoundation)]
     private static extern nint CFArrayGetCount(IntPtr array);
 
@@ -318,15 +255,6 @@ public sealed class MacAppProcesses : IAppProcesses
 
     [DllImport(CoreFoundation)]
     private static extern void CFRelease(IntPtr value);
-
-    [DllImport(CoreFoundation)]
-    private static extern byte CFBooleanGetValue(IntPtr value);
-
-    [DllImport(CoreFoundation)]
-    private static extern IntPtr CFNumberCreate(IntPtr allocator, int type, ref int value);
-
-    [DllImport(CoreFoundation)]
-    private static extern IntPtr CFArrayCreate(IntPtr allocator, IntPtr[] values, nint count, IntPtr callBacks);
 
     [DllImport(ObjectiveC)]
     private static extern IntPtr objc_getClass([MarshalAs(UnmanagedType.LPUTF8Str)] string name);

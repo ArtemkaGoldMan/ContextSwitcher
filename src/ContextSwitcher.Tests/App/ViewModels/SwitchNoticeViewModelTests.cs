@@ -162,7 +162,7 @@ public sealed class SwitchNoticeViewModelTests
 
         AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StayedInBackground.With("Steam")));
         NoticeLine steam = Assert.Single(notice.Lines);
-        Assert.Equal(["Steam closed its windows but kept running in the background."], notice.Messages);
+        Assert.Equal(["Steam still hasn't quit: it is running in the background, or its window is on another desktop."], notice.Messages);
         Assert.True(steam.CanForceQuit);
         Assert.Equal("Force quit Steam", steam.ForceQuitName);
         await steam.ForceQuitCommand!.ExecuteAsync(null);

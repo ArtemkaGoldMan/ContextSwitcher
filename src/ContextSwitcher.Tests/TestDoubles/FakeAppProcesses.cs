@@ -80,7 +80,7 @@ public sealed class FakeAppProcesses : IAppProcesses
         }
     }
 
-    public bool? HasWindow(string app)
+    public bool? HasWindowOnScreen(string app)
     {
         lock (this.gate)
         {

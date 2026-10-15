@@ -61,7 +61,7 @@ public sealed class ClosingAppsTests : IDisposable
 
         IReadOnlyList<StateError> after = ClosingApps.Stayed(ClosingApps.Stayed(errors, "Steam", hasWindow: false), "Autodesk Fusion", hasWindow: true);
 
-        Assert.Equal("Steam closed its windows but kept running in the background.", after[0].Message);
+        Assert.Equal("Steam still hasn't quit: it is running in the background, or its window is on another desktop.", after[0].Message);
         Assert.Equal(["Steam"], after[0].MessageArguments);
         Assert.Equal("Steam", ClosingApps.ForceQuittable(after[0]));
         Assert.Equal(SwitchMessages.CouldNotClose.Key, after[1].MessageKey);

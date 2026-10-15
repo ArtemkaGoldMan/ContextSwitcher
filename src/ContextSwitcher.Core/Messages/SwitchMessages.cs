@@ -9,26 +9,29 @@ namespace ContextSwitcher.Core.Messages;
 public static class SwitchMessages
 {
     /// <summary>
-    /// {0} is an app still running after being asked to quit, with a window open - or one whose
-    /// windows could not be seen, so a question to save cannot be ruled out.
+    /// {0} is an app still running after being asked to quit with a window on screen - or one whose
+    /// windows could not be looked at, so a question to save cannot be ruled out.
     /// </summary>
     public static readonly MessageTemplate CouldNotClose = new(
         "Switch_CouldNotClose",
         "Didn't quit: {0}. It may be asking whether to save changes.");
 
     /// <summary>
-    /// {0} is an app still running after being asked to quit with no window left: some
-    /// apps take half a minute to finish, and the switch does not wait for them. The line goes once
-    /// it has quit (<see cref="Contexts.ClosingAppsFollowUp"/>).
+    /// {0} is an app still running after being asked to quit with no window on screen: some apps
+    /// take half a minute to finish, and the switch does not wait for them. The line goes once it has
+    /// quit (<see cref="Contexts.ClosingAppsFollowUp"/>).
     /// </summary>
     public static readonly MessageTemplate StillClosing = new(
         "Switch_StillClosing",
-        "Still closing: {0} - its windows are closed. This line goes once it has quit.");
+        "Still closing: {0}. This line goes once it has quit.");
 
-    /// <summary>{0} is an app that closed its windows when asked to quit, and minutes later still runs.</summary>
+    /// <summary>
+    /// {0} is an app still running minutes after being asked to quit, with no window on screen: in the
+    /// background, as Steam does, or with its window on another desktop, which can't be told apart.
+    /// </summary>
     public static readonly MessageTemplate StayedInBackground = new(
         "Switch_StayedInBackground",
-        "{0} closed its windows but kept running in the background.");
+        "{0} still hasn't quit: it is running in the background, or its window is on another desktop.");
 
     /// <summary>{0} is an app the person asked to force quit that was still running after.</summary>
     public static readonly MessageTemplate CouldNotForceQuit = new("Switch_CouldNotForceQuit", "Could not force {0} to quit.");

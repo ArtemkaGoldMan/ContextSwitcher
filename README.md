@@ -367,9 +367,10 @@ untick **Close** for that app.
 
 Some apps close their windows and take a while longer to go - Autodesk Fusion takes about half a
 minute. The card says it is **still closing**, and the line goes on its own once it has quit. An
-app still running two minutes later with no window left has stayed on in the background, as Steam
-sometimes does; its line has a **Force quit** button, which ends it at once, the way Force Quit in
-macOS does. Nothing is ever ended by force unless you click it.
+app still running two minutes later with no window on screen is in the background, as Steam
+sometimes stays, or has its window on another desktop; its line has a **Force quit** button, which
+ends it at once, the way Force Quit in macOS does - check first that it isn't asking about saving.
+Nothing is ever ended by force unless you click it.
 </details>
 
 <details>

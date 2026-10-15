@@ -116,8 +116,8 @@
                       <Grid ColumnDefinitions="Auto,*,Auto">
                         <Ellipse Grid.Column="0" Width="4" Height="4" Fill="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Top" Margin="2,7,10,0" />
                         <TextBlock Grid.Column="1" Text="{Binding Text}" Classes="body" TextWrapping="Wrap" />
-                        <!-- Only for an app that stayed on in the background with no window: nothing of
-                             its can be waiting to be saved where anyone could see it. -->
+                        <!-- Only for an app still running minutes later with no window on screen - in the
+                             background, or on another desktop, which the tooltip asks to check. -->
                         <Button Grid.Column="2" Classes="linkButton" Content="{x:Static r:Strings.Notice_ForceQuit}"
                                 Command="{Binding ForceQuitCommand}" IsVisible="{Binding CanForceQuit}"
                                 ToolTip.Tip="{x:Static r:Strings.Notice_ForceQuit_Tip}"

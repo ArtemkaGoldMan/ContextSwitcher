@@ -1037,7 +1037,7 @@
     <comment>Button beside a switch-problems line about an app that stayed running in the background with no window. Ends the app at once.</comment>
   </data>
   <data name="Notice_ForceQuit_Tip" xml:space="preserve">
-    <value>Ends it at once, as Force Quit does. Anything unsaved in it is lost.</value>
+    <value>Ends it at once, as Force Quit does, and anything unsaved in it is lost. Check first that it isn't asking about saving.</value>
     <comment>Tooltip of the Force quit button.</comment>
   </data>
   <data name="Notice_ForceQuitApp" xml:space="preserve">
@@ -1353,12 +1353,12 @@
     <comment>A step of a switch that didn't fully work: the dashboard's Last switch and the Profiles page's card. {0} = one app, still running with a window open after being asked to quit.</comment>
   </data>
   <data name="Msg_Switch_StillClosing" xml:space="preserve">
-    <value>Still closing: {0} - its windows are closed. This line goes once it has quit.</value>
-    <comment>{0} = one app still running after being asked to quit, with no window left. The app keeps watching it for two minutes and takes the line away when it quits.</comment>
+    <value>Still closing: {0}. This line goes once it has quit.</value>
+    <comment>{0} = one app still running after being asked to quit, with no window on screen. The app keeps watching it for two minutes and takes the line away when it quits.</comment>
   </data>
   <data name="Msg_Switch_StayedInBackground" xml:space="preserve">
-    <value>{0} closed its windows but kept running in the background.</value>
-    <comment>{0} = one app still running two minutes after being asked to quit, with no window. A "Force quit" button is next to it.</comment>
+    <value>{0} still hasn't quit: it is running in the background, or its window is on another desktop.</value>
+    <comment>{0} = one app still running two minutes after being asked to quit, with no window on screen. A "Force quit" button is next to it.</comment>
   </data>
   <data name="Msg_Switch_CouldNotForceQuit" xml:space="preserve">
     <value>Could not force {0} to quit.</value>

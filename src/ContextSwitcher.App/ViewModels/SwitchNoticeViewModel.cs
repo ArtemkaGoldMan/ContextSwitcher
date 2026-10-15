@@ -16,7 +16,7 @@ namespace ContextSwitcher.App.ViewModels;
 ///
 /// A switch's lines can change after it - an app that was still closing quits, or stays on in the
 /// background (<see cref="ClosingAppsFollowUp"/>) - and the card follows them while it is open; with
-/// none left it goes. An app that stayed on in the background has a "Force quit" next to it.
+/// none left it goes. An app still running with no window on screen has a "Force quit" next to it.
 /// </summary>
 public sealed class SwitchNoticeViewModel : ViewModelBase, IDisposable
 {
@@ -184,8 +184,8 @@ public sealed class SwitchNoticeViewModel : ViewModelBase, IDisposable
 }
 
 /// <summary>
-/// A line on the card: what went wrong, and, for an app that closed its windows and stayed on in the
-/// background, a way to end it - which it only ever is when this is clicked.
+/// A line on the card: what went wrong, and, for an app still running minutes after a switch with no
+/// window on screen, a way to end it - which it only ever is when this is clicked.
 /// </summary>
 public sealed class NoticeLine
 {

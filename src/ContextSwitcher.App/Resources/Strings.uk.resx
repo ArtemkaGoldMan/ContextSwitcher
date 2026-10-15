@@ -767,7 +767,7 @@
     <value>Завершити примусово</value>
   </data>
   <data name="Notice_ForceQuit_Tip" xml:space="preserve">
-    <value>Завершує його одразу, як «Примусово завершити» в macOS. Незбережене в ньому буде втрачено.</value>
+    <value>Завершує його одразу, як «Примусово завершити» в macOS, і незбережене в ньому буде втрачено. Спершу перевірте, чи він не питає про збереження.</value>
   </data>
   <data name="Notice_ForceQuitApp" xml:space="preserve">
     <value>Примусово завершити {0}</value>
@@ -1028,10 +1028,10 @@
     <value>Не закрилось: {0}. Можливо, питає, чи зберегти зміни.</value>
   </data>
   <data name="Msg_Switch_StillClosing" xml:space="preserve">
-    <value>Ще закривається: {0} — вікна вже закриті. Цей рядок зникне, щойно він закриється.</value>
+    <value>Ще закривається: {0}. Цей рядок зникне, щойно він закриється.</value>
   </data>
   <data name="Msg_Switch_StayedInBackground" xml:space="preserve">
-    <value>{0} закрив вікна, але лишився працювати у фоні.</value>
+    <value>{0} так і не закрився: працює у фоні або його вікно на іншому робочому столі.</value>
   </data>
   <data name="Msg_Switch_CouldNotForceQuit" xml:space="preserve">
     <value>Не вдалося примусово завершити {0}.</value>
