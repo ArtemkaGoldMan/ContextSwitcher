@@ -1695,4 +1695,63 @@
   <data name="Settings_IgnoredApp_TakenOut" xml:space="preserve">
     <value>{0} is never touched now, and was taken out of {1}.</value>
   </data>
+  <data name="Settings_Contact_Section" xml:space="preserve">
+    <value>CONTACT</value>
+    <comment>Settings: the section for writing to the developer.</comment>
+  </data>
+  <data name="Settings_Contact_Description" xml:space="preserve">
+    <value>Something doesn't work, or you have an idea? Write to the developer. An email needs no account; an issue on GitHub needs a GitHub one. Both copy the diagnostics for you to paste in.</value>
+  </data>
+  <data name="Settings_Contact_Email" xml:space="preserve">
+    <value>Write an email</value>
+    <comment>Opens a new message to the developer in the Mac's mail app, and copies the diagnostics.</comment>
+  </data>
+  <data name="Settings_Contact_Issue" xml:space="preserve">
+    <value>Open an issue on GitHub ↗</value>
+    <comment>Opens GitHub's bug form in the browser, and copies the diagnostics.</comment>
+  </data>
+  <data name="Settings_Contact_WhatToWrite" xml:space="preserve">
+    <value>What to write ↗</value>
+    <comment>Opens the README's Contact section: what to write and what to attach.</comment>
+  </data>
+  <data name="Settings_Contact_Address" xml:space="preserve">
+    <value>Address:</value>
+    <comment>Before the developer's email address, which can be selected and copied.</comment>
+  </data>
+  <data name="Contact_EmailSubject" xml:space="preserve">
+    <value>ContextSwitcher {0}: feedback</value>
+    <comment>Subject of the email. {0} = the app's version.</comment>
+  </data>
+  <data name="Contact_EmailBody" xml:space="preserve">
+    <value>What happened:
+
+
+What did you expect instead:
+
+
+What did you do just before? Which profile did you switch from and to, and does it happen every time?
+
+
+Diagnostics (Settings → Diagnostics → Copy diagnostics). Paste them here with ⌘V:
+
+
+ContextSwitcher {0}, macOS {1}</value>
+    <comment>Body of the email, as the person sees it to fill in. {0} = the app's version, {1} = the macOS version.</comment>
+  </data>
+  <data name="Contact_EmailOpened" xml:space="preserve">
+    <value>A new message is open in your mail app, and the diagnostics are copied: paste them into it with ⌘V.</value>
+  </data>
+  <data name="Contact_EmailOpenedNotCopied" xml:space="preserve">
+    <value>A new message is open in your mail app. The diagnostics couldn't be copied; use Copy diagnostics above.</value>
+  </data>
+  <data name="Contact_NoMailApp" xml:space="preserve">
+    <value>No mail app opened. Write to {0} from any mail you use.</value>
+    <comment>{0} = the developer's email address.</comment>
+  </data>
+  <data name="Contact_IssueOpened" xml:space="preserve">
+    <value>The form is open on GitHub, and the diagnostics are copied: paste them into its Diagnostics field.</value>
+  </data>
+  <data name="Contact_IssueOpenedNotCopied" xml:space="preserve">
+    <value>The form is open on GitHub. Copy diagnostics above and paste them into its Diagnostics field.</value>
+  </data>
 </root>

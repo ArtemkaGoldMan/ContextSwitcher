@@ -21,7 +21,7 @@ your music — all from the menu bar.
   <img src="docs/images/dashboard-light.png" width="360" alt="The ContextSwitcher dashboard under the menu bar: the active Work profile, buttons to switch to Personal or Study, quick links, notes and a chart of the last seven days">
 </picture>
 
-[Install](#install) · [Getting started](#getting-started) · [Updates](#updates) · [FAQ](#faq) · [Report a bug](#found-a-bug)
+[Install](#install) · [Getting started](#getting-started) · [Updates](#updates) · [FAQ](#faq) · [Contact](#contact)
 
 </div>
 
@@ -37,7 +37,7 @@ ContextSwitcher keeps a **profile** for each part of your day. Click one, and yo
 
 | | What a profile can do |
 | --- | --- |
-| **Apps** | Open apps when you switch in, and quit them when you switch out — the polite way, like ⌘Q, never force-quit |
+| **Apps** | Open apps when you switch in, and quit them when you switch out — the polite way, like ⌘Q. Nothing is ever forced to quit unless you click **Force quit** |
 | **Browser** | Open web pages without duplicating tabs that are already open, or a whole Chrome or Brave profile — and close a profile's pages when you leave it, leaving every other tab alone. Safari can switch to a tab group or profile with the profile's Focus |
 | **Focus** | Turn on a macOS Focus — Do Not Disturb, Work, Sleep… — and turn it off again when you leave |
 | **Music** | Start an Apple Music or Spotify playlist |
@@ -254,6 +254,14 @@ Dock, whether it opens when you log in, how long to keep your history, and updat
 import** saves your profiles and settings to a file — a copy to keep, or the way to set up another
 Mac the same — and loads them back.
 
+- **Switching** can ask, on each switch, what to do with the apps and tabs no profile has — keep
+  them, close them, or add them to a profile — and keeps a list of apps it never touches, such as a
+  messenger you use in every profile.
+- **Diagnostics** has **Copy diagnostics**, the report to send when something is wrong, and a
+  **Detailed log** that writes down everything for a week when something is off but nothing failed.
+- **Contact** writes to me: an email, no account needed, or an issue on GitHub — see
+  [Contact](#contact).
+
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/settings-dark.png">
@@ -265,7 +273,7 @@ Mac the same — and loads them back.
 
 One step going wrong doesn't stop the rest of the switch. If an app refused to quit (it had unsaved
 work, say) or a shortcut is missing, a card at the bottom of the Profiles page says what happened
-and how to fix it. It stays until you close it or switch again.
+and how to fix it. It stays until you close it or switch again. Still stuck? [Write to me](#contact).
 
 <div align="center">
 <picture>
@@ -325,7 +333,9 @@ installed with Homebrew.
 - It never reads your browsing history. It only looks at open tabs to avoid opening a page twice,
   to close the pages you asked it to close, or when you pick one in the profile editor.
 - It only uses a short, fixed set of macOS's own tools to do its job — AppleScript, `open`,
-  Shortcuts, and Docker if you use it.
+  Shortcuts, Docker if you use it, and `ditto`, `codesign` and `sips` for updates and icons.
+- **Diagnostics stay on your Mac.** **Copy diagnostics** and **Write an email** only put the report
+  on your clipboard and open your own mail app; nothing is sent until you send it yourself.
 
 ## FAQ
 
@@ -414,20 +424,30 @@ In `~/.config/ContextSwitcher/settings.json`. Yes — see [Configuration](docs/c
 The app checks the file and keeps backups, so a typo can't lose your profiles.
 </details>
 
-## Found a bug?
+## Contact
 
-Please [open an issue](https://github.com/ArtemkaGoldMan/ContextSwitcher/issues/new). It helps to
-include:
+Something doesn't work, or you have an idea? Write to me — I read everything, in English or
+Ukrainian.
 
-- the version, from **Settings → Updates**, and your macOS version;
-- what you did, what you expected, and what happened instead;
-- for a switch that went wrong, the end of the log:
+**By email — no account needed:** [contextswitcher.app@gmail.com](mailto:contextswitcher.app@gmail.com).
+The easiest way is **Settings → Contact → Write an email**: it opens a new message in your mail app
+with the questions below already in it, and copies the diagnostics for you to paste in.
 
-  ```bash
-  tail -50 ~/.config/ContextSwitcher/app.log.jsonl
-  ```
+**On GitHub**, if you have an account: [open an issue](https://github.com/ArtemkaGoldMan/ContextSwitcher/issues/new?template=bug_report.yml),
+or **Settings → Contact → Open an issue on GitHub**.
 
-  It is empty when nothing went wrong. When something did, it lists the switch step by step, with app and profile names, web addresses cut to their site and no email addresses — glance over it before posting.
+### What to write
+
+- **What happened, and what you expected** — for example *"I switched from Work to Personal and
+  Slack stayed open"*.
+- **What you did just before** — which profile you switched from and to, and whether it happens
+  every time.
+- **The diagnostics** — **Settings → Diagnostics → Copy diagnostics**, then paste them into the
+  message with ⌘V. They have the app and macOS versions, what is switched on and the recent log; no
+  profile names, web addresses or emails, but glance over them before sending.
+- **A screenshot**, if something looks wrong or a warning card says what happened.
+
+An idea is just as welcome: what you'd like it to do, and what for.
 
 ## Build from source
 
@@ -450,11 +470,18 @@ the app behaves.
 
 ## Documentation
 
+**Using it**
+
 | | |
 | --- | --- |
 | [Permissions](docs/automation-permissions.md) | What macOS asks for, and what to do when a step is blocked |
 | [Focus and Siri](docs/shortcuts-integration.md) | Focus shortcuts, Siri, and the command line |
 | [Configuration](docs/configuration.md) | Every field in `settings.json`, with examples |
+
+**Working on it**
+
+| | |
+| --- | --- |
 | [Release process](docs/release-process.md) | Signing, publishing and how updates work |
 | [Translating](docs/translating.md) | How the app's text is organised, and adding a language |
 | [Performance](docs/performance.md) | What the app costs in memory and CPU, measured, and what did not help |
@@ -463,8 +490,9 @@ the app behaves.
 
 ## Support
 
-ContextSwitcher is free and always will be — every feature, no account, nothing locked. If it saves
-you time, **Support the developer** in the app is the way to say thanks.
+ContextSwitcher is free and always will be — every feature, no account, nothing locked. There's no
+donation page yet. If it saves you time, the best thanks is to tell a friend about it, give it a star
+on GitHub, or [write to me](#contact) what works for you and what doesn't.
 
 ## License
 
