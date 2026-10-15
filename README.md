@@ -24,4 +24,57 @@ Downloads a day appear from the second run on: each day is the difference betwee
 
 ## Visitors
 
-Visitors were not updated on 2026-10-15: reading them needs the `STATS_TRAFFIC_TOKEN` secret (see the docs linked above).
+Views of the repository's pages on GitHub and the people behind them, a day. Bars: views. Line: different visitors.
+
+```mermaid
+xychart-beta
+    title "Visitors a day"
+    x-axis ["10-01", "10-02", "10-03", "10-04", "10-05", "10-06", "10-07", "10-08", "10-09", "10-10", "10-11", "10-12", "10-13", "10-14", "10-15"]
+    bar [0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 21, 2, 21, 9, 0]
+    line [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 1, 4, 1, 0]
+```
+
+| Day | Views | Visitors | Clones |
+| --- | ---: | ---: | ---: |
+| 2026-10-15 | 0 | 0 | 0 |
+| 2026-10-14 | 9 | 1 | 404 |
+| 2026-10-13 | 21 | 4 | 210 |
+| 2026-10-12 | 2 | 1 | 117 |
+| 2026-10-11 | 21 | 4 | 94 |
+| 2026-10-10 | 2 | 1 | 39 |
+| 2026-10-09 | 0 | 0 | 0 |
+| 2026-10-08 | 0 | 0 | 1 |
+| 2026-10-07 | 0 | 0 | 0 |
+| 2026-10-06 | 0 | 0 | 1 |
+| 2026-10-05 | 0 | 0 | 1 |
+| 2026-10-04 | 0 | 0 | 3 |
+| 2026-10-03 | 0 | 0 | 0 |
+| 2026-10-02 | 0 | 0 | 1 |
+| 2026-10-01 | 0 | 0 | 1 |
+
+Clones are almost all automated - CI and bots - and say little about people.
+
+### Where they came from
+
+GitHub's top sites for the 14 days up to 2026-10-15.
+
+| Site | Views | Visitors |
+| --- | ---: | ---: |
+| github.com | 1 | 1 |
+
+### What they looked at
+
+GitHub's top pages for the 14 days up to 2026-10-15.
+
+| Page | Views | Visitors |
+| --- | ---: | ---: |
+| / | 9 | 4 |
+| /releases/tag/v0.3.0 | 5 | 4 |
+| /releases/tag/v0.4.0 | 4 | 3 |
+| /commits/main | 4 | 1 |
+| /pulls | 4 | 1 |
+| /issues | 3 | 1 |
+| /releases | 3 | 1 |
+| /pull/7 | 2 | 1 |
+| /releases/tag/v0.5.0 | 2 | 1 |
+| /actions | 1 | 1 |
