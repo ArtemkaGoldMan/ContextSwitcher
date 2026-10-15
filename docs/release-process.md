@@ -184,3 +184,17 @@ release that touches them:
   `analytics.jsonl` ends with `"endReason":"away"`
 - [ ] **Export and import:** Export saves a file; importing that file asks, then shows the same
   profiles
+
+## README screenshots
+
+The Profiles page, a switch's warnings card and Settings are drawn, not photographed: a script can't
+click through the app's windows, so a test draws the same pages with demo profiles, in light and
+dark, at twice the size, in a macOS window frame. After changing how any of them looks:
+
+```bash
+./scripts/readme-screenshots.sh
+```
+
+It writes `docs/images/{profiles,switch-problems,settings}-{light,dark}.png`; look them over before
+committing. The other screenshots - setup, the profile editor, Stats and the dashboard - are still
+taken from the running app.
