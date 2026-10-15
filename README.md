@@ -202,7 +202,7 @@ The **Profiles** page lists every profile: click one to switch to it — or clic
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/profiles-dark.png">
-  <img src="docs/images/profiles-light.png" width="720" alt="The Profiles page with Work, Personal and Study">
+  <img src="docs/images/profiles-light.png" width="720" alt="The Profiles page with Work, Personal and Study, Personal active now">
 </picture>
 </div>
 
@@ -265,7 +265,7 @@ Mac the same — and loads them back.
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/settings-dark.png">
-  <img src="docs/images/settings-light.png" width="720" alt="Settings: theme, Dock icon, permission status, time tracking and updates">
+  <img src="docs/images/settings-light.png" width="720" alt="Settings: language, theme, Dock icon, open at login, permission to control other apps, and the apps it never touches">
 </picture>
 </div>
 
@@ -278,7 +278,7 @@ and how to fix it. It stays until you close it or switch again. Still stuck? [Wr
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/switch-problems-dark.png">
-  <img src="docs/images/switch-problems-light.png" width="720" alt="A card at the bottom of the window: Switched to Personal, with warnings — Visual Studio Code had unsaved changes">
+  <img src="docs/images/switch-problems-light.png" width="720" alt="A card at the bottom of the window: Switched to Personal, with warnings — Visual Studio Code may be asking to save changes, and Steam still hasn't quit, with a Force quit button">
 </picture>
 </div>
 
