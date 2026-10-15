@@ -451,6 +451,7 @@ the app behaves.
 | [Release process](docs/release-process.md) | Signing, publishing and how updates work |
 | [Translating](docs/translating.md) | How the app's text is organised, and adding a language |
 | [Performance](docs/performance.md) | What the app costs in memory and CPU, measured, and what did not help |
+| [Usage statistics](docs/usage-statistics.md) | The downloads and visitors collected every night, and the plan for counting people |
 | [A Windows version](docs/windows-port.md) | What would carry over to Windows, what would be written again, and what Windows can't do |
 
 ## Support
