@@ -1593,7 +1593,7 @@ Acceptance criteria:
 
 Deliverables:
 
-- Polar.sh donation link.
+- Donation link: the developer's support page, https://artemkagoldman.github.io/support/ (`AppLinks.Support`), which lists every way to donate.
 - Local `license.json`.
 - Cosmetic-only theme/icon unlock.
 - No functionality locked behind donation.

@@ -7,13 +7,12 @@ namespace ContextSwitcher.App;
 public static class AppLinks
 {
     /// <summary>
-    /// Where "Support the developer" goes. agent.md section 19 plans a Polar.sh donation page;
-    /// until that exists this opens the project itself, whose README carries the support section.
-    /// Both buttons were previously wired to an empty lambda, so they were visible, clickable and
-    /// did nothing at all - pointing them somewhere real is the smaller of the two evils until
-    /// there is a page to point at.
+    /// Where "Support the developer" goes - in Settings and in the dashboard: the developer's own
+    /// support page, every way to donate in one place, shared by all their projects. It is in every
+    /// release, so it is a page that stays put while the ways on it change - a new one is added
+    /// there, not here.
     /// </summary>
-    public const string Support = "https://github.com/ArtemkaGoldMan/ContextSwitcher#support";
+    public const string Support = "https://artemkagoldman.github.io/support/";
 
     /// <summary>
     /// Where people write about a problem or an idea, no account needed. It is in every release and
