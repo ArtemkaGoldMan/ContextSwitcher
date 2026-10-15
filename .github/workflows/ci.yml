@@ -143,3 +143,6 @@ jobs:
 
       - name: Lint the shell scripts
         run: shellcheck --severity=warning scripts/*.sh install.sh
+
+      - name: Compile the Python scripts
+        run: python3 -m py_compile scripts/*.py

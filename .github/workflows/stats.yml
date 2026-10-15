@@ -1,0 +1,59 @@
+name: Usage stats
+
+# Once a day, writes down what GitHub counts about the project - each release's downloads, and the
+# repository's visitors - on the stats branch, so there is a history: GitHub keeps visitors for 14
+# days only. The branch's README sums it up; docs/usage-statistics.md says what the numbers mean.
+#
+# Downloads need nothing. Visitors need the STATS_TRAFFIC_TOKEN secret (a fine-grained token that
+# can read this repository's Administration); without it they are skipped with a warning, and the
+# run still succeeds.
+
+on:
+  schedule:
+    - cron: "41 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stats
+
+jobs:
+  collect:
+    name: Collect
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      # The data lives on a branch of its own, with none of the code: a commit a day on main would
+      # need a pull request each time.
+      - name: Check out the stats branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin stats > /dev/null; then
+            git fetch --depth=1 origin stats:stats
+            git worktree add stats-data stats
+          else
+            git worktree add --orphan -b stats stats-data
+          fi
+
+      - name: Collect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TRAFFIC_TOKEN: ${{ secrets.STATS_TRAFFIC_TOKEN }}
+        run: python3 scripts/collect-stats.py "$GITHUB_REPOSITORY" stats-data
+
+      - name: Save
+        working-directory: stats-data
+        run: |
+          cat README.md >> "$GITHUB_STEP_SUMMARY"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing new."
+            exit 0
+          fi
+          git commit -q -m "Stats for $(date -u +%F)"
+          git push -q origin stats
