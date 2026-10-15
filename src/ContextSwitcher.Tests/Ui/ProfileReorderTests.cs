@@ -92,7 +92,7 @@ public sealed class ProfileReorderTests : UiTest
 
             window.MouseMove(start, RawInputModifiers.None);
             window.MouseDown(start, MouseButton.Left, RawInputModifiers.None);
-            Hold();
+            Hold(window);
             window.MouseMove(down, RawInputModifiers.LeftMouseButton);
             Settle(window);
             Assert.NotNull(FindAll<ContentPresenter>(window).FirstOrDefault(p => p.Classes.Contains("lifted")));
@@ -121,7 +121,7 @@ public sealed class ProfileReorderTests : UiTest
 
             window.MouseMove(start, RawInputModifiers.None);
             window.MouseDown(start, MouseButton.Left, RawInputModifiers.None);
-            Hold();
+            Hold(window);
             window.MouseMove(start + new Point(0, work.Bounds.Height * 1.2), RawInputModifiers.LeftMouseButton);
             Settle(window);
 
@@ -219,7 +219,7 @@ public sealed class ProfileReorderTests : UiTest
             window.MouseDown(at, MouseButton.Left, RawInputModifiers.None);
             Assert.DoesNotContain(FindAll<ContentPresenter>(window), p => p.Classes.Contains("lifted"));
 
-            Hold();
+            Hold(window);
             Assert.Contains(FindAll<ContentPresenter>(window), p => p.Classes.Contains("lifted"));
 
             window.MouseUp(at, MouseButton.Left, RawInputModifiers.None);
@@ -242,7 +242,7 @@ public sealed class ProfileReorderTests : UiTest
             window.MouseMove(start, RawInputModifiers.None);
             window.MouseDown(start, MouseButton.Left, RawInputModifiers.None);
             window.MouseMove(far, RawInputModifiers.LeftMouseButton);
-            Hold();
+            LetTheHoldGoBy();
             window.MouseMove(far + new Point(0, 4), RawInputModifiers.LeftMouseButton);
             window.MouseUp(far, MouseButton.Left, RawInputModifiers.None);
             Settle(window);
@@ -266,7 +266,7 @@ public sealed class ProfileReorderTests : UiTest
 
             window.MouseMove(at, RawInputModifiers.None);
             window.MouseDown(at, MouseButton.Left, RawInputModifiers.None);
-            Hold();
+            Hold(window);
             window.MouseUp(at, MouseButton.Left, RawInputModifiers.None);
             Settle(window);
 
@@ -295,8 +295,16 @@ public sealed class ProfileReorderTests : UiTest
     private static ProfilesPage Page(ProfilesViewModel viewModel) =>
         new() { DataContext = viewModel, HoldToDrag = TimeSpan.FromMilliseconds(25) };
 
-    /// <summary>Lets the time go by that a card has to be held for.</summary>
-    private static void Hold() => PumpUntil(Task.Delay(150));
+    /// <summary>
+    /// Holds on until the card is picked up. The pick-up is counted off on the thread pool and handed
+    /// back to the UI thread, so on a busy CI machine it can come well after the hold is up: waiting a
+    /// fixed time for it once failed the test with the card not yet lifted.
+    /// </summary>
+    private static void Hold(Window window) =>
+        PumpUntil(WaitUntil(() => FindAll<ContentPresenter>(window).Any(p => p.Classes.Contains("lifted"))));
+
+    /// <summary>Lets the time go by that a card has to be held for, for a press that should pick nothing up.</summary>
+    private static void LetTheHoldGoBy() => PumpUntil(Task.Delay(150));
 
     private static Button CardOf(Window window, string name) =>
         FindAll<Button>(window).Single(b => Avalonia.Automation.AutomationProperties.GetName(b) == name && IsClickable(b));
@@ -310,7 +318,7 @@ public sealed class ProfileReorderTests : UiTest
 
         window.MouseMove(start, RawInputModifiers.None);
         window.MouseDown(start, MouseButton.Left, RawInputModifiers.None);
-        Hold();
+        Hold(window);
         window.MouseMove(start + new Point(0, (end.Y - start.Y) / 2), RawInputModifiers.LeftMouseButton);
         window.MouseMove(end, RawInputModifiers.LeftMouseButton);
         window.MouseUp(end, MouseButton.Left, RawInputModifiers.None);
