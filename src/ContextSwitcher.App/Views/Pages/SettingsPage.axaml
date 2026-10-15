@@ -228,6 +228,25 @@
       </StackPanel>
     </Border>
 
+    <!-- Contact: an email in the person's own mail app, or an issue on GitHub; both copy the
+         diagnostics first, to paste in. Nothing is sent from here. -->
+    <Border Classes="panel">
+      <StackPanel Spacing="10">
+        <TextBlock Text="{x:Static r:Strings.Settings_Contact_Section}" Classes="sectionTitle" />
+        <TextBlock Text="{x:Static r:Strings.Settings_Contact_Description}" Classes="caption" TextWrapping="Wrap" />
+        <WrapPanel Orientation="Horizontal">
+          <Button Classes="switchContext" Content="{x:Static r:Strings.Settings_Contact_Email}" Command="{Binding Diagnostics.WriteEmailCommand}" Margin="0,0,18,6" />
+          <Button Classes="linkButton" Content="{x:Static r:Strings.Settings_Contact_Issue}" Command="{Binding Diagnostics.OpenIssueCommand}" VerticalAlignment="Center" Margin="0,0,18,6" />
+          <Button Classes="linkButton secondary" Content="{x:Static r:Strings.Settings_Contact_WhatToWrite}" Command="{Binding Diagnostics.WhatToWriteCommand}" VerticalAlignment="Center" Margin="0,0,0,6" />
+        </WrapPanel>
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="{x:Static r:Strings.Settings_Contact_Address}" Classes="caption" VerticalAlignment="Center" />
+          <SelectableTextBlock Text="{Binding Diagnostics.ContactEmail}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+        </StackPanel>
+        <TextBlock Text="{Binding Diagnostics.ContactMessage}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding Diagnostics.HasContactMessage}" />
+      </StackPanel>
+    </Border>
+
     <!-- About -->
     <Border Classes="panel">
       <StackPanel Spacing="10">

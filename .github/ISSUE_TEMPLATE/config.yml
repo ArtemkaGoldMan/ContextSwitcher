@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Write by email - no GitHub account needed
+    url: https://github.com/ArtemkaGoldMan/ContextSwitcher#contact
+    about: contextswitcher.app@gmail.com, with what to write and what to attach.
   - name: A security problem
     url: https://github.com/ArtemkaGoldMan/ContextSwitcher/security/advisories/new
     about: Please report it privately, not here - see SECURITY.md.

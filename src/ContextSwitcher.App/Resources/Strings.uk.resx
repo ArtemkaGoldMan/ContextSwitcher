@@ -1306,4 +1306,55 @@
   <data name="Settings_IgnoredApp_TakenOut" xml:space="preserve">
     <value>«{0}» тепер ніколи не чіпається, і його прибрано з: {1}.</value>
   </data>
+  <data name="Settings_Contact_Section" xml:space="preserve">
+    <value>ЗВ'ЯЗОК</value>
+  </data>
+  <data name="Settings_Contact_Description" xml:space="preserve">
+    <value>Щось не працює чи є ідея? Напишіть розробнику. Для листа не потрібні жодні акаунти, для issue на GitHub — акаунт GitHub. Обидва варіанти копіюють діагностику, щоб ви її вставили.</value>
+  </data>
+  <data name="Settings_Contact_Email" xml:space="preserve">
+    <value>Написати листом</value>
+  </data>
+  <data name="Settings_Contact_Issue" xml:space="preserve">
+    <value>Створити issue на GitHub ↗</value>
+  </data>
+  <data name="Settings_Contact_WhatToWrite" xml:space="preserve">
+    <value>Що написати ↗</value>
+  </data>
+  <data name="Settings_Contact_Address" xml:space="preserve">
+    <value>Адреса:</value>
+  </data>
+  <data name="Contact_EmailSubject" xml:space="preserve">
+    <value>ContextSwitcher {0}: відгук</value>
+  </data>
+  <data name="Contact_EmailBody" xml:space="preserve">
+    <value>Що сталося:
+
+
+Чого ви очікували:
+
+
+Що ви робили перед цим? З якого профілю на який перемикали і чи це стається щоразу?
+
+
+Діагностика (Налаштування → Діагностика → Скопіювати діагностику). Вставте її сюди (⌘V):
+
+
+ContextSwitcher {0}, macOS {1}</value>
+  </data>
+  <data name="Contact_EmailOpened" xml:space="preserve">
+    <value>У вашій пошті відкрито новий лист, а діагностику скопійовано: вставте її в лист (⌘V).</value>
+  </data>
+  <data name="Contact_EmailOpenedNotCopied" xml:space="preserve">
+    <value>У вашій пошті відкрито новий лист. Діагностику скопіювати не вдалося, скористайтеся «Скопіювати діагностику» вище.</value>
+  </data>
+  <data name="Contact_NoMailApp" xml:space="preserve">
+    <value>Пошта не відкрилася. Напишіть на {0} з будь-якої пошти.</value>
+  </data>
+  <data name="Contact_IssueOpened" xml:space="preserve">
+    <value>Форму відкрито на GitHub, а діагностику скопійовано: вставте її в поле Diagnostics.</value>
+  </data>
+  <data name="Contact_IssueOpenedNotCopied" xml:space="preserve">
+    <value>Форму відкрито на GitHub. Скопіюйте діагностику вище і вставте її в поле Diagnostics.</value>
+  </data>
 </root>
