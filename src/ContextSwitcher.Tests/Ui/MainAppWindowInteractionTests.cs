@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.Core.Messages;
 using ContextSwitcher.App.Views;
 using Avalonia.VisualTree;
 using ContextSwitcher.Tests.App;
@@ -94,6 +95,42 @@ public sealed class MainAppWindowInteractionTests : UiTest
             Assert.False(notice.IsEffectivelyVisible, "the close button left the card up");
         });
     }
+
+    /// <summary>
+    /// An app that closed its windows and stayed in the background has "Force quit" beside its line,
+    /// which asks for it to be ended; a line about an app that may be asking to save has none.
+    /// </summary>
+    [Fact]
+    public async Task AnAppLeftInTheBackgroundCanBeForceQuitFromTheCard()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            UiScenario scenario = UiScenario.WithTwoProfiles();
+            Window window = ShowMainWindow(scenario.MainApp());
+            AppHost.UpdateState(new CurrentContextState
+            {
+                CurrentContextId = "personal",
+                LastSwitchCompletedAt = DateTimeOffset.UtcNow,
+                LastSwitchStatus = nameof(ContextSwitchStatus.SucceededWithWarnings),
+                LastErrors = [Keyed(SwitchMessages.StayedInBackground.With("Steam")), Keyed(SwitchMessages.CouldNotClose.With("TextEdit"))]
+            });
+            Settle(window);
+            Border notice = FindControl<Border>(window, b => AutomationProperties.GetName(b) == "Switch problems");
+
+            Assert.True(IsClickable(FindControl<TextBlock>(notice, t => t.Text == "Steam closed its windows but kept running in the background.")));
+            Assert.Single(FindAll<Button>(notice), b => b.IsEffectivelyVisible && Equals(b.Content, "Force quit"));
+            Button forceQuit = FindControl<Button>(notice, b => AutomationProperties.GetName(b) == "Force quit Steam");
+            Assert.True(IsClickable(forceQuit));
+
+            Click(window, forceQuit);
+            Settle(window);
+
+            Assert.Equal(["Steam"], scenario.ForceQuit);
+        });
+    }
+
+    private static StateError Keyed(UserMessage message) =>
+        new() { StepId = "CloseApplications.work", Message = message.English, MessageKey = message.Key, MessageArguments = message.Arguments };
 
     /// <summary>The card belongs to the Profiles page; editing a profile or reading stats is not the moment.</summary>
     [Fact]

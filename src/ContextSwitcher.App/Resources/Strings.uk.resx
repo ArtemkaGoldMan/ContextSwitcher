@@ -763,6 +763,15 @@
   <data name="Notice_At" xml:space="preserve">
     <value>о {0:HH:mm}</value>
   </data>
+  <data name="Notice_ForceQuit" xml:space="preserve">
+    <value>Завершити примусово</value>
+  </data>
+  <data name="Notice_ForceQuit_Tip" xml:space="preserve">
+    <value>Завершує його одразу, як «Примусово завершити» в macOS. Незбережене в ньому буде втрачено.</value>
+  </data>
+  <data name="Notice_ForceQuitApp" xml:space="preserve">
+    <value>Примусово завершити {0}</value>
+  </data>
   <data name="Notice_AnotherSwitchRunning" xml:space="preserve">
     <value>Ще тривало інше перемикання. Спробуйте, коли воно завершиться.</value>
   </data>
@@ -1016,7 +1025,16 @@
     <value>Не вдалося підготувати швидку команду: {0}</value>
   </data>
   <data name="Msg_Switch_CouldNotClose" xml:space="preserve">
-    <value>Не закрилось: {0}. Застосунок лишається відкритим, якщо питає, чи зберегти зміни.</value>
+    <value>Не закрилось: {0}. Можливо, питає, чи зберегти зміни.</value>
+  </data>
+  <data name="Msg_Switch_StillClosing" xml:space="preserve">
+    <value>Ще закривається: {0} — вікна вже закриті. Цей рядок зникне, щойно він закриється.</value>
+  </data>
+  <data name="Msg_Switch_StayedInBackground" xml:space="preserve">
+    <value>{0} закрив вікна, але лишився працювати у фоні.</value>
+  </data>
+  <data name="Msg_Switch_CouldNotForceQuit" xml:space="preserve">
+    <value>Не вдалося примусово завершити {0}.</value>
   </data>
   <data name="Msg_Switch_CouldNotLaunch" xml:space="preserve">
     <value>Не вдалося відкрити: {0}.</value>

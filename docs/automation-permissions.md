@@ -48,6 +48,8 @@ the reason the browser itself gave. A message that doesn't name a reason is the 
 | What happened | Likely reason | What to do |
 | --- | --- | --- |
 | An app didn't quit | It had unsaved work, or quitting it isn't allowed | Save and switch again; check Automation for that app |
+| An app is "still closing" | It closed its windows and is finishing up | Nothing: the line goes once it has quit |
+| An app "kept running in the background" | It closed its windows two minutes ago but didn't quit | **Force quit** on its line, or leave it |
 | Pages opened twice, or a profile's tabs weren't closed | Reading the browser's tabs isn't allowed | Allow your browser under Automation |
 | Tabs weren't closed, and the message says the browser didn't answer | The browser was busy, or hung | Switch again; if it keeps happening, restart the browser |
 | Some tabs stayed open (the message names their sites) | A page asked to confirm leaving, or was loading | Close it yourself, or answer the page's prompt and switch again |
