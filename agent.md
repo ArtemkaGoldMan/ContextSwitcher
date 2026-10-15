@@ -1593,7 +1593,7 @@ Acceptance criteria:
 
 Deliverables:
 
-- Polar.sh donation link.
+- Donation link: the developer's support page, https://artemkagoldman.github.io/support/ (`AppLinks.Support`), which lists every way to donate.
 - Local `license.json`.
 - Cosmetic-only theme/icon unlock.
 - No functionality locked behind donation.
@@ -1838,8 +1838,7 @@ Business model:
 
 - MIT open source. The full app and every feature are always free, built from source or downloaded as a prebuilt `.dmg` from public GitHub Releases.
 - The "Support the developer" button (see §11.1) is a plain link-out to a donation page. It never gates a build, feature, or download behind payment — that would contradict the MIT/open-source distribution model above.
-- Optional "Buy me a beer" donation via Polar.sh.
-- Polar acts as Merchant of Record.
+- Optional donations on the developer's support page, https://artemkagoldman.github.io/support/ - the same page every one of their projects links to, and GitHub's Sponsor button (`.github/FUNDING.yml`).
 - Donation can generate a cosmetic license key.
 
 License file:

@@ -490,9 +490,13 @@ the app behaves.
 
 ## Support
 
-ContextSwitcher is free and always will be — every feature, no account, nothing locked. There's no
-donation page yet. If it saves you time, the best thanks is to tell a friend about it, give it a star
-on GitHub, or [write to me](#contact) what works for you and what doesn't.
+ContextSwitcher is free and always will be — every feature, no account, nothing locked. If it saves
+you time and you'd like to say thanks, every way to donate is on
+**[my support page](https://artemkagoldman.github.io/support/)** — Donatello, a Monobank jar and more.
+**Support the developer** in the app opens it too.
+
+Telling a friend about it, a star on GitHub, or [a line about what works and what doesn't](#contact)
+helps just as much.
 
 ## License
 
