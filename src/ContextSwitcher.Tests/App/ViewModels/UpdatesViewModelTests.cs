@@ -139,6 +139,38 @@ public sealed class UpdatesViewModelTests
         Assert.True(restartRequested);
     }
 
+    /// <summary>
+    /// A release that came out after the check is the one installed: the check had found 0.6.4, 0.6.5
+    /// came out, and installing put in 0.6.4 only to offer 0.6.5 straight after.
+    /// </summary>
+    [Fact]
+    public async Task InstallingAfterANewerReleaseCameOutInstallsTheNewest()
+    {
+        this.releases.Latest = NewRelease;
+        UpdatesViewModel updates = this.Create();
+        await updates.CheckAsync(userAsked: false);
+        this.releases.Latest = NewRelease with { Version = new Version(0, 3, 0) };
+
+        await updates.InstallCommand.ExecuteAsync(null);
+
+        Assert.Equal(new Version(0, 3, 0), this.updater.Installed?.Version);
+        Assert.Equal(2, this.releases.Calls);
+    }
+
+    /// <summary>When GitHub can't be asked again, the release already found is installed all the same.</summary>
+    [Fact]
+    public async Task WithGitHubOutOfReachTheReleaseFoundIsInstalled()
+    {
+        this.releases.Latest = NewRelease;
+        UpdatesViewModel updates = this.Create();
+        await updates.CheckAsync(userAsked: false);
+        this.releases.Failure = new UpdateException(UpdateMessages.GitHubUnreachable.With());
+
+        await updates.InstallCommand.ExecuteAsync(null);
+
+        Assert.Equal(new Version(0, 2, 0), this.updater.Installed?.Version);
+    }
+
     [Fact]
     public async Task AFailedInstallSaysWhyAndKeepsRunning()
     {
