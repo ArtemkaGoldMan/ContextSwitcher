@@ -1,14 +1,10 @@
-## What's new in 0.6.5
+## What's new in 0.6.6
 
-- **Write to the developer from the app.** Settings has a new **Contact** section:
-  - **Write an email** opens a new message to contextswitcher.app@gmail.com in your mail app. The version is already in it, along with the questions worth answering, and the diagnostics are copied for you to paste in.
-  - **Open an issue on GitHub** opens the bug form, also with the diagnostics copied.
-  - **What to write** says what helps.
+- **One update instead of two.** If a newer release came out after the app last checked, **Install and restart** now installs that newest one, not the one the check found - so you no longer update and then have to update again right away. If GitHub can't be reached at that moment, the release already found is installed, as before.
 
-  No GitHub account is needed for the email, and nothing is sent until you send it yourself.
-- **Support the developer** now opens [one page with every way to donate](https://artemkagoldman.github.io/support/): Donatello, a Monobank jar and more to come.
+  This takes effect from the next update after this one: updating to 0.6.6 itself still works the old way.
 
-Coming from an older version? Everything new in [0.6.4](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.4), [0.6.3](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.3), [0.6.2](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.2), [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
+Coming from an older version? Everything new in [0.6.5](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.5), [0.6.4](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.4), [0.6.3](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.3), [0.6.2](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.2), [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
 
 ## Install
 
