@@ -16,7 +16,9 @@ namespace ContextSwitcher.Infrastructure.MacOS;
 /// all - VS Code and Claude do - and those don't count, or an app that closed every window would
 /// seem to have one. Which desktop a window is on, macOS only says through the private
 /// <c>CGSCopySpacesForWindows</c>, which window tools rely on; should it ever go, every window
-/// counts, which errs towards "may be asking to save" and never offers to end an app by force;</item>
+/// counts, which errs towards "may be asking to save" and never offers to end an app by force.
+/// Windows of the app's child processes are its own: Steam draws every window it shows in a
+/// "Steam Helper" it started, and its own process has only hidden ones;</item>
 /// <item>and ending it: <c>NSRunningApplication.forceTerminate</c>, which any app may ask of another.</item>
 /// </list>
 /// </summary>
@@ -27,6 +29,10 @@ public sealed class MacAppProcesses : IAppProcesses
     private const string CoreGraphics = "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics";
     private const string CoreFoundation = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
     private const string LibC = "libc";
+    private const string LibSystem = "/usr/lib/libSystem.dylib";
+
+    /// <summary>More processes than any app starts: a bound on walking its children.</summary>
+    private const int MostProcesses = 1024;
 
     private const uint AllWindows = 0;
     private const uint ExcludeDesktopElements = 1 << 4;
@@ -61,11 +67,13 @@ public sealed class MacAppProcesses : IAppProcesses
             return null;
         }
 
-        HashSet<int> pids = found.Where(entry => IsAlive(entry.Pid)).Select(entry => entry.Pid).ToHashSet();
-        if (pids.Count == 0)
+        HashSet<int> alive = found.Where(entry => IsAlive(entry.Pid)).Select(entry => entry.Pid).ToHashSet();
+        if (alive.Count == 0)
         {
             return false;
         }
+
+        HashSet<int> pids = WithChildren(alive);
 
         IntPtr windows = CGWindowListCopyWindowInfo(AllWindows | ExcludeDesktopElements, 0);
         if (windows == IntPtr.Zero)
@@ -161,6 +169,27 @@ public sealed class MacAppProcesses : IAppProcesses
         return asked;
     }
 
+    /// <summary><paramref name="roots"/> and every process they started, and those started, and so on.</summary>
+    private static HashSet<int> WithChildren(HashSet<int> roots)
+    {
+        HashSet<int> all = [.. roots];
+        Queue<int> parents = new(roots);
+        int[] children = new int[MostProcesses];
+        while (parents.Count > 0 && all.Count < MostProcesses)
+        {
+            int count = proc_listchildpids(parents.Dequeue(), children, children.Length * sizeof(int));
+            for (int i = 0; i < Math.Min(count, children.Length); i++)
+            {
+                if (children[i] > 0 && all.Add(children[i]))
+                {
+                    parents.Enqueue(children[i]);
+                }
+            }
+        }
+
+        return all;
+    }
+
     /// <summary>Whether a process with this id exists; one this user may not signal still does.</summary>
     public static bool IsAlive(int pid) =>
         pid > 0 && (kill(pid, 0) == 0 || Marshal.GetLastPInvokeError() != NoSuchProcess);
@@ -252,6 +281,10 @@ public sealed class MacAppProcesses : IAppProcesses
 
     [DllImport(LibC, SetLastError = true)]
     private static extern int kill(int pid, int signal);
+
+    /// <summary>Fills <paramref name="buffer"/> with the ids of the processes <paramref name="parent"/> started; returns how many.</summary>
+    [DllImport(LibSystem)]
+    private static extern int proc_listchildpids(int parent, int[] buffer, int bufferSize);
 
     [DllImport(CoreGraphics)]
     private static extern IntPtr CGWindowListCopyWindowInfo(uint option, uint relativeToWindow);
