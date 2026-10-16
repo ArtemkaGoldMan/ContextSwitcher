@@ -185,7 +185,7 @@ release that touches them:
 - [ ] **Export and import:** Export saves a file; importing that file asks, then shows the same
   profiles
 
-## README screenshots
+## Screenshots
 
 The Profiles page, a switch's warnings card and Settings are drawn, not photographed: a script can't
 click through the app's windows, so a test draws the same pages with demo profiles, in light and

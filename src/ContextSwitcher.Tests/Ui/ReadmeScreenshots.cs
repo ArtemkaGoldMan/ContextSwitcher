@@ -22,8 +22,9 @@ using ContextSwitcher.Tests.TestDoubles;
 namespace ContextSwitcher.Tests.Ui;
 
 /// <summary>
-/// Draws the README's screenshots of the main window - the Profiles page, the card a switch with
-/// problems leaves, and Settings - in light and dark, at twice the size, in a macOS window frame.
+/// Draws the screenshots of the main window in the README and the user guide - the Profiles page,
+/// the card a switch with problems leaves, and Settings - in light and dark, at twice the size, in a
+/// macOS window frame.
 /// The app's windows can't be clicked through from a script, so they are drawn here, from the same
 /// pages, with demo profiles. Only when <c>CONTEXTSWITCHER_SCREENSHOTS</c> names the folder to write
 /// them to - scripts/readme-screenshots.sh does; in an ordinary test run it does nothing.
@@ -64,7 +65,7 @@ public sealed class ReadmeScreenshots : UiTest
         }
     }
 
-    /// <summary>Three profiles, Personal on - the ones every screenshot in the README shows.</summary>
+    /// <summary>Three profiles, Personal on - the ones every screenshot in the README and the user guide shows.</summary>
     private static AppConfiguration Demo() => new()
     {
         ActiveContextId = "personal",
