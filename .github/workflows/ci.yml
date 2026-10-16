@@ -118,6 +118,11 @@ jobs:
       - name: Run it through its command line
         run: ./scripts/smoke-test-app.sh dist/ContextSwitcher.app
 
+      # No unit test can see the menu bar, and 0.6.4 shipped without an icon there after a dependency
+      # update; this starts the app and looks.
+      - name: Check its menu bar icon
+        run: ./scripts/check-menu-bar-icon.sh dist/ContextSwitcher.app
+
       - name: Pack it
         run: ditto -c -k --keepParent dist/ContextSwitcher.app ContextSwitcher-build.zip
 
