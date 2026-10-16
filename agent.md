@@ -52,6 +52,7 @@ Create and maintain this structure:
 ```text
 ContextSwitcher/
   agent.md
+  CONTRIBUTING.md
   LICENSE
   README.md
   .editorconfig
@@ -1792,18 +1793,30 @@ Naming:
 
 ## 18. Documentation Requirements
 
-README must contain:
+README is the front page - what the app is and how to install it, short enough to read. It must
+contain:
 
 - What the app does.
 - Screenshot or short animated demo after UI exists.
 - Installation steps.
 - Unsigned app quarantine workaround.
-- Example `settings.json`.
-- Shortcuts/Siri setup.
-- Automation permissions setup.
+- How it works in a few lines, with a link to the user guide.
 - Privacy statement.
+- FAQ.
+- Contact: what to write and what to attach. The app links to `README#contact`.
 - Donation explanation.
+
+`docs/user-guide.md`:
+
+- Every step of using the app, with screenshots: setup, the menu bar, profiles, Focus, permissions,
+  settings, the warnings card, stats.
+- Updates and uninstalling.
+
+`CONTRIBUTING.md`:
+
 - Development setup.
+- What to check before a pull request.
+- Links to the docs for working on the app.
 
 `docs/configuration.md`:
 
