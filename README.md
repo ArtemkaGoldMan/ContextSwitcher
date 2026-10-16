@@ -15,13 +15,14 @@ your music — all from the menu bar.
 ![Apple silicon](https://img.shields.io/badge/Apple%20silicon-M1%20and%20later-555555)
 ![Free and open source](https://img.shields.io/badge/free-MIT-20A67A)
 ![English · Українська](https://img.shields.io/badge/languages-English%20%C2%B7%20%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-555555)
+[![Support the developer](https://img.shields.io/badge/support-the%20developer-EA4AAA?logo=data:image%2Fsvg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTkgMTRjMS40OS0xLjQ2IDMtMy4yMSAzLTUuNUE1LjUgNS41IDAgMCAwIDE2LjUgM2MtMS43NiAwLTMgLjUtNC41IDItMS41LTEuNS0yLjc0LTItNC41LTJBNS41IDUuNSAwIDAgMCAyIDguNWMwIDIuMyAxLjUgNC4wNSAzIDUuNWw3IDdaIi8%2BPC9zdmc%2B)](https://artemkagoldman.github.io/support/)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-dark.png">
   <img src="docs/images/dashboard-light.png" width="360" alt="The ContextSwitcher dashboard under the menu bar: the active Work profile, buttons to switch to Personal or Study, quick links, notes and a chart of the last seven days">
 </picture>
 
-[Install](#install) · [Getting started](#getting-started) · [Updates](#updates) · [FAQ](#faq) · [Contact](#contact)
+[Install](#install) · [Getting started](#getting-started) · [Updates](#updates) · [FAQ](#faq) · [Contact](#contact) · [Support the developer](#support-the-developer)
 
 </div>
 
@@ -488,7 +489,7 @@ the app behaves.
 | [Usage statistics](docs/usage-statistics.md) | The downloads and visitors collected every night, and the plan for counting people |
 | [A Windows version](docs/windows-port.md) | What would carry over to Windows, what would be written again, and what Windows can't do |
 
-## Support
+## Support the developer
 
 ContextSwitcher is free and always will be — every feature, no account, nothing locked. If it saves
 you time and you'd like to say thanks, every way to donate is on
