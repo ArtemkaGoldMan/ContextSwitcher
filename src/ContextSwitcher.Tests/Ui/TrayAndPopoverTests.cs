@@ -66,6 +66,32 @@ public sealed class TrayAndPopoverTests : UiTest
     }
 
     /// <summary>
+    /// Since Avalonia 12.1.3 only an icon among the application's tray icons reaches the menu bar; one
+    /// that is merely constructed never shows, which is how 0.6.4 to 0.6.6 shipped with no menu bar
+    /// icon. Headless has no menu bar to look at, so this checks the icon is handed to Avalonia.
+    /// </summary>
+    [Fact]
+    public async Task TheIconIsHandedToTheApplicationSoItReachesTheMenuBar()
+    {
+        await OnUiThreadAsync(() =>
+        {
+            Avalonia.Application app = Avalonia.Application.Current!;
+            TrayIcon icon = new();
+            try
+            {
+                ContextSwitcher.App.App.ShowInMenuBar(app, icon);
+
+                Assert.Same(icon, Assert.Single(TrayIcon.GetIcons(app)!));
+            }
+            finally
+            {
+                TrayIcon.SetIcons(app, null!);
+                icon.Dispose();
+            }
+        });
+    }
+
+    /// <summary>
     /// On macOS the tray icon's native menu stays bound to the NativeMenu it first exported, so giving
     /// it a replacement crashed the app on the second switch ("The menu being updated does not
     /// match"). A switch must move the tick within the same menu and the same entries.

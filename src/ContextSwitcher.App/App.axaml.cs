@@ -71,6 +71,7 @@ public sealed partial class App : Application
                 DisposeTrayIcon();
             };
             this.trayIcon = CreateTrayIcon(desktop);
+            ShowInMenuBar(this, this.trayIcon);
 
             // Clicking the desktop or another app sends this app to the background, and the popover
             // goes with it. The popover's own Deactivated only covers the case where it was the key
@@ -141,6 +142,13 @@ public sealed partial class App : Application
         Infrastructure.MacOS.DockIcon.Show(configuration.ShowDockIcon);
         this.mainAppWindow?.Activate();
     }
+
+    /// <summary>
+    /// Puts the icon in the menu bar. Since Avalonia 12.1.3 a tray icon only reaches the menu bar once
+    /// it is one of the application's <see cref="TrayIcon.Icons"/>; one that is only constructed stays
+    /// a plain object, and 0.6.4 to 0.6.6 shipped with no menu bar icon at all because of it.
+    /// </summary>
+    public static void ShowInMenuBar(Application app, TrayIcon icon) => TrayIcon.SetIcons(app, [icon]);
 
     private TrayIcon CreateTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)
     {
