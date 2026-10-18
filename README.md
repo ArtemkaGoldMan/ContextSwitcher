@@ -1,6 +1,6 @@
 # Usage statistics
 
-Written every day by [the stats workflow](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/.github/workflows/stats.yml); [what the numbers mean](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/docs/usage-statistics.md). Last run 2026-10-17 (UTC).
+Written every day by [the stats workflow](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/.github/workflows/stats.yml); [what the numbers mean](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/docs/usage-statistics.md). Last run 2026-10-18 (UTC).
 
 ## Downloads
 
@@ -29,8 +29,8 @@ Downloads a day (`.dmg` and `.zip`), from one run's totals to the next:
 ```mermaid
 xychart-beta
     title "Downloads a day"
-    x-axis ["10-16", "10-17"]
-    bar [3, 1]
+    x-axis ["10-16", "10-17", "10-18"]
+    bar [3, 1, 0]
 ```
 
 ## Visitors
@@ -40,13 +40,14 @@ Views of the repository's pages on GitHub and the people behind them, a day. Bar
 ```mermaid
 xychart-beta
     title "Visitors a day"
-    x-axis ["10-01", "10-02", "10-03", "10-04", "10-05", "10-06", "10-07", "10-08", "10-09", "10-10", "10-11", "10-12", "10-13", "10-14", "10-15", "10-16", "10-17"]
-    bar [0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 21, 2, 21, 9, 4, 1, 0]
-    line [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 1, 4, 1, 2, 1, 0]
+    x-axis ["10-01", "10-02", "10-03", "10-04", "10-05", "10-06", "10-07", "10-08", "10-09", "10-10", "10-11", "10-12", "10-13", "10-14", "10-15", "10-16", "10-17", "10-18"]
+    bar [0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 21, 2, 21, 9, 4, 1, 0, 0]
+    line [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 1, 4, 1, 2, 1, 0, 0]
 ```
 
 | Day | Views | Visitors | Clones |
 | --- | ---: | ---: | ---: |
+| 2026-10-18 | 0 | 0 | 0 |
 | 2026-10-17 | 0 | 0 | 0 |
 | 2026-10-16 | 1 | 1 | 193 |
 | 2026-10-15 | 4 | 2 | 338 |
@@ -69,7 +70,7 @@ Clones are almost all automated - CI and bots - and say little about people.
 
 ### Where they came from
 
-GitHub's top sites for the 14 days up to 2026-10-17.
+GitHub's top sites for the 14 days up to 2026-10-18.
 
 | Site | Views | Visitors |
 | --- | ---: | ---: |
@@ -78,7 +79,7 @@ GitHub's top sites for the 14 days up to 2026-10-17.
 
 ### What they looked at
 
-GitHub's top pages for the 14 days up to 2026-10-17.
+GitHub's top pages for the 14 days up to 2026-10-18.
 
 | Page | Views | Visitors |
 | --- | ---: | ---: |
