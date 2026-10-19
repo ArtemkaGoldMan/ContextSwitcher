@@ -63,6 +63,7 @@ public static class AppServices
         services.AddSingleton(provider => new DiagnosticsSources(
             provider.GetRequiredService<ConfigPaths>(),
             RunOf(provider.GetRequiredService<IAppInfo>()),
+            () => DiagnosticsReport.ReadLog(provider.GetRequiredService<ConfigPaths>().AppLogPath),
             () => provider.GetRequiredService<TrailLogger>().Remembered(),
             provider.GetRequiredService<IClock>()));
         services.AddSingleton<ConfigurationValidator>();
@@ -170,6 +171,7 @@ public static class AppServices
             development: provider.GetRequiredService<IAppInfo>().IsDevelopment));
         services.AddSingleton<IFileReplacer>(windows ? FileReplacer.RetryingWhileHeldOpen : FileReplacer.Once);
 
+        services.AddSingleton<IShell, MacShell>();
         services.AddSingleton<IDefaultBrowser, MacDefaultBrowser>();
         services.AddSingleton<ILoginItem, MacLoginItem>();
         services.AddSingleton<IScriptRunner, AppleScriptRunner>();

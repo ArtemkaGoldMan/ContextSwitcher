@@ -1,4 +1,5 @@
 using Avalonia.Media.Imaging;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Resources;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
@@ -120,7 +121,7 @@ public sealed class AskOnSwitchViewModel : ViewModelBase
             string? iconPath = installed.FirstOrDefault(app => string.Equals(app.Name, row.Title, StringComparison.OrdinalIgnoreCase))?.IconPath;
             if (iconPath is not null)
             {
-                row.Icon = TryLoad(iconPath);
+                row.Icon = IconFiles.Load(iconPath);
             }
         }
     }
@@ -140,26 +141,13 @@ public sealed class AskOnSwitchViewModel : ViewModelBase
             .Select(async site =>
             {
                 string? path = await siteIcons.GetIconPathAsync(site.First().Url!, cancellationToken).ConfigureAwait(true);
-                Bitmap? icon = path is null ? null : TryLoad(path);
+                Bitmap? icon = IconFiles.Load(path);
                 foreach (UnclaimedRowViewModel row in site)
                 {
                     row.Icon = icon;
                 }
             });
         await Task.WhenAll(sites).ConfigureAwait(true);
-    }
-
-    private static Bitmap? TryLoad(string path)
-    {
-        try
-        {
-            return File.Exists(path) ? new Bitmap(path) : null;
-        }
-        catch (Exception e) when (e is IOException or ArgumentException or InvalidOperationException)
-        {
-            // Not logged: an icon that cannot be read is left out.
-            return null;
-        }
     }
 
     private UnclaimedAnswers Answers()

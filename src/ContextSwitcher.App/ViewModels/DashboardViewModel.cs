@@ -5,7 +5,6 @@ using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
-using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
@@ -22,7 +21,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IAppState appState;
     private readonly IContextSwitchService switchService;
     private readonly IAnalyticsService analyticsService;
-    private readonly IProcessRunner processRunner;
+    private readonly IShell shell;
     private readonly IClock clock;
     private readonly DispatcherTimer elapsedTimer;
 
@@ -46,13 +45,13 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         IAppState appState,
         IContextSwitchService switchService,
         IAnalyticsService analyticsService,
-        IProcessRunner processRunner,
+        IShell shell,
         IClock clock)
     {
         this.appState = appState;
         this.switchService = switchService;
         this.analyticsService = analyticsService;
-        this.processRunner = processRunner;
+        this.shell = shell;
         this.clock = clock;
 
         // Not started here: the elapsed time is only worth keeping fresh while someone can see it.
@@ -377,10 +376,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         _ => status
     };
 
-    private void OpenQuickLink(string url)
-    {
-        _ = this.processRunner.RunAsync(new ProcessStartOptions("open", [url], TimeSpan.FromSeconds(5)), CancellationToken.None);
-    }
+    private void OpenQuickLink(string url) => _ = this.shell.OpenLinkAsync(url, CancellationToken.None);
 
     private void RefreshElapsedDisplay()
     {

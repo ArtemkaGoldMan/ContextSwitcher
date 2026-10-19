@@ -1,6 +1,5 @@
 using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
-using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Core.Updates;
 using ContextSwitcher.App.Resources;
 
@@ -15,12 +14,12 @@ namespace ContextSwitcher.App.ViewModels;
 public sealed class UpdatesViewModel : ViewModelBase
 {
     private readonly UpdateChecker checker;
-    private readonly IProcessRunner processRunner;
+    private readonly IShell shell;
 
-    public UpdatesViewModel(UpdateChecker checker, IProcessRunner processRunner)
+    public UpdatesViewModel(UpdateChecker checker, IShell shell)
     {
         this.checker = checker;
-        this.processRunner = processRunner;
+        this.shell = shell;
 
         this.CheckNowCommand = new AsyncRelayCommand(() => this.checker.CheckAsync(userAsked: true), () => !this.IsBusy);
         this.InstallCommand = new AsyncRelayCommand(this.checker.InstallAsync, () => !this.IsBusy && this.CanInstall);
@@ -103,10 +102,10 @@ public sealed class UpdatesViewModel : ViewModelBase
 
     private void OpenReleasePage()
     {
-        // Only ever a GitHub page: the address comes from the network, and `open` would open anything.
+        // Only ever a GitHub page: the address comes from the network, and the system would open anything.
         if (this.checker.Available is { } release && release.PageUrl.StartsWith("https://github.com/", StringComparison.Ordinal))
         {
-            _ = this.processRunner.RunAsync(new ProcessStartOptions("open", [release.PageUrl], TimeSpan.FromSeconds(5)), CancellationToken.None);
+            _ = this.shell.OpenLinkAsync(release.PageUrl, CancellationToken.None);
         }
     }
 }

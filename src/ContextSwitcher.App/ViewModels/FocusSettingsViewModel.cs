@@ -1,6 +1,5 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.App.Resources;
 using ContextSwitcher.Core.Messages;
 
@@ -25,7 +24,7 @@ public sealed class FocusSettingsViewModel : ViewModelBase
     private static readonly TimeSpan WaitForAdd = TimeSpan.FromMinutes(2);
 
     private readonly ISystemCatalog catalog;
-    private readonly IProcessRunner processRunner;
+    private readonly IShell shell;
     private readonly IFocusShortcutInstaller installer;
     private string shortcutStatus = string.Empty;
     private bool isOffering;
@@ -38,10 +37,10 @@ public sealed class FocusSettingsViewModel : ViewModelBase
     private IReadOnlyList<FocusChoiceViewModel> choices = [];
     private FocusChoiceViewModel selected;
 
-    public FocusSettingsViewModel(ISystemCatalog catalog, IProcessRunner processRunner, IFocusShortcutInstaller installer, FocusConfig focus)
+    public FocusSettingsViewModel(ISystemCatalog catalog, IShell shell, IFocusShortcutInstaller installer, FocusConfig focus)
     {
         this.catalog = catalog;
-        this.processRunner = processRunner;
+        this.shell = shell;
         this.installer = installer;
 
         string current = focus.Enabled ? focus.ModeName.Trim() : string.Empty;
@@ -272,10 +271,7 @@ public sealed class FocusSettingsViewModel : ViewModelBase
         this.OnPropertyChanged(nameof(this.HasHint));
     }
 
-    private void OpenShortcuts()
-    {
-        _ = this.processRunner.RunAsync(new ProcessStartOptions("open", ["-a", "Shortcuts"], TimeSpan.FromSeconds(5)), CancellationToken.None);
-    }
+    private void OpenShortcuts() => this.shell.OpenSystemPage(SystemPage.Shortcuts);
 }
 
 /// <summary>One entry in the Focus dropdown.</summary>

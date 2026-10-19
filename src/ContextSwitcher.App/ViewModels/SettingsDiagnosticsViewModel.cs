@@ -2,7 +2,6 @@ using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Logging;
 
 namespace ContextSwitcher.App.ViewModels;
@@ -24,7 +23,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
 
     private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
-    private readonly IProcessRunner processRunner;
+    private readonly IShell shell;
     private readonly DiagnosticsSources sources;
     private readonly Func<bool?> automation;
     private string? message;
@@ -33,18 +32,18 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     public SettingsDiagnosticsViewModel(
         IAppState appState,
         ConfigurationStore configurationStore,
-        IProcessRunner processRunner,
+        IShell shell,
         DiagnosticsSources sources,
         Func<bool?>? automation = null)
     {
         ArgumentNullException.ThrowIfNull(appState);
         ArgumentNullException.ThrowIfNull(configurationStore);
-        ArgumentNullException.ThrowIfNull(processRunner);
+        ArgumentNullException.ThrowIfNull(shell);
         ArgumentNullException.ThrowIfNull(sources);
 
         this.appState = appState;
         this.configurationStore = configurationStore;
-        this.processRunner = processRunner;
+        this.shell = shell;
         this.sources = sources;
         this.automation = automation ?? (() => null);
         this.CopyCommand = new AsyncRelayCommand(this.CopyAsync);
@@ -168,8 +167,8 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
             AppLinks.ContactEmail,
             Localized.Format(Strings.Contact_EmailSubject, run.Version),
             Localized.Format(Strings.Contact_EmailBody, run.Version, run.MacOs));
-        ProcessResult opened = await this.processRunner.RunAsync(new ProcessStartOptions("open", [link], TimeSpan.FromSeconds(10)), CancellationToken.None).ConfigureAwait(true);
-        this.ContactMessage = opened.ExitCode != 0
+        bool opened = await this.shell.OpenLinkAsync(link, CancellationToken.None).ConfigureAwait(true);
+        this.ContactMessage = !opened
             ? Localized.Format(Strings.Contact_NoMailApp, AppLinks.ContactEmail)
             : copied ? Strings.Contact_EmailOpened : Strings.Contact_EmailOpenedNotCopied;
     }
@@ -189,41 +188,21 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     public static string MailTo(string address, string subject, string body) =>
         $"mailto:{address}?subject={Uri.EscapeDataString(subject)}&body={Uri.EscapeDataString(body.ReplaceLineEndings("\r\n"))}";
 
-    private void Open(string url) =>
-        _ = this.processRunner.RunAsync(new ProcessStartOptions("open", [url], TimeSpan.FromSeconds(5)), CancellationToken.None);
+    private void Open(string url) => _ = this.shell.OpenLinkAsync(url, CancellationToken.None);
 
     /// <summary>The report as it would be copied now.</summary>
     public string BuildReport()
     {
-        string logPath = this.sources.Paths.AppLogPath;
-        List<string> log = [];
-        try
-        {
-            if (File.Exists(logPath))
-            {
-                log.AddRange(File.ReadLines(logPath).TakeLast(DiagnosticsReport.LogLines));
-            }
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            log.Add($"(the log could not be read: {ex.GetType().Name})");
-        }
-
         return DiagnosticsReport.Build(new DiagnosticsInput(
             this.sources.Run(),
             this.appState.Configuration,
             this.automation(),
             this.appState.ConfigurationValidation.Errors.Count,
-            log,
+            this.sources.Log(),
             this.sources.Pending(),
             this.Now));
     }
 
     /// <summary>The log in Finder; when there is none - a quiet week - the folder it would be in.</summary>
-    private void ShowLog()
-    {
-        string log = this.sources.Paths.AppLogPath;
-        IReadOnlyList<string> arguments = File.Exists(log) ? ["-R", log] : [this.sources.Paths.BaseDirectory];
-        _ = this.processRunner.RunAsync(new ProcessStartOptions("open", arguments, TimeSpan.FromSeconds(5)), CancellationToken.None);
-    }
+    private void ShowLog() => this.shell.ShowFile(this.sources.Paths.AppLogPath);
 }

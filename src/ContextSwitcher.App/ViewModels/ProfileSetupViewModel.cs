@@ -6,7 +6,6 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.App.Resources;
 using System.Globalization;
 
@@ -20,7 +19,6 @@ namespace ContextSwitcher.App.ViewModels;
 public sealed class ProfileSetupViewModel : ViewModelBase
 {
     /// <summary>System Settings' Focus pane, where a Focus's Safari filter is set.</summary>
-    private const string FocusSettingsUrl = "x-apple.systempreferences:com.apple.Focus-Settings.extension";
 
     /// <summary>What every browser can do on a switch: nothing, or open pages.</summary>
     private static readonly IReadOnlyList<Choice<BrowserManagementMode>> PageModes =
@@ -38,7 +36,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
-    private readonly IProcessRunner processRunner;
+    private readonly IShell shell;
     private readonly string originalContextId;
 
     private readonly ISystemCatalog catalog;
@@ -70,14 +68,14 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         ConfigurationStore configurationStore,
         IInstalledAppsService installedAppsService,
         ISystemCatalog catalog,
-        IProcessRunner processRunner,
+        IShell shell,
         IFocusShortcutInstaller focusShortcuts,
         ContextDefinition? existing,
         IDefaultBrowser? defaultBrowser = null)
     {
         this.appState = appState;
         this.configurationStore = configurationStore;
-        this.processRunner = processRunner;
+        this.shell = shell;
         this.catalog = catalog;
         this.systemDefault = defaultBrowser?.Get();
         this.IsNew = existing is null;
@@ -147,7 +145,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             "IconGlobe",
             OpenTabsSearchText);
 
-        this.Focus = new FocusSettingsViewModel(catalog, processRunner, focusShortcuts, source.Focus);
+        this.Focus = new FocusSettingsViewModel(catalog, shell, focusShortcuts, source.Focus);
         this.Media = new MediaSettingsViewModel(catalog, source.Media);
 
         // Containers already in config are names Docker gave them; shown, not offered for editing.
@@ -197,8 +195,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.AddBrowserUrlCommand = new RelayCommand(() => this.BrowserUrls.Add(this.UrlRow(string.Empty)));
         this.AddBrowserProfileCommand = new RelayCommand(() => this.BrowserProfiles.Add(
             new BrowserProfileRowViewModel(this.ProfilesBrowser, string.Empty, [], catalog.GetBrowserProfiles, this.RemoveBrowserProfile)));
-        this.OpenFocusSettingsCommand = new RelayCommand(() =>
-            _ = this.processRunner.RunAsync(new ProcessStartOptions("open", [FocusSettingsUrl], TimeSpan.FromSeconds(5)), CancellationToken.None));
+        this.OpenFocusSettingsCommand = new RelayCommand(() => this.shell.OpenSystemPage(SystemPage.FocusSettings));
         this.AddDockerStartCommand = new RelayCommand(() => this.DockerStart.Add(this.ContainerRow(string.Empty, this.RemoveDockerStart, isEditable: true)));
         this.AddDockerStopCommand = new RelayCommand(() => this.DockerStop.Add(this.ContainerRow(string.Empty, this.RemoveDockerStop, isEditable: true)));
         this.AddQuickLinkCommand = new RelayCommand(() => this.QuickLinks.Add(new QuickLinkRowViewModel(string.Empty, string.Empty, "link", this.RemoveQuickLink)));

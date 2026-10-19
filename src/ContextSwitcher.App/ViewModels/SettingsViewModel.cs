@@ -1,7 +1,6 @@
 using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.App.Resources;
 using ContextSwitcher.Infrastructure.MacOS;
 
@@ -17,14 +16,12 @@ namespace ContextSwitcher.App.ViewModels;
 /// </summary>
 public sealed class SettingsViewModel : ViewModelBase, IDisposable
 {
-    private const string AutomationSettingsUrl = "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation";
-
     private static readonly int[] RetentionPresets = [7, 30, 90, 180, 365, 730];
 
     private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private readonly IPermissionsChecker permissionsChecker;
-    private readonly IProcessRunner processRunner;
+    private readonly IShell shell;
 
     private readonly Func<IReadOnlyList<string>> preferredLanguages;
     private readonly ILoginItem? loginItem;
@@ -46,7 +43,7 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         IAppState appState,
         ConfigurationStore configurationStore,
         IPermissionsChecker permissionsChecker,
-        IProcessRunner processRunner,
+        IShell shell,
         UpdatesViewModel updates,
         DiagnosticsSources diagnostics,
         Func<IReadOnlyList<string>>? preferredLanguages = null,
@@ -59,11 +56,11 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         this.preferredLanguages = preferredLanguages ?? PreferredLanguages.Get;
         this.configurationStore = configurationStore;
         this.permissionsChecker = permissionsChecker;
-        this.processRunner = processRunner;
+        this.shell = shell;
         this.Updates = updates;
         this.Transfer = new SettingsTransferViewModel(appState, configurationStore);
         this.IgnoredApps = new IgnoredAppsViewModel(appState, configurationStore, installedApps);
-        this.Diagnostics = new SettingsDiagnosticsViewModel(appState, configurationStore, processRunner, diagnostics, () => this.AutomationGranted);
+        this.Diagnostics = new SettingsDiagnosticsViewModel(appState, configurationStore, shell, diagnostics, () => this.AutomationGranted);
         this.askOnSwitch = this.appState.Configuration.AskOnSwitch;
 
         this.appState.ConfigurationChanged += this.OnConfigurationChanged;
@@ -88,8 +85,8 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         this.selectedRetention = this.RetentionChoices.First(c => c.Value == this.appState.Configuration.Analytics.RetentionDays);
 
         this.RefreshPermissionsCommand = new AsyncRelayCommand(this.RefreshPermissionsAsync);
-        this.OpenAutomationSettingsCommand = new RelayCommand(() => this.OpenUrl(AutomationSettingsUrl));
-        this.SupportDeveloperCommand = new RelayCommand(() => this.OpenUrl(AppLinks.Support));
+        this.OpenAutomationSettingsCommand = new RelayCommand(() => this.shell.OpenSystemPage(SystemPage.AutomationPermission));
+        this.SupportDeveloperCommand = new RelayCommand(() => _ = this.shell.OpenLinkAsync(AppLinks.Support, CancellationToken.None));
         this.OpenLoginItemsCommand = new RelayCommand(() => this.loginItem?.OpenSystemSettings());
 
         _ = this.RefreshPermissionsAsync();
@@ -413,10 +410,6 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private void OpenUrl(string url)
-    {
-        _ = this.processRunner.RunAsync(new ProcessStartOptions("open", [url], TimeSpan.FromSeconds(5)), CancellationToken.None);
-    }
 
     private async Task SaveAsync()
     {

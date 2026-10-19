@@ -33,7 +33,7 @@ public sealed class SettingsViewModelTests
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
         ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel viewModel = new(this.appState, configurationStore, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(this.appState), Diagnostics());
+        SettingsViewModel viewModel = new(this.appState, configurationStore, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics());
 
         // On by default now; turning it off is the change.
         viewModel.ShowDockIcon = false;
@@ -72,7 +72,7 @@ public sealed class SettingsViewModelTests
         this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
 
         ConfigurationStore configurationStore = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel viewModel = new(this.appState, configurationStore, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(this.appState), Diagnostics());
+        SettingsViewModel viewModel = new(this.appState, configurationStore, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics());
 
         Assert.Equal(
             ["1 week", "30 days", "90 days", "6 months", "1 year", "2 years", "3 years"],
@@ -95,15 +95,13 @@ public sealed class SettingsViewModelTests
             },
             new ConfigurationValidationResult([]));
 
-        FakeProcessRunner processRunner = new();
+        FakeShell shell = new();
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel viewModel = new(this.appState, store, new FakePermissionsChecker(), processRunner, Updates(this.appState), Diagnostics());
+        SettingsViewModel viewModel = new(this.appState, store, new FakePermissionsChecker(), shell, Updates(this.appState), Diagnostics());
 
         viewModel.SupportDeveloperCommand.Execute(null);
 
-        ProcessStartOptions call = Assert.Single(processRunner.Calls);
-        Assert.Equal("open", call.FileName);
-        Assert.Equal([AppLinks.Support], call.Arguments);
+        Assert.Equal([AppLinks.Support], shell.Links);
     }
 
     /// <summary>The switch is macOS's login item: flipping it changes it there at once, and reads it back.</summary>
@@ -166,7 +164,7 @@ public sealed class SettingsViewModelTests
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
         this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        return new SettingsViewModel(this.appState, store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(this.appState), Diagnostics(), loginItem: loginItem);
+        return new SettingsViewModel(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), loginItem: loginItem);
     }
 
     /// <summary>After an import the page shows the imported settings, without saving them over again.</summary>
@@ -176,7 +174,7 @@ public sealed class SettingsViewModelTests
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
         this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel viewModel = new(this.appState, store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(this.appState), Diagnostics());
+        SettingsViewModel viewModel = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics());
         FakeSettingsFilePicker picker = new()
         {
             FileToOpen = """{ "activeContextId": "work", "showDockIcon": false, "checkForUpdates": false, "contexts": [ { "id": "work", "displayName": "Work" } ], "analytics": { "enabled": true, "retentionDays": 45 } }"""
@@ -202,8 +200,8 @@ public sealed class SettingsViewModelTests
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }], AskOnSwitch = false };
         this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel open = new(this.appState, store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(this.appState), Diagnostics());
-        SettingsViewModel closed = new(this.appState, store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(this.appState), Diagnostics());
+        SettingsViewModel open = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics());
+        SettingsViewModel closed = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics());
         closed.Dispose();
 
         this.appState.UpdateConfiguration(configuration with { AskOnSwitch = true, IgnoredApps = ["Telegram"] }, new ConfigurationValidationResult([]));
@@ -217,8 +215,8 @@ public sealed class SettingsViewModelTests
 
     internal static UpdatesViewModel Updates(IAppState appState) => new(
         new UpdateChecker(new FakeReleaseSource(), new FakeAppUpdater(), new FakeSystemNotifications(), appState, new FakeAppInfo(new Version(0, 1, 0)), new FakeClock(), new TestLogger()),
-        new FakeProcessRunner());
+        new FakeShell());
 
     internal static DiagnosticsSources Diagnostics() => new(
-        new ConfigPaths("/tmp/context-switcher-tests"), () => new RunInfo("ContextSwitcher", "0.1.0", "26.6", "arm64", "release", 1), () => [], new FakeClock());
+        new ConfigPaths("/tmp/context-switcher-tests"), () => new RunInfo("ContextSwitcher", "0.1.0", "26.6", "arm64", "release", 1), () => [], () => [], new FakeClock());
 }

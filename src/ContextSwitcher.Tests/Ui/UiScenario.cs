@@ -32,7 +32,7 @@ public sealed class UiScenario
         this.JsonStore = new YieldingJsonStore(inner);
         this.ConfigurationStore = new ConfigurationStore(this.JsonStore, this.Paths, validator, this.AppState, new TestLogger());
         this.SwitchService = new StubContextSwitchService();
-        this.ProcessRunner = new FakeProcessRunner();
+        this.Shell = new FakeShell();
         this.Permissions = new FakePermissionsChecker();
         this.InstalledApps = new FakeInstalledAppsService();
         this.Catalog = new FakeSystemCatalog();
@@ -49,9 +49,9 @@ public sealed class UiScenario
         this.Updater = new FakeAppUpdater();
         this.UpdateChecker = new UpdateChecker(
             this.Releases, this.Updater, new FakeSystemNotifications(), this.AppState, new FakeAppInfo(new Version(0, 1, 0)), this.Clock, new TestLogger());
-        this.Updates = new UpdatesViewModel(this.UpdateChecker, this.ProcessRunner);
+        this.Updates = new UpdatesViewModel(this.UpdateChecker, this.Shell);
         this.Diagnostics = new DiagnosticsSources(
-            this.Paths, () => new RunInfo("ContextSwitcher", "0.1.0", "26.6", "arm64", "release", 1), () => [], this.Clock);
+            this.Paths, () => new RunInfo("ContextSwitcher", "0.1.0", "26.6", "arm64", "release", 1), () => [], () => [], this.Clock);
     }
 
     /// <summary>The scenario's settings and state, which every view model it builds reads and saves to.</summary>
@@ -65,7 +65,8 @@ public sealed class UiScenario
 
     public StubContextSwitchService SwitchService { get; }
 
-    public FakeProcessRunner ProcessRunner { get; }
+    /// <summary>What the scenario asked the system to open: links, files, System Settings.</summary>
+    public FakeShell Shell { get; }
 
     public FakePermissionsChecker Permissions { get; }
 
@@ -117,22 +118,22 @@ public sealed class UiScenario
 
     public MainAppViewModel MainApp() => new(
         this.AppState, this.SwitchService, this.ConfigurationStore,
-        this.Permissions, this.ProcessRunner, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates, this.Diagnostics);
+        this.Permissions, this.Shell, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates, this.Diagnostics);
 
     public ProfilesViewModel Profiles() =>
         new(this.AppState, this.SwitchService, this.ConfigurationStore);
 
     public SettingsViewModel Settings() =>
-        new(this.AppState, this.ConfigurationStore, this.Permissions, this.ProcessRunner, this.Updates, this.Diagnostics);
+        new(this.AppState, this.ConfigurationStore, this.Permissions, this.Shell, this.Updates, this.Diagnostics);
 
     public StatsViewModel Stats() => new(this.AppState, this.Analytics);
 
     public DashboardViewModel Dashboard() => new(
-        this.AppState, this.SwitchService, this.Analytics, this.ProcessRunner, this.Clock);
+        this.AppState, this.SwitchService, this.Analytics, this.Shell, this.Clock);
 
     public OnboardingViewModel Onboarding() =>
         new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.SwitchService);
 
     public ProfileSetupViewModel ProfileSetup(ContextDefinition? existing = null) =>
-        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.Catalog, this.ProcessRunner, this.FocusShortcuts, existing);
+        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.Catalog, this.Shell, this.FocusShortcuts, existing);
 }
