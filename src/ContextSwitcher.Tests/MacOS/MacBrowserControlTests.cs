@@ -1,7 +1,7 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
-using ContextSwitcher.Infrastructure.AppleScript;
+using ContextSwitcher.Infrastructure.MacOS.AppleScript;
 using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 

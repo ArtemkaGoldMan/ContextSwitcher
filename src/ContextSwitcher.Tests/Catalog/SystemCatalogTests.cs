@@ -3,8 +3,8 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
-using ContextSwitcher.Infrastructure.AppleScript;
-using ContextSwitcher.Infrastructure.Catalog;
+using ContextSwitcher.Infrastructure.MacOS.AppleScript;
+using ContextSwitcher.Infrastructure.MacOS.Catalog;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Catalog;

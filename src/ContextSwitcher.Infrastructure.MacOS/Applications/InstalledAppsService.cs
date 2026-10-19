@@ -2,7 +2,7 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Infrastructure.Files;
 
-namespace ContextSwitcher.Infrastructure.Applications;
+namespace ContextSwitcher.Infrastructure.MacOS.Applications;
 
 /// <summary>
 /// Enumerates <c>.app</c> bundles from the standard macOS application directories and extracts each

@@ -1,5 +1,5 @@
 using ContextSwitcher.Core.Applications;
-using ContextSwitcher.Infrastructure.Applications;
+using ContextSwitcher.Infrastructure.MacOS.Applications;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Tests.TestDoubles;
 

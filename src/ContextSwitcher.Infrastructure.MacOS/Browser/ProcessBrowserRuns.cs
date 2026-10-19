@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Infrastructure.MacOS;
+using ContextSwitcher.Infrastructure.Browser;
 
-namespace ContextSwitcher.Infrastructure.Browser;
+namespace ContextSwitcher.Infrastructure.MacOS.Browser;
 
 /// <summary>
 /// Tells one run of Chrome or Brave from the next by its main process: the process id together with

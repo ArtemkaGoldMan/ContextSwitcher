@@ -77,7 +77,14 @@ public sealed partial class SilentCatchTests
     private static IEnumerable<string> SourceFiles()
     {
         string root = RepositoryRoot();
-        return new[] { "ContextSwitcher.Core", "ContextSwitcher.Infrastructure", "ContextSwitcher.App" }
+        return new[]
+            {
+                "ContextSwitcher.Core",
+                "ContextSwitcher.Infrastructure",
+                "ContextSwitcher.Infrastructure.MacOS",
+                "ContextSwitcher.Infrastructure.Windows",
+                "ContextSwitcher.App"
+            }
             .SelectMany(project => Directory.EnumerateFiles(Path.Combine(root, "src", project), "*.cs", SearchOption.AllDirectories))
             .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
                 && !file.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal));

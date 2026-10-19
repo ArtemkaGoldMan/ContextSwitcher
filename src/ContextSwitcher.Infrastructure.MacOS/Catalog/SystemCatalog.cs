@@ -5,10 +5,10 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
-using ContextSwitcher.Infrastructure.AppleScript;
+using ContextSwitcher.Infrastructure.MacOS.AppleScript;
 using ContextSwitcher.Infrastructure.MacOS;
 
-namespace ContextSwitcher.Infrastructure.Catalog;
+namespace ContextSwitcher.Infrastructure.MacOS.Catalog;
 
 /// <summary>
 /// Reads Shortcuts through the <c>shortcuts</c> CLI, containers through <c>docker</c>, Chromium

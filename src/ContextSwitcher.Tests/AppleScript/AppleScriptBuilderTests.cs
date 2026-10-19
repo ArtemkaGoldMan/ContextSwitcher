@@ -1,4 +1,4 @@
-using ContextSwitcher.Infrastructure.AppleScript;
+using ContextSwitcher.Infrastructure.MacOS.AppleScript;
 
 namespace ContextSwitcher.Tests.AppleScript;
 

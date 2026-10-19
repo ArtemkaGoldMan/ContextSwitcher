@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- What the app does on a Mac: AppleScript, the Objective-C runtime, the commands macOS has, and the
+       updater for its app bundle. Marked for macOS, so the compiler flags code meant for every system
+       that reaches in here. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\ContextSwitcher.Core\ContextSwitcher.Core.csproj" />
+    <ProjectReference Include="..\ContextSwitcher.Infrastructure\ContextSwitcher.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ContextSwitcher.Tests" />
+    <AssemblyAttribute Include="System.Runtime.Versioning.SupportedOSPlatformAttribute">
+      <_Parameter1>macos</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

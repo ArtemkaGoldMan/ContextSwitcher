@@ -1,6 +1,6 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.ProcessExecution;
-using ContextSwitcher.Infrastructure.AppleScript;
+using ContextSwitcher.Infrastructure.MacOS.AppleScript;
 
 namespace ContextSwitcher.Infrastructure.MacOS;
 

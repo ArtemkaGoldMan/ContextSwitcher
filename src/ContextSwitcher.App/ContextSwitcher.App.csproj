@@ -18,6 +18,14 @@
   <ItemGroup>
     <ProjectReference Include="..\ContextSwitcher.Core\ContextSwitcher.Core.csproj" />
     <ProjectReference Include="..\ContextSwitcher.Infrastructure\ContextSwitcher.Infrastructure.csproj" />
+    <ProjectReference Include="..\ContextSwitcher.Infrastructure.MacOS\ContextSwitcher.Infrastructure.MacOS.csproj" />
+  </ItemGroup>
+
+  <!-- This build is the Mac app, so it may use the macOS project. -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.Versioning.SupportedOSPlatformAttribute">
+      <_Parameter1>macos</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
   <ItemGroup>

@@ -7,20 +7,10 @@ namespace ContextSwitcher.Core.Platform;
 /// What this computer can do that another may not: Focus, Apple Music, a Dock icon, which browsers,
 /// and so profiles and closing tabs by id. Profile Setup and Settings offer only what it has, the plan
 /// has no step for what it lacks, and importing settings says what of them can't be used here. Data,
-/// chosen with the platform's services - <see cref="MacOS"/> on a Mac.
+/// which each platform's registrations choose.
 /// </summary>
 public sealed record PlatformCapabilities
 {
-    /// <summary>Everything the app does today, on a Mac.</summary>
-    public static PlatformCapabilities MacOS { get; } = new()
-    {
-        Focus = true,
-        AppleMusic = true,
-        DockIcon = true,
-        Browsers = [BrowserKind.Safari, BrowserKind.Chrome, BrowserKind.Brave],
-        FocusFilterBrowsers = [BrowserKind.Safari]
-    };
-
     /// <summary>Focus modes, turned on and off through Shortcuts.</summary>
     public required bool Focus { get; init; }
 

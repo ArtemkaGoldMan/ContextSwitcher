@@ -5,6 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+
+    <!-- The tests reach the macOS code on every system on purpose, with fakes in place of the system;
+         what needs a Mac is a [MacOSFact]. -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +27,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ContextSwitcher.Core\ContextSwitcher.Core.csproj" />
     <ProjectReference Include="..\ContextSwitcher.Infrastructure\ContextSwitcher.Infrastructure.csproj" />
+    <ProjectReference Include="..\ContextSwitcher.Infrastructure.MacOS\ContextSwitcher.Infrastructure.MacOS.csproj" />
     <ProjectReference Include="..\ContextSwitcher.App\ContextSwitcher.App.csproj" />
   </ItemGroup>
 

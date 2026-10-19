@@ -4,7 +4,7 @@ using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Messages;
-using ContextSwitcher.Core.Platform;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Contexts;
@@ -325,7 +325,7 @@ public sealed class ContextSwitchServiceTests
         FakeClock clock = new();
         FakeSwitchLock crossProcessLock = new() { HeldElsewhere = true };
         ContextSwitchService service = new(
-            store, executor, new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()), new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()), clock, logger, crossProcessLock, SettingsPath, StatePath);
+            store, executor, new AutomationPlanBuilder(MacPlatform.Capabilities, StepBudgets.Default, new FakeUnknownDefaultBrowser()), new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()), clock, logger, crossProcessLock, SettingsPath, StatePath);
         store.Seed(SettingsPath, TwoContextConfiguration());
 
         ContextSwitchResult result = await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
@@ -383,7 +383,7 @@ public sealed class ContextSwitchServiceTests
         FakeAutomationStepExecutor executor = new();
         FakeClock clock = new();
         ContextSwitchService service = new(
-            store, executor, new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()), new AnalyticsService(clock, sessions), clock, new TestLogger(), new FakeSwitchLock(), SettingsPath, StatePath);
+            store, executor, new AutomationPlanBuilder(MacPlatform.Capabilities, StepBudgets.Default, new FakeUnknownDefaultBrowser()), new AnalyticsService(clock, sessions), clock, new TestLogger(), new FakeSwitchLock(), SettingsPath, StatePath);
         return (service, store, executor);
     }
     private static (ContextSwitchService Service, InMemoryJsonStore Store, FakeAutomationStepExecutor Executor, FakeClock Clock, TestLogger Logger) CreateService()
@@ -393,7 +393,7 @@ public sealed class ContextSwitchServiceTests
         FakeClock clock = new();
         TestLogger logger = new();
         AnalyticsService analytics = new(clock, new InMemoryAnalyticsSessionStore());
-        AutomationPlanBuilder planBuilder = new(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser());
+        AutomationPlanBuilder planBuilder = new(MacPlatform.Capabilities, StepBudgets.Default, new FakeUnknownDefaultBrowser());
 
         ContextSwitchService service = new(
             store,

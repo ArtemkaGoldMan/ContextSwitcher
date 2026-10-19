@@ -1,7 +1,7 @@
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.ProcessExecution;
-using ContextSwitcher.Core.Security;
-using ContextSwitcher.Infrastructure.AppleScript;
+using ContextSwitcher.Infrastructure.MacOS.AppleScript;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Infrastructure.ProcessExecution;
 using ContextSwitcher.Tests.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
@@ -13,7 +13,7 @@ public sealed class AppleScriptRunnerTests
     [MacOSFact]
     public async Task RunAsyncExecutesScriptThroughOsascript()
     {
-        AppleScriptRunner runner = new(new ProcessRunner(CommandAllowlist.MacOS));
+        AppleScriptRunner runner = new(new ProcessRunner(MacPlatform.AllowedCommands));
 
         ProcessResult result = await runner.RunAsync("return 2 + 2", TimeSpan.FromSeconds(10), CancellationToken.None);
 

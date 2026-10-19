@@ -133,7 +133,7 @@ public sealed class FocusShortcutInstallerTests : IDisposable
     /// <summary>Runs the real signer but never opens the result: that would put a dialog on screen.</summary>
     private sealed class OpenNothingRunner : Core.Abstractions.IProcessRunner
     {
-        private readonly Infrastructure.ProcessExecution.ProcessRunner real = new(Core.Security.CommandAllowlist.MacOS);
+        private readonly Infrastructure.ProcessExecution.ProcessRunner real = new(MacPlatform.AllowedCommands);
 
         public string? Opened { get; private set; }
 

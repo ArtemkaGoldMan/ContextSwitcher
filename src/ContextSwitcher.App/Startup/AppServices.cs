@@ -8,18 +8,19 @@ using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Platform;
-using ContextSwitcher.Core.Security;
 using ContextSwitcher.Core.Updates;
-using ContextSwitcher.Infrastructure.AppleScript;
-using ContextSwitcher.Infrastructure.Applications;
 using ContextSwitcher.Infrastructure.Automation;
-using ContextSwitcher.Infrastructure.Catalog;
 using ContextSwitcher.Infrastructure.Analytics;
 using ContextSwitcher.Infrastructure.Browser;
 using ContextSwitcher.Infrastructure.Cli;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Infrastructure.Logging;
 using ContextSwitcher.Infrastructure.MacOS;
+using ContextSwitcher.Infrastructure.MacOS.AppleScript;
+using ContextSwitcher.Infrastructure.MacOS.Applications;
+using ContextSwitcher.Infrastructure.MacOS.Browser;
+using ContextSwitcher.Infrastructure.MacOS.Catalog;
+using ContextSwitcher.Infrastructure.MacOS.Updates;
 using ContextSwitcher.Infrastructure.ProcessExecution;
 using ContextSwitcher.Infrastructure.Time;
 using ContextSwitcher.Infrastructure.Updates;
@@ -200,8 +201,8 @@ public static class AppServices
         services.AddSingleton<IFileReplacer>(windows ? FileReplacer.RetryingWhileHeldOpen : FileReplacer.Once);
 
         // What a Mac can do: everything the app does today; and what it may run.
-        services.AddSingleton(PlatformCapabilities.MacOS);
-        services.AddSingleton(CommandAllowlist.MacOS);
+        services.AddSingleton(MacPlatform.Capabilities);
+        services.AddSingleton(MacPlatform.AllowedCommands);
 
         // How long a switch's steps may take and how they wait - what the app has always used.
         services.AddSingleton(StepBudgets.Default);
