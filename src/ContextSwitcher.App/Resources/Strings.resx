@@ -1755,8 +1755,8 @@ What did you do just before? Which profile did you switch from and to, and does 
 Diagnostics (Settings → Diagnostics → Copy diagnostics). Paste them here with ⌘V:
 
 
-ContextSwitcher {0}, macOS {1}</value>
-    <comment>Body of the email, as the person sees it to fill in. {0} = the app's version, {1} = the macOS version.</comment>
+ContextSwitcher {0}, {1} {2}</value>
+    <comment>Body of the email, as the person sees it to fill in. {0} = the app's version, {1} = the system (macOS), {2} = its version.</comment>
   </data>
   <data name="Contact_EmailOpened" xml:space="preserve">
     <value>A new message is open in your mail app, and the diagnostics are copied: paste them into it with ⌘V.</value>

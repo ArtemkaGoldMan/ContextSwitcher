@@ -1355,7 +1355,7 @@
 Діагностика (Налаштування → Діагностика → Скопіювати діагностику). Вставте її сюди (⌘V):
 
 
-ContextSwitcher {0}, macOS {1}</value>
+ContextSwitcher {0}, {1} {2}</value>
   </data>
   <data name="Contact_EmailOpened" xml:space="preserve">
     <value>У вашій пошті відкрито новий лист, а діагностику скопійовано: вставте її в лист (⌘V).</value>

@@ -77,7 +77,7 @@ public sealed class RedactionInvariantsTests
         };
 
         string report = DiagnosticsReport.Build(new DiagnosticsInput(
-            new RunInfo("ContextSwitcher", "0.6.1", "26.6", "arm64", "release", 1),
+            new RunInfo("ContextSwitcher", "0.6.1", "macOS", "26.6", "arm64", "release", 1),
             configuration,
             true,
             0,

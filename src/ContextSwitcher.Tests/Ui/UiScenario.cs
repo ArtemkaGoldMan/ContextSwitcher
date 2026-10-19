@@ -52,7 +52,7 @@ public sealed class UiScenario
             this.Releases, this.Updater, new FakeSystemNotifications(), this.AppState, new FakeAppInfo(new Version(0, 1, 0)), this.Clock, new TestLogger());
         this.Updates = new UpdatesViewModel(this.UpdateChecker, this.Shell);
         this.Diagnostics = new DiagnosticsSources(
-            this.Paths, () => new RunInfo("ContextSwitcher", "0.1.0", "26.6", "arm64", "release", 1), () => [], () => [], this.Clock);
+            this.Paths, () => new RunInfo("ContextSwitcher", "0.1.0", "macOS", "26.6", "arm64", "release", 1), () => [], () => [], this.Clock);
     }
 
     /// <summary>The scenario's settings and state, which every view model it builds reads and saves to.</summary>

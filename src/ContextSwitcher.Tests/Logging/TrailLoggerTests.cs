@@ -260,7 +260,7 @@ public sealed class TrailLoggerTests : IDisposable
 
     private TrailLogger NewLogger(Func<bool>? detailed = null, LogLevel? writeFrom = null) => new(
         new LocalJsonLogger(new ConfigPaths(this.directory), FileReplacer.Once, new SystemClock()),
-        () => new RunInfo("ContextSwitcher", "0.6.0", "26.6", "arm64", "release", 1),
+        () => new RunInfo("ContextSwitcher", "0.6.0", "macOS", "26.6", "arm64", "release", 1),
         detailed,
         writeFrom);
 

@@ -7,6 +7,9 @@ namespace ContextSwitcher.Infrastructure.MacOS;
 public sealed partial class MacSystemVersion : ISystemVersion
 {
     /// <inheritdoc />
+    public string Name => "macOS";
+
+    /// <inheritdoc />
     public string Read()
     {
         try

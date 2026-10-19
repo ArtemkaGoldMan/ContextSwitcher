@@ -246,6 +246,6 @@ public static class AppServices
     {
         IAppInfo app = provider.GetRequiredService<IAppInfo>();
         ISystemVersion system = provider.GetRequiredService<ISystemVersion>();
-        return () => RunInfo.Current(app.Version.ToString(3), app.IsDevelopment, system.Read());
+        return () => RunInfo.Current(app.Version.ToString(3), app.IsDevelopment, system);
     }
 }

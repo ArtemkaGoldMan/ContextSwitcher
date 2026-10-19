@@ -236,5 +236,5 @@ public sealed class SettingsViewModelTests
         new FakeShell());
 
     internal static DiagnosticsSources Diagnostics() => new(
-        new ConfigPaths("/tmp/context-switcher-tests"), () => new RunInfo("ContextSwitcher", "0.1.0", "26.6", "arm64", "release", 1), () => [], () => [], new FakeClock());
+        new ConfigPaths("/tmp/context-switcher-tests"), () => new RunInfo("ContextSwitcher", "0.1.0", "macOS", "26.6", "arm64", "release", 1), () => [], () => [], new FakeClock());
 }
