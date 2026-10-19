@@ -30,22 +30,28 @@ public sealed class ConfigPathsTests
         Assert.Equal(expected, paths.BaseDirectory);
     }
 
+    /// <summary>What the variable can name; a folder under the home one is put together with this system's separator.</summary>
+    public static TheoryData<string, string> NamedFolders => new()
+    {
+        { "/tmp/cs-demo", "/tmp/cs-demo" },
+        { "~/cs-demo", Path.Combine(Home, "cs-demo") },
+        { "  /tmp/cs-demo  ", "/tmp/cs-demo" }
+    };
+
     [Fact]
     public void AReleaseKeepsItsFilesInTheUsualFolder()
     {
-        Assert.Equal("/Users/someone/.config/ContextSwitcher", ConfigPaths.ResolveBaseDirectory(null, null, Home, isDevelopment: false));
+        Assert.Equal(Path.Combine(Home, ".config", "ContextSwitcher"), ConfigPaths.ResolveBaseDirectory(null, null, Home, isDevelopment: false));
     }
 
     [Fact]
     public void ADevelopmentBuildKeepsItsOwnFolder()
     {
-        Assert.Equal("/Users/someone/.config/ContextSwitcher-dev", ConfigPaths.ResolveBaseDirectory(null, null, Home, isDevelopment: true));
+        Assert.Equal(Path.Combine(Home, ".config", "ContextSwitcher-dev"), ConfigPaths.ResolveBaseDirectory(null, null, Home, isDevelopment: true));
     }
 
     [Theory]
-    [InlineData("/tmp/cs-demo", "/tmp/cs-demo")]
-    [InlineData("~/cs-demo", "/Users/someone/cs-demo")]
-    [InlineData("  /tmp/cs-demo  ", "/tmp/cs-demo")]
+    [MemberData(nameof(NamedFolders))]
     public void TheEnvironmentVariableNamesAnyFolder(string variable, string expected)
     {
         Assert.Equal(expected, ConfigPaths.ResolveBaseDirectory(null, variable, Home, isDevelopment: true));

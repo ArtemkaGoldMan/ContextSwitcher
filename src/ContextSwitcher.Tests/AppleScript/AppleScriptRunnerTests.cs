@@ -2,13 +2,14 @@ using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.AppleScript;
 using ContextSwitcher.Infrastructure.ProcessExecution;
+using ContextSwitcher.Tests.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.AppleScript;
 
 public sealed class AppleScriptRunnerTests
 {
-    [Fact]
+    [MacOSFact]
     public async Task RunAsyncExecutesScriptThroughOsascript()
     {
         AppleScriptRunner runner = new(new ProcessRunner());

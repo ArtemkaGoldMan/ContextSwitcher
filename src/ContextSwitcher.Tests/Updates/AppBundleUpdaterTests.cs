@@ -33,13 +33,14 @@ public sealed class AppBundleUpdaterTests : IDisposable
         }
     }
 
+    /// <summary>The bundle comes back as a full path, which on Windows starts with a drive.</summary>
     [Theory]
     [InlineData("/Applications/ContextSwitcher.app/Contents/MacOS/", "/Applications/ContextSwitcher.app")]
     [InlineData("/Applications/ContextSwitcher.app/Contents/MacOS", "/Applications/ContextSwitcher.app")]
     [InlineData("/Users/me/Projects/ContextSwitcher/src/ContextSwitcher.App/bin/Debug/net10.0/", null)]
     [InlineData("/Applications/ContextSwitcher.app/Contents/Resources/", null)]
     public void FindsTheBundleItRunsFromIfAny(string baseDirectory, string? expected) =>
-        Assert.Equal(expected, AppBundleUpdater.FindBundle(baseDirectory));
+        Assert.Equal(expected is null ? null : Path.GetFullPath(expected), AppBundleUpdater.FindBundle(baseDirectory));
 
     [Theory]
     [InlineData("Executable=/Applications/ContextSwitcher.app/Contents/MacOS/ContextSwitcher\ndesignated => " + Requirement + "\n", Requirement)]
