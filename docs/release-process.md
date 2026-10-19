@@ -117,7 +117,7 @@ A release marked as a pre-release on GitHub is not offered as an update.
 
 - **Checking.** About 30 seconds after launch and then daily, the app asks GitHub's API for the
   newest releases and takes the highest version that carries the Mac's files - `ContextSwitcher.zip`
-  or a disk image - leaving out drafts and pre-releases (`UpdatesViewModel`, `GitHubReleaseSource`,
+  or a disk image - leaving out drafts and pre-releases (`UpdateChecker`, `GitHubReleaseSource`,
   with the files named by `AppBundleUpdater.Assets`). Not GitHub's "latest" release: once Windows has
   releases of its own, that one may carry nothing for the Mac. A newer version shows as "Update to …"
   in the menu bar menu and in Settings → Updates. A failed automatic check says nothing; "Check now"

@@ -10,13 +10,13 @@ using Avalonia.Platform;
 using Avalonia.Styling;
 using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Startup;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Messages;
-using ContextSwitcher.Tests.App;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Ui;
@@ -29,7 +29,6 @@ namespace ContextSwitcher.Tests.Ui;
 /// pages, with demo profiles. Only when <c>CONTEXTSWITCHER_SCREENSHOTS</c> names the folder to write
 /// them to - scripts/readme-screenshots.sh does; in an ordinary test run it does nothing.
 /// </summary>
-[Collection(AppHostTestCollection.Name)]
 public sealed class ReadmeScreenshots : UiTest
 {
     private const string FolderVariable = "CONTEXTSWITCHER_SCREENSHOTS";
@@ -54,8 +53,8 @@ public sealed class ReadmeScreenshots : UiTest
                 foreach (ThemeVariant theme in new[] { ThemeVariant.Light, ThemeVariant.Dark })
                 {
                     Shoot(folder, "profiles", theme, 560, (_, _) => { });
-                    Shoot(folder, "switch-problems", theme, 600, (_, _) => AppHost.UpdateState(WithProblems()));
-                    Shoot(folder, "settings", theme, 850, (viewModel, _) => viewModel.ShowSettings());
+                    Shoot(folder, "switch-problems", theme, 600, (scenario, _) => scenario.AppState.UpdateState(WithProblems()));
+                    Shoot(folder, "settings", theme, 850, (_, viewModel) => viewModel.ShowSettings());
                 }
             });
         }
@@ -107,15 +106,17 @@ public sealed class ReadmeScreenshots : UiTest
     /// up, or drawing it into a bitmap of twice the density, put the active profile's card in the
     /// wrong place and everything else at four times the size.
     /// </summary>
-    private static void Shoot(string folder, string name, ThemeVariant theme, double height, Action<MainAppViewModel, MainAppWindow> prepare)
+    private static void Shoot(string folder, string name, ThemeVariant theme, double height, Action<UiScenario, MainAppViewModel> prepare)
     {
         UiScenario scenario = UiScenario.With(Demo());
-        AppHost.UpdateState(new CurrentContextState { CurrentContextId = "personal" });
-        UpdatesViewModel updates = new(scenario.Releases, scenario.Updater, scenario.ProcessRunner, new FakeSystemNotifications(), UpdatesViewModel.RunningVersion);
+        scenario.AppState.UpdateState(new CurrentContextState { CurrentContextId = "personal" });
+        UpdateChecker checker = new(
+            scenario.Releases, scenario.Updater, new FakeSystemNotifications(), scenario.AppState, new AppInfo(), scenario.Clock, new TestLogger());
         MainAppViewModel viewModel = new(
-            scenario.SwitchService, scenario.ConfigurationStore, scenario.Permissions,
+            scenario.AppState, scenario.SwitchService, scenario.ConfigurationStore, scenario.Permissions,
             scenario.ProcessRunner, scenario.Analytics, scenario.InstalledApps, scenario.Catalog, scenario.FocusShortcuts,
-            scenario.Notice, updates, loginItem: new FakeLoginItem { Status = LoginItemStatus.On });
+            scenario.Notice, new UpdatesViewModel(checker, scenario.ProcessRunner), scenario.Diagnostics,
+            loginItem: new FakeLoginItem { Status = LoginItemStatus.On });
 
         // See-through from the start: a window takes its transparency when it is first shown.
         MainAppWindow window = new(viewModel)
@@ -126,7 +127,7 @@ public sealed class ReadmeScreenshots : UiTest
             TransparencyLevelHint = [WindowTransparencyLevel.Transparent]
         };
         window.Show();
-        prepare(viewModel, window);
+        prepare(scenario, viewModel);
         PumpUntil(Task.Delay(300));
         Settle(window);
 

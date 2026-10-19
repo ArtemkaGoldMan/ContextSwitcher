@@ -7,11 +7,9 @@ using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Messages;
 using ContextSwitcher.App.Views;
 using Avalonia.VisualTree;
-using ContextSwitcher.Tests.App;
 
 namespace ContextSwitcher.Tests.Ui;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class MainAppWindowInteractionTests : UiTest
 {
     [Fact]
@@ -74,7 +72,7 @@ public sealed class MainAppWindowInteractionTests : UiTest
 
             Assert.False(notice.IsEffectivelyVisible, "the card showed with nothing to report");
 
-            AppHost.UpdateState(new CurrentContextState
+            scenario.AppState.UpdateState(new CurrentContextState
             {
                 CurrentContextId = "personal",
                 LastSwitchCompletedAt = DateTimeOffset.UtcNow,
@@ -107,7 +105,7 @@ public sealed class MainAppWindowInteractionTests : UiTest
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
             Window window = ShowMainWindow(scenario.MainApp());
-            AppHost.UpdateState(new CurrentContextState
+            scenario.AppState.UpdateState(new CurrentContextState
             {
                 CurrentContextId = "personal",
                 LastSwitchCompletedAt = DateTimeOffset.UtcNow,
@@ -141,7 +139,7 @@ public sealed class MainAppWindowInteractionTests : UiTest
             UiScenario scenario = UiScenario.WithTwoProfiles();
             MainAppViewModel viewModel = scenario.MainApp();
             Window window = ShowMainWindow(viewModel);
-            AppHost.UpdateState(new CurrentContextState
+            scenario.AppState.UpdateState(new CurrentContextState
             {
                 CurrentContextId = "personal",
                 LastSwitchCompletedAt = DateTimeOffset.UtcNow,

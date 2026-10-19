@@ -1,21 +1,20 @@
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views.Pages;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Infrastructure.Files;
-using ContextSwitcher.Tests.App;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Ui;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class ProfilesPageInteractionTests : UiTest
 {
+    private readonly AppState appState = new();
+
     /// <summary>The profile itself is the switch: clicking its card turns it on. There is no Activate button.</summary>
     [Fact]
     public async Task ClickingAProfileAsksTheSwitchServiceForThatContext()
@@ -227,7 +226,7 @@ public sealed class ProfilesPageInteractionTests : UiTest
         });
     }
 
-    private static (ProfilesViewModel ViewModel, StubContextSwitchService SwitchService, ConfigurationStore Store) Create()
+    private (ProfilesViewModel ViewModel, StubContextSwitchService SwitchService, ConfigurationStore Store) Create()
     {
         AppConfiguration configuration = new()
         {
@@ -239,8 +238,8 @@ public sealed class ProfilesPageInteractionTests : UiTest
             ]
         };
         ConfigurationValidator validator = new();
-        AppHost.UpdateConfiguration(configuration, validator.Validate(configuration));
-        AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
+        this.appState.UpdateConfiguration(configuration, validator.Validate(configuration));
+        this.appState.UpdateState(new CurrentContextState { CurrentContextId = "work" });
 
         InMemoryJsonStore inner = new();
         ConfigPaths paths = new("/tmp/context-switcher-ui-tests");
@@ -249,9 +248,9 @@ public sealed class ProfilesPageInteractionTests : UiTest
         // Completes off-context like real file IO, so a save that resumes on the wrong thread is
         // actually observable here.
         YieldingJsonStore jsonStore = new(inner);
-        ConfigurationStore store = new(jsonStore, paths, validator, new TestLogger());
+        ConfigurationStore store = new(jsonStore, paths, validator, this.appState, new TestLogger());
         StubContextSwitchService switchService = new();
 
-        return (new ProfilesViewModel(switchService, store), switchService, store);
+        return (new ProfilesViewModel(this.appState, switchService, store), switchService, store);
     }
 }

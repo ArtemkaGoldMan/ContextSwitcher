@@ -19,13 +19,17 @@ public sealed class ConfigPaths
     /// The folder this system keeps apps' settings in, when it isn't <c>~/.config</c>: the app's
     /// composition root gives <c>%APPDATA%</c> on Windows.
     /// </param>
-    public ConfigPaths(string? baseDirectory = null, string? settingsRoot = null)
+    /// <param name="development">
+    /// Whether this is a development build, which keeps a folder of its own: the app's composition root
+    /// says, from the app's identity.
+    /// </param>
+    public ConfigPaths(string? baseDirectory = null, string? settingsRoot = null, bool development = false)
     {
         BaseDirectory = ResolveBaseDirectory(
             baseDirectory,
             Environment.GetEnvironmentVariable(DirectoryVariable),
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            AppBuild.IsDevelopment,
+            development,
             settingsRoot);
     }
 

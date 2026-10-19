@@ -1,10 +1,10 @@
+using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Tests.TestDoubles;
-using ContextSwitcher.Tests.App;
 using ContextSwitcher.Tests.Ui;
 
 namespace ContextSwitcher.Tests.App.Startup;
@@ -13,7 +13,6 @@ namespace ContextSwitcher.Tests.App.Startup;
 /// Needs a dispatcher, because the watcher debounces on one and marshals to it before touching
 /// anything the UI owns.
 /// </summary>
-[Collection(AppHostTestCollection.Name)]
 public sealed class StateFileWatcherTests : UiTest
 {
     /// <summary>
@@ -31,12 +30,13 @@ public sealed class StateFileWatcherTests : UiTest
             {
                 ConfigPaths paths = new(directory);
                 JsonFileStore store = new(FileReplacer.Once, new TestLogger());
-                SeedAppHost();
+                AppState appState = Seeded();
 
                 store.WriteAsync(paths.StatePath, new CurrentContextState { CurrentContextId = "work" })
                     .GetAwaiter().GetResult();
 
-                using StateFileWatcher watcher = new(store, paths);
+                using StateFileWatcher watcher = new(appState, store, paths);
+                watcher.Start();
                 bool reloaded = false;
                 watcher.StateReloaded += (_, _) => reloaded = true;
 
@@ -51,7 +51,7 @@ public sealed class StateFileWatcherTests : UiTest
                 PumpUntil(WaitUntil(() => reloaded), TimeSpan.FromSeconds(15));
 
                 Assert.True(reloaded);
-                Assert.Equal("personal", AppHost.State.CurrentContextId);
+                Assert.Equal("personal", appState.State.CurrentContextId);
             }
             finally
             {
@@ -74,13 +74,14 @@ public sealed class StateFileWatcherTests : UiTest
             {
                 ConfigPaths paths = new(directory);
                 JsonFileStore store = new(FileReplacer.Once, new TestLogger());
-                SeedAppHost();
+                AppState appState = Seeded();
 
                 CurrentContextState state = new() { CurrentContextId = "work", LastSwitchCompletedAt = DateTimeOffset.UnixEpoch };
                 store.WriteAsync(paths.StatePath, state).GetAwaiter().GetResult();
-                AppHost.UpdateState(state);
+                appState.UpdateState(state);
 
-                using StateFileWatcher watcher = new(store, paths);
+                using StateFileWatcher watcher = new(appState, store, paths);
+                watcher.Start();
                 int reloads = 0;
                 watcher.StateReloaded += (_, _) => reloads++;
 
@@ -96,7 +97,7 @@ public sealed class StateFileWatcherTests : UiTest
         });
     }
 
-    private static void SeedAppHost()
+    private static AppState Seeded()
     {
         AppConfiguration configuration = new()
         {
@@ -107,8 +108,10 @@ public sealed class StateFileWatcherTests : UiTest
                 new ContextDefinition { Id = "personal", DisplayName = "Personal" }
             ]
         };
-        AppHost.UpdateConfiguration(configuration, new ConfigurationValidator().Validate(configuration));
-        AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
+        AppState appState = new();
+        appState.UpdateConfiguration(configuration, new ConfigurationValidator().Validate(configuration));
+        appState.UpdateState(new CurrentContextState { CurrentContextId = "work" });
+        return appState;
     }
 
     private static async Task WaitUntil(Func<bool> condition)

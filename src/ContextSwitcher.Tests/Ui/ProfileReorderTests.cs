@@ -5,22 +5,21 @@ using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views.Pages;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Infrastructure.Files;
-using ContextSwitcher.Tests.App;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Ui;
 
 /// <summary>Dragging profiles into another order on the Profiles page - the order of the menu bar and the dashboard too.</summary>
-[Collection(AppHostTestCollection.Name)]
 public sealed class ProfileReorderTests : UiTest
 {
+    private readonly AppState appState = new();
+
     /// <summary>Holding a card and moving it past the next puts it there: the order is saved, and the cards show it.</summary>
     [Fact]
     public async Task DraggingACardDownPastTheNextOnePutsItThere()
@@ -31,10 +30,10 @@ public sealed class ProfileReorderTests : UiTest
             Window window = ShowWindow(Page(viewModel), height: 700);
 
             Drag(window, CardOf(window, "Work"), CardOf(window, "Personal"), pastTheMiddle: true);
-            PumpUntil(WaitUntil(() => AppHost.Configuration.Contexts[0].Id == "personal"));
+            PumpUntil(WaitUntil(() => this.appState.Configuration.Contexts[0].Id == "personal"));
             Settle(window);
 
-            Assert.Equal(["personal", "work", "study"], AppHost.Configuration.Contexts.Select(c => c.Id));
+            Assert.Equal(["personal", "work", "study"], this.appState.Configuration.Contexts.Select(c => c.Id));
             Assert.Equal(["Personal", "Work", "Study"], viewModel.Rows.Select(row => row.DisplayName));
 
             // Moving a card is not clicking it: the profile was not turned on or off.
@@ -51,9 +50,9 @@ public sealed class ProfileReorderTests : UiTest
             Window window = ShowWindow(Page(viewModel), height: 700);
 
             Drag(window, CardOf(window, "Study"), CardOf(window, "Work"), pastTheMiddle: false);
-            PumpUntil(WaitUntil(() => AppHost.Configuration.Contexts[0].Id == "study"));
+            PumpUntil(WaitUntil(() => this.appState.Configuration.Contexts[0].Id == "study"));
 
-            Assert.Equal(["study", "work", "personal"], AppHost.Configuration.Contexts.Select(c => c.Id));
+            Assert.Equal(["study", "work", "personal"], this.appState.Configuration.Contexts.Select(c => c.Id));
         });
     }
 
@@ -75,7 +74,7 @@ public sealed class ProfileReorderTests : UiTest
             Settle(window);
 
             Assert.Equal("personal", switchService.LastRequest?.TargetContextId);
-            Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(c => c.Id));
+            Assert.Equal(["work", "personal", "study"], this.appState.Configuration.Contexts.Select(c => c.Id));
         });
     }
 
@@ -102,7 +101,7 @@ public sealed class ProfileReorderTests : UiTest
             Settle(window);
 
             Assert.DoesNotContain(FindAll<ContentPresenter>(window), p => p.Classes.Contains("lifted") || p.Classes.Contains("reorder"));
-            Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(c => c.Id));
+            Assert.Equal(["work", "personal", "study"], this.appState.Configuration.Contexts.Select(c => c.Id));
             Assert.Null(switchService.LastRequest);
         });
     }
@@ -149,17 +148,17 @@ public sealed class ProfileReorderTests : UiTest
             Settle(window);
 
             window.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.Alt);
-            PumpUntil(WaitUntil(() => AppHost.Configuration.Contexts[0].Id == "personal"));
+            PumpUntil(WaitUntil(() => this.appState.Configuration.Contexts[0].Id == "personal"));
             Settle(window);
 
-            Assert.Equal(["personal", "work", "study"], AppHost.Configuration.Contexts.Select(c => c.Id));
+            Assert.Equal(["personal", "work", "study"], this.appState.Configuration.Contexts.Select(c => c.Id));
             Button moved = CardOf(window, "Work");
             Assert.True(moved.IsFocused, $"focused: {TopLevel.GetTopLevel(moved)?.FocusManager?.GetFocusedElement()?.GetType().Name}; card focusable={moved.Focusable}, enabled={moved.IsEffectivelyEnabled}, window active={window.IsActive}");
 
             window.KeyPressQwerty(PhysicalKey.ArrowUp, RawInputModifiers.Alt);
-            PumpUntil(WaitUntil(() => AppHost.Configuration.Contexts[0].Id == "work"));
+            PumpUntil(WaitUntil(() => this.appState.Configuration.Contexts[0].Id == "work"));
 
-            Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(c => c.Id));
+            Assert.Equal(["work", "personal", "study"], this.appState.Configuration.Contexts.Select(c => c.Id));
         });
     }
 
@@ -176,7 +175,7 @@ public sealed class ProfileReorderTests : UiTest
             window.KeyPressQwerty(PhysicalKey.ArrowUp, RawInputModifiers.Alt);
             Settle(window);
 
-            Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(c => c.Id));
+            Assert.Equal(["work", "personal", "study"], this.appState.Configuration.Contexts.Select(c => c.Id));
         });
     }
 
@@ -200,7 +199,7 @@ public sealed class ProfileReorderTests : UiTest
             Settle(window);
 
             Assert.DoesNotContain(FindAll<ContentPresenter>(window), p => p.Classes.Contains("lifted"));
-            Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(c => c.Id));
+            Assert.Equal(["work", "personal", "study"], this.appState.Configuration.Contexts.Select(c => c.Id));
         });
     }
 
@@ -247,7 +246,7 @@ public sealed class ProfileReorderTests : UiTest
             window.MouseUp(far, MouseButton.Left, RawInputModifiers.None);
             Settle(window);
 
-            Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(c => c.Id));
+            Assert.Equal(["work", "personal", "study"], this.appState.Configuration.Contexts.Select(c => c.Id));
             Assert.DoesNotContain(FindAll<ContentPresenter>(window), p => p.Classes.Contains("lifted") || p.Classes.Contains("reorder"));
             Assert.Null(switchService.LastRequest);
         });
@@ -271,7 +270,7 @@ public sealed class ProfileReorderTests : UiTest
             Settle(window);
 
             Assert.DoesNotContain(FindAll<ContentPresenter>(window), p => p.Classes.Contains("lifted"));
-            Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(c => c.Id));
+            Assert.Equal(["work", "personal", "study"], this.appState.Configuration.Contexts.Select(c => c.Id));
             Assert.Null(switchService.LastRequest);
         });
     }
@@ -325,7 +324,7 @@ public sealed class ProfileReorderTests : UiTest
         Settle(window);
     }
 
-    private static (ProfilesViewModel ViewModel, StubContextSwitchService SwitchService, ConfigurationStore Store) Create()
+    private (ProfilesViewModel ViewModel, StubContextSwitchService SwitchService, ConfigurationStore Store) Create()
     {
         AppConfiguration configuration = new()
         {
@@ -338,17 +337,17 @@ public sealed class ProfileReorderTests : UiTest
             ]
         };
         ConfigurationValidator validator = new();
-        AppHost.UpdateConfiguration(configuration, validator.Validate(configuration));
-        AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
+        this.appState.UpdateConfiguration(configuration, validator.Validate(configuration));
+        this.appState.UpdateState(new CurrentContextState { CurrentContextId = "work" });
 
         InMemoryJsonStore inner = new();
         ConfigPaths paths = new("/tmp/context-switcher-ui-tests");
         inner.Seed(paths.SettingsPath, configuration);
         YieldingJsonStore jsonStore = new(inner);
-        ConfigurationStore store = new(jsonStore, paths, validator, new TestLogger());
+        ConfigurationStore store = new(jsonStore, paths, validator, this.appState, new TestLogger());
         StubContextSwitchService switchService = new();
 
-        return (new ProfilesViewModel(switchService, store), switchService, store);
+        return (new ProfilesViewModel(this.appState, switchService, store), switchService, store);
     }
 
     private static async Task WaitUntil(Func<bool> condition)

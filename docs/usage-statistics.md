@@ -172,7 +172,7 @@ rate limiting keep that small; the numbers are close, not exact.
   short timeout. A ping that fails is retried tomorrow and never shown; at most it is a line in the
   detailed log.
 - `ContextSwitcher.App`: sent from the same daily timer as the update check
-  (`UpdatesViewModel`), and once when the setting is turned on. A switch in Settings, under
+  (`UpdateChecker`), and once when the setting is turned on. A switch in Settings, under
   Privacy, listing exactly what is sent, with a link here; the question in setup; the state in
   Settings → Diagnostics' report. Text in English and Ukrainian.
 - Tests: nothing is sent while off; what is sent has exactly the three fields; off deletes the id

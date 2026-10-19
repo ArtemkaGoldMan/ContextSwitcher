@@ -1,9 +1,8 @@
 using Avalonia.Controls;
-using ContextSwitcher.App.Startup;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Tests.App;
 
 namespace ContextSwitcher.Tests.Ui;
 
@@ -11,7 +10,6 @@ namespace ContextSwitcher.Tests.Ui;
 /// The first-run wizard is the only screen a new user is guaranteed to see, and it blocks the app
 /// until it is finished or skipped.
 /// </summary>
-[Collection(AppHostTestCollection.Name)]
 public sealed class OnboardingInteractionTests : UiTest
 {
     [Fact]
@@ -19,7 +17,7 @@ public sealed class OnboardingInteractionTests : UiTest
     {
         await OnUiThreadAsync(() =>
         {
-            (OnboardingViewModel viewModel, Window window) = Show();
+            (OnboardingViewModel viewModel, Window window, _) = Show();
 
             Assert.True(viewModel.IsWelcomeStep);
 
@@ -49,7 +47,7 @@ public sealed class OnboardingInteractionTests : UiTest
     {
         await OnUiThreadAsync(() =>
         {
-            (OnboardingViewModel viewModel, Window window) = Show();
+            (OnboardingViewModel viewModel, Window window, _) = Show();
 
             for (int step = 0; step < 3; step++)
             {
@@ -69,7 +67,7 @@ public sealed class OnboardingInteractionTests : UiTest
     {
         await OnUiThreadAsync(() =>
         {
-            (OnboardingViewModel viewModel, Window window) = Show();
+            (_, Window window, IAppState appState) = Show();
 
             for (int step = 0; step < 3; step++)
             {
@@ -80,14 +78,14 @@ public sealed class OnboardingInteractionTests : UiTest
             Button finish = FindAll<Button>(window)
                 .First(b => (b.Content as string)?.StartsWith("Finish", StringComparison.Ordinal) == true && IsClickable(b));
             Click(window, finish);
-            PumpUntil(WaitUntil(() => AppHost.Configuration.OnboardingCompleted));
+            PumpUntil(WaitUntil(() => appState.Configuration.OnboardingCompleted));
             Settle(window);
 
-            Assert.True(AppHost.Configuration.OnboardingCompleted);
-            Assert.Equal(2, AppHost.Configuration.Contexts.Count);
+            Assert.True(appState.Configuration.OnboardingCompleted);
+            Assert.Equal(2, appState.Configuration.Contexts.Count);
 
             // The wizard shows a briefcase and a house; the saved profiles carry the same icons.
-            Assert.Equal(["briefcase", "house"], AppHost.Configuration.Contexts.Select(c => c.Icon));
+            Assert.Equal(["briefcase", "house"], appState.Configuration.Contexts.Select(c => c.Icon));
         });
     }
 
@@ -96,18 +94,18 @@ public sealed class OnboardingInteractionTests : UiTest
     {
         await OnUiThreadAsync(() =>
         {
-            (_, Window window) = Show();
+            (_, Window window, IAppState appState) = Show();
 
             Click(window, FindVisibleButton(window, "Skip setup"));
-            PumpUntil(WaitUntil(() => AppHost.Configuration.OnboardingCompleted));
+            PumpUntil(WaitUntil(() => appState.Configuration.OnboardingCompleted));
             Settle(window);
 
-            Assert.True(AppHost.Configuration.OnboardingCompleted);
-            Assert.NotEmpty(AppHost.Configuration.Contexts);
+            Assert.True(appState.Configuration.OnboardingCompleted);
+            Assert.NotEmpty(appState.Configuration.Contexts);
         });
     }
 
-    private static (OnboardingViewModel ViewModel, Window Window) Show()
+    private static (OnboardingViewModel ViewModel, Window Window, IAppState AppState) Show()
     {
         UiScenario scenario = UiScenario.With(new AppConfiguration
         {
@@ -120,7 +118,7 @@ public sealed class OnboardingInteractionTests : UiTest
         OnboardingWindow window = new() { DataContext = viewModel };
         window.Show();
         Settle(window);
-        return (viewModel, window);
+        return (viewModel, window, scenario.AppState);
     }
 
     private static async Task WaitUntil(Func<bool> condition)

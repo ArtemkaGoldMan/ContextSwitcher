@@ -1,5 +1,4 @@
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Configuration;
@@ -9,9 +8,10 @@ using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class OnboardingViewModelTests
 {
+    private readonly AppState appState = new();
+
     [Fact]
     public void SuggestionsOnlySeedAppsThatAreActuallyInstalled()
     {
@@ -38,10 +38,10 @@ public sealed class OnboardingViewModelTests
 
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
-        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), this.appState, new TestLogger());
         StubContextSwitchService switchService = new();
 
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration
             {
                 ActiveContextId = "default",
@@ -50,7 +50,7 @@ public sealed class OnboardingViewModelTests
             },
             new ConfigurationValidationResult([]));
 
-        OnboardingViewModel viewModel = new(store, installed, switchService);
+        OnboardingViewModel viewModel = new(this.appState, store, installed, switchService);
         viewModel.FinishCommand.Execute(null);
 
         AppConfiguration? saved = jsonStore.Get<AppConfiguration>(configPaths.SettingsPath);
@@ -71,9 +71,9 @@ public sealed class OnboardingViewModelTests
     {
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
-        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), this.appState, new TestLogger());
 
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration
             {
                 ActiveContextId = "default",
@@ -82,7 +82,7 @@ public sealed class OnboardingViewModelTests
             },
             new ConfigurationValidationResult([]));
 
-        OnboardingViewModel viewModel = new(store, new FakeInstalledAppsService(), new StubContextSwitchService());
+        OnboardingViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new StubContextSwitchService());
         viewModel.SkipCommand.Execute(null);
 
         AppConfiguration? saved = jsonStore.Get<AppConfiguration>(configPaths.SettingsPath);
@@ -113,9 +113,9 @@ public sealed class OnboardingViewModelTests
         Assert.True(viewModel.IsPersonalStep);
     }
 
-    private static OnboardingViewModel Create(FakeInstalledAppsService installed)
+    private OnboardingViewModel Create(FakeInstalledAppsService installed)
     {
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration
             {
                 ActiveContextId = "default",
@@ -124,8 +124,8 @@ public sealed class OnboardingViewModelTests
             },
             new ConfigurationValidationResult([]));
 
-        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), new TestLogger());
-        return new OnboardingViewModel(store, installed, new StubContextSwitchService());
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
+        return new OnboardingViewModel(this.appState, store, installed, new StubContextSwitchService());
     }
 
     /// <summary>
@@ -188,12 +188,12 @@ public sealed class OnboardingViewModelTests
         Assert.False(fromSource.OpenAtLogin);
     }
 
-    private static OnboardingViewModel WithLoginItem(FakeLoginItem loginItem)
+    private OnboardingViewModel WithLoginItem(FakeLoginItem loginItem)
     {
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "default", OnboardingCompleted = false, Contexts = [new ContextDefinition { Id = "default", DisplayName = "Default" }] },
             new ConfigurationValidationResult([]));
-        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), new TestLogger());
-        return new OnboardingViewModel(store, new FakeInstalledAppsService(), new StubContextSwitchService(), loginItem);
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
+        return new OnboardingViewModel(this.appState, store, new FakeInstalledAppsService(), new StubContextSwitchService(), loginItem);
     }
 }

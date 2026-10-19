@@ -1,5 +1,4 @@
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Configuration;
@@ -10,9 +9,10 @@ using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class ProfileSetupViewModelTests
 {
+    private readonly AppState appState = new();
+
     /// <summary>
     /// The id field is gone from the editor, so a new profile's id follows its name - which keeps
     /// the id the CLI and Shortcuts use recognisable - and steps past ids already taken.
@@ -25,10 +25,10 @@ public sealed class ProfileSetupViewModelTests
             ActiveContextId = "deep-work",
             Contexts = [new ContextDefinition { Id = "deep-work", DisplayName = "Deep Work" }]
         };
-        AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
 
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
 
         Assert.True(viewModel.IsNew);
         Assert.Equal("new-profile", viewModel.Id);
@@ -52,12 +52,12 @@ public sealed class ProfileSetupViewModelTests
     public void RenamingAnExistingProfileKeepsItsId()
     {
         ContextDefinition context = new() { Id = "work", DisplayName = "Work" };
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "work", Contexts = [context] },
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
 
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
         viewModel.DisplayName = "Office";
 
         Assert.Equal("work", viewModel.Id);
@@ -73,12 +73,12 @@ public sealed class ProfileSetupViewModelTests
             LaunchApps = ["Slack", "Both App"],
             CloseApps = ["Spotify", "Both App"]
         };
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "work", Contexts = [context] },
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
 
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
 
         Assert.Equal("work", viewModel.Id);
         Assert.Equal(3, viewModel.Apps.Count);
@@ -94,12 +94,12 @@ public sealed class ProfileSetupViewModelTests
     public void SaveCommandRoundTripsIdentityAndAppsToConfiguration()
     {
         ContextDefinition context = new() { Id = "work", DisplayName = "Work" };
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "work", Contexts = [context] },
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
 
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context)
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context)
         {
             DisplayName = "Work Renamed"
         };
@@ -174,9 +174,9 @@ public sealed class ProfileSetupViewModelTests
     public void AnExistingLowercaseAccentStillMatchesItsPreset()
     {
         ContextDefinition context = new() { Id = "work", DisplayName = "Work", AccentColor = "#2f6fed" };
-        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
 
-        ProfileSetupViewModel viewModel = new(CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
 
         Assert.Equal("Blue", viewModel.SelectedAccent.Name);
         Assert.False(viewModel.IsCustomAccent);
@@ -201,32 +201,32 @@ public sealed class ProfileSetupViewModelTests
     public void AnUnknownStoredIconIsKeptAndShownAsTheCircle()
     {
         ContextDefinition context = new() { Id = "work", DisplayName = "Work", Icon = "rocket" };
-        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
 
-        ProfileSetupViewModel viewModel = new(CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
 
         Assert.Equal("rocket", viewModel.Icon);
         Assert.Equal("circle", viewModel.SelectedIcon.Name);
     }
 
-    private static ProfileSetupViewModel NewProfile()
+    private ProfileSetupViewModel NewProfile()
     {
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] },
             new ConfigurationValidationResult([]));
-        return new ProfileSetupViewModel(CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
+        return new ProfileSetupViewModel(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
     }
 
     [Fact]
     public void CancelCommandRaisesCancelRequestedWithoutSaving()
     {
         ContextDefinition context = new() { Id = "work", DisplayName = "Work" };
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "work", Contexts = [context] },
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
 
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null) { DisplayName = "Should not persist" };
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null) { DisplayName = "Should not persist" };
         bool cancelled = false;
         viewModel.CancelRequested += (_, _) => cancelled = true;
 
@@ -240,7 +240,7 @@ public sealed class ProfileSetupViewModelTests
     public void AppPickerExcludesAppsAlreadyAddedAndFiltersBySearch()
     {
         ContextDefinition context = new() { Id = "work", DisplayName = "Work", LaunchApps = ["Slack"] };
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "work", Contexts = [context] },
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
@@ -250,7 +250,7 @@ public sealed class ProfileSetupViewModelTests
         installed.Apps.Add(new InstalledApp("Discord", null));
         installed.Apps.Add(new InstalledApp("Docker", null));
 
-        ProfileSetupViewModel viewModel = new(store, installed, new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, installed, new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
 
         // Slack is already on the profile, so the picker must not offer it again.
         Assert.DoesNotContain(viewModel.AppPicker.FilteredApps, app => app.Name == "Slack");
@@ -265,7 +265,7 @@ public sealed class ProfileSetupViewModelTests
     public void PickingAnAppAddsItWithBothTogglesOnAndRemovesItFromThePicker()
     {
         ContextDefinition context = new() { Id = "work", DisplayName = "Work" };
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "work", Contexts = [context] },
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
@@ -273,7 +273,7 @@ public sealed class ProfileSetupViewModelTests
         FakeInstalledAppsService installed = new();
         installed.Apps.Add(new InstalledApp("Discord", null));
 
-        ProfileSetupViewModel viewModel = new(store, installed, new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, installed, new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
         InstalledAppViewModel discord = Assert.Single(viewModel.AppPicker.FilteredApps);
 
         discord.PickCommand.Execute(null);
@@ -305,9 +305,9 @@ public sealed class ProfileSetupViewModelTests
                 CloseUrls = ["https://linear.app/", "https://youtube.com/"]
             }
         };
-        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
 
         Assert.Equal(
             [("https://github.com/", true, false), ("https://linear.app/", true, true), ("https://youtube.com/", false, true)],
@@ -341,9 +341,9 @@ public sealed class ProfileSetupViewModelTests
                 CloseUrls = ["https://github.com/"]
             }
         };
-        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
         Assert.True(viewModel.BrowserUrls[0].CanClose);
 
         viewModel.BrowserKind = BrowserKind.Default;
@@ -381,10 +381,10 @@ public sealed class ProfileSetupViewModelTests
             DisplayName = "Work",
             BrowserManagement = new BrowserManagementConfig { Mode = BrowserManagementMode.Urls, Browser = BrowserKind.Default, Urls = ["https://github.com/"] }
         };
-        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
         ProfileSetupViewModel viewModel = new(
-            store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context,
+            this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context,
             new FakeDefaultBrowser(BrowserKind.Chrome, "Google Chrome"));
 
         Assert.Equal("Default browser (Google Chrome)", viewModel.SelectedBrowserKind.Label);
@@ -404,7 +404,7 @@ public sealed class ProfileSetupViewModelTests
     public void AnUnscriptableDefaultBrowserIsNamedInTheReason()
     {
         ProfileSetupViewModel viewModel = new(
-            CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null,
+            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null,
             new FakeDefaultBrowser(BrowserKind.Default, "Firefox"));
         viewModel.BrowserKind = BrowserKind.Default;
 
@@ -427,7 +427,7 @@ public sealed class ProfileSetupViewModelTests
     public void EachBrowserOffersWhatItCanDo(BrowserKind chosen, BrowserKind systemDefault, bool offersProfiles, bool showsFocusTip)
     {
         ProfileSetupViewModel viewModel = new(
-            CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null,
+            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null,
             new FakeDefaultBrowser(systemDefault, systemDefault == BrowserKind.Default ? "Firefox" : systemDefault.ToString()));
         viewModel.BrowserKind = chosen;
 
@@ -479,11 +479,11 @@ public sealed class ProfileSetupViewModelTests
                 Profiles = [new BrowserProfileConfig { Browser = BrowserKind.Brave, ProfileDirectory = "Default" }]
             }
         };
-        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
         FakeSystemCatalog catalog = new();
         catalog.BrowserProfiles[BrowserKind.Chrome] = [new("Default", "Artem"), new("Profile 2", "Client")];
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
 
         Assert.Equal(BrowserKind.Brave, viewModel.BrowserKind);
         Assert.Equal(BrowserManagementMode.Profiles, viewModel.BrowserMode);
@@ -508,10 +508,10 @@ public sealed class ProfileSetupViewModelTests
     {
         FakeSystemCatalog catalog = new();
         catalog.InstalledBrowsers.Remove(BrowserKind.Brave);
-        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] }, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] }, new ConfigurationValidationResult([]));
 
         ProfileSetupViewModel viewModel = new(
-            CreateStore(out _, out _), new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null,
+            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null,
             new FakeDefaultBrowser(BrowserKind.Safari, "Safari"));
 
         Assert.Equal(["Default browser (Safari)", "Safari", "Google Chrome"], viewModel.BrowserKindChoices.Select(choice => choice.Label));
@@ -530,13 +530,13 @@ public sealed class ProfileSetupViewModelTests
             DisplayName = "Work",
             BrowserManagement = new BrowserManagementConfig { Mode = BrowserManagementMode.Urls, Browser = BrowserKind.Brave, Urls = ["https://github.com/"] }
         };
-        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
         FakeSystemCatalog catalog = new();
         catalog.InstalledBrowsers.Remove(BrowserKind.Brave);
         catalog.InstalledBrowsers.Remove(BrowserKind.Chrome);
 
         ProfileSetupViewModel viewModel = new(
-            CreateStore(out _, out _), new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
 
         Assert.Equal(["Default browser", "Safari", "Brave (not installed)"], viewModel.BrowserKindChoices.Select(choice => choice.Label));
         Assert.Equal("Brave (not installed)", viewModel.SelectedBrowserKind.Label);
@@ -548,7 +548,7 @@ public sealed class ProfileSetupViewModelTests
     {
         FakeProcessRunner processRunner = new();
         ProfileSetupViewModel viewModel = new(
-            CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), processRunner, new FakeFocusShortcutInstaller(), existing: null);
+            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), processRunner, new FakeFocusShortcutInstaller(), existing: null);
         viewModel.BrowserKind = BrowserKind.Safari;
 
         viewModel.OpenFocusSettingsCommand.Execute(null);
@@ -580,9 +580,9 @@ public sealed class ProfileSetupViewModelTests
             LaunchApps = ["Visual Studio Code"],
             HideApps = ["Visual Studio Code", "Notion"]
         };
-        AppHost.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
-        ProfileSetupViewModel viewModel = new(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), context);
 
         Assert.Equal(
             [("Visual Studio Code", true, false, true), ("Notion", false, false, true)],
@@ -596,11 +596,11 @@ public sealed class ProfileSetupViewModelTests
         Assert.Equal(["Notion"], saved.CloseApps);
     }
 
-    private static ConfigurationStore CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths)
+    private ConfigurationStore CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths)
     {
         jsonStore = new InMemoryJsonStore();
         configPaths = new ConfigPaths("/tmp/context-switcher-tests");
-        return new ConfigurationStore(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
+        return new ConfigurationStore(jsonStore, configPaths, new ConfigurationValidator(), this.appState, new TestLogger());
     }
 
     /// <summary>
@@ -636,9 +636,9 @@ public sealed class ProfileSetupViewModelTests
     }
 
 
-    private static ProfileSetupViewModel NewProfileViewModel()
+    private ProfileSetupViewModel NewProfileViewModel()
     {
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration
             {
                 ActiveContextId = "work",
@@ -646,7 +646,7 @@ public sealed class ProfileSetupViewModelTests
             },
             new ConfigurationValidationResult([]));
 
-        return new ProfileSetupViewModel(CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
+        return new ProfileSetupViewModel(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
     }
 
 }

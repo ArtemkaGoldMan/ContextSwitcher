@@ -4,11 +4,9 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using ContextSwitcher.App.Views;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Tests.App;
 
 namespace ContextSwitcher.Tests.Ui;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class TypographyTests : UiTest
 {
     /// <summary>

@@ -3,11 +3,9 @@ using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views;
 using ContextSwitcher.App.Views.Pages;
 using Avalonia.VisualTree;
-using ContextSwitcher.Tests.App;
 
 namespace ContextSwitcher.Tests.Ui;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class DashboardAndStatsInteractionTests : UiTest
 {
     /// <summary>
@@ -57,7 +55,7 @@ public sealed class DashboardAndStatsInteractionTests : UiTest
 
             Assert.True(scenario.SwitchService.LastRequest!.IsTurnOff);
 
-            ContextSwitcher.App.Startup.AppHost.UpdateState(new ContextSwitcher.Core.Contexts.CurrentContextState
+            scenario.AppState.UpdateState(new ContextSwitcher.Core.Contexts.CurrentContextState
             {
                 PreviousContextId = "work",
                 LastSwitchCompletedAt = DateTimeOffset.UtcNow,

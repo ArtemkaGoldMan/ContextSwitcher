@@ -1,5 +1,4 @@
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
@@ -9,9 +8,10 @@ using ContextSwitcher.Tests.TestDoubles;
 namespace ContextSwitcher.Tests.App.ViewModels;
 
 /// <summary>Settings' apps never touched: adding one takes it out of every profile and says which; removing gives it back to none.</summary>
-[Collection(AppHostTestCollection.Name)]
 public sealed class IgnoredAppsViewModelTests
 {
+    private readonly AppState appState = new();
+
     [Fact]
     public async Task AddingAnAppTakesItOutOfEveryProfileAndSaysWhich()
     {
@@ -30,7 +30,7 @@ public sealed class IgnoredAppsViewModelTests
 
         Assert.Empty(jsonStore.Get<AppConfiguration>(paths.SettingsPath)!.IgnoredApps);
         Assert.Empty(viewModel.Apps);
-        Assert.Empty(AppHost.Configuration.Contexts[0].LaunchApps);
+        Assert.Empty(this.appState.Configuration.Contexts[0].LaunchApps);
         viewModel.Dispose();
     }
 
@@ -44,7 +44,7 @@ public sealed class IgnoredAppsViewModelTests
         (IgnoredAppsViewModel _, InMemoryJsonStore jsonStore, ConfigPaths paths) = Create();
         FakeInstalledAppsService installed = new();
         installed.Apps.Add(new Core.Applications.InstalledApp("Telegram", null));
-        IgnoredAppsViewModel viewModel = new(new ConfigurationStore(jsonStore, paths, new ConfigurationValidator(), new TestLogger()), installed);
+        IgnoredAppsViewModel viewModel = new(this.appState, new ConfigurationStore(jsonStore, paths, new ConfigurationValidator(), this.appState, new TestLogger()), installed);
 
         Assert.Equal(0, installed.Reads);
 
@@ -61,8 +61,8 @@ public sealed class IgnoredAppsViewModelTests
     {
         (IgnoredAppsViewModel ignored, InMemoryJsonStore jsonStore, ConfigPaths paths) = Create();
         ignored.Dispose();
-        ConfigurationStore store = new(jsonStore, paths, new ConfigurationValidator(), new TestLogger());
-        SettingsViewModel settings = new(store, new FakePermissionsChecker(), new FakeProcessRunner(), SettingsViewModelTests.Updates());
+        ConfigurationStore store = new(jsonStore, paths, new ConfigurationValidator(), this.appState, new TestLogger());
+        SettingsViewModel settings = new(this.appState, store, new FakePermissionsChecker(), new FakeProcessRunner(), SettingsViewModelTests.Updates(this.appState), SettingsViewModelTests.Diagnostics());
 
         Assert.False(settings.AskOnSwitch);
         settings.AskOnSwitch = true;
@@ -71,12 +71,12 @@ public sealed class IgnoredAppsViewModelTests
         Assert.True(jsonStore.Get<AppConfiguration>(paths.SettingsPath)!.AskOnSwitch);
 
         // "Don't ask again" in the window turns it off from outside Settings, which follows.
-        AppConfiguration off = AppHost.Configuration with { AskOnSwitch = false };
-        AppHost.UpdateConfiguration(off, new ConfigurationValidator().Validate(off));
+        AppConfiguration off = this.appState.Configuration with { AskOnSwitch = false };
+        this.appState.UpdateConfiguration(off, new ConfigurationValidator().Validate(off));
         Assert.False(settings.AskOnSwitch);
     }
 
-    private static (IgnoredAppsViewModel ViewModel, InMemoryJsonStore JsonStore, ConfigPaths Paths) Create()
+    private (IgnoredAppsViewModel ViewModel, InMemoryJsonStore JsonStore, ConfigPaths Paths) Create()
     {
         AppConfiguration configuration = new()
         {
@@ -88,9 +88,9 @@ public sealed class IgnoredAppsViewModelTests
             ]
         };
         ConfigurationValidator validator = new();
-        AppHost.UpdateConfiguration(configuration, validator.Validate(configuration));
+        this.appState.UpdateConfiguration(configuration, validator.Validate(configuration));
         InMemoryJsonStore jsonStore = new();
         ConfigPaths paths = new("/tmp/context-switcher-ignored-tests");
-        return (new IgnoredAppsViewModel(new ConfigurationStore(jsonStore, paths, validator, new TestLogger()), installedApps: null), jsonStore, paths);
+        return (new IgnoredAppsViewModel(this.appState, new ConfigurationStore(jsonStore, paths, validator, this.appState, new TestLogger()), installedApps: null), jsonStore, paths);
     }
 }

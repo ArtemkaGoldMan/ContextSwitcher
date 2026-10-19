@@ -1,5 +1,4 @@
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
@@ -22,6 +21,7 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
 
     private static readonly int[] RetentionPresets = [7, 30, 90, 180, 365, 730];
 
+    private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private readonly IPermissionsChecker permissionsChecker;
     private readonly IProcessRunner processRunner;
@@ -43,15 +43,17 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
     private Task saving = Task.CompletedTask;
 
     public SettingsViewModel(
+        IAppState appState,
         ConfigurationStore configurationStore,
         IPermissionsChecker permissionsChecker,
         IProcessRunner processRunner,
         UpdatesViewModel updates,
+        DiagnosticsSources diagnostics,
         Func<IReadOnlyList<string>>? preferredLanguages = null,
         ILoginItem? loginItem = null,
-        IInstalledAppsService? installedApps = null,
-        DiagnosticsSources? diagnostics = null)
+        IInstalledAppsService? installedApps = null)
     {
+        this.appState = appState;
         this.loginItem = loginItem;
         this.loginItemStatus = loginItem?.Status ?? LoginItemStatus.Unavailable;
         this.preferredLanguages = preferredLanguages ?? PreferredLanguages.Get;
@@ -59,31 +61,31 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         this.permissionsChecker = permissionsChecker;
         this.processRunner = processRunner;
         this.Updates = updates;
-        this.Transfer = new SettingsTransferViewModel(configurationStore);
-        this.IgnoredApps = new IgnoredAppsViewModel(configurationStore, installedApps);
-        this.Diagnostics = new SettingsDiagnosticsViewModel(configurationStore, processRunner, diagnostics, () => this.AutomationGranted);
-        this.askOnSwitch = AppHost.Configuration.AskOnSwitch;
+        this.Transfer = new SettingsTransferViewModel(appState, configurationStore);
+        this.IgnoredApps = new IgnoredAppsViewModel(appState, configurationStore, installedApps);
+        this.Diagnostics = new SettingsDiagnosticsViewModel(appState, configurationStore, processRunner, diagnostics, () => this.AutomationGranted);
+        this.askOnSwitch = this.appState.Configuration.AskOnSwitch;
 
-        AppHost.ConfigurationChanged += this.OnConfigurationChanged;
+        this.appState.ConfigurationChanged += this.OnConfigurationChanged;
         this.Transfer.Imported += (_, _) =>
         {
             this.ReloadFromConfiguration();
             this.Diagnostics.Refresh();
         };
 
-        this.selectedAppearance = this.AppearanceChoices.First(c => c.Value == AppHost.Configuration.Appearance);
+        this.selectedAppearance = this.AppearanceChoices.First(c => c.Value == this.appState.Configuration.Appearance);
         this.LanguageChoices =
         [
             new(AppLanguages.System, Strings.Settings_Language_MatchMacOS),
             .. AppLanguages.Supported.Select(language => new Choice<string>(language.Code, language.NativeName))
         ];
-        this.selectedLanguage = this.LanguageChoices.FirstOrDefault(c => string.Equals(c.Value, AppHost.Configuration.Language, StringComparison.OrdinalIgnoreCase))
+        this.selectedLanguage = this.LanguageChoices.FirstOrDefault(c => string.Equals(c.Value, this.appState.Configuration.Language, StringComparison.OrdinalIgnoreCase))
             ?? this.LanguageChoices[0];
-        this.showDockIcon = AppHost.Configuration.ShowDockIcon;
-        this.checkForUpdates = AppHost.Configuration.CheckForUpdates;
-        this.analyticsEnabled = AppHost.Configuration.Analytics.Enabled;
-        this.RetentionChoices = WithCurrent(RetentionPresets, AppHost.Configuration.Analytics.RetentionDays, FormatDays);
-        this.selectedRetention = this.RetentionChoices.First(c => c.Value == AppHost.Configuration.Analytics.RetentionDays);
+        this.showDockIcon = this.appState.Configuration.ShowDockIcon;
+        this.checkForUpdates = this.appState.Configuration.CheckForUpdates;
+        this.analyticsEnabled = this.appState.Configuration.Analytics.Enabled;
+        this.RetentionChoices = WithCurrent(RetentionPresets, this.appState.Configuration.Analytics.RetentionDays, FormatDays);
+        this.selectedRetention = this.RetentionChoices.First(c => c.Value == this.appState.Configuration.Analytics.RetentionDays);
 
         this.RefreshPermissionsCommand = new AsyncRelayCommand(this.RefreshPermissionsAsync);
         this.OpenAutomationSettingsCommand = new RelayCommand(() => this.OpenUrl(AutomationSettingsUrl));
@@ -324,16 +326,16 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
     /// </summary>
     public void Dispose()
     {
-        AppHost.ConfigurationChanged -= this.OnConfigurationChanged;
+        this.appState.ConfigurationChanged -= this.OnConfigurationChanged;
         this.IgnoredApps.Dispose();
     }
 
     /// <summary>"Don't ask again", in the window that asks, turns this off from outside Settings.</summary>
     private void OnConfigurationChanged(object? sender, EventArgs e)
     {
-        if (this.askOnSwitch != AppHost.Configuration.AskOnSwitch)
+        if (this.askOnSwitch != this.appState.Configuration.AskOnSwitch)
         {
-            this.askOnSwitch = AppHost.Configuration.AskOnSwitch;
+            this.askOnSwitch = this.appState.Configuration.AskOnSwitch;
             this.OnPropertyChanged(nameof(this.AskOnSwitch));
         }
     }
@@ -343,7 +345,7 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
     /// </summary>
     private void ReloadFromConfiguration()
     {
-        AppConfiguration configuration = AppHost.Configuration;
+        AppConfiguration configuration = this.appState.Configuration;
         this.selectedAppearance = this.AppearanceChoices.First(c => c.Value == configuration.Appearance);
         this.selectedLanguage = this.LanguageChoices.FirstOrDefault(c => string.Equals(c.Value, configuration.Language, StringComparison.OrdinalIgnoreCase))
             ?? this.LanguageChoices[0];
@@ -422,7 +424,7 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
 
         // Built on the configuration as it is now, so a profile saved elsewhere meanwhile is kept.
         // The switch timeout is carried over untouched: nothing reads it yet, so it is not offered.
-        AppConfiguration updated = AppHost.Configuration with
+        AppConfiguration updated = this.appState.Configuration with
         {
             Appearance = this.SelectedAppearance.Value,
             Language = this.SelectedLanguage.Value,

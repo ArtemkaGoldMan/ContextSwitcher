@@ -3,17 +3,16 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
-using Avalonia.Styling;
 using System.Globalization;
 using ContextSwitcher.App.Resources;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views;
-using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Abstractions;
-using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Core.Updates;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App;
@@ -23,6 +22,7 @@ public sealed partial class App : Application
     private static readonly Uri TrayIconUri = new("avares://ContextSwitcher/Assets/Icons/menu-neutral.png");
 
     private TrayIcon? trayIcon;
+    private ThemeFollower? themeFollower;
     private DashboardWindow? dashboardWindow;
     private MainAppWindow? mainAppWindow;
 
@@ -39,27 +39,24 @@ public sealed partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        // The theme follows the setting from the first window on, and changes the moment the setting
-        // does: Settings saves the choice, the save publishes the configuration, and this applies it.
-        // The theme is a UI-thread property; a configuration published from any other thread is
-        // applied there rather than throwing.
-        this.ApplyAppearance();
-        AppHost.ConfigurationChanged += (_, _) =>
-        {
-            if (this.CheckAccess())
-            {
-                this.ApplyAppearance();
-                this.ApplyDockIcon();
-            }
-            else
-            {
-                this.Dispatcher.Post(this.ApplyAppearance);
-                this.Dispatcher.Post(this.ApplyDockIcon);
-            }
-        };
-
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            IAppState appState = AppHost.Services.GetRequiredService<IAppState>();
+            this.themeFollower = new ThemeFollower(appState, this);
+
+            // The Dock icon too changes the moment the setting does, on the UI thread like the theme.
+            appState.ConfigurationChanged += (_, _) =>
+            {
+                if (this.CheckAccess())
+                {
+                    this.ApplyDockIcon(appState);
+                }
+                else
+                {
+                    this.Dispatcher.Post(() => this.ApplyDockIcon(appState));
+                }
+            };
+
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
             // Anything needing the dispatcher starts here rather than in AppHost.Initialize, which
@@ -69,8 +66,9 @@ public sealed partial class App : Application
             {
                 AppHost.ShutdownAsync().GetAwaiter().GetResult();
                 DisposeTrayIcon();
+                this.themeFollower?.Dispose();
             };
-            this.trayIcon = CreateTrayIcon(desktop);
+            this.trayIcon = CreateTrayIcon(desktop, appState);
             ShowInMenuBar(this, this.trayIcon);
 
             // Clicking the desktop or another app sends this app to the background, and the popover
@@ -94,7 +92,7 @@ public sealed partial class App : Application
 
             // A fresh install otherwise lands on one empty "Default" profile - a context switcher
             // with nothing to switch between. Run the wizard before anything else in that case.
-            if (!AppHost.Configuration.OnboardingCompleted)
+            if (!appState.Configuration.OnboardingCompleted)
             {
                 this.ShowOnboarding();
             }
@@ -108,38 +106,19 @@ public sealed partial class App : Application
     }
 
     /// <summary>
-    /// "Match macOS" is Avalonia's default variant, which tracks the system's appearance live; light
-    /// and dark pin it. The menu bar icon is a template image, so macOS draws that either way.
-    /// </summary>
-    public static ThemeVariant ThemeFor(AppearanceMode appearance) => appearance switch
-    {
-        AppearanceMode.Light => ThemeVariant.Light,
-        AppearanceMode.Dark => ThemeVariant.Dark,
-        _ => ThemeVariant.Default
-    };
-
-    private void ApplyAppearance()
-    {
-        // Null only before AppHost has loaded a configuration, as in the headless test host.
-        if (AppHost.Configuration is { } configuration)
-        {
-            this.RequestedThemeVariant = ThemeFor(configuration.Appearance);
-        }
-    }
-
-    /// <summary>
     /// Shows or hides the Dock icon the moment Settings saves the choice, rather than at the next
     /// start. Leaving the Dock makes an app give up being frontmost, so the main window - where the
     /// switch was flipped - is brought back.
     /// </summary>
-    private void ApplyDockIcon()
+    private void ApplyDockIcon(IAppState appState)
     {
-        if (AppHost.Configuration is not { } configuration || Infrastructure.MacOS.DockIcon.IsShown() is not { } shown || shown == configuration.ShowDockIcon)
+        bool wanted = appState.Configuration.ShowDockIcon;
+        if (Infrastructure.MacOS.DockIcon.IsShown() is not { } shown || shown == wanted)
         {
             return;
         }
 
-        Infrastructure.MacOS.DockIcon.Show(configuration.ShowDockIcon);
+        Infrastructure.MacOS.DockIcon.Show(wanted);
         this.mainAppWindow?.Activate();
     }
 
@@ -150,38 +129,32 @@ public sealed partial class App : Application
     /// </summary>
     public static void ShowInMenuBar(Application app, TrayIcon icon) => TrayIcon.SetIcons(app, [icon]);
 
-    private TrayIcon CreateTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)
+    private TrayIcon CreateTrayIcon(IClassicDesktopStyleApplicationLifetime desktop, IAppState appState)
     {
         TrayMenu trayMenu = new(
-            contextId => _ = SwitchFromMenuAsync(contextId),
+            contextId => _ = SwitchFromMenuAsync(contextId, appState),
             this.ShowDashboard,
             this.ShowMainApp,
             this.ShowUpdates,
             () => desktop.Shutdown());
-        trayMenu.Update(AppHost.Configuration.Contexts, AppHost.State.CurrentContextId);
+        trayMenu.Update(appState.Configuration.Contexts, appState.State.CurrentContextId);
 
         // A waiting update shows in the menu; installing one quits this copy so the new one can take
         // its place - the updater has already arranged for it to open.
-        UpdatesViewModel updates = AppHost.Services.GetRequiredService<UpdatesViewModel>();
-        updates.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(UpdatesViewModel.IsUpdateAvailable))
-            {
-                trayMenu.SetAvailableUpdate(updates.IsUpdateAvailable ? updates.AvailableVersionText : null);
-            }
-        };
+        UpdateChecker updates = AppHost.Services.GetRequiredService<UpdateChecker>();
+        updates.Changed += (_, _) => trayMenu.SetAvailableUpdate(updates.Available is { } release ? ReleaseVersion.Format(release.Version) : null);
         updates.RestartRequested += (_, _) => desktop.Shutdown();
 
         // Clicking the update notification leads to the same place. It can be one shown before a
         // restart, while this run hasn't found the update yet, so it asks again.
         AppHost.Services.GetRequiredService<ISystemNotifications>().Clicked += (_, id) =>
         {
-            if (id == UpdatesViewModel.NotificationId)
+            if (id == UpdateChecker.NotificationId)
             {
                 this.Dispatcher.Post(() =>
                 {
                     this.ShowUpdates();
-                    if (!updates.IsUpdateAvailable)
+                    if (updates.Available is null)
                     {
                         _ = updates.CheckAsync(userAsked: true);
                     }
@@ -192,7 +165,7 @@ public sealed partial class App : Application
         TrayIcon trayIcon = new()
         {
             Icon = new WindowIcon(AssetLoader.Open(TrayIconUri)),
-            ToolTipText = AppBuild.DisplayName,
+            ToolTipText = AppHost.Services.GetRequiredService<IAppInfo>().DisplayName,
             Menu = trayMenu.Menu,
             IsVisible = true
         };
@@ -203,8 +176,8 @@ public sealed partial class App : Application
         // Opening the menu bar menu puts the popover away, the way opening one menu closes another.
         trayMenu.Menu.Opening += (_, _) => this.dashboardWindow?.Hide();
 
-        AppHost.ConfigurationChanged += (_, _) => trayMenu.Update(AppHost.Configuration.Contexts, AppHost.State.CurrentContextId);
-        AppHost.StateChanged += (_, _) => trayMenu.Update(AppHost.Configuration.Contexts, AppHost.State.CurrentContextId);
+        appState.ConfigurationChanged += (_, _) => trayMenu.Update(appState.Configuration.Contexts, appState.State.CurrentContextId);
+        appState.StateChanged += (_, _) => trayMenu.Update(appState.Configuration.Contexts, appState.State.CurrentContextId);
 
         // Belt-and-suspenders: on platforms/cases where Clicked still fires despite Menu being
         // set, this gives instant popover behavior; the "Open Dashboard" menu item above is the
@@ -221,13 +194,13 @@ public sealed partial class App : Application
     /// this is a hard boundary: ContextSwitchService already logs its own failure paths, and anything
     /// unexpected is logged here rather than left as an unobserved task exception.
     /// </summary>
-    private static async Task SwitchFromMenuAsync(string contextId)
+    private static async Task SwitchFromMenuAsync(string contextId, IAppState appState)
     {
         try
         {
             IContextSwitchService switchService = AppHost.Services.GetRequiredService<IContextSwitchService>();
             await switchService
-                .SwitchAsync(ContextSwitchRequest.ForClickOn(contextId, AppHost.State.CurrentContextId, ContextSwitchSource.TrayMenu), CancellationToken.None)
+                .SwitchAsync(ContextSwitchRequest.ForClickOn(contextId, appState.State.CurrentContextId, ContextSwitchSource.TrayMenu), CancellationToken.None)
                 .ConfigureAwait(true);
         }
         catch (Exception ex)
@@ -276,7 +249,7 @@ public sealed partial class App : Application
         if (this.dashboardWindow is null)
         {
             DashboardViewModel viewModel = AppHost.Services.GetRequiredService<DashboardViewModel>();
-            this.dashboardWindow = new DashboardWindow(viewModel, this.ShowMainApp);
+            this.dashboardWindow = new DashboardWindow(viewModel, this.ShowMainApp) { Title = AppHost.Services.GetRequiredService<IAppInfo>().DisplayName };
             this.dashboardWindow.Closed += (_, _) => this.dashboardWindow = null;
         }
 
@@ -293,7 +266,7 @@ public sealed partial class App : Application
         if (this.mainAppWindow is null)
         {
             MainAppViewModel viewModel = AppHost.Services.GetRequiredService<MainAppViewModel>();
-            this.mainAppWindow = new MainAppWindow(viewModel);
+            this.mainAppWindow = new MainAppWindow(viewModel) { Title = AppHost.Services.GetRequiredService<IAppInfo>().DisplayName };
             this.mainAppWindow.Closed += (_, _) => this.mainAppWindow = null;
         }
 

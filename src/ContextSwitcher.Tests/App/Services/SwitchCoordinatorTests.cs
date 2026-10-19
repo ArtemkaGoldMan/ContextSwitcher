@@ -1,5 +1,4 @@
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Catalog;
@@ -16,9 +15,9 @@ namespace ContextSwitcher.Tests.App.Services;
 /// apps and tabs neither profile has, saves what was added to a profile before the switch reads it,
 /// and hands the switch what to close besides; with asking off, or nothing to ask about, it doesn't ask.
 /// </summary>
-[Collection(AppHostTestCollection.Name)]
 public sealed class SwitchCoordinatorTests
 {
+    private readonly AppState appState = new();
     private readonly StubContextSwitchService inner = new();
     private readonly FakeRunningApplications running = new();
     private readonly FakeSystemCatalog catalog = new();
@@ -40,7 +39,7 @@ public sealed class SwitchCoordinatorTests
 
         await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.TrayMenu), CancellationToken.None);
 
-        Assert.Equal("personal", AppHost.State.CurrentContextId);
+        Assert.Equal("personal", this.appState.State.CurrentContextId);
     }
 
     [Fact]
@@ -169,9 +168,9 @@ public sealed class SwitchCoordinatorTests
             ]
         };
         ConfigurationValidator validator = new();
-        AppHost.UpdateConfiguration(configuration, validator.Validate(configuration));
-        AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
-        ConfigurationStore store = new(this.jsonStore, this.paths, validator, new TestLogger());
-        return new SwitchCoordinator(this.inner, store, this.running, this.catalog, this.presenter, new FakeClock(), this.jsonStore, this.paths.StatePath);
+        this.appState.UpdateConfiguration(configuration, validator.Validate(configuration));
+        this.appState.UpdateState(new CurrentContextState { CurrentContextId = "work" });
+        ConfigurationStore store = new(this.jsonStore, this.paths, validator, this.appState, new TestLogger());
+        return new SwitchCoordinator(this.inner, this.appState, store, this.running, this.catalog, this.presenter, new FakeClock(), this.jsonStore, this.paths.StatePath);
     }
 }

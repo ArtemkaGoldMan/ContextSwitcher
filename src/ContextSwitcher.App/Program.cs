@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using Avalonia;
 using ContextSwitcher.App.Resources;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Logging;
@@ -42,17 +43,18 @@ internal static class Program
         bool interactive = !CliCommandRouter.IsHeadless(args);
         TimeSpan waitedForDisplay = interactive ? DisplayAvailability.WaitUntilAvailable() : TimeSpan.Zero;
 
-        AppHost.Initialize(args);
+        StartupOutcome startup = AppHost.Initialize(args);
         ReportCrashes();
         if (waitedForDisplay > TimeSpan.Zero)
         {
             LogWaitedForDisplay(waitedForDisplay);
         }
 
+        IAppState appState = AppHost.Services.GetRequiredService<IAppState>();
         if (CliCommandRouter.IsHeadless(args))
         {
             CliCommandRouter router = AppHost.Services.GetRequiredService<CliCommandRouter>();
-            int exitCode = router.RunAsync(args, AppHost.Configuration, AppHost.ConfigurationValidation, AppHost.State, Console.Out, CancellationToken.None, AppHost.ConfigurationWasQuarantined)
+            int exitCode = router.RunAsync(args, appState.Configuration, appState.ConfigurationValidation, appState.State, Console.Out, CancellationToken.None, startup.ConfigurationWasQuarantined)
                 .GetAwaiter()
                 .GetResult();
             Environment.Exit(exitCode);
@@ -61,11 +63,11 @@ internal static class Program
 
         // Before any window, so every text is read in it. The command line above stays English: scripts
         // read it.
-        AppLanguages.Apply(AppLanguages.Resolve(AppHost.Configuration?.Language, PreferredLanguages.Get()));
+        AppLanguages.Apply(AppLanguages.Resolve(appState.Configuration.Language, PreferredLanguages.Get()));
 
         try
         {
-            BuildAvaloniaApp()
+            BuildAvaloniaApp(appState.Configuration.ShowDockIcon)
                 .StartWithClassicDesktopLifetime(args);
         }
         catch (InvalidOperationException ex) when (DisplayAvailability.IsRenderTimerFailure(ex) && StartAttempt() < MaxStartAttempts)
@@ -139,16 +141,18 @@ internal static class Program
         }
     }
 
-    public static AppBuilder BuildAvaloniaApp()
+    /// <summary>The app as Avalonia's previewer builds it: with the Dock icon, as the setting starts out.</summary>
+    public static AppBuilder BuildAvaloniaApp() => BuildAvaloniaApp(showDockIcon: true);
+
+    private static AppBuilder BuildAvaloniaApp(bool showDockIcon)
     {
         AppBuilder builder = AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .With(new MacOSPlatformOptions
             {
                 // Read once at startup, not live - MacOSPlatformOptions is AppBuilder configuration,
-                // not a runtime-toggleable property. AppHost.Initialize (called before this) has
-                // already loaded config by the time BuildAvaloniaApp runs.
-                ShowInDock = AppHost.Configuration?.ShowDockIcon ?? true,
+                // not a runtime-toggleable property. Main passes the setting AppHost.Initialize loaded.
+                ShowInDock = showDockIcon,
                 DisableDefaultApplicationMenuItems = true
             })
             .With(new SkiaOptions { MaxGpuResourceSizeBytes = GpuCacheBytes });

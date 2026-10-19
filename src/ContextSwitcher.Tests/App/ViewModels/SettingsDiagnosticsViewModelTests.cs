@@ -1,5 +1,4 @@
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
@@ -9,9 +8,10 @@ using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class SettingsDiagnosticsViewModelTests : IDisposable
 {
+    private readonly AppState appState = new();
+
     private static readonly DateTimeOffset Now = new(2026, 10, 14, 13, 0, 0, TimeSpan.Zero);
     private readonly string directory = Path.Combine(Path.GetTempPath(), "cs-diag-" + Guid.NewGuid().ToString("N"));
     private readonly InMemoryJsonStore jsonStore = new();
@@ -23,8 +23,8 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
     {
         Directory.CreateDirectory(this.directory);
         this.paths = new ConfigPaths(this.directory);
-        this.store = new ConfigurationStore(this.jsonStore, this.paths, new ConfigurationValidator(), new TestLogger());
-        AppHost.UpdateConfiguration(
+        this.store = new ConfigurationStore(this.jsonStore, this.paths, new ConfigurationValidator(), this.appState, new TestLogger());
+        this.appState.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] },
             new ConfigurationValidationResult([]));
     }
@@ -55,7 +55,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
     [Fact]
     public void AnExpiredDetailedLogShowsAsOff()
     {
-        AppHost.UpdateConfiguration(AppHost.Configuration with { DetailedLogUntil = Now.AddDays(-1) }, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(this.appState.Configuration with { DetailedLogUntil = Now.AddDays(-1) }, new ConfigurationValidationResult([]));
 
         Assert.False(this.Create().DetailedLog);
     }
@@ -190,6 +190,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
         Assert.True(text?.StartsWith(start, StringComparison.Ordinal) == true, $"expected it to start with \"{start}\": {text}");
 
     private SettingsDiagnosticsViewModel Create() => new(
+        this.appState,
         this.store,
         this.processRunner,
         new DiagnosticsSources(

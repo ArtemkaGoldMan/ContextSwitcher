@@ -1,6 +1,5 @@
 using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
@@ -23,22 +22,27 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     /// <summary>How long the detailed log stays on once it is turned on.</summary>
     public static readonly TimeSpan DetailedFor = TimeSpan.FromDays(7);
 
+    private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private readonly IProcessRunner processRunner;
-    private readonly DiagnosticsSources? sources;
+    private readonly DiagnosticsSources sources;
     private readonly Func<bool?> automation;
     private string? message;
     private string? contactMessage;
 
     public SettingsDiagnosticsViewModel(
+        IAppState appState,
         ConfigurationStore configurationStore,
         IProcessRunner processRunner,
-        DiagnosticsSources? sources = null,
+        DiagnosticsSources sources,
         Func<bool?>? automation = null)
     {
+        ArgumentNullException.ThrowIfNull(appState);
         ArgumentNullException.ThrowIfNull(configurationStore);
         ArgumentNullException.ThrowIfNull(processRunner);
+        ArgumentNullException.ThrowIfNull(sources);
 
+        this.appState = appState;
         this.configurationStore = configurationStore;
         this.processRunner = processRunner;
         this.sources = sources;
@@ -84,7 +88,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     /// <summary>Whether everything is being written to the log, as it happens, for now.</summary>
     public bool DetailedLog
     {
-        get => AppHost.Configuration.DetailedLogUntil is { } until && until > this.Now;
+        get => this.appState.Configuration.DetailedLogUntil is { } until && until > this.Now;
         set
         {
             if (value != this.DetailedLog)
@@ -95,7 +99,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     }
 
     /// <summary>"On until 21.10.2026." while it is on; nothing otherwise.</summary>
-    public string DetailedLogStatus => this.DetailedLog && AppHost.Configuration.DetailedLogUntil is { } until
+    public string DetailedLogStatus => this.DetailedLog && this.appState.Configuration.DetailedLogUntil is { } until
         ? Localized.Format(Strings.Settings_DetailedLog_Until, until.ToLocalTime())
         : string.Empty;
 
@@ -124,11 +128,11 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
         this.OnPropertyChanged(nameof(this.HasDetailedLogStatus));
     }
 
-    private DateTimeOffset Now => this.sources?.Clock.UtcNow ?? DateTimeOffset.UtcNow;
+    private DateTimeOffset Now => this.sources.Clock.UtcNow;
 
     private async Task SetDetailedLogAsync(bool on)
     {
-        AppConfiguration updated = AppHost.Configuration with { DetailedLogUntil = on ? this.Now + DetailedFor : null };
+        AppConfiguration updated = this.appState.Configuration with { DetailedLogUntil = on ? this.Now + DetailedFor : null };
         try
         {
             ConfigurationSaveResult result = await this.configurationStore.SaveAsync(updated, CancellationToken.None).ConfigureAwait(true);
@@ -159,7 +163,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     private async Task WriteEmailAsync()
     {
         bool copied = await this.CopyReportAsync().ConfigureAwait(true);
-        RunInfo run = this.Run();
+        RunInfo run = this.sources.Run();
         string link = MailTo(
             AppLinks.ContactEmail,
             Localized.Format(Strings.Contact_EmailSubject, run.Version),
@@ -188,17 +192,14 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     private void Open(string url) =>
         _ = this.processRunner.RunAsync(new ProcessStartOptions("open", [url], TimeSpan.FromSeconds(5)), CancellationToken.None);
 
-    private RunInfo Run() =>
-        this.sources?.Run() ?? RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), Infrastructure.Files.AppBuild.IsDevelopment);
-
     /// <summary>The report as it would be copied now.</summary>
     public string BuildReport()
     {
-        string logPath = this.sources?.Paths.AppLogPath ?? string.Empty;
+        string logPath = this.sources.Paths.AppLogPath;
         List<string> log = [];
         try
         {
-            if (logPath.Length > 0 && File.Exists(logPath))
+            if (File.Exists(logPath))
             {
                 log.AddRange(File.ReadLines(logPath).TakeLast(DiagnosticsReport.LogLines));
             }
@@ -209,24 +210,20 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
         }
 
         return DiagnosticsReport.Build(new DiagnosticsInput(
-            this.Run(),
-            AppHost.Configuration,
+            this.sources.Run(),
+            this.appState.Configuration,
             this.automation(),
-            AppHost.ConfigurationValidation?.Errors.Count ?? 0,
+            this.appState.ConfigurationValidation.Errors.Count,
             log,
-            this.sources?.Pending() ?? [],
+            this.sources.Pending(),
             this.Now));
     }
 
     /// <summary>The log in Finder; when there is none - a quiet week - the folder it would be in.</summary>
     private void ShowLog()
     {
-        if (this.sources is not { } known)
-        {
-            return;
-        }
-
-        IReadOnlyList<string> arguments = File.Exists(known.Paths.AppLogPath) ? ["-R", known.Paths.AppLogPath] : [known.Paths.BaseDirectory];
+        string log = this.sources.Paths.AppLogPath;
+        IReadOnlyList<string> arguments = File.Exists(log) ? ["-R", log] : [this.sources.Paths.BaseDirectory];
         _ = this.processRunner.RunAsync(new ProcessStartOptions("open", arguments, TimeSpan.FromSeconds(5)), CancellationToken.None);
     }
 }

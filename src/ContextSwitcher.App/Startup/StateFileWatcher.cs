@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Logging;
 using Avalonia.Threading;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Infrastructure.Files;
@@ -11,25 +12,35 @@ namespace ContextSwitcher.App.Startup;
 /// it did not perform itself.
 ///
 /// Section 10 has Shortcuts, Siri and the CLI each switching in their own process, and
-/// <see cref="AppHost.State"/> was only ever updated in-process. A switch from any of those left the
+/// the app's state was only ever updated in-process. A switch from any of those left the
 /// menu bar popover showing the previous profile and a stale elapsed timer until the app was
 /// restarted - the switch itself worked, the UI just never heard about it.
 /// </summary>
-public sealed class StateFileWatcher : IDisposable
+public sealed class StateFileWatcher : IHousekeeping, IDisposable
 {
+    private readonly IAppState appState;
     private readonly IJsonStore jsonStore;
     private readonly ConfigPaths configPaths;
-    private readonly FileSystemWatcher? watcher;
-    private readonly DispatcherTimer debounce;
+    private FileSystemWatcher? watcher;
+    private DispatcherTimer? debounce;
 
-    public StateFileWatcher(IJsonStore jsonStore, ConfigPaths configPaths)
+    public StateFileWatcher(IAppState appState, IJsonStore jsonStore, ConfigPaths configPaths)
     {
+        ArgumentNullException.ThrowIfNull(appState);
         ArgumentNullException.ThrowIfNull(jsonStore);
         ArgumentNullException.ThrowIfNull(configPaths);
 
+        this.appState = appState;
         this.jsonStore = jsonStore;
         this.configPaths = configPaths;
+    }
 
+    /// <summary>Raised after <see cref="IAppState.State"/> has been refreshed from disk.</summary>
+    public event EventHandler? StateReloaded;
+
+    /// <summary>Starts watching <c>state.json</c>.</summary>
+    public void Start()
+    {
         // A write arrives as several events, and the file is briefly absent while it is replaced
         // atomically, so settle before reading rather than racing the writer.
         this.debounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
@@ -37,7 +48,7 @@ public sealed class StateFileWatcher : IDisposable
 
         try
         {
-            this.watcher = new FileSystemWatcher(configPaths.BaseDirectory, Path.GetFileName(configPaths.StatePath))
+            this.watcher = new FileSystemWatcher(this.configPaths.BaseDirectory, Path.GetFileName(this.configPaths.StatePath))
             {
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size
             };
@@ -55,13 +66,15 @@ public sealed class StateFileWatcher : IDisposable
         }
     }
 
-    /// <summary>Raised after <see cref="AppHost.State"/> has been refreshed from disk.</summary>
-    public event EventHandler? StateReloaded;
-
+    /// <summary>Stops watching; nothing to do when it never started.</summary>
     public void Dispose()
     {
-        this.debounce.Stop();
-        this.debounce.Tick -= this.OnDebounceElapsed;
+        if (this.debounce is { } debounce)
+        {
+            debounce.Stop();
+            debounce.Tick -= this.OnDebounceElapsed;
+        }
+
         this.watcher?.Dispose();
     }
 
@@ -72,13 +85,13 @@ public sealed class StateFileWatcher : IDisposable
 
     private void RestartDebounce()
     {
-        this.debounce.Stop();
-        this.debounce.Start();
+        this.debounce?.Stop();
+        this.debounce?.Start();
     }
 
     private void OnDebounceElapsed(object? sender, EventArgs e)
     {
-        this.debounce.Stop();
+        this.debounce?.Stop();
         _ = this.ReloadAsync();
     }
 
@@ -96,14 +109,14 @@ public sealed class StateFileWatcher : IDisposable
             return;
         }
 
-        if (reloaded is null || !HasChanged(AppHost.State, reloaded))
+        if (reloaded is null || !HasChanged(this.appState.State, reloaded))
         {
             // Our own writes come back through the watcher too; ignoring identical state keeps this
             // from looping on them.
             return;
         }
 
-        AppHost.UpdateState(reloaded);
+        this.appState.UpdateState(reloaded);
         this.StateReloaded?.Invoke(this, EventArgs.Empty);
     }
 

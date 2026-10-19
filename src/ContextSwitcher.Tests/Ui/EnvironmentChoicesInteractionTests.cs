@@ -6,7 +6,6 @@ using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views.Pages;
 using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Tests.App;
 
 namespace ContextSwitcher.Tests.Ui;
 
@@ -14,7 +13,6 @@ namespace ContextSwitcher.Tests.Ui;
 /// Profile Setup's choose-don't-type controls, driven the way a person uses them: open the
 /// dropdown, click the entry; open the flyout, click the item; save; read what was written.
 /// </summary>
-[Collection(AppHostTestCollection.Name)]
 public sealed class EnvironmentChoicesInteractionTests : UiTest
 {
     private const string Prefix = FocusSettingsViewModel.ShortcutPrefix;
@@ -26,7 +24,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
             scenario.Catalog.ShortcutNames.Add(ContextSwitcher.Core.Configuration.FocusModes.OffShortcutName("Work"));
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
             ExpandSections(window);
 
@@ -37,7 +35,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
             Assert.True(IsClickable(FindButton(window, "Open Shortcuts ↗")));
 
             SaveAndWait(window, viewModel);
-            Assert.Equal(new FocusConfig { Enabled = true, ModeName = "Work" }, AppHost.Configuration.Contexts[0].Focus);
+            Assert.Equal(new FocusConfig { Enabled = true, ModeName = "Work" }, scenario.AppState.Configuration.Contexts[0].Focus);
         });
     }
 
@@ -51,7 +49,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
         await OnUiThreadAsync(() =>
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
             ExpandSections(window);
 
@@ -82,7 +80,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
             UiScenario scenario = UiScenario.WithTwoProfiles();
             scenario.Catalog.IsMusicRunning = true;
             scenario.Catalog.MusicPlaylists!.AddRange(["Deep Focus", "Running"]);
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
             ExpandSections(window);
 
@@ -92,7 +90,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
             ChooseFromDropdown(window, Dropdown(window, "Playlist"), "Deep Focus");
 
             SaveAndWait(window, viewModel);
-            MediaConfig media = AppHost.Configuration.Contexts[0].Media;
+            MediaConfig media = scenario.AppState.Configuration.Contexts[0].Media;
             Assert.Equal((MediaPlayerKind.AppleMusic, "Deep Focus"), (media.Player, media.Playlist));
         });
     }
@@ -107,7 +105,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
         await OnUiThreadAsync(() =>
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
             ExpandSections(window);
             Expander environment = FindControl<Expander>(window, e => Avalonia.Automation.AutomationProperties.GetName(e) == "Focus and music");
@@ -130,7 +128,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
             scenario.Catalog.OpenTabs.Add(new OpenTab("Pull requests", "https://github.com/pulls"));
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             viewModel.BrowserMode = BrowserManagementMode.Urls;
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
 
@@ -146,7 +144,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
             fromTabs.Flyout.Hide();
             Settle(window);
             SaveAndWait(window, viewModel);
-            Assert.Equal(["https://github.com/pulls"], AppHost.Configuration.Contexts[0].BrowserManagement.Urls);
+            Assert.Equal(["https://github.com/pulls"], scenario.AppState.Configuration.Contexts[0].BrowserManagement.Urls);
         });
     }
 
@@ -157,7 +155,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
             scenario.Catalog.DockerContainers = ["api-db", "redis"];
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
             ExpandSections(window);
 
@@ -178,7 +176,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
             scenario.Catalog.DockerContainers = null;
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
             ExpandSections(window);
 
@@ -202,7 +200,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
             scenario.Catalog.BrowserProfiles[BrowserKind.Chrome] = [new("Default", "Artem"), new("Profile 2", "Client")];
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
 
             // The browser first: only then does "On switch" offer its profiles.
@@ -212,7 +210,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
             ChooseFromDropdown(window, Dropdown(window, "Browser profile"), "Client (Profile 2)");
 
             SaveAndWait(window, viewModel);
-            BrowserProfileConfig profile = Assert.Single(AppHost.Configuration.Contexts[0].BrowserManagement.Profiles);
+            BrowserProfileConfig profile = Assert.Single(scenario.AppState.Configuration.Contexts[0].BrowserManagement.Profiles);
             Assert.Equal((BrowserKind.Chrome, "Profile 2"), (profile.Browser, profile.ProfileDirectory));
         });
     }
@@ -231,7 +229,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
                 ActiveContextId = "work",
                 Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work", AccentColor = "#2F6FED", LaunchApps = ["Slack"] }]
             });
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel });
 
             Assert.Contains(FindAll<TextBlock>(window), t => t.Text == "Slack" && IsClickable(t));
@@ -267,7 +265,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
             scenario.Catalog.MusicPlaylists!.Add("Deep Focus");
             scenario.Catalog.DockerContainers = ["redis"];
             scenario.Catalog.OpenTabs.Add(new OpenTab("Inbox", "https://linear.app/inbox"));
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             viewModel.BrowserMode = BrowserManagementMode.Urls;
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
             ExpandSections(window);

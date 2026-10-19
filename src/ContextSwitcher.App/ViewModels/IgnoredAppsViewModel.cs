@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
 using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 
@@ -18,14 +17,16 @@ namespace ContextSwitcher.App.ViewModels;
 /// </summary>
 public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
 {
+    private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private readonly IInstalledAppsService? installedApps;
     private readonly Dictionary<string, Bitmap?> icons = new(StringComparer.OrdinalIgnoreCase);
     private bool pickerLoaded;
     private string? message;
 
-    public IgnoredAppsViewModel(ConfigurationStore configurationStore, IInstalledAppsService? installedApps)
+    public IgnoredAppsViewModel(IAppState appState, ConfigurationStore configurationStore, IInstalledAppsService? installedApps)
     {
+        this.appState = appState;
         this.configurationStore = configurationStore;
         this.installedApps = installedApps;
         this.Apps = new ObservableCollection<IgnoredAppRowViewModel>();
@@ -36,7 +37,7 @@ public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
 
         this.OpenPickerCommand = new RelayCommand(() => _ = this.LoadPickerAsync());
         this.Reload();
-        AppHost.ConfigurationChanged += this.OnConfigurationChanged;
+        this.appState.ConfigurationChanged += this.OnConfigurationChanged;
         _ = this.LoadListedIconsAsync();
     }
 
@@ -65,12 +66,12 @@ public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
 
     public bool HasMessage => !string.IsNullOrEmpty(this.Message);
 
-    public void Dispose() => AppHost.ConfigurationChanged -= this.OnConfigurationChanged;
+    public void Dispose() => this.appState.ConfigurationChanged -= this.OnConfigurationChanged;
 
     /// <summary>Never touches <paramref name="name"/> from now on, and takes it out of every profile.</summary>
     public async Task AddAsync(string name)
     {
-        (AppConfiguration updated, IReadOnlyList<string> takenOutOf) = IgnoredApps.Ignore(AppHost.Configuration, name);
+        (AppConfiguration updated, IReadOnlyList<string> takenOutOf) = IgnoredApps.Ignore(this.appState.Configuration, name);
         ConfigurationSaveResult result = await this.configurationStore.SaveAsync(updated, CancellationToken.None).ConfigureAwait(true);
         this.Message = result.Succeeded && takenOutOf.Count > 0
             ? Localized.Format(Strings.Settings_IgnoredApp_TakenOut, name, string.Join(", ", takenOutOf))
@@ -80,7 +81,7 @@ public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
 
     private async Task RemoveAsync(IgnoredAppRowViewModel row)
     {
-        await this.configurationStore.SaveAsync(IgnoredApps.StopIgnoring(AppHost.Configuration, row.Name), CancellationToken.None).ConfigureAwait(true);
+        await this.configurationStore.SaveAsync(IgnoredApps.StopIgnoring(this.appState.Configuration, row.Name), CancellationToken.None).ConfigureAwait(true);
         this.Message = null;
         this.Reload();
     }
@@ -132,7 +133,7 @@ public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
 
     private void Reload(bool force = false)
     {
-        IReadOnlyList<string> ignored = AppHost.Configuration.IgnoredApps;
+        IReadOnlyList<string> ignored = this.appState.Configuration.IgnoredApps;
         if (!force && this.Apps.Select(row => row.Name).SequenceEqual(ignored, StringComparer.Ordinal))
         {
             return;

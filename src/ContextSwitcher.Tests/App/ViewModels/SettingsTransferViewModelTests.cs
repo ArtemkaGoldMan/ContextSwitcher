@@ -1,6 +1,5 @@
 using System.Text.Json;
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
@@ -10,9 +9,10 @@ using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class SettingsTransferViewModelTests
 {
+    private readonly AppState appState = new();
+
     private readonly InMemoryJsonStore jsonStore = new();
     private readonly ConfigPaths configPaths = new("/tmp/context-switcher-tests");
     private readonly FakeSettingsFilePicker picker = new();
@@ -24,7 +24,7 @@ public sealed class SettingsTransferViewModelTests
             ActiveContextId = "work",
             Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }]
         };
-        AppHost.UpdateConfiguration(current, new ConfigurationValidator().Validate(current));
+        this.appState.UpdateConfiguration(current, new ConfigurationValidator().Validate(current));
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public sealed class SettingsTransferViewModelTests
         Assert.Equal(["deep"], saved.Contexts.Select(context => context.Id));
         Assert.False(saved.ShowDockIcon);
         Assert.True(saved.OnboardingCompleted);
-        Assert.Same(saved, AppHost.Configuration);
+        Assert.Same(saved, this.appState.Configuration);
         Assert.True(imported);
         Assert.False(transfer.IsConfirmingImport);
     }
@@ -81,7 +81,7 @@ public sealed class SettingsTransferViewModelTests
 
         Assert.False(transfer.IsConfirmingImport);
         Assert.Null(this.jsonStore.Get<AppConfiguration>(this.configPaths.SettingsPath));
-        Assert.Equal(["work"], AppHost.Configuration.Contexts.Select(context => context.Id));
+        Assert.Equal(["work"], this.appState.Configuration.Contexts.Select(context => context.Id));
     }
 
     /// <summary>A file that isn't ours, or that wouldn't pass the check, is turned down with the reason.</summary>
@@ -117,5 +117,5 @@ public sealed class SettingsTransferViewModelTests
     private static string Settings(string body) => "{ \"schemaVersion\": 1, " + body + " }";
 
     private SettingsTransferViewModel Create() =>
-        new(new ConfigurationStore(this.jsonStore, this.configPaths, new ConfigurationValidator(), new TestLogger())) { FilePicker = this.picker };
+        new(this.appState, new ConfigurationStore(this.jsonStore, this.configPaths, new ConfigurationValidator(), this.appState, new TestLogger())) { FilePicker = this.picker };
 }

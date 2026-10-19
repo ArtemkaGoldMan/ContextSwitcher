@@ -2,7 +2,6 @@ using System.Text.RegularExpressions;
 using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Catalog;
@@ -37,6 +36,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         new(BrowserManagementMode.Profiles, Strings.Browser_Mode_Profiles)
     ];
 
+    private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private readonly IProcessRunner processRunner;
     private readonly string originalContextId;
@@ -66,6 +66,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     private bool isSaving;
 
     public ProfileSetupViewModel(
+        IAppState appState,
         ConfigurationStore configurationStore,
         IInstalledAppsService installedAppsService,
         ISystemCatalog catalog,
@@ -74,13 +75,14 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         ContextDefinition? existing,
         IDefaultBrowser? defaultBrowser = null)
     {
+        this.appState = appState;
         this.configurationStore = configurationStore;
         this.processRunner = processRunner;
         this.catalog = catalog;
         this.systemDefault = defaultBrowser?.Get();
         this.IsNew = existing is null;
 
-        ContextDefinition source = existing ?? CreateDefaultContext(AppHost.Configuration.Contexts);
+        ContextDefinition source = existing ?? CreateDefaultContext(this.appState.Configuration.Contexts);
         this.originalContextId = source.Id;
 
         this.displayName = source.DisplayName;
@@ -224,7 +226,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     /// against the other profiles, so <c>switch --context deep-work</c> reads the way the profile
     /// is named instead of <c>profile-3</c>.
     /// </summary>
-    public string Id => this.IsNew ? ProfileIds.FromName(this.DisplayName, AppHost.Configuration.Contexts) : this.originalContextId;
+    public string Id => this.IsNew ? ProfileIds.FromName(this.DisplayName, this.appState.Configuration.Contexts) : this.originalContextId;
 
     public string DisplayName
     {
@@ -702,7 +704,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         {
             ContextDefinition edited = this.BuildContextDefinition();
 
-            List<ContextDefinition> contexts = [.. AppHost.Configuration.Contexts];
+            List<ContextDefinition> contexts = [.. this.appState.Configuration.Contexts];
             int existingIndex = contexts.FindIndex(c => c.Id == this.originalContextId);
             if (existingIndex >= 0)
             {
@@ -713,12 +715,12 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 contexts.Add(edited);
             }
 
-            AppConfiguration updated = AppHost.Configuration with
+            AppConfiguration updated = this.appState.Configuration with
             {
                 Contexts = contexts,
-                ActiveContextId = AppHost.Configuration.ActiveContextId == this.originalContextId
+                ActiveContextId = this.appState.Configuration.ActiveContextId == this.originalContextId
                     ? edited.Id
-                    : AppHost.Configuration.ActiveContextId
+                    : this.appState.Configuration.ActiveContextId
             };
 
             ConfigurationSaveResult result = await this.configurationStore.SaveAsync(updated, CancellationToken.None).ConfigureAwait(true);
