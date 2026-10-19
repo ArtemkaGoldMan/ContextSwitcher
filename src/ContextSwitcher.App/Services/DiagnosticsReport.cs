@@ -17,6 +17,19 @@ public static class DiagnosticsReport
     /// <summary>How many lines of the log file are included.</summary>
     public const int LogLines = 60;
 
+    /// <summary>The last lines of the log file - none when nothing was written this week - or why it could not be read.</summary>
+    public static IReadOnlyList<string> ReadLog(string path)
+    {
+        try
+        {
+            return File.Exists(path) ? File.ReadLines(path).TakeLast(LogLines).ToList() : [];
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return [$"(the log could not be read: {ex.GetType().Name})"];
+        }
+    }
+
     public static string Build(DiagnosticsInput input)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -27,7 +40,7 @@ public static class DiagnosticsReport
         report.AppendLine(CultureInfo.InvariantCulture, $"Made {input.Now:yyyy-MM-dd HH:mm 'UTC'}");
         report.AppendLine();
         report.AppendLine(CultureInfo.InvariantCulture, $"Version: {input.Run.Version} ({input.Run.Build})");
-        report.AppendLine(CultureInfo.InvariantCulture, $"macOS: {input.Run.MacOs} ({input.Run.Architecture})");
+        report.AppendLine(CultureInfo.InvariantCulture, $"macOS: {input.Run.SystemVersion} ({input.Run.Architecture})");
         report.AppendLine(CultureInfo.InvariantCulture, $"Language: {config.Language}, appearance: {config.Appearance}");
         report.AppendLine(CultureInfo.InvariantCulture, $"Automation permission: {Describe(input.Automation)}");
         report.AppendLine();

@@ -79,15 +79,6 @@ public static class OutsideClick
     }
 
     /// <summary>
-    /// Whether this reading is a fresh press outside <paramref name="inside"/>: the button has just
-    /// gone down - it was up at the last reading - with the pointer outside. A press that began
-    /// inside and is dragged out does not count, and neither does a button already held when the
-    /// popover opened.
-    /// </summary>
-    public static bool IsPressOutside(bool wasDown, bool isDown, ScreenPoint pointer, ScreenRect inside) =>
-        isDown && !wasDown && !inside.Contains(pointer);
-
-    /// <summary>
     /// Struct returns from objc_msgSend come back in registers only on arm64; on x86_64 a rect
     /// would need objc_msgSend_stret. The app ships for Apple Silicon, so anything else opts out.
     /// </summary>

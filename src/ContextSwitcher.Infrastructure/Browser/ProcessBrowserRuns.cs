@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Infrastructure.MacOS;
 
 namespace ContextSwitcher.Infrastructure.Browser;
 
@@ -14,18 +15,12 @@ public sealed class ProcessBrowserRuns : IBrowserRuns
     /// <inheritdoc />
     public string? Current(BrowserKind browser)
     {
-        string? name = browser switch
-        {
-            BrowserKind.Chrome => "Google Chrome",
-            BrowserKind.Brave => "Brave Browser",
-            _ => null
-        };
-        if (name is null)
+        if (browser is not (BrowserKind.Chrome or BrowserKind.Brave))
         {
             return null;
         }
 
-        Process[] processes = Process.GetProcessesByName(name);
+        Process[] processes = Process.GetProcessesByName(MacBrowserApps.Name(browser));
         try
         {
             // One main process per browser; were there ever two, neither could be told to be the one scripted.

@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Logging;
 using System.Runtime.InteropServices;
+using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Analytics;
 
 namespace ContextSwitcher.Infrastructure.MacOS;
@@ -16,7 +17,7 @@ namespace ContextSwitcher.Infrastructure.MacOS;
 /// They are observed by an object of a class made at runtime, as .NET has no binding for them, and
 /// arrive on the main thread. Where AppKit can't be reached - not macOS - nothing is ever raised.
 /// </summary>
-public sealed class AwayEvents
+public sealed class AwayEvents : IAwayEvents
 {
     private const string ObjectiveC = "/usr/lib/libobjc.A.dylib";
     private const string AppKit = "/System/Library/Frameworks/AppKit.framework/AppKit";
@@ -66,10 +67,10 @@ public sealed class AwayEvents
         }
     }
 
-    /// <summary>Nobody can be using the Mac, for the reason given.</summary>
+    /// <inheritdoc />
     public event EventHandler<AwayReason>? Away;
 
-    /// <summary>That reason no longer holds.</summary>
+    /// <inheritdoc />
     public event EventHandler<AwayReason>? Back;
 
     /// <summary>Whether macOS will tell this instance - the first one made, on a Mac.</summary>

@@ -2,12 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Logging;
-using ContextSwitcher.Infrastructure.MacOS;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App.Views;
 
@@ -27,6 +24,8 @@ public sealed partial class DashboardWindow : Window
     public static readonly Thickness ShadowRoom = new(16, 10, 16, 22);
 
     private readonly Action openMainApp = () => { };
+    private readonly IPopoverWindow? popoverWindow;
+    private readonly ILogger? log;
     private DashboardViewModel? viewModel;
     private DispatcherTimer? frontmostWatch;
     private int? frontmostBaseline;
@@ -37,14 +36,18 @@ public sealed partial class DashboardWindow : Window
         AvaloniaXamlLoader.Load(this);
     }
 
+    /// <summary>The popover for <paramref name="viewModel"/>, as the app shows it.</summary>
     /// <param name="openMainApp">
     /// Opens the main window. The app owns that window, since the menu bar's own "Open App" opens it
     /// too, and two owners meant two windows.
     /// </param>
-    public DashboardWindow(DashboardViewModel viewModel, Action openMainApp)
+    /// <param name="popover">How the window shows as a popover, and what is asked to tell a click elsewhere.</param>
+    public DashboardWindow(DashboardViewModel viewModel, Action openMainApp, IPopoverWindow popover, ILogger logger)
         : this()
     {
         this.openMainApp = openMainApp;
+        this.popoverWindow = popover;
+        this.log = logger;
         this.viewModel = viewModel;
         DataContext = viewModel;
         viewModel.OpenAppRequested += this.OnOpenAppRequested;
@@ -87,17 +90,21 @@ public sealed partial class DashboardWindow : Window
     /// </summary>
     public void ShowAsPopover()
     {
-        // On whichever desktop the user is on, and over a full-screen app: by default a window goes
-        // back to the Space it was first shown on, so the popover opened out of sight.
-        IntPtr window = this.NativeWindow();
-        WindowSpaces.FollowActiveSpace(window);
+        // Only the designer makes one without these, and never shows it as a popover.
+        if (this.popoverWindow is not { } popover || this.log is not { } logger)
+        {
+            this.Show();
+            return;
+        }
 
-        // And without bringing the app forward, as a menu bar popover should: an app with a Dock
-        // icon coming forward made macOS leave a full-screen app for a desktop. So it opens as a
-        // non-activating panel, without focus - taking focus activated the app, whatever the window
-        // (MenuBarPanel). A click in it gives it focus. Should the window not be one that can be made
-        // a panel, it is shown and activated as an ordinary window, as before.
-        bool panel = MenuBarPanel.Make(window);
+        // On whichever desktop the user is on, and over a full-screen app: by default a window goes
+        // back to the Space it was first shown on, so the popover opened out of sight. And without
+        // bringing the app forward, as a menu bar popover should: an app with a Dock icon coming
+        // forward made macOS leave a full-screen app for a desktop. So it opens without focus -
+        // taking focus activated the app, whatever the window. A click in it gives it focus. Should
+        // the window not be one that can open without focus, it is shown and activated as an
+        // ordinary window, as before.
+        bool panel = popover.Prepare(this.NativeWindow());
         this.ShowActivated = !panel;
         this.Show();
         if (!panel)
@@ -108,16 +115,16 @@ public sealed partial class DashboardWindow : Window
         // Once as it opens, and again once whatever macOS does in response has happened.
         if (DiagnosingWindows)
         {
-            this.LogSpace();
-            DispatcherTimer.RunOnce(this.LogSpace, TimeSpan.FromSeconds(1));
+            this.LogSpace(popover, logger);
+            DispatcherTimer.RunOnce(() => this.LogSpace(popover, logger), TimeSpan.FromSeconds(1));
         }
 
-        this.frontmostBaseline = FrontmostApplication.ProcessId();
+        this.frontmostBaseline = popover.FrontmostProcessId();
 
         // A button still held from the click that opened the popover is not a new press; unknown
         // counts as held for the same reason.
-        this.wasMouseDown = OutsideClick.IsMouseDown() ?? true;
-        this.frontmostWatch ??= CreateFrontmostWatch();
+        this.wasMouseDown = popover.IsMouseDown() ?? true;
+        this.frontmostWatch ??= this.CreateFrontmostWatch(popover);
         this.frontmostWatch.Start();
     }
 
@@ -128,20 +135,20 @@ public sealed partial class DashboardWindow : Window
     /// </summary>
     private static bool DiagnosingWindows => Environment.GetEnvironmentVariable("CONTEXTSWITCHER_DIAGNOSE") == "windows";
 
-    private void LogSpace()
+    private void LogSpace(IPopoverWindow popover, ILogger logger)
     {
-        if (WindowSpaces.Describe(this.NativeWindow()) is not { } space)
+        if (popover.Describe(this.NativeWindow()) is not { } description)
         {
             return;
         }
 
-        _ = AppHost.Services.GetRequiredService<ILogger>().LogAsync(new LogEntry
+        _ = logger.LogAsync(new LogEntry
         {
             Timestamp = DateTimeOffset.UtcNow,
             Level = LogLevel.Information,
             Category = "Diagnostics",
             EventId = "DashboardShown",
-            Message = $"Dashboard shown: collectionBehavior=0x{space.Behavior:x}, onActiveSpace={space.OnActiveSpace}, {MenuBarPanel.Describe(this.NativeWindow())}."
+            Message = $"Dashboard shown: {description}."
         });
     }
 
@@ -153,7 +160,7 @@ public sealed partial class DashboardWindow : Window
     /// for another app coming to the front. 50ms because a quick click holds the button for not much
     /// more than that; each check is two calls into AppKit, nothing that costs anything.
     /// </summary>
-    private DispatcherTimer CreateFrontmostWatch()
+    private DispatcherTimer CreateFrontmostWatch(IPopoverWindow popover)
     {
         DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(50) };
         timer.Tick += (_, _) =>
@@ -164,10 +171,10 @@ public sealed partial class DashboardWindow : Window
                 return;
             }
 
-            (bool dismiss, this.frontmostBaseline) = FrontmostApplication.Evaluate(
-                this.frontmostBaseline, FrontmostApplication.ProcessId(), Environment.ProcessId);
+            (bool dismiss, this.frontmostBaseline) = PopoverDismissal.AfterFrontmostLook(
+                this.frontmostBaseline, popover.FrontmostProcessId(), Environment.ProcessId);
 
-            if (dismiss || this.WasPressedOutside())
+            if (dismiss || this.WasPressedOutside(popover))
             {
                 timer.Stop();
                 this.Hide();
@@ -176,10 +183,10 @@ public sealed partial class DashboardWindow : Window
         return timer;
     }
 
-    /// <summary>Whether the mouse has just gone down outside the card - in AppKit's own coordinates.</summary>
-    private bool WasPressedOutside()
+    /// <summary>Whether the mouse has just gone down outside the card.</summary>
+    private bool WasPressedOutside(IPopoverWindow popover)
     {
-        bool? isDown = OutsideClick.IsMouseDown();
+        bool? isDown = popover.IsMouseDown();
         if (isDown is null)
         {
             return false;
@@ -192,15 +199,9 @@ public sealed partial class DashboardWindow : Window
             return false;
         }
 
-        IntPtr nsWindow = this.NativeWindow();
-        if (OutsideClick.WindowFrame(nsWindow) is not { } frame || OutsideClick.PointerLocation() is not { } pointer)
-        {
-            return false;
-        }
-
         // The card, not the transparent room around it that its shadow is drawn into.
-        ScreenRect card = frame.Inset(ShadowRoom.Left, ShadowRoom.Top, ShadowRoom.Right, ShadowRoom.Bottom);
-        return OutsideClick.IsPressOutside(wasDown, isDown.Value, pointer, card);
+        bool? outside = popover.IsPointerOutside(this.NativeWindow(), ShadowRoom.Left, ShadowRoom.Top, ShadowRoom.Right, ShadowRoom.Bottom);
+        return outside is { } pointerOutside && PopoverDismissal.IsPressOutside(wasDown, isDown.Value, pointerOutside);
     }
 
     private void OnKeyDown(object? sender, Avalonia.Input.KeyEventArgs e)

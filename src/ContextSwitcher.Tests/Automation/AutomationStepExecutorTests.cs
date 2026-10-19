@@ -1,8 +1,10 @@
 using ContextSwitcher.Core.Automation;
+using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Messages;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Automation;
 using ContextSwitcher.Infrastructure.Browser;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Automation;
@@ -117,7 +119,7 @@ public sealed class AutomationStepExecutorTests
         TimeSpan stepTimeout = TimeSpan.FromSeconds(20);
         AutomationStep step = new(
             "CloseApplications.personal", AutomationStepType.CloseApplications, "Close applications", false,
-            stepTimeout, new Dictionary<string, string> { ["apps"] = """["Chess","Stickies"]""" });
+            stepTimeout, new AppsArguments(["Chess", "Stickies"]).ToDictionary());
 
         await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -139,7 +141,7 @@ public sealed class AutomationStepExecutorTests
         TimeSpan stepTimeout = TimeSpan.FromSeconds(30);
         AutomationStep step = new(
             "LaunchApplications.work", AutomationStepType.LaunchApplications, "Launch applications", false,
-            stepTimeout, new Dictionary<string, string> { ["apps"] = """["Calculator","Stickies"]""" });
+            stepTimeout, new AppsArguments(["Calculator", "Stickies"]).ToDictionary());
 
         await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -177,7 +179,7 @@ public sealed class AutomationStepExecutorTests
         FakeScriptRunner scriptRunner = new();
         AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
 
-        AutomationStep step = MediaStep(player: "AppleMusic", playlist: "Deep Focus", autoPlay: true, isCritical: false);
+        AutomationStep step = MediaStep(player: MediaPlayerKind.AppleMusic, playlist: "Deep Focus", autoPlay: true, isCritical: false);
 
         await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -238,7 +240,7 @@ public sealed class AutomationStepExecutorTests
         FakeProcessRunner processRunner = new();
         AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
         AutomationStep step = ManageBrowserContextStep(
-            mode: "Urls", browser: "Default", urls: "https://example.com/", isCritical: false);
+            mode: BrowserManagementMode.Urls, browser: BrowserKind.Default, url: "https://example.com/", isCritical: false);
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -253,7 +255,7 @@ public sealed class AutomationStepExecutorTests
         processRunner.Enqueue(new ProcessResult(1, string.Empty, "no browser", false));
         AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
         AutomationStep step = ManageBrowserContextStep(
-            mode: "Urls", browser: "Default", urls: "https://example.com/", isCritical: true);
+            mode: BrowserManagementMode.Urls, browser: BrowserKind.Default, url: "https://example.com/", isCritical: true);
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -266,15 +268,10 @@ public sealed class AutomationStepExecutorTests
         FakeProcessRunner processRunner = new();
         AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
 
-        Dictionary<string, string> arguments = new()
-        {
-            ["mode"] = "Profiles",
-            ["browser"] = "Default",
-            ["urls"] = string.Empty,
-            ["avoidDuplicateTabs"] = "True",
-            ["profilesJson"] = "[{\"browser\":\"Chrome\",\"profile_directory\":\"Profile 1\",\"urls\":[\"https://mail.example/\"]}]"
-        };
-        AutomationStep step = new("ManageBrowserContext.work", AutomationStepType.ManageBrowserContext, "Manage browser context", false, TimeSpan.FromSeconds(20), arguments);
+        BrowserContextArguments arguments = new(
+            "work", BrowserManagementMode.Profiles, BrowserKind.Default, [], [], AvoidDuplicateTabs: true,
+            [new BrowserProfileConfig { Browser = BrowserKind.Chrome, ProfileDirectory = "Profile 1", Urls = ["https://mail.example/"] }]);
+        AutomationStep step = new("ManageBrowserContext.work", AutomationStepType.ManageBrowserContext, "Manage browser context", false, TimeSpan.FromSeconds(20), arguments.ToDictionary());
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -291,14 +288,8 @@ public sealed class AutomationStepExecutorTests
         scriptRunner.Enqueue(new ProcessResult(0, "4\u001fhttps://linear.app/a\n5\u001fhttps://linear.app/b\n", string.Empty, false));
         scriptRunner.Enqueue(new ProcessResult(0, "2", string.Empty, false));
         AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
-        Dictionary<string, string> arguments = new()
-        {
-            ["contextId"] = "work",
-            ["browser"] = "Chrome",
-            ["closeUrlsJson"] = "[\"https://linear.app/\"]",
-            ["keepUrlsJson"] = "[]"
-        };
-        AutomationStep step = new("CloseBrowserTabs.work", AutomationStepType.CloseBrowserTabs, "Close browser tabs", false, TimeSpan.FromSeconds(10), arguments);
+        CloseTabsArguments arguments = new(BrowserKind.Chrome, ["https://linear.app/"], [], "work");
+        AutomationStep step = new("CloseBrowserTabs.work", AutomationStepType.CloseBrowserTabs, "Close browser tabs", false, TimeSpan.FromSeconds(10), arguments.ToDictionary());
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -316,7 +307,7 @@ public sealed class AutomationStepExecutorTests
         FakeProcessRunner processRunner = new();
         AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
         AutomationStep step = ManageBrowserContextStep(
-            mode: "Urls", browser: "Default", urls: "https://www.google.com/maps/@50.45,30.52,12z", isCritical: false);
+            mode: BrowserManagementMode.Urls, browser: BrowserKind.Default, url: "https://www.google.com/maps/@50.45,30.52,12z", isCritical: false);
 
         await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -324,17 +315,10 @@ public sealed class AutomationStepExecutorTests
         Assert.Equal(["https://www.google.com/maps/@50.45,30.52,12z"], call.Arguments);
     }
 
-    private static AutomationStep ManageBrowserContextStep(string mode, string browser, string urls, bool isCritical)
+    private static AutomationStep ManageBrowserContextStep(BrowserManagementMode mode, BrowserKind browser, string url, bool isCritical)
     {
-        Dictionary<string, string> arguments = new()
-        {
-            ["mode"] = mode,
-            ["browser"] = browser,
-            ["urls"] = System.Text.Json.JsonSerializer.Serialize(new[] { urls }),
-            ["avoidDuplicateTabs"] = "False",
-            ["profilesJson"] = "[]"
-        };
-        return new AutomationStep("ManageBrowserContext.work", AutomationStepType.ManageBrowserContext, "Manage browser context", isCritical, TimeSpan.FromSeconds(20), arguments);
+        BrowserContextArguments arguments = new(null, mode, browser, [url], [], AvoidDuplicateTabs: false, []);
+        return new AutomationStep("ManageBrowserContext.work", AutomationStepType.ManageBrowserContext, "Manage browser context", isCritical, TimeSpan.FromSeconds(20), arguments.ToDictionary());
     }
 
     [Fact]
@@ -359,7 +343,7 @@ public sealed class AutomationStepExecutorTests
         AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
         AutomationStep step = new(
             $"{type}.work", type, "Docker", false, TimeSpan.FromSeconds(45),
-            new Dictionary<string, string> { ["containers"] = """["postgres-work","redis-work"]""" });
+            new ContainersArguments(["postgres-work", "redis-work"]).ToDictionary());
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -377,7 +361,7 @@ public sealed class AutomationStepExecutorTests
         AutomationStepExecutor executor = CreateExecutor(processRunner, new FakeScriptRunner(), new FakeClock());
         AutomationStep step = new(
             "StopDockerResources.work", AutomationStepType.StopDockerResources, "Docker", true, TimeSpan.FromSeconds(45),
-            new Dictionary<string, string> { ["containers"] = """["redis-work"]""" });
+            new ContainersArguments(["redis-work"]).ToDictionary());
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -389,7 +373,7 @@ public sealed class AutomationStepExecutorTests
     {
         FakeScriptRunner scriptRunner = new();
         AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
-        AutomationStep step = MediaStep(player: "AppleMusic", playlist: "Deep Focus", autoPlay: false, isCritical: false);
+        AutomationStep step = MediaStep(player: MediaPlayerKind.AppleMusic, playlist: "Deep Focus", autoPlay: false, isCritical: false);
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -401,7 +385,7 @@ public sealed class AutomationStepExecutorTests
     public async Task ExecuteAsyncControlMediaWarnsWhenPlaylistMissing()
     {
         AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), new FakeScriptRunner(), new FakeClock());
-        AutomationStep step = MediaStep(player: "AppleMusic", playlist: "", autoPlay: true, isCritical: false);
+        AutomationStep step = MediaStep(player: MediaPlayerKind.AppleMusic, playlist: "", autoPlay: true, isCritical: false);
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -413,7 +397,7 @@ public sealed class AutomationStepExecutorTests
     {
         FakeScriptRunner scriptRunner = new();
         AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
-        AutomationStep step = MediaStep(player: "AppleMusic", playlist: "Deep Focus", autoPlay: true, isCritical: false);
+        AutomationStep step = MediaStep(player: MediaPlayerKind.AppleMusic, playlist: "Deep Focus", autoPlay: true, isCritical: false);
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -428,7 +412,7 @@ public sealed class AutomationStepExecutorTests
         FakeScriptRunner scriptRunner = new();
         scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "spotify error", false));
         AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock());
-        AutomationStep step = MediaStep(player: "Spotify", playlist: "spotify:playlist:abc", autoPlay: true, isCritical: true);
+        AutomationStep step = MediaStep(player: MediaPlayerKind.Spotify, playlist: "spotify:playlist:abc", autoPlay: true, isCritical: true);
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -537,36 +521,76 @@ public sealed class AutomationStepExecutorTests
         Assert.Equal(AutomationResultStatus.Failed, result.Status);
     }
 
-    private static AutomationStep MediaStep(string player, string playlist, bool autoPlay, bool isCritical)
+    private static AutomationStep MediaStep(MediaPlayerKind player, string playlist, bool autoPlay, bool isCritical)
     {
-        Dictionary<string, string> arguments = new()
-        {
-            ["player"] = player,
-            ["playlist"] = playlist,
-            ["autoPlay"] = autoPlay ? "True" : "False"
-        };
-        return new AutomationStep("ControlMedia.work", AutomationStepType.ControlMedia, "Control media", isCritical, TimeSpan.FromSeconds(8), arguments);
+        MediaArguments arguments = new(player, playlist, autoPlay);
+        return new AutomationStep("ControlMedia.work", AutomationStepType.ControlMedia, "Control media", isCritical, TimeSpan.FromSeconds(8), arguments.ToDictionary());
     }
 
     private static AutomationStep FocusStep(bool enabled, string modeName, bool isCritical, string previousModeName = "")
     {
-        Dictionary<string, string> arguments = new()
-        {
-            ["enabled"] = enabled ? "True" : "False",
-            ["modeName"] = modeName,
-            ["previousModeName"] = previousModeName
-        };
-        return new AutomationStep("SetFocusMode.work", AutomationStepType.SetFocusMode, "Set Focus mode", isCritical, TimeSpan.FromSeconds(10), arguments);
+        FocusArguments arguments = new(enabled, modeName, previousModeName);
+        return new AutomationStep("SetFocusMode.work", AutomationStepType.SetFocusMode, "Set Focus mode", isCritical, TimeSpan.FromSeconds(10), arguments.ToDictionary());
     }
 
+    /// <summary>
+    /// Every handler, with the Mac's ways of asking the system over fake runners, so what each step
+    /// would run on a Mac is what is checked.
+    /// </summary>
     private static AutomationStepExecutor CreateExecutor(FakeProcessRunner processRunner, FakeScriptRunner scriptRunner, FakeClock clock, FakeApplicationHider? hider = null, FakeAppProcesses? processes = null)
     {
         // No wait between "is it still running?" checks, so a test of an app that never quits does
         // not sit through the real interval. Never the real hider: it would hide this Mac's apps -
         // nor the real processes, whose windows are this Mac's.
+        BrowserLauncher browser = new(new MacBrowserControl(processRunner, scriptRunner), new FakeOpenedTabsStore(), new FakeBrowserRuns(), new TestLogger());
         return new AutomationStepExecutor(
-            processRunner, scriptRunner, new BrowserLauncher(processRunner, scriptRunner), clock, quitConfirmInterval: TimeSpan.Zero,
-            hider: hider ?? new FakeApplicationHider(), processes: processes ?? new FakeAppProcesses());
+            [
+                new CloseApplicationsHandler(new MacAppQuitter(scriptRunner), processes ?? new FakeAppProcesses(), clock, quitConfirmInterval: TimeSpan.Zero),
+                new LaunchApplicationsHandler(new MacAppLauncher(processRunner), clock),
+                new HideApplicationsHandler(hider ?? new FakeApplicationHider(), clock),
+                new ManageBrowserContextHandler(browser, clock),
+                new CloseBrowserTabsHandler(browser, clock),
+                new DockerContainersHandler(AutomationStepType.StartDockerResources, processRunner, clock),
+                new DockerContainersHandler(AutomationStepType.StopDockerResources, processRunner, clock),
+                new ControlMediaHandler(new MacMediaPlayer(scriptRunner), clock),
+                new SetFocusModeHandler(new MacShortcutRunner(processRunner), clock),
+            ],
+            clock);
+    }
+
+    /// <summary>A step goes to the handler for its type, and to no other.</summary>
+    [Fact]
+    public async Task AStepGoesToTheHandlerForItsType()
+    {
+        FakeStepHandler launching = new(AutomationStepType.LaunchApplications);
+        FakeStepHandler closing = new(AutomationStepType.CloseApplications);
+        AutomationStepExecutor executor = new([launching, closing], new FakeClock());
+
+        await executor.ExecuteAsync(LaunchApplicationsStep(["Notes"], isCritical: false), CancellationToken.None);
+
+        Assert.Equal(["LaunchApplications.work"], launching.Ran);
+        Assert.Empty(closing.Ran);
+    }
+
+    /// <summary>Two handlers for one type is a mistake in the registrations, said when the executor is made.</summary>
+    [Fact]
+    public void TwoHandlersForOneTypeAreRefused()
+    {
+        Assert.Throws<ArgumentException>(() => new AutomationStepExecutor(
+            [new FakeStepHandler(AutomationStepType.SetFocusMode), new FakeStepHandler(AutomationStepType.SetFocusMode)], new FakeClock()));
+    }
+
+    private sealed class FakeStepHandler(AutomationStepType type) : IStepHandler
+    {
+        public List<string> Ran { get; } = [];
+
+        public AutomationStepType Type => type;
+
+        public Task<AutomationResult> ExecuteAsync(AutomationStep step, CancellationToken cancellationToken)
+        {
+            this.Ran.Add(step.Id);
+            return Task.FromResult(new AutomationResult(step.Id, step.Type, AutomationResultStatus.Succeeded, "Ran.", 0, null, null, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch));
+        }
     }
 
     /// <summary>
@@ -612,7 +636,7 @@ public sealed class AutomationStepExecutorTests
         AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), new FakeScriptRunner(), new FakeClock(), hider);
         AutomationStep step = new(
             "HideApplications.work", AutomationStepType.HideApplications, "Hide applications", false, TimeSpan.FromSeconds(5),
-            new Dictionary<string, string> { ["apps"] = """["Slack","Notion"]""" });
+            new AppsArguments(["Slack", "Notion"]).ToDictionary());
 
         AutomationResult result = await executor.ExecuteAsync(step, CancellationToken.None);
 
@@ -624,13 +648,13 @@ public sealed class AutomationStepExecutorTests
     {
         return new AutomationStep(
             "CloseApplications.personal", AutomationStepType.CloseApplications, "Close applications", isCritical,
-            TimeSpan.FromSeconds(10), new Dictionary<string, string> { ["apps"] = System.Text.Json.JsonSerializer.Serialize(apps) });
+            TimeSpan.FromSeconds(10), new AppsArguments(apps).ToDictionary());
     }
 
     private static AutomationStep LaunchApplicationsStep(IReadOnlyList<string> apps, bool isCritical)
     {
         return new AutomationStep(
             "LaunchApplications.work", AutomationStepType.LaunchApplications, "Launch applications", isCritical,
-            TimeSpan.FromSeconds(15), new Dictionary<string, string> { ["apps"] = System.Text.Json.JsonSerializer.Serialize(apps) });
+            TimeSpan.FromSeconds(15), new AppsArguments(apps).ToDictionary());
     }
 }

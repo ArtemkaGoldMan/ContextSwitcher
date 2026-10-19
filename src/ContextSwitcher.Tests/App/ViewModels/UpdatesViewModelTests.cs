@@ -17,7 +17,7 @@ public sealed class UpdatesViewModelTests
 
     private readonly FakeReleaseSource releases = new();
     private readonly FakeAppUpdater updater = new();
-    private readonly FakeProcessRunner processRunner = new();
+    private readonly FakeShell shell = new();
 
     /// <summary>14:32 where the tests run: the page gives the time of the check in the Mac's own time.</summary>
     private readonly FakeClock clock = new() { UtcNow = new DateTimeOffset(new DateTime(2026, 10, 10, 14, 32, 0, DateTimeKind.Local)) };
@@ -116,8 +116,7 @@ public sealed class UpdatesViewModelTests
         Assert.False(updates.InstallCommand.CanExecute(null));
 
         updates.OpenReleasePageCommand.Execute(null);
-        ProcessStartOptions open = Assert.Single(this.processRunner.Calls);
-        Assert.Equal(["https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.2.0"], open.Arguments);
+        Assert.Equal(["https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.2.0"], this.shell.Links);
     }
 
     /// <summary>The page address comes off the network; only a GitHub page is ever handed to `open`.</summary>
@@ -130,7 +129,7 @@ public sealed class UpdatesViewModelTests
 
         updates.OpenReleasePageCommand.Execute(null);
 
-        Assert.Empty(this.processRunner.Calls);
+        Assert.Empty(this.shell.Links);
     }
 
     /// <summary>Offline, the daily check keeps quiet - only a check someone asked for reports a failure.</summary>
@@ -161,5 +160,5 @@ public sealed class UpdatesViewModelTests
         Assert.True(updates.InstallCommand.CanExecute(null));
     }
 
-    private UpdatesViewModel Create() => new(this.checker, this.processRunner);
+    private UpdatesViewModel Create() => new(this.checker, this.shell);
 }

@@ -53,7 +53,7 @@ public static class AppServices
             IClock clock = provider.GetRequiredService<IClock>();
             return new TrailLogger(
                 provider.GetRequiredService<LocalJsonLogger>(),
-                RunOf(provider.GetRequiredService<IAppInfo>()),
+                RunOf(provider),
 
                 // Settings → Detailed log: everything is written, as it happens, until the week is up.
                 detailed: () => appState.Configuration.DetailedLogUntil is { } until && until > clock.UtcNow,
@@ -62,7 +62,8 @@ public static class AppServices
         services.AddSingleton<ILogger>(provider => provider.GetRequiredService<TrailLogger>());
         services.AddSingleton(provider => new DiagnosticsSources(
             provider.GetRequiredService<ConfigPaths>(),
-            RunOf(provider.GetRequiredService<IAppInfo>()),
+            RunOf(provider),
+            () => DiagnosticsReport.ReadLog(provider.GetRequiredService<ConfigPaths>().AppLogPath),
             () => provider.GetRequiredService<TrailLogger>().Remembered(),
             provider.GetRequiredService<IClock>()));
         services.AddSingleton<ConfigurationValidator>();
@@ -71,11 +72,21 @@ public static class AppServices
         services.AddSingleton(provider => new AutomationPlanBuilder(provider.GetRequiredService<IDefaultBrowser>()));
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IOpenedTabsStore, OpenedTabsStore>();
-        services.AddSingleton(provider => new BrowserLauncher(
-            provider.GetRequiredService<IProcessRunner>(),
-            provider.GetRequiredService<IScriptRunner>(),
-            provider.GetRequiredService<IOpenedTabsStore>(),
-            provider.GetRequiredService<IBrowserRuns>()));
+        services.AddSingleton<IBrowserLauncher, BrowserLauncher>();
+
+        // What runs each type of step; a type with none is reported as skipped. A new type of step is
+        // a new handler and a line here.
+        services.AddSingleton<IStepHandler, CloseApplicationsHandler>();
+        services.AddSingleton<IStepHandler, LaunchApplicationsHandler>();
+        services.AddSingleton<IStepHandler, HideApplicationsHandler>();
+        services.AddSingleton<IStepHandler, ManageBrowserContextHandler>();
+        services.AddSingleton<IStepHandler, CloseBrowserTabsHandler>();
+        services.AddSingleton<IStepHandler>(provider => new DockerContainersHandler(
+            AutomationStepType.StartDockerResources, provider.GetRequiredService<IProcessRunner>(), provider.GetRequiredService<IClock>()));
+        services.AddSingleton<IStepHandler>(provider => new DockerContainersHandler(
+            AutomationStepType.StopDockerResources, provider.GetRequiredService<IProcessRunner>(), provider.GetRequiredService<IClock>()));
+        services.AddSingleton<IStepHandler, ControlMediaHandler>();
+        services.AddSingleton<IStepHandler, SetFocusModeHandler>();
         services.AddSingleton<IAutomationStepExecutor, AutomationStepExecutor>();
         services.AddSingleton<ISwitchLock>(provider => new FileSwitchLock(provider.GetRequiredService<ConfigPaths>().SwitchLockPath));
         services.AddSingleton(provider => new ContextSwitchService(
@@ -170,12 +181,18 @@ public static class AppServices
             development: provider.GetRequiredService<IAppInfo>().IsDevelopment));
         services.AddSingleton<IFileReplacer>(windows ? FileReplacer.RetryingWhileHeldOpen : FileReplacer.Once);
 
+        services.AddSingleton<IShell, MacShell>();
         services.AddSingleton<IDefaultBrowser, MacDefaultBrowser>();
         services.AddSingleton<ILoginItem, MacLoginItem>();
         services.AddSingleton<IScriptRunner, AppleScriptRunner>();
         services.AddSingleton<IBrowserRuns, ProcessBrowserRuns>();
+        services.AddSingleton<IBrowserControl, MacBrowserControl>();
         services.AddSingleton<IApplicationHider, MacApplicationHider>();
         services.AddSingleton<IAppProcesses, MacAppProcesses>();
+        services.AddSingleton<IAppLauncher, MacAppLauncher>();
+        services.AddSingleton<IAppQuitter, MacAppQuitter>();
+        services.AddSingleton<IMediaPlayer, MacMediaPlayer>();
+        services.AddSingleton<IShortcutRunner, MacShortcutRunner>();
         services.AddSingleton<IRunningApplications, MacRunningApplications>();
         services.AddSingleton<IImageConverter>(provider => new SipsImageConverter(provider.GetRequiredService<IProcessRunner>(), SipsImageConverter.DefaultTimeout));
         services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
@@ -183,7 +200,12 @@ public static class AppServices
         services.AddSingleton<ISystemCatalog, SystemCatalog>();
         services.AddSingleton<IFocusShortcutInstaller, FocusShortcutInstaller>();
         services.AddSingleton<ISystemNotifications, MacNotifications>();
-        services.AddSingleton<AwayEvents>();
+        services.AddSingleton<IAwayEvents, AwayEvents>();
+        services.AddSingleton<IDockIcon, DockIcon>();
+        services.AddSingleton<IPreferredLanguages, PreferredLanguages>();
+        services.AddSingleton<IDisplayAvailability, DisplayAvailability>();
+        services.AddSingleton<ISystemVersion, MacSystemVersion>();
+        services.AddSingleton<IPopoverWindow, MacPopoverWindow>();
 
         // The updater, and which releases are the Mac's: the zip and the disk image.
         services.AddSingleton<IAppUpdater>(provider => new AppBundleUpdater(
@@ -191,6 +213,11 @@ public static class AppServices
         services.AddSingleton(AppBundleUpdater.Assets);
     }
 
-    /// <summary>Which app, which build, on which Mac: the first line of a log and of a diagnostic report.</summary>
-    private static Func<RunInfo> RunOf(IAppInfo app) => () => RunInfo.Current(app.Version.ToString(3), app.IsDevelopment);
+    /// <summary>Which app, which build, on which system: the first line of a log and of a diagnostic report.</summary>
+    private static Func<RunInfo> RunOf(IServiceProvider provider)
+    {
+        IAppInfo app = provider.GetRequiredService<IAppInfo>();
+        ISystemVersion system = provider.GetRequiredService<ISystemVersion>();
+        return () => RunInfo.Current(app.Version.ToString(3), app.IsDevelopment, system.Read());
+    }
 }

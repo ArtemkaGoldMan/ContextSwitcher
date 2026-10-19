@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using ContextSwitcher.App.Views;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Ui;
 
@@ -52,7 +53,7 @@ public sealed class TypographyTests : UiTest
                     new ContextDefinition { Id = "home", DisplayName = "Особисте", AccentColor = "#20A67A" }
                 ]
             });
-            DashboardWindow window = new(scenario.Dashboard(), () => { });
+            DashboardWindow window = new(scenario.Dashboard(), () => { }, new FakePopoverWindow(), new TestLogger());
             window.Show();
             Settle(window);
 

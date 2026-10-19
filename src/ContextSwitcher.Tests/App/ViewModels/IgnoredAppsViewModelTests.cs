@@ -62,7 +62,7 @@ public sealed class IgnoredAppsViewModelTests
         (IgnoredAppsViewModel ignored, InMemoryJsonStore jsonStore, ConfigPaths paths) = Create();
         ignored.Dispose();
         ConfigurationStore store = new(jsonStore, paths, new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel settings = new(this.appState, store, new FakePermissionsChecker(), new FakeProcessRunner(), SettingsViewModelTests.Updates(this.appState), SettingsViewModelTests.Diagnostics());
+        SettingsViewModel settings = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), SettingsViewModelTests.Updates(this.appState), SettingsViewModelTests.Diagnostics(), new FakePreferredLanguages());
 
         Assert.False(settings.AskOnSwitch);
         settings.AskOnSwitch = true;

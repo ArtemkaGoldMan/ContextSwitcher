@@ -1,7 +1,6 @@
 using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Core.ProcessExecution;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -17,7 +16,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
     private readonly ConfigurationStore configurationStore;
     private readonly IInstalledAppsService installedAppsService;
     private readonly ISystemCatalog catalog;
-    private readonly IProcessRunner processRunner;
+    private readonly IShell shell;
     private readonly IFocusShortcutInstaller focusShortcuts;
     private readonly IDefaultBrowser? defaultBrowser;
 
@@ -28,7 +27,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         IContextSwitchService switchService,
         ConfigurationStore configurationStore,
         IPermissionsChecker permissionsChecker,
-        IProcessRunner processRunner,
+        IShell shell,
         IAnalyticsService analyticsService,
         IInstalledAppsService installedAppsService,
         ISystemCatalog catalog,
@@ -36,6 +35,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         SwitchNoticeViewModel switchNotice,
         UpdatesViewModel updates,
         DiagnosticsSources diagnostics,
+        IPreferredLanguages preferredLanguages,
         IDefaultBrowser? defaultBrowser = null,
         ILoginItem? loginItem = null)
     {
@@ -45,10 +45,10 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         this.configurationStore = configurationStore;
         this.installedAppsService = installedAppsService;
         this.catalog = catalog;
-        this.processRunner = processRunner;
+        this.shell = shell;
 
         this.Profiles = new ProfilesViewModel(appState, switchService, configurationStore, switchNotice);
-        this.Settings = new SettingsViewModel(appState, configurationStore, permissionsChecker, processRunner, updates, diagnostics, loginItem: loginItem, installedApps: installedAppsService);
+        this.Settings = new SettingsViewModel(appState, configurationStore, permissionsChecker, shell, updates, diagnostics, preferredLanguages, loginItem: loginItem, installedApps: installedAppsService);
         this.Stats = new StatsViewModel(appState, analyticsService);
 
         this.Profiles.EditRequested += this.OnEditRequested;
@@ -105,7 +105,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
 
     private void OnEditRequested(object? sender, ContextDefinition? context)
     {
-        ProfileSetupViewModel setup = new(this.appState, this.configurationStore, this.installedAppsService, this.catalog, this.processRunner, this.focusShortcuts, context, this.defaultBrowser);
+        ProfileSetupViewModel setup = new(this.appState, this.configurationStore, this.installedAppsService, this.catalog, this.shell, this.focusShortcuts, context, this.defaultBrowser);
         setup.Saved += this.OnProfileSetupFinished;
         setup.CancelRequested += this.OnProfileSetupFinished;
         this.CurrentPage = setup;

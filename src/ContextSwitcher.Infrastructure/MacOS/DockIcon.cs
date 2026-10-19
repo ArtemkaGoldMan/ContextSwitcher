@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using ContextSwitcher.Core.Abstractions;
 
 namespace ContextSwitcher.Infrastructure.MacOS;
 
@@ -7,7 +8,7 @@ namespace ContextSwitcher.Infrastructure.MacOS;
 /// a regular app has an icon in the Dock and in ⌘-Tab, an accessory app lives in the menu bar only.
 /// Avalonia only sets this once, at startup, so a change in Settings used to wait for a restart.
 /// </summary>
-public static class DockIcon
+public sealed class DockIcon : IDockIcon
 {
     private const string ObjectiveC = "/usr/lib/libobjc.A.dylib";
 
@@ -15,15 +16,15 @@ public static class DockIcon
     private const long Regular = 0;
     private const long Accessory = 1;
 
-    /// <summary>Whether the app shows in the Dock now, or null where that can't be asked.</summary>
-    public static bool? IsShown()
+    /// <inheritdoc />
+    public bool? IsShown()
     {
         IntPtr app = Application();
         return app == IntPtr.Zero ? null : SendReturningLong(app, sel_registerName("activationPolicy")) == Regular;
     }
 
     /// <summary>Puts the icon in the Dock, or takes it out. Does nothing where AppKit isn't running.</summary>
-    public static void Show(bool show)
+    public void Show(bool show)
     {
         IntPtr app = Application();
         if (app != IntPtr.Zero)

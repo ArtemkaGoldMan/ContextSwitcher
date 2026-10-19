@@ -1,65 +1,62 @@
+using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Core.ProcessExecution;
-using ContextSwitcher.Infrastructure.AppleScript;
 using ContextSwitcher.Infrastructure.Browser;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Browser;
 
+/// <summary>
+/// What a switch decides in the browser: which pages to open, which tabs to focus, remember and close.
+/// How the Mac's browsers are asked is in MacBrowserControlTests.
+/// </summary>
 public sealed class BrowserLauncherTests
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(20);
 
-    [Fact]
-    public async Task ManageBrowserContextAsyncUrlsModeUsesPlainOpenForDefaultBrowser()
-    {
-        FakeProcessRunner processRunner = new();
-        BrowserLauncher launcher = new(processRunner, new FakeScriptRunner());
+    private readonly FakeBrowserControl browser = new();
+    private readonly FakeOpenedTabsStore store = new();
+    private readonly FakeBrowserRuns runs = new();
+    private readonly TestLogger logger = new();
 
-        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
+    [Fact]
+    public async Task ManageBrowserContextAsyncUrlsModeOpensInTheDefaultBrowser()
+    {
+        BrowserLaunchOutcome outcome = await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Default, ["https://example.com/"], false, [], Timeout),
             CancellationToken.None);
 
         Assert.Empty(outcome.Warnings);
-        ProcessStartOptions call = Assert.Single(processRunner.Calls);
-        Assert.Equal("open", call.FileName);
-        Assert.Equal(["https://example.com/"], call.Arguments);
+        Assert.Equal([(BrowserKind.Default, "https://example.com/")], this.browser.Opened);
+        Assert.Empty(this.browser.Listed);
     }
 
     [Fact]
     public async Task ManageBrowserContextAsyncUrlsModeTargetsNamedBrowser()
     {
-        FakeProcessRunner processRunner = new();
-        BrowserLauncher launcher = new(processRunner, new FakeScriptRunner());
-
-        await launcher.ManageBrowserContextAsync(
+        await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], false, [], Timeout),
             CancellationToken.None);
 
-        ProcessStartOptions call = Assert.Single(processRunner.Calls);
-        Assert.Equal(["-a", "Google Chrome", "https://example.com/"], call.Arguments);
+        Assert.Equal([(BrowserKind.Chrome, "https://example.com/")], this.browser.Opened);
     }
 
     /// <summary>
-    /// The tab listing is one script for the whole context, so a URL that is already open costs
-    /// that listing plus a single focus - never an `open`, and never a sweep per URL.
+    /// The tab listing is one look for the whole context, so a URL that is already open costs that
+    /// listing plus a single focus - never an `open`, and never a sweep per URL.
     /// </summary>
     [Fact]
     public async Task ManageBrowserContextAsyncUrlsModeSkipsOpenWhenExistingTabFocused()
     {
-        FakeProcessRunner processRunner = new();
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, "https://other.example/\nhttps://example.com/\n", string.Empty, false));
+        this.browser.WithTabs(new BrowserTab(null, "https://other.example/"), new BrowserTab(null, "https://example.com/"));
 
-        BrowserLauncher launcher = new(processRunner, scriptRunner);
-
-        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
+        BrowserLaunchOutcome outcome = await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Safari, ["https://example.com/"], true, [], Timeout),
             CancellationToken.None);
 
         Assert.Empty(outcome.Warnings);
-        Assert.Empty(processRunner.Calls);
-        Assert.Equal(2, scriptRunner.Scripts.Count);
+        Assert.Empty(this.browser.Opened);
+        Assert.Single(this.browser.Listed);
+        Assert.Equal(["https://example.com/"], this.browser.Focused);
     }
 
     /// <summary>
@@ -69,14 +66,9 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task ManageBrowserContextAsyncUrlsModeChecksExistingTabsWithASingleListing()
     {
-        FakeProcessRunner processRunner = new();
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(
-            0, ChromeTabs((1, "https://a.example/"), (2, "https://b.example/"), (3, "https://c.example/")), string.Empty, false));
+        this.browser.WithTabs(new BrowserTab(1, "https://a.example/"), new BrowserTab(2, "https://b.example/"), new BrowserTab(3, "https://c.example/"));
 
-        BrowserLauncher launcher = new(processRunner, scriptRunner);
-
-        await launcher.ManageBrowserContextAsync(
+        await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(
                 BrowserManagementMode.Urls,
                 BrowserKind.Chrome,
@@ -84,82 +76,66 @@ public sealed class BrowserLauncherTests
                 true, [], Timeout),
             CancellationToken.None);
 
-        Assert.Empty(processRunner.Calls);
-        Assert.Equal(2, scriptRunner.Scripts.Count);
+        Assert.Empty(this.browser.Opened);
+        Assert.Single(this.browser.Listed);
+        Assert.Equal(["https://c.example/"], this.browser.Focused);
     }
 
     [Fact]
     public async Task ManageBrowserContextAsyncUrlsModeOpensWhenNoExistingTabFound()
     {
-        FakeProcessRunner processRunner = new();
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, "https://unrelated.example/\n", string.Empty, false));
+        this.browser.WithTabs(new BrowserTab(null, "https://unrelated.example/"));
 
-        BrowserLauncher launcher = new(processRunner, scriptRunner);
-
-        await launcher.ManageBrowserContextAsync(
+        await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Safari, ["https://example.com/"], true, [], Timeout),
             CancellationToken.None);
 
-        Assert.Single(processRunner.Calls);
+        Assert.Single(this.browser.Opened);
+        Assert.Empty(this.browser.Focused);
     }
 
     /// <summary>
-    /// The regression behind the "no URL opened at all" bug: a browser that does not answer
-    /// AppleEvents fails the duplicate-tab probe, and section 9.3 requires falling back to a plain
-    /// <c>open</c> rather than giving up on the URL.
+    /// The regression behind the "no URL opened at all" bug: a browser that does not answer fails
+    /// the duplicate-tab check, and section 9.3 requires falling back to a plain open rather than
+    /// giving up on the URL.
     /// </summary>
     [Fact]
     public async Task ManageBrowserContextAsyncUrlsModeStillOpensWhenTabInspectionFails()
     {
-        FakeProcessRunner processRunner = new();
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(-1, string.Empty, string.Empty, TimedOut: true));
+        this.browser.Failing(BrowserProblemKind.NotAnswering);
 
-        BrowserLauncher launcher = new(processRunner, scriptRunner);
-
-        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
+        BrowserLaunchOutcome outcome = await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], true, [], Timeout),
             CancellationToken.None);
 
-        ProcessStartOptions call = Assert.Single(processRunner.Calls);
-        Assert.Equal(["-a", "Google Chrome", "https://example.com/"], call.Arguments);
+        Assert.Equal([(BrowserKind.Chrome, "https://example.com/")], this.browser.Opened);
         Assert.Contains(outcome.Warnings, warning => warning.English.Contains("Google Chrome", StringComparison.Ordinal));
     }
 
     /// <summary>
-    /// Probing is best-effort, so it may never spend the whole step budget - that is what starved
-    /// the <c>open</c> fallback when a browser hung.
+    /// Checking is best-effort, so it may never spend the whole step budget - that is what starved
+    /// the open fallback when a browser hung.
     /// </summary>
     [Fact]
     public async Task ManageBrowserContextAsyncUrlsModeGivesTabInspectionOnlyASliceOfTheStepTimeout()
     {
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, "false", string.Empty, false));
-
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
-
-        await launcher.ManageBrowserContextAsync(
+        await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], true, [], Timeout),
             CancellationToken.None);
 
-        Assert.True(Assert.Single(scriptRunner.Timeouts) < Timeout);
+        Assert.True(Assert.Single(this.browser.Listed).Timeout < Timeout);
     }
 
     /// <summary>
-    /// Once inspection has failed once the browser is not scriptable, so re-probing every remaining
-    /// URL would only burn the step's budget to reach the same answer.
+    /// Once inspection has failed once the browser can't be asked, so asking again for every
+    /// remaining URL would only burn the step's budget to reach the same answer.
     /// </summary>
     [Fact]
     public async Task ManageBrowserContextAsyncUrlsModeStopsProbingAfterInspectionFailsOnce()
     {
-        FakeProcessRunner processRunner = new();
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(-1, string.Empty, string.Empty, TimedOut: true));
+        this.browser.Failing(BrowserProblemKind.NotAnswering);
 
-        BrowserLauncher launcher = new(processRunner, scriptRunner);
-
-        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
+        BrowserLaunchOutcome outcome = await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(
                 BrowserManagementMode.Urls,
                 BrowserKind.Chrome,
@@ -169,23 +145,21 @@ public sealed class BrowserLauncherTests
                 Timeout),
             CancellationToken.None);
 
-        Assert.Single(scriptRunner.Scripts);
-        Assert.Equal(3, processRunner.Calls.Count);
+        Assert.Single(this.browser.Listed);
+        Assert.Equal(3, this.browser.Opened.Count);
         Assert.Single(outcome.Warnings);
     }
 
     [Fact]
-    public async Task ManageBrowserContextAsyncUrlsModeReportsWarningOnNonZeroExit()
+    public async Task ManageBrowserContextAsyncUrlsModeReportsWarningWhenAPageDoesNotOpen()
     {
-        FakeProcessRunner processRunner = new();
-        processRunner.Enqueue(new ProcessResult(1, string.Empty, "no such app", false));
-        BrowserLauncher launcher = new(processRunner, new FakeScriptRunner());
+        this.browser.OpenProblem = new BrowserProblem(BrowserProblemKind.Failed, "no such app");
 
-        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
+        BrowserLaunchOutcome outcome = await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Default, ["https://example.com/"], false, [], Timeout),
             CancellationToken.None);
 
-        Assert.Single(outcome.Warnings);
+        Assert.Equal("Could not open 'https://example.com/': no such app", Assert.Single(outcome.Warnings).English);
     }
 
     /// <summary>
@@ -195,56 +169,41 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task ManageBrowserContextAsyncLegacyGroupsModeDoesNothing()
     {
-        FakeProcessRunner processRunner = new();
-        FakeScriptRunner scriptRunner = new();
-        BrowserLauncher launcher = new(processRunner, scriptRunner);
-
-        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
+        BrowserLaunchOutcome outcome = await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Groups, BrowserKind.Safari, ["https://fallback.example/"], false, [], Timeout),
             CancellationToken.None);
 
         Assert.Empty(outcome.Warnings);
-        Assert.Empty(processRunner.Calls);
-        Assert.Empty(scriptRunner.Scripts);
+        Assert.Empty(this.browser.Opened);
+        Assert.Empty(this.browser.Listed);
     }
 
     [Fact]
-    public async Task ManageBrowserContextAsyncProfilesModeLaunchesEachProfileWithProfileDirectoryArgument()
+    public async Task ManageBrowserContextAsyncProfilesModeOpensEachProfileWithItsPages()
     {
-        FakeProcessRunner processRunner = new();
-        BrowserLauncher launcher = new(processRunner, new FakeScriptRunner());
-
         BrowserProfileConfig[] profiles =
         [
             new() { Browser = BrowserKind.Chrome, ProfileDirectory = "Profile 1", Urls = ["https://mail.example/"] },
             new() { Browser = BrowserKind.Brave, ProfileDirectory = "Default", Urls = [] }
         ];
 
-        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
+        BrowserLaunchOutcome outcome = await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Profiles, BrowserKind.Default, [], false, profiles, Timeout),
             CancellationToken.None);
 
         Assert.Empty(outcome.Warnings);
-        Assert.Equal(2, processRunner.Calls.Count);
-
-        ProcessStartOptions chromeCall = processRunner.Calls[0];
-        Assert.Equal("open", chromeCall.FileName);
-        Assert.Equal(["-na", "Google Chrome", "--args", "--profile-directory=Profile 1", "https://mail.example/"], chromeCall.Arguments);
-
-        ProcessStartOptions braveCall = processRunner.Calls[1];
-        Assert.Equal(["-na", "Brave Browser", "--args", "--profile-directory=Default"], braveCall.Arguments);
+        Assert.Equal(
+            [(BrowserKind.Chrome, "Profile 1", "https://mail.example/"), (BrowserKind.Brave, "Default", "")],
+            this.browser.OpenedProfiles.Select(opened => (opened.Browser, opened.ProfileDirectory, string.Join(' ', opened.Urls))));
     }
 
     [Fact]
     public async Task ManageBrowserContextAsyncProfilesModeReportsWarningOnFailure()
     {
-        FakeProcessRunner processRunner = new();
-        processRunner.Enqueue(new ProcessResult(1, string.Empty, "profile locked", false));
-        BrowserLauncher launcher = new(processRunner, new FakeScriptRunner());
-
+        this.browser.OpenProblem = new BrowserProblem(BrowserProblemKind.Failed, "profile locked");
         BrowserProfileConfig[] profiles = [new() { Browser = BrowserKind.Chrome, ProfileDirectory = "Profile 1" }];
 
-        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
+        BrowserLaunchOutcome outcome = await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Profiles, BrowserKind.Default, [], false, profiles, Timeout),
             CancellationToken.None);
 
@@ -258,62 +217,44 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task ADuplicateIsFoundUnderTheAddressThePageMovedTo()
     {
-        FakeProcessRunner processRunner = new();
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((4, "https://mail.google.com/mail/u/0/#inbox")), string.Empty, false));
-        BrowserLauncher launcher = new(processRunner, scriptRunner);
+        this.browser.WithTabs(new BrowserTab(4, "https://mail.google.com/mail/u/0/#inbox"));
 
-        await launcher.ManageBrowserContextAsync(
+        await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://mail.google.com/"], true, [], Timeout),
             CancellationToken.None);
 
-        Assert.Empty(processRunner.Calls);
-        Assert.Contains("https://mail.google.com/mail/u/0/#inbox", scriptRunner.Scripts[1], StringComparison.Ordinal);
+        Assert.Empty(this.browser.Opened);
+        Assert.Equal(["https://mail.google.com/mail/u/0/#inbox"], this.browser.Focused);
     }
 
     /// <summary>
-    /// Only the profile's pages close - in Chrome each tab by its id, so one whose address changes
-    /// between being listed and being closed still closes - and a page the next profile opens stays.
+    /// Only the profile's pages close, and a page the next profile opens stays. A browser that isn't
+    /// running isn't started to be asked.
     /// </summary>
     [Fact]
     public async Task ClosingTabsClosesTheProfilesPagesAndNothingElse()
     {
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(
-            0,
-            ChromeTabs((11, "https://linear.app/team/issues"), (12, "https://news.example/"), (13, "https://mail.google.com/mail/u/0/")),
-            string.Empty,
-            false));
-        scriptRunner.Enqueue(new ProcessResult(0, "1", string.Empty, false));
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+        this.browser.WithTabs(
+            new BrowserTab(11, "https://linear.app/team/issues"), new BrowserTab(12, "https://news.example/"), new BrowserTab(13, "https://mail.google.com/mail/u/0/"));
 
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(
             BrowserKind.Chrome, ["https://linear.app/", "https://mail.google.com/"], ["https://mail.google.com/"], null, Timeout, CancellationToken.None);
 
         Assert.Equal(new TabClosingOutcome(1, null), outcome);
-        Assert.Equal(2, scriptRunner.Scripts.Count);
-        Assert.Contains("is not running then return \"\"", scriptRunner.Scripts[0], StringComparison.Ordinal);
-        Assert.Contains("set doomed to {\"11\"}", scriptRunner.Scripts[1], StringComparison.Ordinal);
+        Assert.False(Assert.Single(this.browser.Listed).StartIfNeeded);
+        Assert.Equal([new BrowserTab(11, "https://linear.app/team/issues")], Assert.Single(this.browser.Closed));
     }
 
-    /// <summary>Safari's tabs have no id, so they close by the address Safari reported.</summary>
+    /// <summary>Safari's tabs have no id, so the tab to close is the one at the address Safari reported.</summary>
     [Fact]
     public async Task SafariTabsCloseByTheirAddress()
     {
-        FakeScriptRunner scriptRunner = new();
-        char separator = AppleScriptBuilder.OpenTabFieldSeparator;
-        scriptRunner.Enqueue(new ProcessResult(
-            0,
-            $"https://linear.app/team/issues{separator}Issues\nhttps://news.example/{separator}News\n",
-            string.Empty,
-            false));
-        scriptRunner.Enqueue(new ProcessResult(0, "1", string.Empty, false));
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+        this.browser.WithTabs(new BrowserTab(null, "https://linear.app/team/issues"), new BrowserTab(null, "https://news.example/"));
 
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Safari, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(BrowserKind.Safari, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
 
         Assert.Equal(new TabClosingOutcome(1, null), outcome);
-        Assert.Contains("set doomed to {\"https://linear.app/team/issues\"}", scriptRunner.Scripts[1], StringComparison.Ordinal);
+        Assert.Equal([new BrowserTab(null, "https://linear.app/team/issues")], Assert.Single(this.browser.Closed));
     }
 
     /// <summary>
@@ -325,38 +266,32 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task ATabOpenedForAPageThatClosesIsClosedWhereverItWent()
     {
-        FakeProcessRunner processRunner = new();
-        FakeScriptRunner scriptRunner = new();
-        FakeOpenedTabsStore store = new();
-        BrowserLauncher launcher = new(processRunner, scriptRunner, store, new FakeBrowserRuns(), TimeSpan.Zero);
+        BrowserLauncher launcher = this.Create();
 
         // Entering: Gmail is already open; Fusion opens, and its new tab is 7.
-        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((3, "https://mail.google.com/mail/u/0/")), string.Empty, false));
-        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((3, "https://mail.google.com/mail/u/0/"), (7, "https://fusion.online.autodesk.com/")), string.Empty, false));
+        this.browser
+            .WithTabs(new BrowserTab(3, "https://mail.google.com/mail/u/0/"))
+            .WithTabs(new BrowserTab(3, "https://mail.google.com/mail/u/0/"), new BrowserTab(7, "https://fusion.online.autodesk.com/"));
         await launcher.ManageBrowserContextAsync(
             new BrowserContextRequest(
                 BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://mail.google.com/", "https://fusion.online.autodesk.com/"], true, [], Timeout,
                 "work", ["https://fusion.online.autodesk.com/"]),
             CancellationToken.None);
 
-        OpenedTabs remembered = store.Tabs["work"];
+        OpenedTabs remembered = this.store.Tabs["work"];
         Assert.Equal((BrowserKind.Chrome, "run-1"), (remembered.Browser, remembered.BrowserRun));
         Assert.Equal([7], remembered.TabIds);
-        Assert.Single(processRunner.Calls);
+        Assert.Single(this.browser.Opened);
 
         // Leaving: tab 7 has gone to Autodesk's sign-in, another site; a tab the user opened stays.
-        scriptRunner.Enqueue(new ProcessResult(
-            0,
-            ChromeTabs((3, "https://mail.google.com/mail/u/0/"), (7, "https://signin.autodesk.com/idmgr/"), (9, "https://www.youtube.com/")),
-            string.Empty,
-            false));
-        scriptRunner.Enqueue(new ProcessResult(0, "1", string.Empty, false));
+        this.browser.WithTabs(
+            new BrowserTab(3, "https://mail.google.com/mail/u/0/"), new BrowserTab(7, "https://signin.autodesk.com/idmgr/"), new BrowserTab(9, "https://www.youtube.com/"));
         TabClosingOutcome outcome = await launcher.CloseTabsAsync(
             BrowserKind.Chrome, ["https://fusion.online.autodesk.com/"], [], "work", Timeout, CancellationToken.None);
 
         Assert.Equal(new TabClosingOutcome(1, null), outcome);
-        Assert.Contains("set doomed to {\"7\"}", scriptRunner.Scripts[^1], StringComparison.Ordinal);
-        Assert.Empty(store.Tabs);
+        Assert.Equal([new BrowserTab(7, "https://signin.autodesk.com/idmgr/")], Assert.Single(this.browser.Closed));
+        Assert.Empty(this.store.Tabs);
     }
 
     /// <summary>
@@ -366,19 +301,17 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task OnlyTabsOpenedForPagesThatCloseAreRemembered()
     {
-        FakeScriptRunner scriptRunner = new();
-        FakeOpenedTabsStore store = new();
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner, store, new FakeBrowserRuns(), TimeSpan.Zero);
-        scriptRunner.Enqueue(new ProcessResult(0, string.Empty, string.Empty, false));
-        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((20, "https://docs.example/"), (21, "https://fusion.online.autodesk.com/")), string.Empty, false));
+        this.browser
+            .WithTabs()
+            .WithTabs(new BrowserTab(20, "https://docs.example/"), new BrowserTab(21, "https://fusion.online.autodesk.com/"));
 
-        await launcher.ManageBrowserContextAsync(
+        await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(
                 BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://docs.example/", "https://fusion.online.autodesk.com/"], true, [], Timeout,
                 "work", ["https://fusion.online.autodesk.com/"]),
             CancellationToken.None);
 
-        Assert.Equal([21], store.Tabs["work"].TabIds);
+        Assert.Equal([21], this.store.Tabs["work"].TabIds);
     }
 
     /// <summary>
@@ -388,23 +321,36 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task ATabSomeoneElseOpenedMeanwhileIsNotRemembered()
     {
-        FakeScriptRunner scriptRunner = new();
-        FakeOpenedTabsStore store = new();
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner, store, new FakeBrowserRuns(), TimeSpan.Zero);
-        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((1, "https://news.example/")), string.Empty, false));
-        scriptRunner.Enqueue(new ProcessResult(
-            0,
-            ChromeTabs((1, "https://news.example/"), (5, "https://www.youtube.com/"), (6, "https://fusion.online.autodesk.com/")),
-            string.Empty,
-            false));
+        this.browser
+            .WithTabs(new BrowserTab(1, "https://news.example/"))
+            .WithTabs(new BrowserTab(1, "https://news.example/"), new BrowserTab(5, "https://www.youtube.com/"), new BrowserTab(6, "https://fusion.online.autodesk.com/"));
 
-        await launcher.ManageBrowserContextAsync(
+        await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(
                 BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://fusion.online.autodesk.com/"], true, [], Timeout,
                 "work", ["https://fusion.online.autodesk.com/"]),
             CancellationToken.None);
 
-        Assert.Equal([6], store.Tabs["work"].TabIds);
+        Assert.Equal([6], this.store.Tabs["work"].TabIds);
+    }
+
+    /// <summary>Remembering is a nicety: when it can't be written, the tabs still close by address, and the log says so.</summary>
+    [Fact]
+    public async Task TabsThatCouldNotBeRememberedAreLogged()
+    {
+        this.store.Failure = new IOException("disk full");
+        this.browser
+            .WithTabs()
+            .WithTabs(new BrowserTab(21, "https://fusion.online.autodesk.com/"));
+
+        BrowserLaunchOutcome outcome = await this.Create().ManageBrowserContextAsync(
+            new BrowserContextRequest(
+                BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://fusion.online.autodesk.com/"], true, [], Timeout,
+                "work", ["https://fusion.online.autodesk.com/"]),
+            CancellationToken.None);
+
+        Assert.Empty(outcome.Warnings);
+        Assert.Equal("OpenedTabsNotRemembered", Assert.Single(this.logger.Entries).EventId);
     }
 
     /// <summary>
@@ -414,36 +360,29 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task IdsFromAnEarlierRunOfTheBrowserAreNotUsed()
     {
-        FakeScriptRunner scriptRunner = new();
-        FakeOpenedTabsStore store = new();
-        store.Tabs["work"] = new OpenedTabs(BrowserKind.Chrome, "run-1", [7]);
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner, store, new FakeBrowserRuns { Run = "run-2" }, TimeSpan.Zero);
-        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((7, "https://www.youtube.com/"), (8, "https://fusion.online.autodesk.com/home")), string.Empty, false));
-        scriptRunner.Enqueue(new ProcessResult(0, "1", string.Empty, false));
+        this.store.Tabs["work"] = new OpenedTabs(BrowserKind.Chrome, "run-1", [7]);
+        this.runs.Run = "run-2";
+        this.browser.WithTabs(new BrowserTab(7, "https://www.youtube.com/"), new BrowserTab(8, "https://fusion.online.autodesk.com/home"));
 
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(
             BrowserKind.Chrome, ["https://fusion.online.autodesk.com/"], [], "work", Timeout, CancellationToken.None);
 
         Assert.Equal(1, outcome.Closed);
-        Assert.Contains("set doomed to {\"8\"}", scriptRunner.Scripts[^1], StringComparison.Ordinal);
-        Assert.Empty(store.Tabs);
+        Assert.Equal([new BrowserTab(8, "https://fusion.online.autodesk.com/home")], Assert.Single(this.browser.Closed));
+        Assert.Empty(this.store.Tabs);
     }
 
     /// <summary>A remembered tab showing a page the next profile opens is left open, like any other such tab.</summary>
     [Fact]
     public async Task ARememberedTabTheNextProfileOpensStays()
     {
-        FakeScriptRunner scriptRunner = new();
-        FakeOpenedTabsStore store = new();
-        store.Tabs["work"] = new OpenedTabs(BrowserKind.Chrome, "run-1", [7, 8]);
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner, store, new FakeBrowserRuns(), TimeSpan.Zero);
-        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((7, "https://calendar.google.com/r/week"), (8, "https://signin.autodesk.com/")), string.Empty, false));
-        scriptRunner.Enqueue(new ProcessResult(0, "1", string.Empty, false));
+        this.store.Tabs["work"] = new OpenedTabs(BrowserKind.Chrome, "run-1", [7, 8]);
+        this.browser.WithTabs(new BrowserTab(7, "https://calendar.google.com/r/week"), new BrowserTab(8, "https://signin.autodesk.com/"));
 
-        await launcher.CloseTabsAsync(
+        await this.Create().CloseTabsAsync(
             BrowserKind.Chrome, ["https://fusion.online.autodesk.com/"], ["https://calendar.google.com/"], "work", Timeout, CancellationToken.None);
 
-        Assert.Contains("set doomed to {\"8\"}", scriptRunner.Scripts[^1], StringComparison.Ordinal);
+        Assert.Equal([new BrowserTab(8, "https://signin.autodesk.com/")], Assert.Single(this.browser.Closed));
     }
 
     /// <summary>
@@ -452,30 +391,26 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task APageThatOnlyOpensCostsNoExtraListing()
     {
-        FakeScriptRunner scriptRunner = new();
-        FakeOpenedTabsStore store = new();
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner, store, new FakeBrowserRuns(), TimeSpan.Zero);
-        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((1, "https://news.example/")), string.Empty, false));
+        this.browser.WithTabs(new BrowserTab(1, "https://news.example/"));
 
-        await launcher.ManageBrowserContextAsync(
+        await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://docs.example/"], true, [], Timeout, "work", []),
             CancellationToken.None);
 
-        Assert.Single(scriptRunner.Scripts);
-        Assert.Empty(store.Tabs);
+        Assert.Single(this.browser.Listed);
+        Assert.Empty(this.store.Tabs);
     }
 
     [Fact]
     public async Task WithNoTabToCloseTheBrowserIsOnlyAsked()
     {
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, "https://news.example/\n", string.Empty, false));
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+        this.browser.WithTabs(new BrowserTab(null, "https://news.example/"));
 
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Safari, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(BrowserKind.Safari, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
 
         Assert.Equal(new TabClosingOutcome(0, null), outcome);
-        Assert.Single(scriptRunner.Scripts);
+        Assert.Single(this.browser.Listed);
+        Assert.Empty(this.browser.Closed);
     }
 
     /// <summary>
@@ -485,24 +420,19 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task AnUnscriptableDefaultBrowserIsReportedAndLeftAlone()
     {
-        FakeScriptRunner scriptRunner = new();
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
-
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Default, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(BrowserKind.Default, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
 
         Assert.Equal(0, outcome.Closed);
         Assert.Equal("Switch_CloseTabsNeedsBrowser", outcome.Problem?.Key);
-        Assert.Empty(scriptRunner.Scripts);
+        Assert.Empty(this.browser.Listed);
     }
 
     [Fact]
     public async Task ABrowserThatWontAnswerIsReported()
     {
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "Not authorized to send Apple events", false));
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+        this.browser.Failing(BrowserProblemKind.NotAllowed, "Not authorized to send Apple events");
 
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Brave, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(BrowserKind.Brave, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
 
         Assert.Equal(0, outcome.Closed);
         Assert.Equal("Switch_BrowserNotAllowed", outcome.Problem?.Key);
@@ -515,11 +445,9 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task ARefusedPermissionSaysWhereToTurnItOn()
     {
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "execution error: Not authorized to send Apple events to Google Chrome. (-1743)", false));
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+        this.browser.Failing(BrowserProblemKind.NotAllowed, "execution error: Not authorized to send Apple events to Google Chrome. (-1743)");
 
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
 
         Assert.Contains("System Settings → Privacy & Security → Automation", outcome.Problem?.English, StringComparison.Ordinal);
         Assert.Contains("Google Chrome", outcome.Problem?.English, StringComparison.Ordinal);
@@ -528,11 +456,9 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task ASlowBrowserIsNotBlamedOnPermissions()
     {
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(-1, string.Empty, string.Empty, TimedOut: true));
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+        this.browser.Failing(BrowserProblemKind.NotAnswering);
 
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
 
         Assert.Equal("Switch_BrowserNotAnswering", outcome.Problem?.Key);
         Assert.DoesNotContain("Automation", outcome.Problem?.English, StringComparison.Ordinal);
@@ -541,24 +467,20 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task AnyOtherFailureQuotesItsReason()
     {
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "execution error: Google Chrome got an error: Can't get window 1. (-1728)\nsecond line", false));
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+        this.browser.Failing(BrowserProblemKind.Failed, "execution error: Google Chrome got an error: Can't get window 1. (-1728)\nsecond line");
 
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
 
         Assert.Equal("Could not control Google Chrome: execution error: Google Chrome got an error: Can't get window 1. (-1728)", outcome.Problem?.English);
     }
 
-    /// <summary>A script that failed without a word has nothing to quote, so the general message stands.</summary>
+    /// <summary>A failure without a word has nothing to quote, so the general message stands.</summary>
     [Fact]
     public async Task AFailureWithNoReasonKeepsTheGeneralMessage()
     {
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, string.Empty, false));
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+        this.browser.Failing(BrowserProblemKind.Failed);
 
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
 
         Assert.Equal("Switch_CouldNotCloseTabs", outcome.Problem?.Key);
     }
@@ -567,17 +489,14 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task ARefusedPermissionIsSaidWhenCheckingForOpenTabsToo()
     {
-        FakeProcessRunner processRunner = new();
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "Not authorized to send Apple events to Google Chrome. (-1743)", false));
-        BrowserLauncher launcher = new(processRunner, scriptRunner);
+        this.browser.Failing(BrowserProblemKind.NotAllowed, "Not authorized to send Apple events to Google Chrome. (-1743)");
 
-        BrowserLaunchOutcome outcome = await launcher.ManageBrowserContextAsync(
+        BrowserLaunchOutcome outcome = await this.Create().ManageBrowserContextAsync(
             new BrowserContextRequest(BrowserManagementMode.Urls, BrowserKind.Chrome, ["https://example.com/"], true, [], Timeout),
             CancellationToken.None);
 
         Assert.Contains(outcome.Warnings, warning => warning.Key == "Switch_BrowserNotAllowed");
-        Assert.Single(processRunner.Calls);
+        Assert.Single(this.browser.Opened);
     }
 
     /// <summary>
@@ -587,13 +506,12 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task ATabThatStayedOpenIsNamed()
     {
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((11, "https://linear.app/team"), (12, "https://www.github.com/pulls"), (13, "https://example.com/")), string.Empty, false));
-        scriptRunner.Enqueue(new ProcessResult(0, "1", string.Empty, false));
-        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((12, "https://www.github.com/pulls"), (13, "https://example.com/")), string.Empty, false));
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+        this.browser
+            .WithTabs(new BrowserTab(11, "https://linear.app/team"), new BrowserTab(12, "https://www.github.com/pulls"), new BrowserTab(13, "https://example.com/"))
+            .WithTabs(new BrowserTab(12, "https://www.github.com/pulls"), new BrowserTab(13, "https://example.com/"));
+        this.browser.Closing = new TabsClosed(1, null);
 
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(
             BrowserKind.Chrome, ["https://linear.app/", "https://github.com/"], [], null, Timeout, CancellationToken.None);
 
         Assert.Equal(1, outcome.Closed);
@@ -603,33 +521,41 @@ public sealed class BrowserLauncherTests
     [Fact]
     public async Task EveryTabClosedIsNotAProblem()
     {
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((11, "https://linear.app/team"), (12, "https://github.com/pulls")), string.Empty, false));
-        scriptRunner.Enqueue(new ProcessResult(0, "2", string.Empty, false));
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+        this.browser.WithTabs(new BrowserTab(11, "https://linear.app/team"), new BrowserTab(12, "https://github.com/pulls"));
 
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(
             BrowserKind.Chrome, ["https://linear.app/", "https://github.com/"], [], null, Timeout, CancellationToken.None);
 
         Assert.Equal(2, outcome.Closed);
         Assert.Null(outcome.Problem);
-        Assert.Equal(2, scriptRunner.Scripts.Count);
+        Assert.Single(this.browser.Listed);
     }
 
     /// <summary>When the look at what is left can't be made, the count still says some stayed open.</summary>
     [Fact]
     public async Task ATabThatStayedOpenIsCountedWhenWhichCannotBeSaid()
     {
-        FakeScriptRunner scriptRunner = new();
-        scriptRunner.Enqueue(new ProcessResult(0, ChromeTabs((11, "https://linear.app/team"), (12, "https://github.com/pulls")), string.Empty, false));
-        scriptRunner.Enqueue(new ProcessResult(0, "1", string.Empty, false));
-        scriptRunner.Enqueue(new ProcessResult(1, string.Empty, "AppleEvent timed out", false));
-        BrowserLauncher launcher = new(new FakeProcessRunner(), scriptRunner);
+        this.browser
+            .WithTabs(new BrowserTab(11, "https://linear.app/team"), new BrowserTab(12, "https://github.com/pulls"))
+            .Failing(BrowserProblemKind.Failed, "AppleEvent timed out");
+        this.browser.Closing = new TabsClosed(1, null);
 
-        TabClosingOutcome outcome = await launcher.CloseTabsAsync(
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(
             BrowserKind.Chrome, ["https://linear.app/", "https://github.com/"], [], null, Timeout, CancellationToken.None);
 
         Assert.Equal("Closed 1 of 2 tabs in Google Chrome.", outcome.Problem?.English);
+    }
+
+    /// <summary>A browser that closed the tabs without saying how many is taken at its word: nothing to report.</summary>
+    [Fact]
+    public async Task ACloseThatGivesNoCountIsNotAProblem()
+    {
+        this.browser.WithTabs(new BrowserTab(11, "https://linear.app/team"));
+        this.browser.Closing = new TabsClosed(null, null);
+
+        TabClosingOutcome outcome = await this.Create().CloseTabsAsync(BrowserKind.Chrome, ["https://linear.app/"], [], null, Timeout, CancellationToken.None);
+
+        Assert.Equal(new TabClosingOutcome(0, null), outcome);
     }
 
     [Theory]
@@ -649,7 +575,6 @@ public sealed class BrowserLauncherTests
         Assert.Equal("a.com, b.com, c.com, +2", line);
     }
 
-    /// <summary>A Chromium tab listing as <see cref="AppleScriptBuilder.ListChromiumTabs"/> prints it.</summary>
-    private static string ChromeTabs(params (int Id, string Url)[] tabs) =>
-        string.Concat(tabs.Select(tab => $"{tab.Id}{AppleScriptBuilder.OpenTabFieldSeparator}{tab.Url}\n"));
+    /// <summary>No wait between looks for the tabs just opened, so the tests don't sit through the real one.</summary>
+    private BrowserLauncher Create() => new(this.browser, this.store, this.runs, this.logger, TimeSpan.Zero);
 }

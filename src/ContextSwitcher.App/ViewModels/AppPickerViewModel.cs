@@ -1,4 +1,5 @@
 using Avalonia.Media.Imaging;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Applications;
 
@@ -96,7 +97,7 @@ public sealed class AppPickerViewModel : ViewModelBase
             List<InstalledAppViewModel> viewModels = [];
             foreach (InstalledApp app in installed)
             {
-                Bitmap? icon = LoadIcon(app.IconPath);
+                Bitmap? icon = IconFiles.Load(app.IconPath);
                 this.iconsByAppName[app.Name] = icon;
                 viewModels.Add(new InstalledAppViewModel(app.Name, icon, this.onPicked));
             }
@@ -139,23 +140,5 @@ public sealed class AppPickerViewModel : ViewModelBase
     public Bitmap? ResolveIcon(string appName)
     {
         return this.iconsByAppName.TryGetValue(appName, out Bitmap? icon) ? icon : null;
-    }
-
-    private static Bitmap? LoadIcon(string? iconPath)
-    {
-        if (string.IsNullOrEmpty(iconPath) || !File.Exists(iconPath))
-        {
-            return null;
-        }
-
-        try
-        {
-            return new Bitmap(iconPath);
-        }
-        catch (Exception ex) when (ex is IOException or ArgumentException or NotSupportedException)
-        {
-            // Not logged: a truncated or unreadable cached PNG must not break the picker.
-            return null;
-        }
     }
 }

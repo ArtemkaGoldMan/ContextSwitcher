@@ -6,6 +6,7 @@ using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.AppleScript;
+using ContextSwitcher.Infrastructure.MacOS;
 
 namespace ContextSwitcher.Infrastructure.Catalog;
 
@@ -108,7 +109,7 @@ public sealed class SystemCatalog : ISystemCatalog
 
     /// <inheritdoc />
     public bool IsBrowserInstalled(BrowserKind browser) =>
-        browser == BrowserKind.Default || this.IsInstalled(AppName(browser));
+        browser == BrowserKind.Default || this.IsInstalled(MacBrowserApps.Name(browser));
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<string>?> GetMusicPlaylistsAsync(bool startMusicIfNeeded, CancellationToken cancellationToken)
@@ -137,7 +138,7 @@ public sealed class SystemCatalog : ISystemCatalog
         HashSet<string> seen = new(StringComparer.Ordinal);
         foreach (BrowserKind candidate in browsers)
         {
-            string appName = AppName(candidate);
+            string appName = MacBrowserApps.Name(candidate);
 
             // Scripting an app that is not installed makes AppleScript ask the user to locate it.
             if (!this.IsInstalled(appName))
@@ -182,7 +183,7 @@ public sealed class SystemCatalog : ISystemCatalog
         List<OpenBrowserTab> tabs = [];
         foreach (BrowserKind browser in TabBrowsers)
         {
-            string appName = AppName(browser);
+            string appName = MacBrowserApps.Name(browser);
 
             // Scripting an app that is not installed makes AppleScript ask the user to locate it.
             if (!this.IsInstalled(appName))
@@ -270,12 +271,4 @@ public sealed class SystemCatalog : ISystemCatalog
 
     private static List<string> Lines(string output) =>
         output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-
-    private static string AppName(BrowserKind browser) => browser switch
-    {
-        BrowserKind.Chrome => "Google Chrome",
-        BrowserKind.Brave => "Brave Browser",
-        BrowserKind.Safari => "Safari",
-        _ => throw new ArgumentOutOfRangeException(nameof(browser), browser, "Default browser has no fixed application name.")
-    };
 }

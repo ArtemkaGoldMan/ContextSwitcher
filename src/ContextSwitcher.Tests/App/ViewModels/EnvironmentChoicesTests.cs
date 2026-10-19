@@ -1,5 +1,6 @@
 using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
+using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
@@ -26,7 +27,7 @@ public sealed class EnvironmentChoicesTests
         FakeSystemCatalog catalog = new();
         catalog.ShortcutNames.AddRange([$"{Prefix}Writing", "Play/Pause", $"{Prefix}Work", $"{Prefix}Off", FocusModes.OffShortcutName("Work")]);
 
-        FocusSettingsViewModel focus = new(catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), new FocusConfig());
+        FocusSettingsViewModel focus = new(catalog, new FakeShell(), new FakeFocusShortcutInstaller(), new FocusConfig());
 
         Assert.Equal(
             ["Don't use Focus", "Work", "Writing", "Do Not Disturb", "Personal", "Sleep"],
@@ -44,7 +45,7 @@ public sealed class EnvironmentChoicesTests
     {
         FakeSystemCatalog catalog = new();
         catalog.ShortcutNames.Add(FocusModes.OffShortcutName("Reading"));
-        FocusSettingsViewModel focus = new(catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), new FocusConfig());
+        FocusSettingsViewModel focus = new(catalog, new FakeShell(), new FakeFocusShortcutInstaller(), new FocusConfig());
 
         focus.Selected = focus.Choices.Single(c => c.ModeName == "Reading");
 
@@ -58,7 +59,7 @@ public sealed class EnvironmentChoicesTests
     public async Task CheckingAgainPicksUpAShortcutMadeMeanwhile()
     {
         FakeSystemCatalog catalog = new();
-        FocusSettingsViewModel focus = new(catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), new FocusConfig { Enabled = true, ModeName = "Work" });
+        FocusSettingsViewModel focus = new(catalog, new FakeShell(), new FakeFocusShortcutInstaller(), new FocusConfig { Enabled = true, ModeName = "Work" });
         Assert.True(focus.IsShortcutMissing);
         Assert.True(focus.IsOffShortcutMissing);
 
@@ -73,7 +74,7 @@ public sealed class EnvironmentChoicesTests
     [Fact]
     public void AModeNameFromConfigIsKeptEvenIfNoListHasIt()
     {
-        FocusSettingsViewModel focus = new(new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), new FocusConfig { Enabled = true, ModeName = "Deep Work" });
+        FocusSettingsViewModel focus = new(new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), new FocusConfig { Enabled = true, ModeName = "Deep Work" });
 
         Assert.Equal("Deep Work", focus.Selected.ModeName);
         Assert.Equal(new FocusConfig { Enabled = true, ModeName = "Deep Work" }, focus.ToConfig());
@@ -91,7 +92,7 @@ public sealed class EnvironmentChoicesTests
     {
         FakeSystemCatalog catalog = new();
         FakeFocusShortcutInstaller installer = new() { AddsTo = catalog };
-        FocusSettingsViewModel focus = new(catalog, new FakeProcessRunner(), installer, new FocusConfig { Enabled = true, ModeName = "Sleep" })
+        FocusSettingsViewModel focus = new(catalog, new FakeShell(), installer, new FocusConfig { Enabled = true, ModeName = "Sleep" })
         {
             PollInterval = TimeSpan.FromMilliseconds(1)
         };
@@ -118,19 +119,19 @@ public sealed class EnvironmentChoicesTests
         FakeSystemCatalog catalog = new();
         catalog.ShortcutNames.AddRange([$"{Prefix}Do Not Disturb", $"{Prefix}Off", $"{Prefix}Deep Work"]);
 
-        FocusSettingsViewModel builtIn = new(catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), new FocusConfig { Enabled = true, ModeName = "Do Not Disturb" });
+        FocusSettingsViewModel builtIn = new(catalog, new FakeShell(), new FakeFocusShortcutInstaller(), new FocusConfig { Enabled = true, ModeName = "Do Not Disturb" });
         Assert.True(builtIn.IsOffShortcutMissing);
         Assert.True(builtIn.CanCreateOffShortcut);
         Assert.Contains($"\u201c{Prefix}Off - Do Not Disturb\u201d", builtIn.MissingOffShortcutText, StringComparison.Ordinal);
 
-        FocusSettingsViewModel custom = new(catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), new FocusConfig { Enabled = true, ModeName = "Deep Work" });
+        FocusSettingsViewModel custom = new(catalog, new FakeShell(), new FakeFocusShortcutInstaller(), new FocusConfig { Enabled = true, ModeName = "Deep Work" });
         Assert.False(custom.IsOffShortcutMissing);
     }
 
     [Fact]
     public void AFocusTheUserMadeCannotBeCreatedForThem()
     {
-        FocusSettingsViewModel focus = new(new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), new FocusConfig { Enabled = true, ModeName = "Deep Work" });
+        FocusSettingsViewModel focus = new(new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), new FocusConfig { Enabled = true, ModeName = "Deep Work" });
 
         Assert.True(focus.IsShortcutMissing);
         Assert.False(focus.CanCreateShortcut);
@@ -140,7 +141,7 @@ public sealed class EnvironmentChoicesTests
     public async Task AFailedOfferSaysWhy()
     {
         FakeFocusShortcutInstaller installer = new() { Problem = FocusMessages.CouldNotPrepare.With() };
-        FocusSettingsViewModel focus = new(new FakeSystemCatalog(), new FakeProcessRunner(), installer, new FocusConfig { Enabled = true, ModeName = "Work" });
+        FocusSettingsViewModel focus = new(new FakeSystemCatalog(), new FakeShell(), installer, new FocusConfig { Enabled = true, ModeName = "Work" });
 
         await focus.OfferShortcutAsync("Work", turnOff: false);
 
@@ -151,14 +152,12 @@ public sealed class EnvironmentChoicesTests
     [Fact]
     public void OpenShortcutsOpensTheShortcutsApp()
     {
-        FakeProcessRunner runner = new();
-        FocusSettingsViewModel focus = new(new FakeSystemCatalog(), runner, new FakeFocusShortcutInstaller(), new FocusConfig());
+        FakeShell shell = new();
+        FocusSettingsViewModel focus = new(new FakeSystemCatalog(), shell, new FakeFocusShortcutInstaller(), new FocusConfig());
 
         focus.OpenShortcutsCommand.Execute(null);
 
-        ProcessStartOptions call = Assert.Single(runner.Calls);
-        Assert.Equal("open", call.FileName);
-        Assert.Equal(["-a", "Shortcuts"], call.Arguments);
+        Assert.Equal([SystemPage.Shortcuts], shell.Pages);
     }
 
     [Fact]
@@ -404,6 +403,6 @@ public sealed class EnvironmentChoicesTests
         jsonStore.Seed(paths.SettingsPath, configuration);
         ConfigurationStore store = new(jsonStore, paths, validator, this.appState, new TestLogger());
 
-        return new ProfileSetupViewModel(this.appState, store, new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
+        return new ProfileSetupViewModel(this.appState, store, new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), existing: null);
     }
 }

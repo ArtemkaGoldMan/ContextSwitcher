@@ -207,10 +207,13 @@ on macOS and on Windows, and Mac users see no difference. Worth doing even if Wi
    Release build with warnings as errors, then the tests. Both summarise with
    `scripts/summarise-tests.py`. Making it a required check is a setting on GitHub (Settings →
    Branches) ([CI](#ci)).
-3. **Seams.** Interfaces for launching and closing apps, browser tabs, media, Focus, and opening a
-   link or showing a file. `AutomationStepExecutor` and `BrowserLauncher` take them instead of
-   building AppleScript and running `open` themselves, and the six view models that run `open` use
-   the one for links and files. The macOS versions are today's code, moved and not changed.
+3. **Seams** - done in [#83](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/83). Interfaces in Core for opening, quitting and
+   looking for apps, browser tabs, media, Focus Shortcuts, and opening a link, a file or a system
+   page; each step type has a handler of its own, and `BrowserLauncher` keeps only its decisions. The
+   six view models that ran `open` use `IShell`. The macOS helpers the app called straight - sleep and
+   lock, the Dock icon, the preferred languages, waiting for a display, the system's version, the
+   popover's window - are behind interfaces too. The macOS versions are the code that was there, moved
+   and not changed, and registered in `AppServices.RegisterPlatform`.
 4. **How a profile names an app** ([decided](#decisions-made)). Profiles keep listing apps by name,
    so every settings file reads as before, and the settings gain one map from a name to how Windows
    finds that app, filled in when it is picked:

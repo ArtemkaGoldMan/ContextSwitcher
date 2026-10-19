@@ -7,27 +7,13 @@ public sealed class OutsideClickTests
 {
     private static readonly ScreenRect Card = new(1000, 600, 360, 400);
 
-    [Fact]
-    public void AFreshPressOutsideTheCardCounts()
-    {
-        Assert.True(OutsideClick.IsPressOutside(wasDown: false, isDown: true, new ScreenPoint(200, 300), Card));
-    }
-
     /// <summary>The menu bar icon sits above the card - a press there is outside, and closes it.</summary>
     [Fact]
-    public void APressOnTheMenuBarAboveTheCardCounts()
+    public void TheMenuBarAboveTheCardIsOutsideIt()
     {
-        Assert.True(OutsideClick.IsPressOutside(false, true, new ScreenPoint(1300, 1110), Card));
-    }
-
-    [Theory]
-    [InlineData(false, true, 1100, 800)] // a press inside the card: a button being clicked
-    [InlineData(true, true, 200, 300)]   // still held from before - a drag, or the click that opened it
-    [InlineData(false, false, 200, 300)] // no button down at all
-    [InlineData(true, false, 200, 300)]  // a release
-    public void AnythingElseDoesNot(bool wasDown, bool isDown, double x, double y)
-    {
-        Assert.False(OutsideClick.IsPressOutside(wasDown, isDown, new ScreenPoint(x, y), Card));
+        Assert.False(Card.Contains(new ScreenPoint(1300, 1110)));
+        Assert.False(Card.Contains(new ScreenPoint(200, 300)));
+        Assert.True(Card.Contains(new ScreenPoint(1100, 800)));
     }
 
     /// <summary>

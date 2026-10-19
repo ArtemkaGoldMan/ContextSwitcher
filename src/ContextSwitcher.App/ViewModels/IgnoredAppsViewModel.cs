@@ -112,23 +112,10 @@ public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
         foreach (IgnoredAppRowViewModel row in this.Apps.Where(row => !this.icons.ContainsKey(row.Name)).ToList())
         {
             string? path = installed.FirstOrDefault(app => string.Equals(app.Name, row.Name, StringComparison.OrdinalIgnoreCase))?.IconPath;
-            this.icons[row.Name] = path is not null && File.Exists(path) ? TryLoad(path) : null;
+            this.icons[row.Name] = IconFiles.Load(path);
         }
 
         this.Reload(force: true);
-    }
-
-    private static Bitmap? TryLoad(string path)
-    {
-        try
-        {
-            return new Bitmap(path);
-        }
-        catch (Exception e) when (e is IOException or ArgumentException or InvalidOperationException)
-        {
-            // Not logged: an icon that cannot be read is left out.
-            return null;
-        }
     }
 
     private void Reload(bool force = false)

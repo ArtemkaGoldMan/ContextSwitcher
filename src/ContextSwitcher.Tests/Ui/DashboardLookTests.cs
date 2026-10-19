@@ -7,6 +7,7 @@ using Avalonia.VisualTree;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views;
 using ContextSwitcher.Core.Analytics;
+using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Ui;
 
@@ -24,7 +25,7 @@ public sealed class DashboardLookTests : UiTest
         await OnUiThreadAsync(() =>
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
-            DashboardWindow window = new(scenario.Dashboard(), () => { });
+            DashboardWindow window = new(scenario.Dashboard(), () => { }, new FakePopoverWindow(), new TestLogger());
             window.Show();
             Settle(window);
 
@@ -54,7 +55,7 @@ public sealed class DashboardLookTests : UiTest
             Record(scenario, "work", new DateTimeOffset(2026, 10, 7, 9, 0, 0, TimeSpan.Zero), hours: 4);
 
             DashboardViewModel viewModel = scenario.Dashboard();
-            DashboardWindow window = new(viewModel, () => { });
+            DashboardWindow window = new(viewModel, () => { }, new FakePopoverWindow(), new TestLogger());
             window.Show();
             PumpUntil(WaitUntil(() => viewModel.HasBalanceData));
             Settle(window);
@@ -90,7 +91,7 @@ public sealed class DashboardLookTests : UiTest
         await OnUiThreadAsync(() =>
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
-            DashboardWindow window = new(scenario.Dashboard(), () => { });
+            DashboardWindow window = new(scenario.Dashboard(), () => { }, new FakePopoverWindow(), new TestLogger());
             window.Show();
             Settle(window);
 

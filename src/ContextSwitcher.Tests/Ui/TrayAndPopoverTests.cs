@@ -6,6 +6,7 @@ using ContextSwitcher.App.Views;
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Ui;
 
@@ -219,7 +220,7 @@ public sealed class TrayAndPopoverTests : UiTest
         await OnUiThreadAsync(() =>
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
-            DashboardWindow popover = new(scenario.Dashboard(), () => { });
+            DashboardWindow popover = new(scenario.Dashboard(), () => { }, new FakePopoverWindow(), new TestLogger());
             popover.Show();
             Settle(popover);
 
@@ -247,7 +248,7 @@ public sealed class TrayAndPopoverTests : UiTest
                 LastSwitchCompletedAt = scenario.Clock.UtcNow.AddMinutes(-5)
             });
             DashboardViewModel viewModel = scenario.Dashboard();
-            DashboardWindow popover = new(viewModel, () => { });
+            DashboardWindow popover = new(viewModel, () => { }, new FakePopoverWindow(), new TestLogger());
 
             Assert.False(viewModel.IsClockRunning);
 
@@ -274,7 +275,7 @@ public sealed class TrayAndPopoverTests : UiTest
             UiScenario scenario = UiScenario.WithTwoProfiles();
             scenario.AppState.UpdateState(new CurrentContextState());
             DashboardViewModel viewModel = scenario.Dashboard();
-            DashboardWindow popover = new(viewModel, () => { });
+            DashboardWindow popover = new(viewModel, () => { }, new FakePopoverWindow(), new TestLogger());
 
             popover.Show();
 
@@ -291,7 +292,7 @@ public sealed class TrayAndPopoverTests : UiTest
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
             scenario.SwitchService.Result = scenario.SwitchService.Result with { Status = ContextSwitchStatus.SucceededWithWarnings };
-            DashboardWindow popover = new(scenario.Dashboard(), () => { });
+            DashboardWindow popover = new(scenario.Dashboard(), () => { }, new FakePopoverWindow(), new TestLogger());
             popover.Show();
             Settle(popover);
 

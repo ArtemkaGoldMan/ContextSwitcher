@@ -15,7 +15,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
     private static readonly DateTimeOffset Now = new(2026, 10, 14, 13, 0, 0, TimeSpan.Zero);
     private readonly string directory = Path.Combine(Path.GetTempPath(), "cs-diag-" + Guid.NewGuid().ToString("N"));
     private readonly InMemoryJsonStore jsonStore = new();
-    private readonly FakeProcessRunner processRunner = new();
+    private readonly FakeShell shell = new();
     private readonly ConfigPaths paths;
     private readonly ConfigurationStore store;
 
@@ -99,17 +99,13 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
         Assert.Contains("{\"eventId\":\"StepCompleted\"}", report, StringComparison.Ordinal);
     }
 
+    /// <summary>The log is shown in the file manager - or, in a quiet week with none, its folder (MacShellTests).</summary>
     [Fact]
-    public void ShowingTheLogRevealsTheFileAndOtherwiseTheFolder()
+    public void ShowingTheLogShowsTheLogFile()
     {
-        SettingsDiagnosticsViewModel viewModel = this.Create();
+        this.Create().ShowLogCommand.Execute(null);
 
-        viewModel.ShowLogCommand.Execute(null);
-        Assert.Equal([this.paths.BaseDirectory], this.processRunner.Calls[0].Arguments);
-
-        File.WriteAllText(this.paths.AppLogPath, "{}");
-        viewModel.ShowLogCommand.Execute(null);
-        Assert.Equal(["-R", this.paths.AppLogPath], this.processRunner.Calls[1].Arguments);
+        Assert.Equal([this.paths.AppLogPath], this.shell.ShownFiles);
     }
 
     /// <summary>
@@ -130,7 +126,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
         await viewModel.WriteEmailCommand.ExecuteAsync(null);
 
         StartsWith(copied, "Context Switcher diagnostics");
-        string link = Assert.Single(Assert.Single(this.processRunner.Calls, call => call.FileName == "open").Arguments);
+        string link = Assert.Single(this.shell.Links);
         Assert.StartsWith("mailto:contextswitcher.app@gmail.com?subject=ContextSwitcher%200.6.1%3A%20feedback&body=", link, StringComparison.Ordinal);
         string body = Uri.UnescapeDataString(link[(link.IndexOf("&body=", StringComparison.Ordinal) + 6)..]);
         Assert.StartsWith("What happened:\r\n", body, StringComparison.Ordinal);
@@ -142,7 +138,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
     [Fact]
     public async Task WithNoMailAppTheAddressIsGiven()
     {
-        this.processRunner.DefaultResult = new ContextSwitcher.Core.ProcessExecution.ProcessResult(1, string.Empty, "No application knows how to open URL", false);
+        this.shell.LinksOpen = false;
         SettingsDiagnosticsViewModel viewModel = this.Create();
 
         await viewModel.WriteEmailCommand.ExecuteAsync(null);
@@ -165,7 +161,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
         await viewModel.OpenIssueCommand.ExecuteAsync(null);
 
         Assert.True(copied);
-        Assert.Equal(["https://github.com/ArtemkaGoldMan/ContextSwitcher/issues/new?template=bug_report.yml"], Assert.Single(this.processRunner.Calls).Arguments);
+        Assert.Equal(["https://github.com/ArtemkaGoldMan/ContextSwitcher/issues/new?template=bug_report.yml"], this.shell.Links);
         Assert.Equal("The form is open on GitHub, and the diagnostics are copied: paste them into its Diagnostics field.", viewModel.ContactMessage);
     }
 
@@ -174,7 +170,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
     {
         this.Create().WhatToWriteCommand.Execute(null);
 
-        Assert.Equal(["https://github.com/ArtemkaGoldMan/ContextSwitcher#contact"], Assert.Single(this.processRunner.Calls).Arguments);
+        Assert.Equal(["https://github.com/ArtemkaGoldMan/ContextSwitcher#contact"], this.shell.Links);
     }
 
     /// <summary>A mail link carries its text escaped, with the line breaks mail links expect.</summary>
@@ -192,10 +188,11 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
     private SettingsDiagnosticsViewModel Create() => new(
         this.appState,
         this.store,
-        this.processRunner,
+        this.shell,
         new DiagnosticsSources(
             this.paths,
             () => new RunInfo("ContextSwitcher", "0.6.1", "26.6", "arm64", "release", 1),
+            () => DiagnosticsReport.ReadLog(this.paths.AppLogPath),
             () => [],
             new FakeClock { UtcNow = Now }),
         () => true);

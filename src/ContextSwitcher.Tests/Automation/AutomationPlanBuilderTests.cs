@@ -99,7 +99,7 @@ public sealed class AutomationPlanBuilderTests
         AutomationPlan plan = builder.Build(previous, target);
 
         AutomationStep close = Assert.Single(plan.Steps, step => step.Type == AutomationStepType.CloseApplications);
-        Assert.Equal("""["Obsidian","Spotify"]""", close.Arguments["apps"]);
+        Assert.Equal(["Obsidian", "Spotify"], AppsArguments.From(close.Arguments).Apps);
     }
 
     [Fact]
@@ -175,8 +175,8 @@ public sealed class AutomationPlanBuilderTests
         AutomationPlan plan = builder.Build(previous: null, target);
 
         AutomationStep focus = Assert.Single(plan.Steps, step => step.Type == AutomationStepType.SetFocusMode);
-        Assert.Equal("True", focus.Arguments["enabled"]);
-        Assert.Equal("Work", focus.Arguments["modeName"]);
+        Assert.True(FocusArguments.From(focus.Arguments).Enabled);
+        Assert.Equal("Work", FocusArguments.From(focus.Arguments).ModeName);
     }
 
     /// <summary>
@@ -199,10 +199,10 @@ public sealed class AutomationPlanBuilderTests
         AutomationPlan plan = builder.Build(previous, target);
 
         AutomationStep focus = Assert.Single(plan.Steps, step => step.Type == AutomationStepType.SetFocusMode);
-        Assert.Equal("False", focus.Arguments["enabled"]);
+        Assert.False(FocusArguments.From(focus.Arguments).Enabled);
 
         // The mode to turn off, which has its own Off Shortcut.
-        Assert.Equal("Work", focus.Arguments["previousModeName"]);
+        Assert.Equal("Work", FocusArguments.From(focus.Arguments).PreviousModeName);
     }
 
     /// <summary>
@@ -223,7 +223,7 @@ public sealed class AutomationPlanBuilderTests
         // Coming back from a profile that did turn a Focus on still clears it.
         ContextDefinition dnd = new() { Id = "home", DisplayName = "Home", Focus = new FocusConfig { Enabled = true, ModeName = "Do Not Disturb" } };
         AutomationStep focus = Assert.Single(builder.Build(dnd, noMode).Steps, step => step.Type == AutomationStepType.SetFocusMode);
-        Assert.Equal("False", focus.Arguments["enabled"]);
+        Assert.False(FocusArguments.From(focus.Arguments).Enabled);
     }
     /// <summary>
     /// Leaving a profile closes the tabs it lists - first, before any app is quit, so a browser
@@ -263,16 +263,16 @@ public sealed class AutomationPlanBuilderTests
             [AutomationStepType.CloseBrowserTabs, AutomationStepType.CloseApplications, AutomationStepType.ManageBrowserContext],
             plan.Steps.Select(step => step.Type));
         AutomationStep closing = plan.Steps[0];
-        Assert.Equal("Chrome", closing.Arguments["browser"]);
-        Assert.Equal("""["https://linear.app/","https://mail.google.com/"]""", closing.Arguments["closeUrlsJson"]);
-        Assert.Equal("""["https://mail.google.com/"]""", closing.Arguments["keepUrlsJson"]);
-        Assert.Equal("work", closing.Arguments["contextId"]);
+        Assert.Equal(BrowserKind.Chrome, CloseTabsArguments.From(closing.Arguments).Browser);
+        Assert.Equal(["https://linear.app/", "https://mail.google.com/"], CloseTabsArguments.From(closing.Arguments).CloseUrls);
+        Assert.Equal(["https://mail.google.com/"], CloseTabsArguments.From(closing.Arguments).KeepUrls);
+        Assert.Equal("work", CloseTabsArguments.From(closing.Arguments).ContextId);
 
         // Entering, the profile says whose pages it opens and which of them close later, so the tabs
         // opened for those can be remembered - and found again when it is left.
         AutomationStep entering = new AutomationPlanBuilder().Build(target, previous).Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext);
-        Assert.Equal("work", entering.Arguments["contextId"]);
-        Assert.Equal("""["https://linear.app/","https://mail.google.com/"]""", entering.Arguments["rememberUrlsJson"]);
+        Assert.Equal("work", BrowserContextArguments.From(entering.Arguments).ContextId);
+        Assert.Equal(["https://linear.app/", "https://mail.google.com/"], BrowserContextArguments.From(entering.Arguments).RememberUrls);
     }
 
     /// <summary>Only pages in the same browser are spared: a page open in Safari is a different tab.</summary>
@@ -304,7 +304,7 @@ public sealed class AutomationPlanBuilderTests
 
         AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
 
-        Assert.Equal("[]", plan.Steps.Single(step => step.Type == AutomationStepType.CloseBrowserTabs).Arguments["keepUrlsJson"]);
+        Assert.Empty(CloseTabsArguments.From(plan.Steps.Single(step => step.Type == AutomationStepType.CloseBrowserTabs).Arguments).KeepUrls);
     }
 
     /// <summary>
@@ -364,10 +364,10 @@ public sealed class AutomationPlanBuilderTests
             [AutomationStepType.StopDockerResources, AutomationStepType.CloseBrowserTabs, AutomationStepType.CloseApplications, AutomationStepType.SetFocusMode],
             plan.Steps.Select(step => step.Type));
         Assert.Equal((string.Empty, "work"), (plan.TargetContextId, plan.PreviousContextId));
-        Assert.Equal("[]", plan.Steps[1].Arguments["keepUrlsJson"]);
+        Assert.Empty(CloseTabsArguments.From(plan.Steps[1].Arguments).KeepUrls);
         Assert.True(plan.Steps[2].IsCritical);
         AutomationStep focus = plan.Steps[3];
-        Assert.Equal(("False", "Work"), (focus.Arguments["enabled"], focus.Arguments["previousModeName"]));
+        Assert.Equal((false, "Work"), (FocusArguments.From(focus.Arguments).Enabled, FocusArguments.From(focus.Arguments).PreviousModeName));
     }
 
     /// <summary>
@@ -394,12 +394,12 @@ public sealed class AutomationPlanBuilderTests
 
         AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
 
-        Assert.Equal("""["Visual Studio Code"]""", plan.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments["apps"]);
-        Assert.Equal("""["redis"]""", plan.Steps.Single(step => step.Type == AutomationStepType.StopDockerResources).Arguments["containers"]);
+        Assert.Equal(["Visual Studio Code"], AppsArguments.From(plan.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments).Apps);
+        Assert.Equal(["redis"], ContainersArguments.From(plan.Steps.Single(step => step.Type == AutomationStepType.StopDockerResources).Arguments).Containers);
 
         // Leaving for no profile at all, everything listed goes.
         AutomationPlan off = new AutomationPlanBuilder().Build(previous, target: null);
-        Assert.Equal("""["Slack","Visual Studio Code"]""", off.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments["apps"]);
+        Assert.Equal(["Slack", "Visual Studio Code"], AppsArguments.From(off.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments).Apps);
     }
 
     [Fact]
@@ -447,12 +447,12 @@ public sealed class AutomationPlanBuilderTests
         AutomationPlan plan = new AutomationPlanBuilder(new FakeDefaultBrowser(BrowserKind.Chrome, "Google Chrome")).Build(previous, target);
 
         AutomationStep closing = plan.Steps.Single(step => step.Type == AutomationStepType.CloseBrowserTabs);
-        Assert.Equal(("Chrome", """["https://mail.google.com/"]"""), (closing.Arguments["browser"], closing.Arguments["keepUrlsJson"]));
+        Assert.Equal((BrowserKind.Chrome, "https://mail.google.com/"), (CloseTabsArguments.From(closing.Arguments).Browser, Assert.Single(CloseTabsArguments.From(closing.Arguments).KeepUrls)));
 
         // Entering a Default profile opens its pages in that browser too, checking for duplicates.
         ContextDefinition entering = previous with { BrowserManagement = previous.BrowserManagement with { Urls = ["https://linear.app/"] } };
         AutomationPlan opening = new AutomationPlanBuilder(new FakeDefaultBrowser(BrowserKind.Safari, "Safari")).Build(null, entering);
-        Assert.Equal("Safari", opening.Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext).Arguments["browser"]);
+        Assert.Equal(BrowserKind.Safari, BrowserContextArguments.From(opening.Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext).Arguments).Browser);
     }
 
     /// <summary>
@@ -495,10 +495,10 @@ public sealed class AutomationPlanBuilderTests
         AutomationPlan plan = new AutomationPlanBuilder().Build(work, personal, extras);
 
         AutomationStep apps = plan.Steps.Single(step => step.Type == AutomationStepType.CloseApplications);
-        Assert.Equal("""["Slack","Figma"]""", apps.Arguments["apps"]);
+        Assert.Equal(["Slack", "Figma"], AppsArguments.From(apps.Arguments).Apps);
         List<AutomationStep> tabs = plan.Steps.Where(step => step.Type == AutomationStepType.CloseBrowserTabs).ToList();
         Assert.Equal(2, tabs.Count);
-        Assert.Equal("""["https://a.example/","https://c.example/"]""", tabs.Single(step => step.Arguments["browser"] == "Chrome").Arguments["closeUrlsJson"]);
+        Assert.Equal(["https://a.example/", "https://c.example/"], tabs.Select(step => CloseTabsArguments.From(step.Arguments)).Single(arguments => arguments.Browser == BrowserKind.Chrome).CloseUrls);
         Assert.All(tabs, step => Assert.False(step.Arguments.ContainsKey("contextId")));
         Assert.Equal(tabs.Count, tabs.Select(step => step.Id).Distinct().Count());
         List<AutomationStep> order = plan.Steps.ToList();
@@ -513,7 +513,7 @@ public sealed class AutomationPlanBuilderTests
 
         AutomationPlan plan = new AutomationPlanBuilder().Build(null, personal, new SwitchExtras(["Figma"], []));
 
-        Assert.Equal("""["Figma"]""", plan.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments["apps"]);
+        Assert.Equal(["Figma"], AppsArguments.From(plan.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments).Apps);
     }
 
     /// <summary>An app never touched is neither opened, closed nor hidden, even when a profile still lists it by hand.</summary>
@@ -526,7 +526,7 @@ public sealed class AutomationPlanBuilderTests
         AutomationPlan leaving = new AutomationPlanBuilder().Build(work, personal, ignoredApps: ["Telegram"]);
         AutomationPlan entering = new AutomationPlanBuilder().Build(null, personal, ignoredApps: ["Telegram"]);
 
-        Assert.Equal("""["Slack"]""", leaving.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments["apps"]);
+        Assert.Equal(["Slack"], AppsArguments.From(leaving.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments).Apps);
         Assert.DoesNotContain(leaving.Steps, step => step.Type == AutomationStepType.HideApplications);
         Assert.DoesNotContain(entering.Steps, step => step.Type == AutomationStepType.LaunchApplications);
     }
@@ -544,7 +544,7 @@ public sealed class AutomationPlanBuilderTests
 
         AutomationPlan plan = new AutomationPlanBuilder(new FakeDefaultBrowser(BrowserKind.Default, "Firefox")).Build(previous, target: null);
 
-        Assert.Equal("Default", plan.Steps.Single(step => step.Type == AutomationStepType.CloseBrowserTabs).Arguments["browser"]);
+        Assert.Equal(BrowserKind.Default, CloseTabsArguments.From(plan.Steps.Single(step => step.Type == AutomationStepType.CloseBrowserTabs).Arguments).Browser);
     }
 
     /// <summary>
@@ -568,6 +568,6 @@ public sealed class AutomationPlanBuilderTests
         Assert.Equal(
             [AutomationStepType.CloseApplications, AutomationStepType.HideApplications, AutomationStepType.LaunchApplications],
             plan.Steps.Select(step => step.Type));
-        Assert.Equal("""["Visual Studio Code"]""", plan.Steps[1].Arguments["apps"]);
+        Assert.Equal(["Visual Studio Code"], AppsArguments.From(plan.Steps[1].Arguments).Apps);
     }
 }

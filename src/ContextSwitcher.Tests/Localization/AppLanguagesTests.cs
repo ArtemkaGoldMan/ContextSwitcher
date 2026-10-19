@@ -33,7 +33,7 @@ public sealed class AppLanguagesTests
     [Fact]
     public void TheMacsPreferredLanguagesCanBeRead()
     {
-        IReadOnlyList<string> languages = PreferredLanguages.Get();
+        IReadOnlyList<string> languages = new PreferredLanguages().Get();
 
         Assert.NotEmpty(languages);
         Assert.All(languages, language => Assert.Matches("^[a-z]{2,3}", language));
