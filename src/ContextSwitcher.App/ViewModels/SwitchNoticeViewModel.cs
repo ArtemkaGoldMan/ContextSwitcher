@@ -33,6 +33,7 @@ public sealed class SwitchNoticeViewModel : ViewModelBase, IDisposable
     private IReadOnlyList<NoticeLine> lines = [];
     private bool showsRejection;
 
+    /// <summary>Shows the card for each switch that finishes from <paramref name="since"/> on with problems.</summary>
     /// <param name="appState">Where the last switch's outcome comes from, and the profiles' names.</param>
     /// <param name="since">When the app started: switches that finished earlier are not news.</param>
     /// <param name="forceQuit">Ends an app by force, as asked from a line: the switch's completion time and the app.</param>

@@ -67,7 +67,7 @@ public sealed class OnboardingInteractionTests : UiTest
     {
         await OnUiThreadAsync(() =>
         {
-            (OnboardingViewModel viewModel, Window window, IAppState appState) = Show();
+            (_, Window window, IAppState appState) = Show();
 
             for (int step = 0; step < 3; step++)
             {
