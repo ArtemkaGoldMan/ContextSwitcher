@@ -31,7 +31,7 @@ public sealed class SettingsViewModelTests
 
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
-        ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
+        ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator(), AppHost.AppState, new TestLogger());
         SettingsViewModel viewModel = new(configurationStore, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
 
         // On by default now; turning it off is the change.
@@ -70,7 +70,7 @@ public sealed class SettingsViewModelTests
         };
         AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
 
-        ConfigurationStore configurationStore = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), new TestLogger());
+        ConfigurationStore configurationStore = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), AppHost.AppState, new TestLogger());
         SettingsViewModel viewModel = new(configurationStore, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
 
         Assert.Equal(
@@ -95,7 +95,7 @@ public sealed class SettingsViewModelTests
             new ConfigurationValidationResult([]));
 
         FakeProcessRunner processRunner = new();
-        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), new TestLogger());
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), AppHost.AppState, new TestLogger());
         SettingsViewModel viewModel = new(store, new FakePermissionsChecker(), processRunner, Updates());
 
         viewModel.SupportDeveloperCommand.Execute(null);
@@ -164,7 +164,7 @@ public sealed class SettingsViewModelTests
     {
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
         AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
-        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), new TestLogger());
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), AppHost.AppState, new TestLogger());
         return new SettingsViewModel(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(), loginItem: loginItem);
     }
 
@@ -174,7 +174,7 @@ public sealed class SettingsViewModelTests
     {
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
         AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
-        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), new TestLogger());
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), AppHost.AppState, new TestLogger());
         SettingsViewModel viewModel = new(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
         FakeSettingsFilePicker picker = new()
         {
@@ -200,7 +200,7 @@ public sealed class SettingsViewModelTests
     {
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }], AskOnSwitch = false };
         AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
-        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), new TestLogger());
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), AppHost.AppState, new TestLogger());
         SettingsViewModel open = new(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
         SettingsViewModel closed = new(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
         closed.Dispose();

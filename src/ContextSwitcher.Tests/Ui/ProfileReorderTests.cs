@@ -345,7 +345,7 @@ public sealed class ProfileReorderTests : UiTest
         ConfigPaths paths = new("/tmp/context-switcher-ui-tests");
         inner.Seed(paths.SettingsPath, configuration);
         YieldingJsonStore jsonStore = new(inner);
-        ConfigurationStore store = new(jsonStore, paths, validator, new TestLogger());
+        ConfigurationStore store = new(jsonStore, paths, validator, AppHost.AppState, new TestLogger());
         StubContextSwitchService switchService = new();
 
         return (new ProfilesViewModel(switchService, store), switchService, store);

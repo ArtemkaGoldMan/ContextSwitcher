@@ -117,5 +117,5 @@ public sealed class SettingsTransferViewModelTests
     private static string Settings(string body) => "{ \"schemaVersion\": 1, " + body + " }";
 
     private SettingsTransferViewModel Create() =>
-        new(new ConfigurationStore(this.jsonStore, this.configPaths, new ConfigurationValidator(), new TestLogger())) { FilePicker = this.picker };
+        new(new ConfigurationStore(this.jsonStore, this.configPaths, new ConfigurationValidator(), AppHost.AppState, new TestLogger())) { FilePicker = this.picker };
 }

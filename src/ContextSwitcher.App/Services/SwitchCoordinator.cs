@@ -1,4 +1,3 @@
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Applications;
@@ -20,6 +19,7 @@ namespace ContextSwitcher.App.Services;
 public sealed class SwitchCoordinator : IContextSwitchService
 {
     private readonly IContextSwitchService inner;
+    private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private readonly IRunningApplications runningApps;
     private readonly ISystemCatalog catalog;
@@ -30,6 +30,7 @@ public sealed class SwitchCoordinator : IContextSwitchService
     private bool asking;
 
     /// <param name="inner">Runs the switch itself.</param>
+    /// <param name="appState">The settings to ask by, and where the state the switch wrote is published.</param>
     /// <param name="configurationStore">Saves what the person added to a profile when asked.</param>
     /// <param name="runningApps">The apps open now, to ask about.</param>
     /// <param name="catalog">The browser tabs open now, to ask about.</param>
@@ -39,6 +40,7 @@ public sealed class SwitchCoordinator : IContextSwitchService
     /// <param name="statePath">Where the switch writes its state: <c>state.json</c>.</param>
     public SwitchCoordinator(
         IContextSwitchService inner,
+        IAppState appState,
         ConfigurationStore configurationStore,
         IRunningApplications runningApps,
         ISystemCatalog catalog,
@@ -48,6 +50,7 @@ public sealed class SwitchCoordinator : IContextSwitchService
         string statePath)
     {
         this.inner = inner;
+        this.appState = appState;
         this.configurationStore = configurationStore;
         this.runningApps = runningApps;
         this.catalog = catalog;
@@ -65,13 +68,13 @@ public sealed class SwitchCoordinator : IContextSwitchService
         ContextSwitchResult result = await this.AskThenSwitchAsync(request, cancellationToken).ConfigureAwait(true);
 
         CurrentContextState? state = await this.jsonStore.ReadAsync<CurrentContextState>(this.statePath, cancellationToken).ConfigureAwait(true);
-        AppHost.UpdateState(state ?? new CurrentContextState());
+        this.appState.UpdateState(state ?? new CurrentContextState());
         return result;
     }
 
     private async Task<ContextSwitchResult> AskThenSwitchAsync(ContextSwitchRequest request, CancellationToken cancellationToken)
     {
-        AppConfiguration configuration = AppHost.Configuration;
+        AppConfiguration configuration = this.appState.Configuration;
         if (!configuration.AskOnSwitch || request.DryRun || request.Extras is not null)
         {
             return await this.inner.SwitchAsync(request, cancellationToken).ConfigureAwait(true);
@@ -82,10 +85,10 @@ public sealed class SwitchCoordinator : IContextSwitchService
         if (this.asking)
         {
             DateTimeOffset now = this.clock.UtcNow;
-            return new ContextSwitchResult(request.TargetContextId, AppHost.State.CurrentContextId, ContextSwitchStatus.Cancelled, [], now, now, request.CorrelationId ?? Guid.NewGuid().ToString("N"));
+            return new ContextSwitchResult(request.TargetContextId, this.appState.State.CurrentContextId, ContextSwitchStatus.Cancelled, [], now, now, request.CorrelationId ?? Guid.NewGuid().ToString("N"));
         }
 
-        string? currentId = string.IsNullOrEmpty(AppHost.State.CurrentContextId) ? null : AppHost.State.CurrentContextId;
+        string? currentId = string.IsNullOrEmpty(this.appState.State.CurrentContextId) ? null : this.appState.State.CurrentContextId;
         ContextDefinition? entering = request.IsTurnOff ? null : configuration.Contexts.FirstOrDefault(context => context.Id == request.TargetContextId);
         bool stays = !request.IsTurnOff && request.TargetContextId == currentId && !request.Force;
         ContextDefinition? leaving = stays ? null : configuration.Contexts.FirstOrDefault(context => context.Id == currentId);
@@ -115,7 +118,7 @@ public sealed class SwitchCoordinator : IContextSwitchService
         }
 
         // Built on the configuration as it is now, not as it was when the window opened.
-        AppConfiguration updated = AppHost.Configuration;
+        AppConfiguration updated = this.appState.Configuration;
         if (answer.DontAskAgain)
         {
             updated = updated with { AskOnSwitch = false };
@@ -126,7 +129,7 @@ public sealed class SwitchCoordinator : IContextSwitchService
             updated = answer.Answers.ApplyTo(updated, leaving?.Id, entering?.Id);
         }
 
-        if (!ReferenceEquals(updated, AppHost.Configuration))
+        if (!ReferenceEquals(updated, this.appState.Configuration))
         {
             // Saved before the switch reads it, so a profile given an app closes or opens it now.
             await this.configurationStore.SaveAsync(updated, cancellationToken).ConfigureAwait(true);

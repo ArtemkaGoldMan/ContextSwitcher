@@ -600,7 +600,7 @@ public sealed class ProfileSetupViewModelTests
     {
         jsonStore = new InMemoryJsonStore();
         configPaths = new ConfigPaths("/tmp/context-switcher-tests");
-        return new ConfigurationStore(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
+        return new ConfigurationStore(jsonStore, configPaths, new ConfigurationValidator(), AppHost.AppState, new TestLogger());
     }
 
     /// <summary>

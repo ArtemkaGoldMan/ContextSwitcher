@@ -39,53 +39,50 @@ public static class AppHost
     /// </summary>
     public static IServiceProvider Services { get; private set; } = null!;
 
-    /// <summary>
-    /// Gets the configuration loaded (or created) during startup.
-    /// </summary>
-    public static AppConfiguration Configuration { get; private set; } = null!;
-
-    /// <summary>
-    /// Gets the result of validating <see cref="Configuration"/>.
-    /// </summary>
-    public static ConfigurationValidationResult ConfigurationValidation { get; private set; } = null!;
-
-    /// <summary>
-    /// Gets whether startup found a settings file it could not parse and moved it aside, in which
-    /// case <see cref="Configuration"/> is a fresh default rather than the user's own.
-    /// </summary>
-    public static bool ConfigurationWasQuarantined { get; private set; }
-
     private static StateFileWatcher? stateWatcher;
     private static AwayEvents? awayEvents;
     private static ClosingAppsFollowUp? closingFollowUp;
 
     /// <summary>
-    /// Gets the runtime state loaded during startup, or a fresh default when none was persisted.
+    /// The app's settings and state, which the container gives to whatever reads them. The view models
+    /// still read them through the properties below, which forward to it until they are given it too.
     /// </summary>
-    public static CurrentContextState State { get; private set; } = null!;
+    public static IAppState AppState { get; } = new AppState();
 
-    /// <summary>
-    /// Raised after <see cref="UpdateConfiguration"/> replaces <see cref="Configuration"/>, so
-    /// long-lived view models (the Dashboard) can refresh without the app restarting.
-    /// </summary>
-    public static event EventHandler? ConfigurationChanged;
+    /// <summary>Forwards to <see cref="IAppState.Configuration"/>.</summary>
+    public static AppConfiguration Configuration => AppState.Configuration;
 
-    /// <summary>
-    /// Raised after <see cref="UpdateState"/> replaces <see cref="State"/>, so the Dashboard and
-    /// the Profiles page can both reflect a switch triggered from the other window.
-    /// </summary>
-    public static event EventHandler? StateChanged;
+    /// <summary>Forwards to <see cref="IAppState.ConfigurationValidation"/>.</summary>
+    public static ConfigurationValidationResult ConfigurationValidation => AppState.ConfigurationValidation;
+
+    /// <summary>Forwards to <see cref="IAppState.State"/>.</summary>
+    public static CurrentContextState State => AppState.State;
+
+    /// <summary>Forwards to <see cref="IAppState.ConfigurationChanged"/>.</summary>
+    public static event EventHandler? ConfigurationChanged
+    {
+        add => AppState.ConfigurationChanged += value;
+        remove => AppState.ConfigurationChanged -= value;
+    }
+
+    /// <summary>Forwards to <see cref="IAppState.StateChanged"/>.</summary>
+    public static event EventHandler? StateChanged
+    {
+        add => AppState.StateChanged += value;
+        remove => AppState.StateChanged -= value;
+    }
 
     /// <summary>
     /// Builds the service container and runs the synchronous startup sequence.
     /// Must be called once, before the Avalonia application starts.
     /// </summary>
-    public static void Initialize(string[] args)
+    public static StartupOutcome Initialize(string[] args)
     {
         ArgumentNullException.ThrowIfNull(args);
 
         ServiceCollection services = new();
 
+        services.AddSingleton(AppState);
         services.AddSingleton<IClock, SystemClock>();
         AddPlatformFileServices(services);
         services.AddSingleton<IJsonStore, JsonFileStore>();
@@ -95,13 +92,17 @@ public static class AppHost
         // What happens is remembered and only a problem is written, with the trail that led to it - see
         // TrailLogger. CONTEXTSWITCHER_LOG_LEVEL=information (or debug, trace) writes from that level on
         // as it happens, for looking into something that is not a failure.
-        services.AddSingleton(provider => new TrailLogger(
-            provider.GetRequiredService<LocalJsonLogger>(),
-            () => RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), AppBuild.IsDevelopment),
+        services.AddSingleton(provider =>
+        {
+            IAppState appState = provider.GetRequiredService<IAppState>();
+            return new TrailLogger(
+                provider.GetRequiredService<LocalJsonLogger>(),
+                () => RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), AppBuild.IsDevelopment),
 
-            // Settings → Detailed log: everything is written, as it happens, until the week is up.
-            detailed: () => Configuration?.DetailedLogUntil is { } until && until > DateTimeOffset.UtcNow,
-            writeFrom: Enum.TryParse(Environment.GetEnvironmentVariable("CONTEXTSWITCHER_LOG_LEVEL"), ignoreCase: true, out LogLevel from) ? from : null));
+                // Settings → Detailed log: everything is written, as it happens, until the week is up.
+                detailed: () => appState.Configuration.DetailedLogUntil is { } until && until > DateTimeOffset.UtcNow,
+                writeFrom: Enum.TryParse(Environment.GetEnvironmentVariable("CONTEXTSWITCHER_LOG_LEVEL"), ignoreCase: true, out LogLevel from) ? from : null);
+        });
         services.AddSingleton<ILogger>(provider => provider.GetRequiredService<TrailLogger>());
         services.AddSingleton(provider => new DiagnosticsSources(
             provider.GetRequiredService<ConfigPaths>(),
@@ -151,6 +152,7 @@ public static class AppHost
         services.AddSingleton<IAskOnSwitchPresenter, WindowAskOnSwitchPresenter>();
         services.AddSingleton<IContextSwitchService>(provider => new SwitchCoordinator(
             provider.GetRequiredService<ContextSwitchService>(),
+            provider.GetRequiredService<IAppState>(),
             provider.GetRequiredService<ConfigurationStore>(),
             provider.GetRequiredService<IRunningApplications>(),
             provider.GetRequiredService<ISystemCatalog>(),
@@ -208,7 +210,7 @@ public static class AppHost
         // A headless CLI invocation is a one-shot process that exits immediately; starting an
         // analytics session or a persistent global hook for it would be pointless and wasteful.
         bool isInteractive = !CliCommandRouter.IsHeadless(args);
-        BootstrapAsync(isInteractive).GetAwaiter().GetResult();
+        return BootstrapAsync(isInteractive).GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -226,33 +228,12 @@ public static class AppHost
         services.AddSingleton<IFileReplacer>(windows ? FileReplacer.RetryingWhileHeldOpen : FileReplacer.Once);
     }
 
-    /// <summary>
-    /// Replaces <see cref="Configuration"/> and <see cref="ConfigurationValidation"/> after the Main
-    /// App window persists a change (agent.md section 11.1.2), then raises
-    /// <see cref="ConfigurationChanged"/>. Callers must already have written and validated
-    /// <paramref name="configuration"/> - see <c>ConfigurationStore</c>.
-    /// </summary>
-    public static void UpdateConfiguration(AppConfiguration configuration, ConfigurationValidationResult validation)
-    {
-        ArgumentNullException.ThrowIfNull(configuration);
-        ArgumentNullException.ThrowIfNull(validation);
+    /// <summary>Forwards to <see cref="IAppState.UpdateConfiguration"/>.</summary>
+    public static void UpdateConfiguration(AppConfiguration configuration, ConfigurationValidationResult validation) =>
+        AppState.UpdateConfiguration(configuration, validation);
 
-        Configuration = configuration;
-        ConfigurationValidation = validation;
-        ConfigurationChanged?.Invoke(null, EventArgs.Empty);
-    }
-
-    /// <summary>
-    /// Replaces <see cref="State"/> after a context switch completes, then raises
-    /// <see cref="StateChanged"/>.
-    /// </summary>
-    public static void UpdateState(CurrentContextState state)
-    {
-        ArgumentNullException.ThrowIfNull(state);
-
-        State = state;
-        StateChanged?.Invoke(null, EventArgs.Empty);
-    }
+    /// <summary>Forwards to <see cref="IAppState.UpdateState"/>.</summary>
+    public static void UpdateState(CurrentContextState state) => AppState.UpdateState(state);
 
     /// <summary>
     /// Ends the current analytics session on app shutdown. Safe to call even if none was ever
@@ -268,8 +249,9 @@ public static class AppHost
             .ConfigureAwait(false);
     }
 
-    private static async Task BootstrapAsync(bool isInteractive)
+    private static async Task<StartupOutcome> BootstrapAsync(bool isInteractive)
     {
+        IAppState appState = Services.GetRequiredService<IAppState>();
         ConfigPaths configPaths = Services.GetRequiredService<ConfigPaths>();
         IJsonStore jsonStore = Services.GetRequiredService<IJsonStore>();
         ConfigurationValidator validator = Services.GetRequiredService<ConfigurationValidator>();
@@ -287,10 +269,9 @@ public static class AppHost
         AppConfiguration? configuration = await jsonStore.ReadAsync<AppConfiguration>(configPaths.SettingsPath)
             .ConfigureAwait(false);
 
+        bool quarantined = configuration is null && settingsFileExisted;
         if (configuration is null)
         {
-            ConfigurationWasQuarantined = settingsFileExisted;
-
             if (settingsFileExisted)
             {
                 await Services.GetRequiredService<ILogger>().LogAsync(
@@ -310,35 +291,36 @@ public static class AppHost
             await jsonStore.WriteAsync(configPaths.SettingsPath, configuration).ConfigureAwait(false);
         }
 
-        Configuration = configuration;
-        ConfigurationValidation = validator.Validate(configuration);
-        if (!ConfigurationValidation.IsValid)
+        ConfigurationValidationResult validation = validator.Validate(configuration);
+        appState.UpdateConfiguration(configuration, validation);
+        if (!validation.IsValid)
         {
             // Said once a start, by setting and without the profile's number: which, not what was typed.
             AppLog.Warn(
                 "Configuration",
                 "ConfigurationInvalid",
-                $"The settings have {ConfigurationValidation.Errors.Count} problem(s): "
-                    + ConfigurationValidation.DescribeForLog());
+                $"The settings have {validation.Errors.Count} problem(s): "
+                    + validation.DescribeForLog());
         }
 
-        analyticsService.Enabled = Configuration.Analytics.Enabled;
+        analyticsService.Enabled = configuration.Analytics.Enabled;
 
-        State = await jsonStore.ReadAsync<CurrentContextState>(configPaths.StatePath).ConfigureAwait(false)
+        CurrentContextState state = await jsonStore.ReadAsync<CurrentContextState>(configPaths.StatePath).ConfigureAwait(false)
             ?? new CurrentContextState();
+        appState.UpdateState(state);
 
-        string activeContextId = ActiveAtStartup(State, Configuration);
+        string activeContextId = ActiveAtStartup(state, configuration);
 
-        bool activeContextIsValid = ConfigurationValidation.IsValid
-            && Configuration.Contexts.Any(context => context.Id == activeContextId);
+        bool activeContextIsValid = validation.IsValid
+            && configuration.Contexts.Any(context => context.Id == activeContextId);
 
         if (!isInteractive)
         {
-            return;
+            return new StartupOutcome(quarantined);
         }
 
         await analyticsService.RecoverFromCrashAsync(CancellationToken.None).ConfigureAwait(false);
-        await analyticsService.PruneOldSessionsAsync(Configuration.Analytics.RetentionDays, CancellationToken.None).ConfigureAwait(false);
+        await analyticsService.PruneOldSessionsAsync(configuration.Analytics.RetentionDays, CancellationToken.None).ConfigureAwait(false);
 
 
 
@@ -347,6 +329,7 @@ public static class AppHost
             await analyticsService.StartSessionAsync(activeContextId, CancellationToken.None).ConfigureAwait(false);
         }
 
+        return new StartupOutcome(quarantined);
     }
 
     /// <summary>
@@ -380,7 +363,7 @@ public static class AppHost
 
         // Pruning only at startup meant a menu bar app left up for months honoured its retention
         // setting exactly once, keeping every session past the cutoff until the next restart.
-        StartPeriodicPruning(Services.GetRequiredService<IAnalyticsService>());
+        StartPeriodicPruning(Services.GetRequiredService<IAnalyticsService>(), Services.GetRequiredService<IAppState>());
 
         // A sign of life every couple of minutes: after a crash, the session ends at the last one.
         StartAliveRecording(Services.GetRequiredService<IAnalyticsService>());
@@ -390,11 +373,11 @@ public static class AppHost
         stateWatcher ??= Services.GetRequiredService<StateFileWatcher>();
 
         // No time counts while the Mac sleeps, its screen is locked, or another user is in front.
-        awayEvents ??= StartAwayPause(Services.GetRequiredService<IAnalyticsService>());
+        awayEvents ??= StartAwayPause(Services.GetRequiredService<IAnalyticsService>(), Services.GetRequiredService<IAppState>());
 
         // An app a switch asked to quit that was still going when it finished is watched for a couple
         // of minutes, and its line in the warnings follows what it does.
-        closingFollowUp ??= StartClosingFollowUp(Services.GetRequiredService<ClosingAppsFollowUp>());
+        closingFollowUp ??= StartClosingFollowUp(Services.GetRequiredService<ClosingAppsFollowUp>(), Services.GetRequiredService<IAppState>());
 
         Services.GetRequiredService<UpdatesViewModel>().StartAutomaticChecks();
     }
@@ -404,24 +387,24 @@ public static class AppHost
     /// started, the command line included - and shows what it changes, as long as that is still the
     /// last switch: one that finished meanwhile has warnings of its own.
     /// </summary>
-    private static ClosingAppsFollowUp StartClosingFollowUp(ClosingAppsFollowUp followUp)
+    private static ClosingAppsFollowUp StartClosingFollowUp(ClosingAppsFollowUp followUp, IAppState appState)
     {
         DateTimeOffset since = DateTimeOffset.UtcNow;
         DateTimeOffset? watched = null;
-        StateChanged += (_, _) =>
+        appState.StateChanged += (_, _) =>
         {
-            if (State.LastSwitchCompletedAt is { } completedAt && completedAt >= since && completedAt != watched)
+            if (appState.State.LastSwitchCompletedAt is { } completedAt && completedAt >= since && completedAt != watched)
             {
                 watched = completedAt;
-                followUp.Watch(State);
+                followUp.Watch(appState.State);
             }
         };
 
         followUp.StateAmended += (_, amended) => Dispatcher.UIThread.Post(() =>
         {
-            if (State.LastSwitchCompletedAt == amended.LastSwitchCompletedAt)
+            if (appState.State.LastSwitchCompletedAt == amended.LastSwitchCompletedAt)
             {
-                UpdateState(amended);
+                appState.UpdateState(amended);
             }
         });
 
@@ -436,9 +419,9 @@ public static class AppHost
         timer.Start();
     }
 
-    private static AwayEvents StartAwayPause(IAnalyticsService analyticsService)
+    private static AwayEvents StartAwayPause(IAnalyticsService analyticsService, IAppState appState)
     {
-        AwayPause pause = new(analyticsService, () => State.CurrentContextId);
+        AwayPause pause = new(analyticsService, () => appState.State.CurrentContextId);
         AwayEvents events = new();
         events.Away += (_, reason) => _ = QuietlyAsync(() => pause.OnAwayAsync(reason, CancellationToken.None));
         events.Back += (_, reason) => _ = QuietlyAsync(() => pause.OnBackAsync(reason, CancellationToken.None));
@@ -458,18 +441,18 @@ public static class AppHost
         }
     }
 
-    private static void StartPeriodicPruning(IAnalyticsService analyticsService)
+    private static void StartPeriodicPruning(IAnalyticsService analyticsService, IAppState appState)
     {
         DispatcherTimer timer = new() { Interval = TimeSpan.FromHours(6) };
-        timer.Tick += (_, _) => _ = PruneQuietlyAsync(analyticsService);
+        timer.Tick += (_, _) => _ = PruneQuietlyAsync(analyticsService, appState);
         timer.Start();
     }
 
-    private static async Task PruneQuietlyAsync(IAnalyticsService analyticsService)
+    private static async Task PruneQuietlyAsync(IAnalyticsService analyticsService, IAppState appState)
     {
         try
         {
-            await analyticsService.PruneOldSessionsAsync(Configuration.Analytics.RetentionDays, CancellationToken.None)
+            await analyticsService.PruneOldSessionsAsync(appState.Configuration.Analytics.RetentionDays, CancellationToken.None)
                 .ConfigureAwait(true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

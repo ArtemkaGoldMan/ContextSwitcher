@@ -1,5 +1,4 @@
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Logging;
@@ -9,9 +8,10 @@ using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.App.Services;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class ConfigurationStoreTests
 {
+    private readonly AppState appState = new();
+
     private static AppConfiguration ValidConfiguration => new()
     {
         ActiveContextId = "work",
@@ -24,8 +24,8 @@ public sealed class ConfigurationStoreTests
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
         jsonStore.Seed(configPaths.SettingsPath, new AppConfiguration());
-        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
-        AppHost.UpdateConfiguration(new AppConfiguration(), new ConfigurationValidationResult([]));
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), this.appState, new TestLogger());
+        this.appState.UpdateConfiguration(new AppConfiguration(), new ConfigurationValidationResult([]));
 
         ConfigurationSaveResult result = await store.SaveAsync(ValidConfiguration, CancellationToken.None);
 
@@ -33,7 +33,7 @@ public sealed class ConfigurationStoreTests
         Assert.Empty(result.Errors);
         Assert.Equal("work", jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)?.ActiveContextId);
         Assert.Contains(configPaths.SettingsPath, jsonStore.BackedUpPaths);
-        Assert.Equal("work", AppHost.Configuration.ActiveContextId);
+        Assert.Equal("work", this.appState.Configuration.ActiveContextId);
     }
 
     /// <summary>
@@ -45,7 +45,7 @@ public sealed class ConfigurationStoreTests
     {
         TestLogger logger = new();
         InMemoryJsonStore jsonStore = new();
-        ConfigurationStore store = new(jsonStore, new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), logger);
+        ConfigurationStore store = new(jsonStore, new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, logger);
         AppConfiguration invalid = new()
         {
             ActiveContextId = "work",
@@ -69,7 +69,7 @@ public sealed class ConfigurationStoreTests
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
         jsonStore.WriteFailurePaths.Add(configPaths.SettingsPath);
-        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), logger);
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), this.appState, logger);
 
         await Assert.ThrowsAsync<IOException>(() => store.SaveAsync(ValidConfiguration, CancellationToken.None));
 
@@ -97,12 +97,12 @@ public sealed class ConfigurationStoreTests
         // continuation stays on the calling thread whatever ConfigureAwait says. Real file IO does
         // yield, so make this one yield too or the test cannot see the bug at all.
         YieldingJsonStore jsonStore = new(inner);
-        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
-        AppHost.UpdateConfiguration(new AppConfiguration(), new ConfigurationValidationResult([]));
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), this.appState, new TestLogger());
+        this.appState.UpdateConfiguration(new AppConfiguration(), new ConfigurationValidationResult([]));
 
         int publishedOn = 0;
         void Handler(object? sender, EventArgs e) => publishedOn = Environment.CurrentManagedThreadId;
-        AppHost.ConfigurationChanged += Handler;
+        this.appState.ConfigurationChanged += Handler;
 
         try
         {
@@ -110,7 +110,7 @@ public sealed class ConfigurationStoreTests
         }
         finally
         {
-            AppHost.ConfigurationChanged -= Handler;
+            this.appState.ConfigurationChanged -= Handler;
         }
 
         Assert.Equal(context.ThreadId, publishedOn);
@@ -174,9 +174,9 @@ public sealed class ConfigurationStoreTests
     {
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
-        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), this.appState, new TestLogger());
         AppConfiguration original = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
-        AppHost.UpdateConfiguration(original, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(original, new ConfigurationValidationResult([]));
 
         AppConfiguration invalid = new() { ActiveContextId = "missing", Contexts = [] };
         ConfigurationSaveResult result = await store.SaveAsync(invalid, CancellationToken.None);
@@ -184,6 +184,6 @@ public sealed class ConfigurationStoreTests
         Assert.False(result.Succeeded);
         Assert.NotEmpty(result.Errors);
         Assert.Null(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath));
-        Assert.Same(original, AppHost.Configuration);
+        Assert.Same(original, this.appState.Configuration);
     }
 }

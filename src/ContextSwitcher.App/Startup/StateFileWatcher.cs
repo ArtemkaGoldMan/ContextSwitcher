@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Logging;
 using Avalonia.Threading;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Infrastructure.Files;
@@ -11,22 +12,25 @@ namespace ContextSwitcher.App.Startup;
 /// it did not perform itself.
 ///
 /// Section 10 has Shortcuts, Siri and the CLI each switching in their own process, and
-/// <see cref="AppHost.State"/> was only ever updated in-process. A switch from any of those left the
+/// the app's state was only ever updated in-process. A switch from any of those left the
 /// menu bar popover showing the previous profile and a stale elapsed timer until the app was
 /// restarted - the switch itself worked, the UI just never heard about it.
 /// </summary>
 public sealed class StateFileWatcher : IDisposable
 {
+    private readonly IAppState appState;
     private readonly IJsonStore jsonStore;
     private readonly ConfigPaths configPaths;
     private readonly FileSystemWatcher? watcher;
     private readonly DispatcherTimer debounce;
 
-    public StateFileWatcher(IJsonStore jsonStore, ConfigPaths configPaths)
+    public StateFileWatcher(IAppState appState, IJsonStore jsonStore, ConfigPaths configPaths)
     {
+        ArgumentNullException.ThrowIfNull(appState);
         ArgumentNullException.ThrowIfNull(jsonStore);
         ArgumentNullException.ThrowIfNull(configPaths);
 
+        this.appState = appState;
         this.jsonStore = jsonStore;
         this.configPaths = configPaths;
 
@@ -55,7 +59,7 @@ public sealed class StateFileWatcher : IDisposable
         }
     }
 
-    /// <summary>Raised after <see cref="AppHost.State"/> has been refreshed from disk.</summary>
+    /// <summary>Raised after <see cref="IAppState.State"/> has been refreshed from disk.</summary>
     public event EventHandler? StateReloaded;
 
     public void Dispose()
@@ -96,14 +100,14 @@ public sealed class StateFileWatcher : IDisposable
             return;
         }
 
-        if (reloaded is null || !HasChanged(AppHost.State, reloaded))
+        if (reloaded is null || !HasChanged(this.appState.State, reloaded))
         {
             // Our own writes come back through the watcher too; ignoring identical state keeps this
             // from looping on them.
             return;
         }
 
-        AppHost.UpdateState(reloaded);
+        this.appState.UpdateState(reloaded);
         this.StateReloaded?.Invoke(this, EventArgs.Empty);
     }
 

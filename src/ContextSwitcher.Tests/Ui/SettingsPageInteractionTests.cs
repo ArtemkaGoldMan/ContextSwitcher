@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Styling;
+using ContextSwitcher.App;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views.Pages;
@@ -156,6 +157,7 @@ public sealed class SettingsPageInteractionTests : UiTest
             SettingsViewModel viewModel = scenario.Settings();
             Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 2400);
             Application app = Application.Current!;
+            using ThemeFollower theme = new(AppHost.AppState, app);
 
             Assert.Equal(ThemeVariant.Default, app.RequestedThemeVariant);
 

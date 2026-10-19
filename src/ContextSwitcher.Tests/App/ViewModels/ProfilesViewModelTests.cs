@@ -304,7 +304,7 @@ public sealed class ProfilesViewModelTests
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
         StubContextSwitchService switchService = new();
-        ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
+        ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator(), AppHost.AppState, new TestLogger());
 
         ProfilesViewModel viewModel = new(switchService, configurationStore);
         return (viewModel, switchService, jsonStore);
