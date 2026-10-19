@@ -116,7 +116,10 @@ A release marked as a pre-release on GitHub is not offered as an update.
 ## How updating works
 
 - **Checking.** About 30 seconds after launch and then daily, the app asks GitHub's API for the
-  latest release (`UpdatesViewModel`, `GitHubReleaseSource`). A newer version shows as "Update to …"
+  newest releases and takes the highest version that carries the Mac's files - `ContextSwitcher.zip`
+  or a disk image - leaving out drafts and pre-releases (`UpdatesViewModel`, `GitHubReleaseSource`,
+  with the files named by `AppBundleUpdater.Assets`). Not GitHub's "latest" release: once Windows has
+  releases of its own, that one may carry nothing for the Mac. A newer version shows as "Update to …"
   in the menu bar menu and in Settings → Updates. A failed automatic check says nothing; "Check now"
   says why.
 - **Notifying.** A version the automatic check finds is also announced in a macOS notification
@@ -138,6 +141,11 @@ A release marked as a pre-release on GitHub is not offered as an update.
 `Casks/contextswitcher.rb`. **It needs nothing per release**: it is `version :latest` and downloads
 `releases/latest/download/ContextSwitcher.zip`, so it always installs the newest release, and the app
 updates itself after that.
+
+`install.sh` downloads the same address. So **GitHub's latest release must always be one with the
+Mac's files**: the release workflow marks each release it publishes the latest outright, and a
+release without them - Windows files only, once there is a Windows build - is published with
+`--latest=false` ([why](windows-plan.md#keeping-the-macs-latest-release)).
 
 Homebrew quarantines everything it downloads, and since Homebrew 5 there is no `--no-quarantine`, so
 the cask clears the flag itself in `postflight_steps` (Homebrew 7's replacement for `postflight`

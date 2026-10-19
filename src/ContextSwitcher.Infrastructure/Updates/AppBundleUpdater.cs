@@ -27,6 +27,15 @@ namespace ContextSwitcher.Infrastructure.Updates;
 /// </summary>
 public sealed class AppBundleUpdater : IAppUpdater
 {
+    /// <summary>The asset this updater installs from: the app, zipped with ditto.</summary>
+    public const string ArchiveName = "ContextSwitcher.zip";
+
+    /// <summary>
+    /// What makes a release the Mac's: the zip this updater installs from, or a disk image to download
+    /// by hand. A release with only Windows files is not one.
+    /// </summary>
+    public static ReleaseAssets Assets { get; } = new(ArchiveName, ".dmg");
+
     /// <summary>
     /// Waits for the old copy to quit, swaps the new one in - putting the old one back if that fails -
     /// opens whichever is there, and cleans up. A copy still running after 30 seconds is left alone.
@@ -128,14 +137,14 @@ public sealed class AppBundleUpdater : IAppUpdater
 
         if (release.ArchiveUrl is null)
         {
-            throw new UpdateException(UpdateMessages.NoArchive.With(ReleaseVersion.Format(release.Version), GitHubReleaseSource.ArchiveName));
+            throw new UpdateException(UpdateMessages.NoArchive.With(ReleaseVersion.Format(release.Version), ArchiveName));
         }
 
         string work = Path.Combine(this.workRoot, $"ContextSwitcher-update-{Guid.NewGuid():N}");
         Directory.CreateDirectory(work);
         try
         {
-            string archive = Path.Combine(work, GitHubReleaseSource.ArchiveName);
+            string archive = Path.Combine(work, ArchiveName);
             await this.DownloadAsync(release.ArchiveUrl, archive, cancellationToken).ConfigureAwait(false);
 
             string unpacked = Path.Combine(work, "unpacked");

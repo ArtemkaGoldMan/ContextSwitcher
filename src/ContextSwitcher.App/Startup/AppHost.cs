@@ -169,8 +169,10 @@ public static class AppHost
         // Releases are about 50 MB, so the client's own timeout is generous; the API request has a
         // short one of its own.
         services.AddSingleton(_ => new HttpClient { Timeout = TimeSpan.FromMinutes(10) });
+        // The release source is shared; which releases are this app's is the updater's to say - the Mac's
+        // zip and disk image - so a release with only Windows files is never offered here.
         services.AddSingleton<IReleaseSource>(provider => new GitHubReleaseSource(
-            provider.GetRequiredService<HttpClient>(), ReleaseVersion.Format(UpdatesViewModel.RunningVersion)));
+            provider.GetRequiredService<HttpClient>(), ReleaseVersion.Format(UpdatesViewModel.RunningVersion), AppBundleUpdater.Assets));
         services.AddSingleton<IAppUpdater>(provider => new AppBundleUpdater(
             provider.GetRequiredService<HttpClient>(), provider.GetRequiredService<IProcessRunner>()));
         services.AddSingleton<ISystemNotifications, MacNotifications>();
