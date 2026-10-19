@@ -102,11 +102,11 @@ public sealed class UiScenario
     public static UiScenario With(AppConfiguration configuration) => new(configuration);
 
     public MainAppViewModel MainApp() => new(
-        this.SwitchService, this.ConfigurationStore, this.JsonStore, this.Paths,
+        this.SwitchService, this.ConfigurationStore,
         this.Permissions, this.ProcessRunner, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates);
 
     public ProfilesViewModel Profiles() =>
-        new(this.SwitchService, this.ConfigurationStore, this.JsonStore, this.Paths);
+        new(this.SwitchService, this.ConfigurationStore);
 
     public SettingsViewModel Settings() =>
         new(this.ConfigurationStore, this.Permissions, this.ProcessRunner, this.Updates);
@@ -114,7 +114,7 @@ public sealed class UiScenario
     public StatsViewModel Stats() => new(this.Analytics);
 
     public DashboardViewModel Dashboard() => new(
-        this.SwitchService, this.Analytics, this.JsonStore, this.ProcessRunner, this.Paths, this.Clock);
+        this.SwitchService, this.Analytics, this.ProcessRunner, this.Clock);
 
     public OnboardingViewModel Onboarding() =>
         new(this.ConfigurationStore, this.InstalledApps, this.SwitchService);

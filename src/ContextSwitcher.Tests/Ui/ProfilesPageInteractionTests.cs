@@ -252,6 +252,6 @@ public sealed class ProfilesPageInteractionTests : UiTest
         ConfigurationStore store = new(jsonStore, paths, validator);
         StubContextSwitchService switchService = new();
 
-        return (new ProfilesViewModel(switchService, store, jsonStore, paths), switchService, store);
+        return (new ProfilesViewModel(switchService, store), switchService, store);
     }
 }

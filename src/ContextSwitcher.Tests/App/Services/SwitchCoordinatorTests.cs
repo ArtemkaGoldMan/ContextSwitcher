@@ -26,6 +26,23 @@ public sealed class SwitchCoordinatorTests
     private readonly InMemoryJsonStore jsonStore = new();
     private readonly ConfigPaths paths = new("/tmp/context-switcher-coordinator-tests");
 
+    /// <summary>
+    /// Whatever started the switch - the menu bar, the popover, the Profiles page, the setup wizard - the
+    /// state it wrote is published at once, rather than each of them reading it back for itself.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EverySwitchPublishesTheStateItWrote(bool askOnSwitch)
+    {
+        SwitchCoordinator coordinator = this.Create(askOnSwitch);
+        await this.jsonStore.WriteAsync(this.paths.StatePath, new CurrentContextState { CurrentContextId = "personal" });
+
+        await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.MenuBar), CancellationToken.None);
+
+        Assert.Equal("personal", AppHost.State.CurrentContextId);
+    }
+
     [Fact]
     public async Task WithAskingOffItNeverAsks()
     {
@@ -155,6 +172,6 @@ public sealed class SwitchCoordinatorTests
         AppHost.UpdateConfiguration(configuration, validator.Validate(configuration));
         AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
         ConfigurationStore store = new(this.jsonStore, this.paths, validator);
-        return new SwitchCoordinator(this.inner, store, this.running, this.catalog, this.presenter);
+        return new SwitchCoordinator(this.inner, store, this.running, this.catalog, this.presenter, this.jsonStore, this.paths.StatePath);
     }
 }

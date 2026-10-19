@@ -9,12 +9,13 @@ using ContextSwitcher.Core.Contexts;
 namespace ContextSwitcher.App.Services;
 
 /// <summary>
-/// Every switch started in the app - the menu bar, the popover, the Profiles page - goes through here.
-/// With <see cref="AppConfiguration.AskOnSwitch"/> on, it first finds the apps and tabs open that
-/// neither profile in the switch has, asks what to do with them, adds what was added to its profile,
-/// and hands the switch what to close besides. With it off - or nothing to ask about - the switch
-/// goes straight through. The command line switches through <see cref="ContextSwitchService"/>
-/// directly: it has no window to ask in.
+/// Every switch started in the app - the menu bar, the popover, the Profiles page, the setup wizard -
+/// goes through here. With <see cref="AppConfiguration.AskOnSwitch"/> on, it first finds the apps and
+/// tabs open that neither profile in the switch has, asks what to do with them, adds what was added to
+/// its profile, and hands the switch what to close besides. With it off - or nothing to ask about - the
+/// switch goes straight through. Either way it then reads the state the switch wrote and publishes it,
+/// so whatever started the switch, every window shows the outcome at once. The command line switches
+/// through <see cref="ContextSwitchService"/> directly: it has no window to ask in or to update.
 /// </summary>
 public sealed class SwitchCoordinator : IContextSwitchService
 {
@@ -23,20 +24,33 @@ public sealed class SwitchCoordinator : IContextSwitchService
     private readonly IRunningApplications runningApps;
     private readonly ISystemCatalog catalog;
     private readonly IAskOnSwitchPresenter presenter;
+    private readonly IJsonStore jsonStore;
+    private readonly string statePath;
     private bool asking;
 
+    /// <param name="inner">Runs the switch itself.</param>
+    /// <param name="configurationStore">Saves what the person added to a profile when asked.</param>
+    /// <param name="runningApps">The apps open now, to ask about.</param>
+    /// <param name="catalog">The browser tabs open now, to ask about.</param>
+    /// <param name="presenter">Shows the question.</param>
+    /// <param name="jsonStore">Reads the state the switch wrote.</param>
+    /// <param name="statePath">Where the switch writes its state: <c>state.json</c>.</param>
     public SwitchCoordinator(
         IContextSwitchService inner,
         ConfigurationStore configurationStore,
         IRunningApplications runningApps,
         ISystemCatalog catalog,
-        IAskOnSwitchPresenter presenter)
+        IAskOnSwitchPresenter presenter,
+        IJsonStore jsonStore,
+        string statePath)
     {
         this.inner = inner;
         this.configurationStore = configurationStore;
         this.runningApps = runningApps;
         this.catalog = catalog;
         this.presenter = presenter;
+        this.jsonStore = jsonStore;
+        this.statePath = statePath;
     }
 
     /// <inheritdoc />
@@ -44,6 +58,15 @@ public sealed class SwitchCoordinator : IContextSwitchService
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        ContextSwitchResult result = await this.AskThenSwitchAsync(request, cancellationToken).ConfigureAwait(true);
+
+        CurrentContextState? state = await this.jsonStore.ReadAsync<CurrentContextState>(this.statePath, cancellationToken).ConfigureAwait(true);
+        AppHost.UpdateState(state ?? new CurrentContextState());
+        return result;
+    }
+
+    private async Task<ContextSwitchResult> AskThenSwitchAsync(ContextSwitchRequest request, CancellationToken cancellationToken)
+    {
         AppConfiguration configuration = AppHost.Configuration;
         if (!configuration.AskOnSwitch || request.DryRun || request.Extras is not null)
         {

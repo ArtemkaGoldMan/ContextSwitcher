@@ -150,7 +150,9 @@ public static class AppHost
             provider.GetRequiredService<ConfigurationStore>(),
             provider.GetRequiredService<IRunningApplications>(),
             provider.GetRequiredService<ISystemCatalog>(),
-            provider.GetRequiredService<IAskOnSwitchPresenter>()));
+            provider.GetRequiredService<IAskOnSwitchPresenter>(),
+            provider.GetRequiredService<IJsonStore>(),
+            provider.GetRequiredService<ConfigPaths>().StatePath));
         services.AddSingleton(provider => new CliCommandRouter(provider.GetRequiredService<ContextSwitchService>()));
         services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
         services.AddSingleton<IInstalledAppsService, InstalledAppsService>();

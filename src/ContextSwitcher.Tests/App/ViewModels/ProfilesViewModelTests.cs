@@ -36,20 +36,18 @@ public sealed class ProfilesViewModelTests
         Assert.Null(requested);
     }
 
+    /// <summary>The state the switch wrote is published by the switch itself - see SwitchCoordinatorTests.</summary>
     [Fact]
-    public void ClickingAProfileSwitchesToItAndPublishesNewState()
+    public void ClickingAProfileSwitchesToIt()
     {
         AppConfiguration configuration = TwoContexts();
-        (ProfilesViewModel viewModel, StubContextSwitchService switchService, InMemoryJsonStore jsonStore) = CreateViewModel(configuration);
-        ConfigPaths configPaths = new("/tmp/context-switcher-tests");
-        jsonStore.Seed(configPaths.StatePath, new CurrentContextState { CurrentContextId = "personal" });
+        (ProfilesViewModel viewModel, StubContextSwitchService switchService, _) = CreateViewModel(configuration);
         switchService.Result = new ContextSwitchResult("personal", "work", ContextSwitchStatus.Succeeded, [], DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, "corr");
 
         viewModel.Rows[1].ToggleCommand.Execute(null);
 
         Assert.Equal("personal", switchService.LastRequest?.TargetContextId);
         Assert.Equal(ContextSwitchSource.Dashboard, switchService.LastRequest?.Source);
-        Assert.Equal("personal", AppHost.State.CurrentContextId);
     }
 
     /// <summary>
@@ -61,7 +59,6 @@ public sealed class ProfilesViewModelTests
     {
         AppConfiguration configuration = TwoContexts();
         (ProfilesViewModel viewModel, StubContextSwitchService switchService, InMemoryJsonStore jsonStore) = CreateViewModel(configuration);
-        jsonStore.Seed(new ConfigPaths("/tmp/context-switcher-tests").StatePath, new CurrentContextState { CurrentContextId = "work" });
         switchService.Result = new ContextSwitchResult("personal", null, ContextSwitchStatus.Cancelled, [], DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, "corr");
 
         viewModel.Rows[1].ToggleCommand.Execute(null);
@@ -80,7 +77,6 @@ public sealed class ProfilesViewModelTests
     {
         AppConfiguration configuration = TwoContexts();
         (ProfilesViewModel viewModel, StubContextSwitchService switchService, InMemoryJsonStore jsonStore) = CreateViewModel(configuration);
-        jsonStore.Seed(new ConfigPaths("/tmp/context-switcher-tests").StatePath, new CurrentContextState { CurrentContextId = "work" });
         AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
         switchService.Result = new ContextSwitchResult(string.Empty, "work", ContextSwitchStatus.Cancelled, [], DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, "corr");
         ProfileRowViewModel work = viewModel.Rows.Single(row => row.Context.Id == "work");
@@ -310,7 +306,7 @@ public sealed class ProfilesViewModelTests
         StubContextSwitchService switchService = new();
         ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator());
 
-        ProfilesViewModel viewModel = new(switchService, configurationStore, jsonStore, configPaths);
+        ProfilesViewModel viewModel = new(switchService, configurationStore);
         return (viewModel, switchService, jsonStore);
     }
 }

@@ -3,7 +3,6 @@ using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
-using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
@@ -17,8 +16,6 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
 {
     private readonly IContextSwitchService switchService;
     private readonly ConfigurationStore configurationStore;
-    private readonly IJsonStore jsonStore;
-    private readonly ConfigPaths configPaths;
     private readonly bool ownsNotice;
 
     private IReadOnlyList<ProfileRowViewModel> rows = [];
@@ -27,16 +24,12 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
     public ProfilesViewModel(
         IContextSwitchService switchService,
         ConfigurationStore configurationStore,
-        IJsonStore jsonStore,
-        ConfigPaths configPaths,
         SwitchNoticeViewModel? notice = null)
     {
         this.switchService = switchService;
         this.Notice = notice ?? new SwitchNoticeViewModel(DateTimeOffset.UtcNow);
         this.ownsNotice = notice is null;
         this.configurationStore = configurationStore;
-        this.jsonStore = jsonStore;
-        this.configPaths = configPaths;
 
         this.AddCommand = new RelayCommand(() => this.EditRequested?.Invoke(this, null));
 
@@ -126,11 +119,6 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
         ContextSwitchResult result = await this.switchService
             .SwitchAsync(request, CancellationToken.None)
             .ConfigureAwait(true);
-
-        CurrentContextState? state = await this.jsonStore
-            .ReadAsync<CurrentContextState>(this.configPaths.StatePath)
-            .ConfigureAwait(true);
-        AppHost.UpdateState(state ?? new CurrentContextState());
 
         // A switch that ran shows its own warnings in the notice, from the state it wrote. These two
         // never got that far, so the notice is told directly.

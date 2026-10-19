@@ -6,7 +6,6 @@ using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.ProcessExecution;
-using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.App.Resources;
 
 namespace ContextSwitcher.App.ViewModels;
@@ -22,9 +21,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
 
     private readonly IContextSwitchService switchService;
     private readonly IAnalyticsService analyticsService;
-    private readonly IJsonStore jsonStore;
     private readonly IProcessRunner processRunner;
-    private readonly ConfigPaths configPaths;
     private readonly IClock clock;
     private readonly DispatcherTimer elapsedTimer;
 
@@ -47,16 +44,12 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     public DashboardViewModel(
         IContextSwitchService switchService,
         IAnalyticsService analyticsService,
-        IJsonStore jsonStore,
         IProcessRunner processRunner,
-        ConfigPaths configPaths,
         IClock clock)
     {
         this.switchService = switchService;
         this.analyticsService = analyticsService;
-        this.jsonStore = jsonStore;
         this.processRunner = processRunner;
-        this.configPaths = configPaths;
         this.clock = clock;
 
         // Not started here: the elapsed time is only worth keeping fresh while someone can see it.
@@ -315,11 +308,6 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
             ContextSwitchResult result = await this.switchService
                 .SwitchAsync(ContextSwitchRequest.ForClickOn(contextId, AppHost.State.CurrentContextId, ContextSwitchSource.Dashboard), CancellationToken.None)
                 .ConfigureAwait(true);
-
-            CurrentContextState? state = await this.jsonStore
-                .ReadAsync<CurrentContextState>(this.configPaths.StatePath)
-                .ConfigureAwait(true);
-            AppHost.UpdateState(state ?? new CurrentContextState());
 
             // Behave like a menu: a clean switch closes the popover. Anything worth reading - a
             // warning, a failure, a switch rejected because another was running - keeps it open.

@@ -229,12 +229,6 @@ public sealed partial class App : Application
             await switchService
                 .SwitchAsync(ContextSwitchRequest.ForClickOn(contextId, AppHost.State.CurrentContextId, ContextSwitchSource.MenuBar), CancellationToken.None)
                 .ConfigureAwait(true);
-
-            IJsonStore jsonStore = AppHost.Services.GetRequiredService<IJsonStore>();
-            ConfigPaths configPaths = AppHost.Services.GetRequiredService<ConfigPaths>();
-            CurrentContextState? state = await jsonStore.ReadAsync<CurrentContextState>(configPaths.StatePath)
-                .ConfigureAwait(true);
-            AppHost.UpdateState(state ?? new CurrentContextState());
         }
         catch (Exception ex)
         {

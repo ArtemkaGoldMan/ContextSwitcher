@@ -2,7 +2,6 @@ using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
-using ContextSwitcher.Infrastructure.Files;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -26,8 +25,6 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
     public MainAppViewModel(
         IContextSwitchService switchService,
         ConfigurationStore configurationStore,
-        IJsonStore jsonStore,
-        ConfigPaths configPaths,
         IPermissionsChecker permissionsChecker,
         IProcessRunner processRunner,
         IAnalyticsService analyticsService,
@@ -47,7 +44,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         this.catalog = catalog;
         this.processRunner = processRunner;
 
-        this.Profiles = new ProfilesViewModel(switchService, configurationStore, jsonStore, configPaths, switchNotice);
+        this.Profiles = new ProfilesViewModel(switchService, configurationStore, switchNotice);
         this.Settings = new SettingsViewModel(configurationStore, permissionsChecker, processRunner, updates, loginItem: loginItem, installedApps: installedAppsService, diagnostics: diagnostics);
         this.Stats = new StatsViewModel(analyticsService);
 
