@@ -116,7 +116,8 @@ in one place, one clock, the names.
 ### PR 2 - The app's state and AppHost
 
 `AppHost` stops being a global and keeps only the composition. **Size:** L. **Stage 0:** none; the
-registrations for each platform are left for [PR 5](#pr-5---the-projects).
+registrations for each platform are left for [PR 5](#pr-5---the-projects). **Done** in [#82](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/82),
+except what it left to the pull requests after it - listed under each of them as "From PR 2".
 
 **From PR 1:** the update checker takes `UpdatesViewModel`'s logging, through an `ILogger` rather
 than `AppLog` ([F18](#f18-applog-where-a-logger-is-at-hand)), and its time, through `IClock` rather
@@ -162,6 +163,12 @@ code as its macOS version. **Size:** L. **Stage 0:** item 3, and the helpers it 
 and uses or drops what `TryFocusExistingTabAsync` returns; `RunInfo.MacOs` becomes `SystemVersion`
 ([F21](#f21-names-that-mislead)); the browsers' application names live in one place
 ([F19](#f19-the-same-thing-in-several-places)).
+
+**From PR 2:** `AwayEvents` is registered with the platform's services and given to `AwayWatcher`, so
+its interface takes the class's place there. Two pieces of [F8](#f8-view-models-reach-into-infrastructure-and-the-file-system),
+planned with PR 1's duplicates, were in neither pull request: the diagnostics' log lines come from
+`DiagnosticsSources` like the rest of the report, rather than from the view model reading the file,
+and one icon loader serves `AppPickerViewModel`, `AskOnSwitchViewModel` and `IgnoredAppsViewModel`.
 
 #### A seam for links, files and system pages
 
@@ -213,6 +220,10 @@ when none is given, goes with the optional services ([F13](#f13-optional-service
 [F20](#f20-four-ways-to-tell-the-time)); "Chrome or Brave" becomes a capability
 ([F19](#f19-the-same-thing-in-several-places)).
 
+**From PR 2:** the Settings page's diagnostics are given their `DiagnosticsSources` as a required
+parameter already, through `SettingsViewModel` and `MainAppViewModel`; their other optional parameters
+are as they were ([F13](#f13-optional-services-and-defaults)).
+
 #### How a profile names an app
 
 Stage 0 item 4, [as decided](windows-plan.md#decisions-made): profiles keep listing apps by name, so
@@ -259,6 +270,11 @@ and `MainAppViewModel` holds nothing only to hand it to Profile Setup.
 
 Stage 0 item 6, as [the plan](windows-plan.md#the-projects) lays it out. With PRs 2-4 merged it is
 mostly files moving. **Size:** M. **Stage 0:** item 6.
+
+**From PR 2:** the registrations are in `AppServices` now, not `AppHost`, and everything that differs
+by platform is in its one method `RegisterPlatform` - the files' choices that were
+`AddPlatformFileServices`, the macOS classes, `AwayEvents`, and which release files are the Mac's. That
+method is what moves into each platform's `PlatformServices.Register`.
 
 #### Two platform projects
 
@@ -317,7 +333,7 @@ Rules 4 and 8.
   `SwitchNoticeViewModel` 6, `IgnoredAppsViewModel` 5, `SettingsDiagnosticsViewModel` 5, and up to 3
   in each of six more.
 - **Why it matters:** a view model's real inputs are not in its constructor, so a reader can't see
-  them and a test can't give them. [`AppHostTestCollection`](../src/ContextSwitcher.Tests/App/AppHostTestCollection.cs#L8)
+  them and a test can't give them. [`AppHostTestCollection`](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/de3c2a07bae0e25110fba76e8f3d8f583b867bdb/src/ContextSwitcher.Tests/App/AppHostTestCollection.cs#L8)
   makes 25 of the 95 test files run one after another, and a test that forgets the collection races
   the others. A second window with settings of its own - a preview of an imported file, say - can't
   be built, because there is only one `Configuration`. Static events are also how F3's leak happens.

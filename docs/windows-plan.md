@@ -240,8 +240,8 @@ on macOS and on Windows, and Mac users see no difference. Worth doing even if Wi
    before. It also gives `ConfigPaths` Windows' settings root, so everything lives in
    `%APPDATA%\ContextSwitcher`, or `ContextSwitcher-dev` for a development build - not
    `%LOCALAPPDATA%`, where Velopack puts the app and which it replaces on each update. Both choices
-   sit in one method, `AddPlatformFileServices`, for item 6 to move into each platform's
-   registrations.
+   sit with the rest of what differs by platform in one method, `AppServices.RegisterPlatform`, for
+   item 6 to move into each platform's registrations.
 8. **Releases** - done in [#79](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/79) ([why](#keeping-the-macs-latest-release)). The Mac
    updater no longer trusts "latest": `GitHubReleaseSource` takes the highest version among the
    newest releases that carry this platform's files, which it is given as data -
