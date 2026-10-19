@@ -222,6 +222,7 @@ public sealed class ClosingAppsTests : IDisposable
             new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()),
             clock,
             new TestLogger(),
+            new FakeSwitchLock(),
             Path.Combine(this.folder, "settings.json"),
             statePath);
         return (service, store, statePath);

@@ -126,6 +126,7 @@ public static class AppHost
         services.AddSingleton<IApplicationHider, MacApplicationHider>();
         services.AddSingleton<IAppProcesses, MacAppProcesses>();
         services.AddSingleton<IAutomationStepExecutor, AutomationStepExecutor>();
+        services.AddSingleton<ISwitchLock>(provider => new FileSwitchLock(provider.GetRequiredService<ConfigPaths>().SwitchLockPath));
         services.AddSingleton(provider => new ContextSwitchService(
             provider.GetRequiredService<IJsonStore>(),
             provider.GetRequiredService<IAutomationStepExecutor>(),
@@ -133,6 +134,7 @@ public static class AppHost
             provider.GetRequiredService<IAnalyticsService>(),
             provider.GetRequiredService<IClock>(),
             provider.GetRequiredService<ILogger>(),
+            provider.GetRequiredService<ISwitchLock>(),
             provider.GetRequiredService<ConfigPaths>().SettingsPath,
             provider.GetRequiredService<ConfigPaths>().StatePath));
         services.AddSingleton(provider => new ClosingAppsFollowUp(

@@ -73,6 +73,9 @@ public sealed class ConfigPaths
     /// </summary>
     public string StatePath => Path.Combine(BaseDirectory, "state.json");
 
+    /// <summary>The file held while a switch runs, so no other process switches at the same time.</summary>
+    public string SwitchLockPath => Path.Combine(BaseDirectory, "state.json.lock");
+
     /// <summary>
     /// Gets the path to the tabs each profile opened in Chrome or Brave for pages it closes on leaving.
     /// </summary>

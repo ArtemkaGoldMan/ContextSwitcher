@@ -318,36 +318,26 @@ public sealed class ContextSwitchServiceTests
     [Fact]
     public async Task ASwitchRunningInAnotherProcessTurnsThisOneAway()
     {
-        string directory = Path.Combine(Path.GetTempPath(), $"cs-lock-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(directory);
-        try
-        {
-            string statePath = Path.Combine(directory, "state.json");
-            InMemoryJsonStore store = new();
-            FakeAutomationStepExecutor executor = new();
-            TestLogger logger = new();
-            FakeClock clock = new();
-            ContextSwitchService service = new(
-                store, executor, new AutomationPlanBuilder(), new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()), clock, logger, SettingsPath, statePath);
-            store.Seed(SettingsPath, TwoContextConfiguration());
+        InMemoryJsonStore store = new();
+        FakeAutomationStepExecutor executor = new();
+        TestLogger logger = new();
+        FakeClock clock = new();
+        FakeSwitchLock crossProcessLock = new() { HeldElsewhere = true };
+        ContextSwitchService service = new(
+            store, executor, new AutomationPlanBuilder(), new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()), clock, logger, crossProcessLock, SettingsPath, StatePath);
+        store.Seed(SettingsPath, TwoContextConfiguration());
 
-            using (new FileStream(statePath + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
-            {
-                ContextSwitchResult result = await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
+        ContextSwitchResult result = await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
 
-                Assert.Equal(ContextSwitchStatus.Cancelled, result.Status);
-                Assert.Empty(executor.ExecutedSteps);
-                Assert.Contains(logger.Entries, entry => entry.EventId == "SwitchRejected");
-            }
+        Assert.Equal(ContextSwitchStatus.Cancelled, result.Status);
+        Assert.Empty(executor.ExecutedSteps);
+        Assert.Contains(logger.Entries, entry => entry.EventId == "SwitchRejected");
 
-            // Once that one is done, the next switch goes ahead.
-            ContextSwitchResult after = await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
-            Assert.Equal(ContextSwitchStatus.Succeeded, after.Status);
-        }
-        finally
-        {
-            Directory.Delete(directory, recursive: true);
-        }
+        // Once that one is done, the next switch goes ahead - and gives the lock back when it ends.
+        crossProcessLock.HeldElsewhere = false;
+        ContextSwitchResult after = await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
+        Assert.Equal(ContextSwitchStatus.Succeeded, after.Status);
+        Assert.Equal(0, crossProcessLock.Held);
     }
 
     [Fact]
@@ -392,7 +382,7 @@ public sealed class ContextSwitchServiceTests
         FakeAutomationStepExecutor executor = new();
         FakeClock clock = new();
         ContextSwitchService service = new(
-            store, executor, new AutomationPlanBuilder(), new AnalyticsService(clock, sessions), clock, new TestLogger(), SettingsPath, StatePath);
+            store, executor, new AutomationPlanBuilder(), new AnalyticsService(clock, sessions), clock, new TestLogger(), new FakeSwitchLock(), SettingsPath, StatePath);
         return (service, store, executor);
     }
     private static (ContextSwitchService Service, InMemoryJsonStore Store, FakeAutomationStepExecutor Executor, FakeClock Clock, TestLogger Logger) CreateService()
@@ -411,6 +401,7 @@ public sealed class ContextSwitchServiceTests
             analytics,
             clock,
             logger,
+            new FakeSwitchLock(),
             SettingsPath,
             StatePath);
 
