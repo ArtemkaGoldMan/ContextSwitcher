@@ -7,6 +7,7 @@ using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Infrastructure.MacOS.Updates;
 using ContextSwitcher.Infrastructure.ProcessExecution;
 using ContextSwitcher.Infrastructure.Updates;
+using ContextSwitcher.Tests.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Updates;
@@ -65,14 +66,9 @@ public sealed class AppBundleUpdaterTests : IDisposable
     /// An ad-hoc signature vouches only for that one build, so a copy signed that way has nothing to
     /// check a download against - it must not install one. The real codesign reads the signature.
     /// </summary>
-    [Fact]
+    [MacOSFact]
     public async Task AnAdHocSignedCopyCannotUpdateItself()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return;
-        }
-
         string installed = await MakeBundleAsync(Path.Combine(this.root, "Applications"), "0.1.0", signAdHoc: true);
         AppBundleUpdater updater = new(new HttpClient(this.handler), new ProcessRunner(MacPlatform.AllowedCommands), installed, this.root, "/usr/bin/true");
 
@@ -85,14 +81,9 @@ public sealed class AppBundleUpdaterTests : IDisposable
     /// Downloaded, unpacked, its version read and its signature checked against the running copy's
     /// own requirement - the step that keeps out anything not signed with the same certificate.
     /// </summary>
-    [Fact]
+    [MacOSFact]
     public async Task ADownloadIsUnpackedAndCheckedAgainstTheRunningCopysCertificate()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return;
-        }
-
         (AppBundleUpdater updater, CertificateRunner runner) = await this.UpdaterOfferingAsync("0.2.0");
 
         StagedUpdate staged = await updater.StageAsync(Release, CancellationToken.None);
@@ -103,14 +94,9 @@ public sealed class AppBundleUpdaterTests : IDisposable
         Assert.Equal(Release.ArchiveUrl, Assert.Single(this.handler.Requests).RequestUri!.ToString());
     }
 
-    [Fact]
+    [MacOSFact]
     public async Task ADownloadNotSignedWithTheSameCertificateIsRefusedAndRemoved()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return;
-        }
-
         (AppBundleUpdater updater, CertificateRunner runner) = await this.UpdaterOfferingAsync("0.2.0");
         runner.SignatureMatches = false;
 
@@ -120,14 +106,9 @@ public sealed class AppBundleUpdaterTests : IDisposable
         Assert.Empty(Directory.GetDirectories(this.Work, "ContextSwitcher-update-*"));
     }
 
-    [Fact]
+    [MacOSFact]
     public async Task ADownloadOfAnotherVersionIsRefused()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return;
-        }
-
         (AppBundleUpdater updater, _) = await this.UpdaterOfferingAsync("0.1.5");
 
         UpdateException error = await Assert.ThrowsAsync<UpdateException>(() => updater.StageAsync(Release, CancellationToken.None));
@@ -136,14 +117,9 @@ public sealed class AppBundleUpdaterTests : IDisposable
         Assert.Empty(Directory.GetDirectories(this.Work, "ContextSwitcher-update-*"));
     }
 
-    [Fact]
+    [MacOSFact]
     public async Task AReleaseWithoutTheArchiveIsLeftToTheReleasePage()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return;
-        }
-
         (AppBundleUpdater updater, _) = await this.UpdaterOfferingAsync("0.2.0");
 
         UpdateException error = await Assert.ThrowsAsync<UpdateException>(() => updater.StageAsync(Release with { ArchiveUrl = null }, CancellationToken.None));
@@ -156,14 +132,9 @@ public sealed class AppBundleUpdaterTests : IDisposable
     /// The script that runs after the app quits: the new copy takes the old one's place, gets
     /// opened, and the temporary folder - the old copy with it - is gone.
     /// </summary>
-    [Fact]
+    [MacOSFact]
     public async Task TheInstallScriptSwapsTheNewCopyInAndOpensIt()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return;
-        }
-
         string installed = await MakeBundleAsync(Path.Combine(this.root, "Applications"), "0.1.0", signAdHoc: false);
         string work = Path.Combine(this.root, "work");
         string staged = await MakeBundleAsync(Path.Combine(work, "unpacked"), "0.2.0", signAdHoc: false);
@@ -186,14 +157,9 @@ public sealed class AppBundleUpdaterTests : IDisposable
     /// If the new copy can't be moved into place, the old one is put back and opened - the person
     /// keeps a working app rather than none - and the temporary folder is still cleared away.
     /// </summary>
-    [Fact]
+    [MacOSFact]
     public async Task TheInstallScriptPutsTheOldCopyBackWhenTheNewOneCantGoIn()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return;
-        }
-
         string installed = await MakeBundleAsync(Path.Combine(this.root, "Applications"), "0.1.0", signAdHoc: false);
         string work = Path.Combine(this.root, "work");
         Directory.CreateDirectory(work);

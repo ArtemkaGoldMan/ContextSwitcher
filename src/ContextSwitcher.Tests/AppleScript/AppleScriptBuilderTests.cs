@@ -1,4 +1,5 @@
 using ContextSwitcher.Infrastructure.MacOS.AppleScript;
+using ContextSwitcher.Tests.MacOS;
 
 namespace ContextSwitcher.Tests.AppleScript;
 
@@ -108,10 +109,10 @@ public sealed class AppleScriptBuilderTests
     /// The tab scripts compile against Chrome's real dictionary - a misspelt term only shows up
     /// there. Compiling reads the dictionary from the app's bundle; nothing is run or started.
     /// </summary>
-    [Fact]
+    [MacOSFact]
     public async Task TheChromeTabScriptsCompile()
     {
-        if (!OperatingSystem.IsMacOS() || !Directory.Exists("/Applications/Google Chrome.app"))
+        if (!Directory.Exists("/Applications/Google Chrome.app"))
         {
             return;
         }

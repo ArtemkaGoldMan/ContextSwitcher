@@ -5,6 +5,7 @@ using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.MacOS.AppleScript;
 using ContextSwitcher.Infrastructure.MacOS.Catalog;
+using ContextSwitcher.Tests.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Catalog;
@@ -208,14 +209,9 @@ public sealed class SystemCatalogTests : IDisposable
     }
 
     /// <summary>On this Mac, through the real Applications folder: Safari always comes with macOS.</summary>
-    [Fact]
+    [MacOSFact]
     public void SafariIsAlwaysThereOnAMac()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return;
-        }
-
         Assert.True(new SystemCatalog(new FakeProcessRunner(), new FakeScriptRunner()).IsBrowserInstalled(BrowserKind.Safari));
     }
 

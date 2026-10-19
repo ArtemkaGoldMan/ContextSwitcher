@@ -34,7 +34,7 @@ public static class MenuBarPanel
     /// </summary>
     public static bool Make(IntPtr nsWindow)
     {
-        if (nsWindow == IntPtr.Zero || !OperatingSystem.IsMacOS())
+        if (nsWindow == IntPtr.Zero)
         {
             return false;
         }
@@ -82,7 +82,7 @@ public static class MenuBarPanel
     /// </summary>
     public static string? Describe(IntPtr nsWindow)
     {
-        if (nsWindow == IntPtr.Zero || !OperatingSystem.IsMacOS())
+        if (nsWindow == IntPtr.Zero)
         {
             return null;
         }

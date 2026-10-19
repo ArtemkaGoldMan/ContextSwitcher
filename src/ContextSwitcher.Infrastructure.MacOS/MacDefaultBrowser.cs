@@ -18,7 +18,7 @@ public sealed class MacDefaultBrowser : IDefaultBrowser
     /// <inheritdoc />
     public DefaultBrowser? Get()
     {
-        if (!OperatingSystem.IsMacOS() || !NativeLibrary.TryLoad(AppKit, out _))
+        if (!NativeLibrary.TryLoad(AppKit, out _))
         {
             return null;
         }

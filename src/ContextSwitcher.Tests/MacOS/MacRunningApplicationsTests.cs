@@ -7,14 +7,9 @@ namespace ContextSwitcher.Tests.MacOS;
 public sealed class MacRunningApplicationsTests
 {
     /// <summary>Apps with a place in the Dock, each named as Finder shows it - never Finder, never the app asking.</summary>
-    [Fact]
+    [MacOSFact]
     public void ListsDockAppsByTheirFinderNames()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return;
-        }
-
         IReadOnlyList<RunningApp> apps = new MacRunningApplications().List();
 
         Assert.DoesNotContain(apps, app => app.IsCalled("Finder"));

@@ -38,7 +38,7 @@ public static class WindowSpaces
     /// <summary>Makes <paramref name="nsWindow"/> appear on whichever Space is in front when it is shown.</summary>
     public static void FollowActiveSpace(IntPtr nsWindow)
     {
-        if (nsWindow == IntPtr.Zero || !OperatingSystem.IsMacOS())
+        if (nsWindow == IntPtr.Zero)
         {
             return;
         }
@@ -47,10 +47,10 @@ public static class WindowSpaces
         SendNUInt(nsWindow, sel_registerName("setCollectionBehavior:"), FollowingTheActiveSpace(current));
     }
 
-    /// <summary>A window's behaviour and whether it is on the Space in front, for the log; null off a Mac.</summary>
+    /// <summary>A window's behaviour and whether it is on the Space in front, for the log; null without a window.</summary>
     public static (nuint Behavior, bool OnActiveSpace)? Describe(IntPtr nsWindow)
     {
-        if (nsWindow == IntPtr.Zero || !OperatingSystem.IsMacOS())
+        if (nsWindow == IntPtr.Zero)
         {
             return null;
         }

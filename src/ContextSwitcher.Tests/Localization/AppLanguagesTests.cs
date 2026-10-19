@@ -1,5 +1,6 @@
 using ContextSwitcher.App.Resources;
 using ContextSwitcher.Infrastructure.MacOS;
+using ContextSwitcher.Tests.MacOS;
 
 namespace ContextSwitcher.Tests.Localization;
 
@@ -30,7 +31,7 @@ public sealed class AppLanguagesTests
     public void AnUnknownLanguageFollowsMacOS() =>
         Assert.Equal("uk", AppLanguages.Resolve("tlh", ["uk-UA"]));
 
-    [Fact]
+    [MacOSFact]
     public void TheMacsPreferredLanguagesCanBeRead()
     {
         IReadOnlyList<string> languages = new PreferredLanguages().Get();

@@ -160,7 +160,7 @@ public sealed class MacAppProcesses : IAppProcesses
     private static bool Visit(string app, Action<IntPtr, int> visit)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(app);
-        if (!OperatingSystem.IsMacOS() || !NativeLibrary.TryLoad(AppKit, out _))
+        if (!NativeLibrary.TryLoad(AppKit, out _))
         {
             return false;
         }

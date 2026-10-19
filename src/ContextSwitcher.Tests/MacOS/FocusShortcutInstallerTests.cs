@@ -89,10 +89,10 @@ public sealed class FocusShortcutInstallerTests : IDisposable
     /// The real `shortcuts sign` accepts what is generated - the step a typo would break. Not on CI:
     /// signing goes through the Mac's iCloud account, which a build server doesn't have.
     /// </summary>
-    [Fact]
+    [MacOSFact]
     public async Task TheGeneratedFileIsAcceptedByTheRealSigner()
     {
-        if (!OperatingSystem.IsMacOS() || !File.Exists("/usr/bin/shortcuts") || Environment.GetEnvironmentVariable("CI") == "true")
+        if (!File.Exists("/usr/bin/shortcuts") || Environment.GetEnvironmentVariable("CI") == "true")
         {
             return;
         }

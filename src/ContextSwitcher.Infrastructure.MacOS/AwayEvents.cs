@@ -15,7 +15,7 @@ namespace ContextSwitcher.Infrastructure.MacOS;
 /// <c>NSWorkspaceSessionDidResignActiveNotification</c> and <c>…DidBecomeActive…</c>.</item>
 /// </list>
 /// They are observed by an object of a class made at runtime, as .NET has no binding for them, and
-/// arrive on the main thread. Where AppKit can't be reached - not macOS - nothing is ever raised.
+/// arrive on the main thread. Where AppKit can't be loaded, nothing is ever raised.
 /// </summary>
 public sealed class AwayEvents : IAwayEvents
 {
@@ -36,7 +36,7 @@ public sealed class AwayEvents : IAwayEvents
 
     public AwayEvents()
     {
-        if (active is not null || !OperatingSystem.IsMacOS() || !NativeLibrary.TryLoad(AppKit, out IntPtr appKit))
+        if (active is not null || !NativeLibrary.TryLoad(AppKit, out IntPtr appKit))
         {
             return;
         }

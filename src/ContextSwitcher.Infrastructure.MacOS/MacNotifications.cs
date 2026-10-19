@@ -132,11 +132,6 @@ public sealed class MacNotifications : ISystemNotifications
     /// <summary>Whether this process is an app bundle with an identifier, the only kind the center serves.</summary>
     private static bool IsAppBundle()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return false;
-        }
-
         try
         {
             IntPtr pool = objc_autoreleasePoolPush();
