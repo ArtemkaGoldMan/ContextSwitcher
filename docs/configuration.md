@@ -75,6 +75,7 @@ down with the reason — then asked about, as it replaces every profile and sett
 | `detailedLogUntil` | A date and time. Until then the log holds everything the app does, not only problems — Settings → Diagnostics → Detailed log sets it to a week from now. Absent, or past, is the ordinary quiet log. |
 | `askOnSwitch` | Before a switch started in the app, asks what to do with the apps and tabs open that neither profile has — see below. Off unless turned on. |
 | `ignoredApps` | Apps never opened, closed, hidden or asked about, even if a profile still lists them. **Settings → Never touch these apps** takes each one out of every profile as it's added. |
+| `apps` | How Windows finds each app the profiles name, by that name: `{ "Slack": { "windows_app_id": "com.squirrel.slack.slack", "windows_exe": "slack.exe" } }`. For the Windows version, which is still to come. The Mac doesn't use it, and keeps it as it is. |
 | `onboardingCompleted` | Absent means "already onboarded", so upgrading never re-runs the wizard. |
 | `analytics.retentionDays` | Sessions older than this are pruned at startup. |
 
