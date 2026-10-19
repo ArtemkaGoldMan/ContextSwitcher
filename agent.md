@@ -231,7 +231,7 @@ Infrastructure rules:
 - Script templates must be centralized and testable.
 - Never concatenate untrusted user input directly into shell commands.
 - Prefer passing process arguments as arrays over shell strings.
-- `AutomationStepExecutor` implements `IAutomationStepExecutor` (Core abstraction) and is the single place that maps an `AutomationStepType` + its `Arguments` to real `IProcessRunner`/`IScriptRunner` calls (AppleScript templates, `open`, `docker`, etc.). This is the seam that lets `ContextSwitchService` in Core orchestrate a switch without referencing Infrastructure or knowing anything OS-specific — it only depends on `IAutomationStepExecutor`.
+- `AutomationStepExecutor` implements `IAutomationStepExecutor` (Core abstraction) and hands each step to the `IStepHandler` registered for its `AutomationStepType`. A handler reads the step's arguments through the record for its type (`AppsArguments`, `BrowserContextArguments`, `FocusArguments`…, in Core, which the plan builder writes) and asks the system through Core interfaces - `IAppLauncher`, `IAppQuitter`, `IMediaPlayer`, `IShortcutRunner`, `IBrowserLauncher` over `IBrowserControl` - whose macOS versions build the AppleScript and run `open` and `shortcuts`. A new step type is a new handler and a registration. This is the seam that lets `ContextSwitchService` in Core orchestrate a switch without referencing Infrastructure or knowing anything OS-specific — it only depends on `IAutomationStepExecutor`.
 
 ### 4.3 App
 
@@ -265,7 +265,7 @@ services.AddSingleton<IAnalyticsService, AnalyticsService>();
 services.AddSingleton<IContextSwitchService, ContextSwitchService>();
 services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
 
-services.AddSingleton<BrowserLauncher>();
+services.AddSingleton<IBrowserLauncher, BrowserLauncher>();
 services.AddSingleton<CliCommandRouter>();
 services.AddSingleton<ConfigurationStore>();
 
@@ -1754,8 +1754,8 @@ Text (docs/translating.md):
   (key, values, English). `AutomationResult.Problems` and `StateError.MessageKey/MessageArguments` carry
   them; the App shows them through `MessageText.Of`, from `Msg_<key>` in Strings.resx.
 - The language is chosen once at startup (Program.Main, before any window) by `AppLanguages`: the
-  `language` setting, or the first of the Mac's preferred languages (`PreferredLanguages`, via
-  NSLocale) that has a translation. A language in `AppLanguages.Supported` must be translated in
+  `language` setting, or the first of the Mac's preferred languages (`IPreferredLanguages`, whose
+  macOS version asks NSLocale) that has a translation. A language in `AppLanguages.Supported` must be translated in
   full - `ResourceTests` checks. The log, CLI output and identifiers (Focus Shortcut names) stay
   English.
 

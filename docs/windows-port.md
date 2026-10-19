@@ -224,7 +224,9 @@ What that means for each feature, without an extension:
 These come before any Windows code, and none of them changes what the Mac app does. The
 [plan](windows-plan.md) has them as stage 0.
 
-1. **Seams where AppleScript is wired in.**
+1. **Seams where AppleScript is wired in** - done in [#83](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/83): each step
+   type has a handler, and what they and `BrowserLauncher` ask of macOS is behind an interface of its
+   own. As it was before:
    [`AutomationStepExecutor`](../src/ContextSwitcher.Infrastructure/Automation/AutomationStepExecutor.cs)
    quits apps through AppleScript, launches them with `open -a`, plays Music and Spotify through
    AppleScript and runs Focus Shortcuts with `shortcuts run`, and defaults to `MacApplicationHider`.
@@ -234,7 +236,7 @@ These come before any Windows code, and none of them changes what the Mac app do
    Finder, open Shortcuts - and need one for opening a link or showing a file.
 
    The rest is already behind interfaces in `Core/Abstractions` and only needs a Windows
-   registration in [`AppHost`](../src/ContextSwitcher.App/Startup/AppHost.cs): `IApplicationHider`,
+   registration in [`AppServices`](../src/ContextSwitcher.App/Startup/AppServices.cs): `IApplicationHider`,
    `IAppProcesses`, `IRunningApplications`, `ILoginItem`, `ISystemNotifications`, `IDefaultBrowser`,
    `IAppUpdater`, `ISystemCatalog`, `IInstalledAppsService`, `IPermissionsChecker`.
 

@@ -157,7 +157,9 @@ services started in one place. **Done when** `AppHost` only builds the container
 ### PR 3 - macOS behind interfaces
 
 Every piece of macOS the shared code and the app call is given through an interface, with today's
-code as its macOS version. **Size:** L. **Stage 0:** item 3, and the helpers it doesn't list.
+code as its macOS version. **Size:** L. **Stage 0:** item 3, and the helpers it doesn't list. **Done**
+in [#83](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/83), except what it left to the pull requests after it - listed under each of them as
+"From PR 3". The registrations it speaks of are in `AppServices`, where PR 2 put them.
 
 **From PR 1:** `BrowserLauncher` is given an `ILogger` ([F18](#f18-applog-where-a-logger-is-at-hand))
 and uses or drops what `TryFocusExistingTabAsync` returns; `RunInfo.MacOs` becomes `SystemVersion`
@@ -224,6 +226,20 @@ when none is given, goes with the optional services ([F13](#f13-optional-service
 parameter already, through `SettingsViewModel` and `MainAppViewModel`; their other optional parameters
 are as they were ([F13](#f13-optional-services-and-defaults)).
 
+**From PR 3:**
+
+- The waits for tests moved with the code they time: `quitConfirmInterval` is
+  `CloseApplicationsHandler`'s now, and `openedTabPollInterval` is still `BrowserLauncher`'s
+  ([F12](#f12-timings-are-constants-and-test-only-parameters)).
+- "Chrome or Brave" is in `BrowserLauncher`, which remembers tabs by id only in those two, and in
+  `MacBrowserControl`, which closes theirs by id. The browsers' app names are in `MacBrowserApps`
+  alone, but the names Profile Setup shows are not ([F19](#f19-the-same-thing-in-several-places)).
+- `SettingsViewModel` and `MainAppViewModel` are given the preferred languages as a required
+  parameter; the rest of their optional parameters are as they were
+  ([F13](#f13-optional-services-and-defaults)).
+- The log's first line, the diagnostic report and the mail to the developer still say "macOS" before
+  `RunInfo.SystemVersion`; which system it is can come with the version.
+
 #### How a profile names an app
 
 Stage 0 item 4, [as decided](windows-plan.md#decisions-made): profiles keep listing apps by name, so
@@ -275,6 +291,13 @@ mostly files moving. **Size:** M. **Stage 0:** item 6.
 by platform is in its one method `RegisterPlatform` - the files' choices that were
 `AddPlatformFileServices`, the macOS classes, `AwayEvents`, and which release files are the Mac's. That
 method is what moves into each platform's `PlatformServices.Register`.
+
+**From PR 3:** the new interfaces' macOS versions are in `MacOS/` and registered in
+`RegisterPlatform`: `MacAppLauncher`, `MacAppQuitter`, `MacMediaPlayer`, `MacShortcutRunner`,
+`MacBrowserControl` with `MacBrowserApps`, `MacSystemVersion` and `MacPopoverWindow`, and the helpers
+the app now has through interfaces. Three macOS versions sit outside `MacOS/` and go to the macOS
+project too: `ProcessBrowserRuns`, `InstalledAppsService` and `SystemCatalog`. The step handlers,
+`BrowserLauncher` and `PopoverDismissal` are shared and stay.
 
 #### Two platform projects
 
