@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using ContextSwitcher.Tests.MacOS;
 
 namespace ContextSwitcher.Tests.Startup;
 
@@ -19,8 +20,7 @@ public sealed class AppStartupSmokeTests : IDisposable
     }
 
     /// <summary>Where this build keeps everything: a development (Debug) build its own folder, apart from the installed app's.</summary>
-    private string ConfigDirectory => Path.Combine(
-        this.home, ".config", AppExecutable().Contains("/bin/Debug/", StringComparison.Ordinal) ? "ContextSwitcher-dev" : "ContextSwitcher");
+    private string ConfigDirectory => Path.Combine(this.home, ".config", IsDevelopmentBuild() ? "ContextSwitcher-dev" : "ContextSwitcher");
 
     public void Dispose() => Directory.Delete(this.home, recursive: true);
 
@@ -50,14 +50,15 @@ public sealed class AppStartupSmokeTests : IDisposable
 
     /// <summary>
     /// Run from the code, the app keeps to its own folder and never opens the installed app's - which
-    /// is what made a fresh install show the profiles being worked on.
+    /// is what made a fresh install show the profiles being worked on. Only on macOS: Windows looks the
+    /// home folder up for the user, whatever HOME says, so there a test can't give the app one.
     /// </summary>
-    [Fact]
+    [MacOSFact]
     public async Task ADevelopmentBuildKeepsToItsOwnFolder()
     {
         await this.RunAsync("validate-config");
 
-        bool development = AppExecutable().Contains("/bin/Debug/", StringComparison.Ordinal);
+        bool development = IsDevelopmentBuild();
         Assert.Equal(development, File.Exists(Path.Combine(this.home, ".config", "ContextSwitcher-dev", "settings.json")));
         Assert.Equal(!development, File.Exists(Path.Combine(this.home, ".config", "ContextSwitcher", "settings.json")));
     }
@@ -104,6 +105,14 @@ public sealed class AppStartupSmokeTests : IDisposable
 
         // Only what the test asks for: one set in the shell running the tests would send the app elsewhere.
         start.Environment.Remove("CONTEXTSWITCHER_CONFIG_DIR");
+
+        // Windows looks the home folder up for the user, whatever HOME or USERPROFILE say, so there the app
+        // is told its folder outright - or it would use the real one of whoever runs the tests.
+        if (OperatingSystem.IsWindows())
+        {
+            start.Environment["CONTEXTSWITCHER_CONFIG_DIR"] = this.ConfigDirectory;
+        }
+
         foreach ((string name, string value) in environment)
         {
             start.Environment[name] = value;
@@ -131,8 +140,12 @@ public sealed class AppStartupSmokeTests : IDisposable
         }
 
         string configuration = AppContext.BaseDirectory.Contains($"{Path.DirectorySeparatorChar}Release{Path.DirectorySeparatorChar}", StringComparison.Ordinal) ? "Release" : "Debug";
-        string executable = Path.Combine(directory!.FullName, "src", "ContextSwitcher.App", "bin", configuration, "net10.0", "ContextSwitcher");
+        string executable = Path.Combine(
+            directory!.FullName, "src", "ContextSwitcher.App", "bin", configuration, "net10.0", OperatingSystem.IsWindows() ? "ContextSwitcher.exe" : "ContextSwitcher");
         Assert.True(File.Exists(executable), $"The app isn't built at {executable}.");
         return executable;
     }
+
+    private static bool IsDevelopmentBuild() =>
+        AppExecutable().Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}Debug{Path.DirectorySeparatorChar}", StringComparison.Ordinal);
 }

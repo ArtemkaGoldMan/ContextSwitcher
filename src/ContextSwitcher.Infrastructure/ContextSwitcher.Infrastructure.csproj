@@ -5,6 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="ContextSwitcher.Tests" />
   </ItemGroup>
 
   <PropertyGroup>

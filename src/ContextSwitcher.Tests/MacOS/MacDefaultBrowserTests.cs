@@ -19,7 +19,7 @@ public sealed class MacDefaultBrowserTests
     }
 
     /// <summary>Every Mac has a browser for web links - asked for real, it is named.</summary>
-    [Fact]
+    [MacOSFact]
     public void TheMacsDefaultBrowserIsFound()
     {
         DefaultBrowser? browser = new MacDefaultBrowser().Get();

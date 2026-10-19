@@ -15,7 +15,7 @@ public sealed class AwayEventsTests
     /// observer class made at runtime. The lock screen's are distributed to every app on the Mac, so
     /// they aren't posted from a test.
     /// </summary>
-    [Fact]
+    [MacOSFact]
     public void SleepWakeAndUserSwitchingFromMacOSReachTheEvents()
     {
         AwayEvents events = new();
