@@ -1,9 +1,10 @@
 # Architecture review
 
 How well the code follows the rules below, what gets in the way of changing it, and the order to
-clean it up in - one pull request at a time. Nothing here changes what the app does.
+clean it up in - five pull requests that finish stage 0 of the Windows plan. Nothing here changes
+what the app does.
 
-Written in October 2026 against `main` at `5d4cd25`: 0.6.7 with items 1, 2 and 7 of
+Written in October 2026 against `main` at `de3c2a0`: 0.6.7 with items 1, 2, 7 and 8 of
 [stage 0](windows-plan.md#stage-0---groundwork-on-the-mac) merged. Every finding was checked in that
 code; line numbers are from it.
 
@@ -14,7 +15,9 @@ Core and most of Infrastructure already work the way the rules ask. There are 23
 services take what they need through their constructors, and the tests give them fakes of their own.
 [#78](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/78) added the pattern for policies:
 [`FileReplacer`](../src/ContextSwitcher.Infrastructure/Files/FileReplacer.cs) with named presets,
-chosen in `AppHost`.
+chosen in `AppHost`. [#79](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/79) did the same
+for which release files are the Mac's: `AppBundleUpdater.Assets`, handed to the release source in
+`AppHost`.
 
 What makes the app hard to change is in four places:
 
@@ -39,44 +42,51 @@ What makes the app hard to change is in four places:
 The rest is smaller: policies written as constants, optional services, four ways of telling the
 time, duplicated helpers and a few names.
 
-## The pieces, in order
+The fix is five pull requests, each made of one commit per piece, so a piece can be read and, if
+need be, reverted on its own.
 
-Each piece is one pull request that changes no behaviour, ranked by what it makes easier to change
-against what it costs. Sizes are lines changed with their tests: **XS** under 50, **S** under 150,
-**M** under 400, **L** more.
+## The pull requests, in order
 
-| # | Piece | Findings | Size | Stage 0 |
+None of them changes what the app does. Sizes are lines changed with their tests: **XS** under 50,
+**S** under 150, **M** under 400, **L** more.
+
+| PR | What | Findings | Size | Stage 0 |
 | --- | --- | --- | --- | --- |
-| 1 | [Dispose the Settings page](#1-dispose-the-settings-page) | F3 | XS | new |
-| 2 | [One place publishes the state after a switch](#2-one-place-publishes-the-state-after-a-switch) | F4 | S | new |
-| 3 | [A seam for links, files and system pages](#3-a-seam-for-links-files-and-system-pages) | F7 | S | item 3 |
-| 4 | [The app's state as a service](#4-the-apps-state-as-a-service) | F1, F2, F8 | L, two PRs | new |
-| 5 | [Seams for apps, media and Focus](#5-seams-for-apps-media-and-focus) | F5, F13 | M | item 3 |
-| 6 | [A seam for browser tabs](#6-a-seam-for-browser-tabs) | F6 | M | item 3 |
-| 7 | [The macOS helpers behind interfaces](#7-the-macos-helpers-behind-interfaces) | F9, F10 | M | new, next to item 3 |
-| 8 | [Policies as data](#8-policies-as-data) | F11, F12 | S + S | new; the allowlist feeds item 6 |
-| 9 | [No optional services](#9-no-optional-services) | F13 | S | new; meets item 5 |
-| 10 | [The app's identity and the update checker](#10-the-apps-identity-and-the-update-checker) | F14 | M | new |
-| 11 | [AppHost split in three](#11-apphost-split-in-three) | F15 | M | item 6 takes the platform half |
-| 12 | [Profile Setup in sections](#12-profile-setup-in-sections) | F16 | M | new; its browser rules come from item 5 |
-| 13 | [The switch lock out of Core](#13-the-switch-lock-out-of-core) | F17 | S | new |
-| 14 | [One image converter](#14-one-image-converter) | F19 | S | new; stage 2 swaps in SkiaSharp |
-| 15 | [Small fixes](#15-small-fixes) | F18-F21 | S each | new |
-| 16 | [Typed step arguments](#16-typed-step-arguments) | F22 | M | new |
+| 1 | [Small fixes](#pr-1---small-fixes) | F3, F4, F17-F21 | M | none |
+| 2 | [The app's state and AppHost](#pr-2---the-apps-state-and-apphost) | F1, F2, F8, F14, F15 | L | none |
+| 3 | [macOS behind interfaces](#pr-3---macos-behind-interfaces) | F5-F7, F9, F22 | L | item 3 |
+| 4 | [Platform capabilities and policies](#pr-4---platform-capabilities-and-policies) | F11-F13, F16 | L | items 4 and 5 |
+| 5 | [The projects](#pr-5---the-projects) | F10, F15 | M, mostly file moves | item 6 |
 
-Pieces 1-3 are cheap and can go in any order. Piece 4 is the one that pays most; do it before 11.
-Pieces 5-7 are what Windows needs next, and 5 and 6 are item 3 of stage 0 - do them before item 6
-moves the macOS code into its own project, so the move only moves files. Piece 9 and piece 12 go
-with item 5 (capabilities). The rest can wait.
+The order matters:
 
-### 1. Dispose the Settings page
+- **1 first.** Its fixes are cheap and stand alone - one is a leak - and nothing after it needs to
+  wait for them.
+- **2 before 3**, so the new seams are registered in the split `AppHost`, not added to the one being
+  taken apart.
+- **3 before 4**, because the capabilities lean on the seams: what a platform can do is said next to
+  how it does it.
+- **5 last**, so the move only moves files: by then every macOS class is behind an interface and
+  registered in one place.
+
+Items 1, 2, 7 and 8 of stage 0 are merged
+([#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76),
+[#78](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/78),
+[#79](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/79)). These five take items 3 to 6, so
+when they are merged stage 0 is done.
+
+### PR 1 - Small fixes
+
+Five pieces that need nothing else first. **Size:** M. **Stage 0:** none.
+
+#### Dispose the Settings page
 
 `SettingsViewModel` becomes `IDisposable`: it unsubscribes from `AppHost.ConfigurationChanged` and
 disposes `IgnoredApps`. `MainAppViewModel.Dispose` disposes `Settings` as it does `Profiles` and
 `Stats`. **Done when** a test opens and closes the main window twice and only one Settings page
 still reacts to a saved change.
 
-### 2. One place publishes the state after a switch
+#### One place publishes the state after a switch
 
 `SwitchCoordinator`, which every switch in the app goes through, reads `state.json` after the switch
 and publishes it. The menu bar, the popover and the Profiles page stop doing it themselves, so they
@@ -84,7 +94,64 @@ stop needing `IJsonStore` and `ConfigPaths`; the setup wizard gets the same beha
 no view model reads `state.json`, and the wizard's switch shows at once rather than through the file
 watcher.
 
-### 3. A seam for links, files and system pages
+#### The switch lock out of Core
+
+The lock that keeps two processes from switching at once moves behind an `ISwitchLock` in Core,
+implemented with today's file in Infrastructure. **Done when** `ContextSwitchService` touches no file.
+
+#### One image converter
+
+An `IImageConverter` ("make this a 32-pixel PNG") with `sips` as the macOS version, used by
+`InstalledAppsService` and `SiteIcons`. Stage 2 gives Windows a SkiaSharp one. **Done when** `sips`
+appears once.
+
+#### Loggers, duplicates, one clock and names
+
+A commit for each of [F18](#f18-applog-where-a-logger-is-at-hand) to
+[F21](#f21-names-that-mislead), a few files each: give a logger where one is at hand, the duplicates
+in one place, one clock, the names.
+
+### PR 2 - The app's state and AppHost
+
+`AppHost` stops being a global and keeps only the composition. **Size:** L. **Stage 0:** none; the
+registrations for each platform are left for [PR 5](#pr-5---the-projects).
+
+#### The app's state as a service
+
+An `IAppState` in the app - the configuration, its validation, the current state, `Update…` and the
+two events - registered as a singleton and given to whatever reads it. It is the app's own, not
+something a platform varies, so it needs no Infrastructure version. `AppHost`'s properties forward
+to it until nothing uses them.
+
+- **First commit:** the service, and the classes that are not view models move to it:
+  `ConfigurationStore`, `SwitchCoordinator`, `StateFileWatcher`, `App.axaml.cs`, the CLI's start in
+  `Program`.
+- **Second commit:** the view models, and their tests build their own `IAppState` instead of setting
+  `AppHost`'s. `AppHostTestCollection` goes.
+
+**Done when** `AppHost` has no public state but `Services`, and no test is in a collection for it.
+
+#### The app's identity and the update checker
+
+An `IAppInfo` - the version, whether it is a development build, the display name - replaces
+`UpdatesViewModel.RunningVersion`, `AppBuild` and the three calls to `RunInfo.Current`. An update
+checker service takes the daily timer, the notification and the checks out of `UpdatesViewModel`,
+which keeps what Settings shows. **Done when** `AppHost` reads no static of a view model.
+
+#### AppHost split in three
+
+After the app's state has moved out: the registrations (one method per platform, which
+[PR 5](#pr-5---the-projects) moves into each platform's project), the start-up sequence (load,
+validate, recover the time history - a class of its own that can be tested), and the housekeeping
+that runs while the app is up (pruning, the sign of life, the away pause, the closing follow-up) as
+services started in one place. **Done when** `AppHost` only builds the container and starts the app.
+
+### PR 3 - macOS behind interfaces
+
+Every piece of macOS the shared code and the app call is given through an interface, with today's
+code as its macOS version. **Size:** L. **Stage 0:** item 3, and the helpers it doesn't list.
+
+#### A seam for links, files and system pages
 
 An `IShell` (or `ILinkOpener`) in Core with `OpenLink`, `ShowFile` and `OpenSystemPage`, the last
 taking a name such as "automation" or "focus" rather than an `x-apple.systempreferences:` address.
@@ -92,21 +159,7 @@ taking a name such as "automation" or "focus" rather than an `x-apple.systempref
 call. The six view models take it instead of `IProcessRunner`, which they use for nothing else.
 **Done when** no view model mentions `open`, `ProcessStartOptions` or `x-apple`.
 
-### 4. The app's state as a service
-
-An `IAppState` in the app - the configuration, its validation, the current state, `Update…` and the
-two events - registered as a singleton and given to whatever reads it. It is the app's own, not
-something a platform varies, so it needs no Infrastructure version. `AppHost`'s properties forward
-to it until nothing uses them.
-
-- **First PR:** the service, and the classes that are not view models move to it: `ConfigurationStore`,
-  `SwitchCoordinator`, `StateFileWatcher`, `App.axaml.cs`, the CLI's start in `Program`.
-- **Second PR:** the view models, and their tests build their own `IAppState` instead of setting
-  `AppHost`'s. `AppHostTestCollection` goes.
-
-**Done when** `AppHost` has no public state but `Services`, and no test is in a collection for it.
-
-### 5. Seams for apps, media and Focus
+#### Seams for apps, media and Focus
 
 Interfaces for launching, quitting and checking apps, for playing media, and for running a Focus
 Shortcut, with today's AppleScript, `open -a` and `shortcuts run` as their macOS versions.
@@ -115,7 +168,7 @@ step type has a handler of its own (`IStepHandler`, chosen by `AutomationStepTyp
 dispatcher. **Done when** the executor has no `using …AppleScript` or `…MacOS`, no `?? new`, and
 running a new step type takes a new handler and a line in `AppHost`, not an edit to the executor.
 
-### 6. A seam for browser tabs
+#### A seam for browser tabs
 
 An interface for what a browser is asked - list its tabs, focus one, close some, open a page, open a
 profile - with today's AppleScript and `open` as the macOS version. `BrowserLauncher` keeps the
@@ -123,7 +176,7 @@ decisions (which tabs to close, what was opened, what to remember) and gets an i
 so the executor no longer takes the concrete class. The browser's application name lives in one
 place. **Done when** `BrowserLauncher` has no AppleScript and its tests need no fake script runner.
 
-### 7. The macOS helpers behind interfaces
+#### The macOS helpers behind interfaces
 
 Interfaces for: the Mac being away and back (`AwayEvents`), the Dock icon (`DockIcon`), the preferred
 languages (`PreferredLanguages`), waiting for a display (`DisplayAvailability`), the system's version
@@ -132,7 +185,34 @@ languages (`PreferredLanguages`), waiting for a display (`DisplayAvailability`),
 them; `App`, `Program` and `DashboardWindow` are given them. **Done when** nothing in
 `ContextSwitcher.App` but `AppHost` names a class in `Infrastructure.MacOS`.
 
-### 8. Policies as data
+#### Typed step arguments
+
+With the step handlers in place, each step type's arguments become a record that the plan builder
+writes and its handler reads, serialized as today. **Done when** no string key is written in one
+class and read in another.
+
+### PR 4 - Platform capabilities and policies
+
+What a machine can do, and the waits and lists that differ between platforms, become data the
+composition root chooses. **Size:** L. **Stage 0:** items 4 and 5.
+
+#### How a profile names an app
+
+Stage 0 item 4, [as decided](windows-plan.md#decisions-made): profiles keep listing apps by name, so
+every settings file reads as before, and the settings gain one map from a name to how Windows finds
+that app - its AppUserModelID and executable. macOS ignores it. **Done when** a settings file with
+the map, and one without it, both read and save unchanged on the Mac.
+
+#### What each platform can do
+
+Stage 0 item 5: one service, given through constructors, says whether this machine has Focus, Apple
+Music, Safari, closing tabs by id, Shortcuts, a Dock icon, and browser profiles - which today means
+Chrome and Brave. Profile Setup and Settings hide what it lacks, `AutomationPlanBuilder` plans no
+step for it, and importing settings says what this machine can't use. The copies of "Chrome or
+Brave" ([F19](#f19-the-same-thing-in-several-places)) become this one answer. **Done when** no view
+model or planner names a browser or a system to decide what to offer.
+
+#### Policies as data
 
 - **Allowed commands:** `CommandAllowlist` becomes a value with a named preset, `CommandAllowlist.MacOS`,
   that `ProcessRunner` is given; `AppHost` chooses it. Windows adds its own in stage 1.
@@ -143,57 +223,46 @@ them; `App`, `Program` and `DashboardWindow` are given them. **Done when** nothi
 **Done when** no constructor takes a `TimeSpan?` for tests, and `ProcessRunner` has no internal
 constructor.
 
-### 9. No optional services
+#### No optional services
 
 Every service a class needs is a required parameter. Where a platform has no such thing, it gets an
 implementation that does nothing and says so (`ILoginItem.Status` is already `Unavailable` for that),
-or the capabilities from item 5 hide the feature. **Done when** no constructor takes an interface
-with `= null`.
+or the capabilities hide the feature. **Done when** no constructor takes an interface with `= null`.
 
-### 10. The app's identity and the update checker
-
-An `IAppInfo` - the version, whether it is a development build, the display name - replaces
-`UpdatesViewModel.RunningVersion`, `AppBuild` and the three calls to `RunInfo.Current`. An update
-checker service takes the daily timer, the notification and the checks out of `UpdatesViewModel`,
-which keeps what Settings shows. **Done when** `AppHost` reads no static of a view model.
-
-### 11. AppHost split in three
-
-After piece 4: the registrations (one method per platform, which item 6 moves into each platform's
-project), the start-up sequence (load, validate, recover the time history - a class of its own that
-can be tested), and the housekeeping that runs while the app is up (pruning, the sign of life, the
-away pause, the closing follow-up) as services started in one place. **Done when** `AppHost` only
-builds the container and starts the app.
-
-### 12. Profile Setup in sections
+#### Profile Setup in sections
 
 `ProfileSetupViewModel` gets one child view model per section, as Focus and media already have: the
 browser, Docker, quick links, and the look (colour and icon). What a browser can do - profiles in
 Chrome and Brave only, nothing for a default browser that can't be scripted - comes from the
-capabilities (item 5), not from the view model. `MainAppViewModel` is given a factory for Profile
-Setup instead of keeping its six services to pass on. **Done when** no section's rules are in the
-parent, and `MainAppViewModel` holds nothing only to hand it to Profile Setup.
+capabilities, not from the view model. `MainAppViewModel` is given a factory for Profile Setup
+instead of keeping its six services to pass on. **Done when** no section's rules are in the parent,
+and `MainAppViewModel` holds nothing only to hand it to Profile Setup.
 
-### 13. The switch lock out of Core
+### PR 5 - The projects
 
-The lock that keeps two processes from switching at once moves behind an `ISwitchLock` in Core,
-implemented with today's file in Infrastructure. **Done when** `ContextSwitchService` touches no file.
+Stage 0 item 6, as [the plan](windows-plan.md#the-projects) lays it out. With PRs 2-4 merged it is
+mostly files moving. **Size:** M. **Stage 0:** item 6.
 
-### 14. One image converter
+#### Two platform projects
 
-An `IImageConverter` ("make this a 32-pixel PNG") with `sips` as the macOS version, used by
-`InstalledAppsService` and `SiteIcons`. Stage 2 gives Windows a SkiaSharp one. **Done when** `sips`
-appears once.
+`ContextSwitcher.Infrastructure.MacOS` takes `MacOS/`, `AppleScript/`, the updater and the rest of
+the macOS versions; `ContextSwitcher.Infrastructure.Windows` starts empty, targeting
+`net10.0-windows10.0.19041.0`. The app targets `net10.0` and `net10.0-windows10.0.19041.0`. Each
+platform project is marked `[SupportedOSPlatform]`, so the platform analyzer (CA1416) stops shared
+code reaching into it, and `EnableWindowsTargeting` lets a Mac build it all. The allowed commands'
+presets go with their platform. **Done when** CI builds and tests on both, and the Mac app is the same.
 
-### 15. Small fixes
+#### Each platform's registrations
 
-Each of [F18](#f18-applog-where-a-logger-is-at-hand) to [F21](#f21-names-that-mislead) is a PR of a
-few files: give a logger where one is at hand, the duplicates in one place, one clock, the names.
+The platform half of the `AppHost` split: each project has a `PlatformServices.Register`, and
+`AppHost` calls it - `AddPlatformFileServices` among them. **Done when** `AppHost` names no platform
+class and has no `OperatingSystem` check.
 
-### 16. Typed step arguments
+#### No macOS checks in macOS classes
 
-Each step type's arguments become a record that the plan builder writes and the handler reads,
-serialized as today. **Done when** no string key is written in one class and read in another.
+The `OperatingSystem.IsMacOS()` guards come out of the macOS classes
+([F10](#f10-macos-classes-check-for-macos-themselves)), and their tests are marked `[MacOSFact]`.
+**Done when** only `MacLoginItem`'s version check is left.
 
 ## The rules
 
@@ -235,8 +304,8 @@ Rules 4 and 8.
   makes 25 of the 95 test files run one after another, and a test that forgets the collection races
   the others. A second window with settings of its own - a preview of an imported file, say - can't
   be built, because there is only one `Configuration`. Static events are also how F3's leak happens.
-- **Fix:** [piece 4](#4-the-apps-state-as-a-service).
-- **Size:** L, in two PRs. **Stage 0:** new.
+- **Fix:** [The app's state as a service](#the-apps-state-as-a-service), in PR 2.
+- **Size:** L, in two commits. **Stage 0:** new.
 
 ### F2. The container is asked for services outside the composition root
 
@@ -252,8 +321,10 @@ Rule 4. Most of these are boundaries to keep, not problems.
   built before the container. A factory registration resolved in `StartRuntimeServices` would do.
 - **Real, small:** [`DashboardWindow.axaml.cs:138`](../src/ContextSwitcher.App/Views/DashboardWindow.axaml.cs#L138)
   looks up an `ILogger`. `App` builds this window with `new`, so it can pass one in.
-- **Fix:** pieces [4](#4-the-apps-state-as-a-service) and [7](#7-the-macos-helpers-behind-interfaces)
-  take most of `App.axaml.cs`'s lookups with them. **Size:** XS for the window. **Stage 0:** new.
+- **Fix:** [the app's state as a service](#the-apps-state-as-a-service) (PR 2) and
+  [the macOS helpers behind interfaces](#the-macos-helpers-behind-interfaces) (PR 3) take most of
+  `App.axaml.cs`'s lookups with them; the window's logger goes with the second. **Size:** XS for the
+  window. **Stage 0:** new.
 
 ### F3. Two view models are never disposed
 
@@ -271,7 +342,8 @@ Rules 4 and 8. A bug, found by this review.
   Settings and ignored-apps pages still run their handlers on every save. If Settings was shown, its
   file picker ([`StorageProviderSettingsFilePicker`](../src/ContextSwitcher.App/Services/StorageProviderSettingsFilePicker.cs#L8))
   holds the window itself. A week of opening the window from the menu bar is that many dead windows.
-- **Fix:** [piece 1](#1-dispose-the-settings-page). **Size:** XS. **Stage 0:** new.
+- **Fix:** [Dispose the Settings page](#dispose-the-settings-page), in PR 1. **Size:** XS.
+  **Stage 0:** new.
 
 ### F4. Three places switch and then publish the state
 
@@ -286,7 +358,8 @@ Rules 6 and 8.
 - **Why it matters:** two view models depend on `IJsonStore` and `ConfigPaths` - an Infrastructure
   class - only for this. Changing where the state comes from after a switch, or adding a fourth place
   that switches, means finding all of them; the wizard already behaves differently.
-- **Fix:** [piece 2](#2-one-place-publishes-the-state-after-a-switch). **Size:** S. **Stage 0:** new.
+- **Fix:** [One place publishes the state](#one-place-publishes-the-state-after-a-switch), in PR 1.
+  **Size:** S. **Stage 0:** new.
 
 ### F5. AutomationStepExecutor does nine jobs and defaults to macOS
 
@@ -303,8 +376,8 @@ Rules 1, 3 and 6.
 - **Why it matters:** the Windows version of any step means editing this class and the Mac code in
   it; the defaults mean a forgotten registration quietly runs Mac code. A tenth step type grows the
   switch and the class again.
-- **Fix:** [piece 5](#5-seams-for-apps-media-and-focus). **Size:** M. **Stage 0:** item 3 names the
-  seams; the handler per step type is new.
+- **Fix:** [Seams for apps, media and Focus](#seams-for-apps-media-and-focus), in PR 3. **Size:** M.
+  **Stage 0:** item 3 names the seams; the handler per step type is new.
 
 ### F6. BrowserLauncher has no interface and does five jobs
 
@@ -320,7 +393,8 @@ Rules 1 and 6.
 - **Why it matters:** stage 2 keeps the decisions - which tabs to close, which are this profile's -
   and replaces how the browser is asked. Today the two are in the same methods, so Windows would
   copy the decisions or wrap Mac code in conditions.
-- **Fix:** [piece 6](#6-a-seam-for-browser-tabs). **Size:** M. **Stage 0:** item 3.
+- **Fix:** [A seam for browser tabs](#a-seam-for-browser-tabs), in PR 3. **Size:** M. **Stage 0:**
+  item 3.
 
 ### F7. Six view models run `open`
 
@@ -336,7 +410,8 @@ Rule 7.
   and [`ProfileSetupViewModel.cs:24`](../src/ContextSwitcher.App/ViewModels/ProfileSetupViewModel.cs#L24).
 - **Why it matters:** opening a link on Windows means changing six view models, and their tests
   check the arguments of a macOS command rather than "the link was opened".
-- **Fix:** [piece 3](#3-a-seam-for-links-files-and-system-pages). **Size:** S. **Stage 0:** item 3.
+- **Fix:** [A seam for links, files and system pages](#a-seam-for-links-files-and-system-pages), in
+  PR 3. **Size:** S. **Stage 0:** item 3.
 
 ### F8. View models reach into Infrastructure and the file system
 
@@ -355,10 +430,12 @@ Rule 7.
 - **Why it matters:** when item 6 splits Infrastructure, every `using ContextSwitcher.Infrastructure`
   in a view model has to be looked at again. The report's log lines can't be tested without a file.
   The three icon loaders already catch different exceptions (F19).
-- **Fix:** `ConfigPaths` goes with [piece 2](#2-one-place-publishes-the-state-after-a-switch);
-  `RunInfo` and `AppBuild` with [piece 10](#10-the-apps-identity-and-the-update-checker);
-  `PreferredLanguages` with [piece 7](#7-the-macos-helpers-behind-interfaces). The log lines come
-  from `DiagnosticsSources` like the rest of the report, and one icon loader serves the three.
+- **Fix:** `ConfigPaths` goes with
+  [one place publishes the state](#one-place-publishes-the-state-after-a-switch) (PR 1); `RunInfo`
+  and `AppBuild` with [the app's identity](#the-apps-identity-and-the-update-checker) (PR 2);
+  `PreferredLanguages` with [the macOS helpers](#the-macos-helpers-behind-interfaces) (PR 3). The
+  log lines come from `DiagnosticsSources` like the rest of the report, and one icon loader serves
+  the three - a commit in PR 1's duplicates.
 - **Size:** S beyond those pieces. **Stage 0:** new.
 
 ### F9. macOS helpers called straight from the app
@@ -368,7 +445,7 @@ Rules 1 and 2.
 - **Where:** `DisplayAvailability` in [`Program.cs:43`](../src/ContextSwitcher.App/Program.cs#L43),
   `:71` and `:111`; `PreferredLanguages` in [`Program.cs:64`](../src/ContextSwitcher.App/Program.cs#L64);
   `DockIcon` in [`App.axaml.cs:137`](../src/ContextSwitcher.App/App.axaml.cs#L137) and `:142`;
-  `new AwayEvents()` in [`AppHost.cs:437`](../src/ContextSwitcher.App/Startup/AppHost.cs#L437);
+  `new AwayEvents()` in [`AppHost.cs:439`](../src/ContextSwitcher.App/Startup/AppHost.cs#L439);
   `WindowSpaces`, `MenuBarPanel`, `FrontmostApplication` and `OutsideClick` in
   [`DashboardWindow.axaml.cs:93`](../src/ContextSwitcher.App/Views/DashboardWindow.axaml.cs#L93)-203.
   [`RunInfo.cs:26`](../src/ContextSwitcher.Infrastructure/Logging/RunInfo.cs#L26), in shared
@@ -377,8 +454,8 @@ Rules 1 and 2.
   needs every one of them: sleep and a locked screen pause time, the language comes from Windows,
   the tray flyout behaves differently, and diagnostics name the Windows version. Item 3 lists the
   seams for switching and for links, not these, so they would turn up one by one in stage 1.
-- **Fix:** [piece 7](#7-the-macos-helpers-behind-interfaces). **Size:** M. **Stage 0:** new; item 5
-  covers whether a Dock icon exists, not how to show it.
+- **Fix:** [The macOS helpers behind interfaces](#the-macos-helpers-behind-interfaces), in PR 3.
+  **Size:** M. **Stage 0:** new; item 5 covers whether a Dock icon exists, not how to show it.
 
 ### F10. macOS classes check for macOS themselves
 
@@ -389,11 +466,12 @@ Rule 2.
   [`MacApplicationHider.cs:25`](../src/ContextSwitcher.Infrastructure/MacOS/MacApplicationHider.cs#L25)
   and [`MenuBarPanel.cs:37`](../src/ContextSwitcher.Infrastructure/MacOS/MenuBarPanel.cs#L37). The
   only check outside them is in the composition root,
-  [`AppHost.cs:214`](../src/ContextSwitcher.App/Startup/AppHost.cs#L214), where it belongs.
+  [`AppHost.cs:216`](../src/ContextSwitcher.App/Startup/AppHost.cs#L216), where it belongs.
 - **Why it matters:** today they keep the tests passing on Windows, where these classes are built
   and do nothing. Once item 6 registers them only on macOS and marks their project for it, the
   checks are dead code that hides a wrong registration.
-- **Fix:** remove them in item 6, with the tests of these classes marked `[MacOSFact]`. Keep
+- **Fix:** remove them in [PR 5](#pr-5---the-projects) (item 6), with the tests of these classes
+  marked `[MacOSFact]`. Keep
   [`MacLoginItem.cs:107`](../src/ContextSwitcher.Infrastructure/MacOS/MacLoginItem.cs#L107): it asks
   for a macOS version, which is a question within the platform. **Size:** S. **Stage 0:** item 6.
 
@@ -408,8 +486,8 @@ Rules 5 and 8.
   [`:30`](../src/ContextSwitcher.Infrastructure/ProcessExecution/ProcessRunner.cs#L30).
 - **Why it matters:** Windows runs other programs. With one static list, it either allows the Mac's
   tools on Windows and its own on the Mac, or grows a condition.
-- **Fix:** [piece 8](#8-policies-as-data). **Size:** S. **Stage 0:** new; item 6 then puts each
-  preset in its platform's project.
+- **Fix:** [Policies as data](#policies-as-data), in PR 4. **Size:** S. **Stage 0:** new; item 6
+  then puts each preset in its platform's project.
 
 ### F12. Timings are constants and test-only parameters
 
@@ -426,7 +504,7 @@ Rule 5.
   waits than AppleScript. Today a new value means a new constant and a new optional parameter, and
   the budgets of a step are split between the plan builder (the whole) and the executor (its parts),
   which have to agree.
-- **Fix:** [piece 8](#8-policies-as-data). **Size:** S. **Stage 0:** new.
+- **Fix:** [Policies as data](#policies-as-data), in PR 4. **Size:** S. **Stage 0:** new.
 
 ### F13. Optional services and defaults
 
@@ -448,8 +526,8 @@ Rule 3.
 - **Why it matters:** the container fills these in, so the app works - but a registration dropped
   in a refactor, or missing on Windows, raises no error: "open at login" or the default browser just
   disappear. A reader can't tell which features a class really needs.
-- **Fix:** [piece 9](#9-no-optional-services), with F5's and F6's in pieces 5 and 6. **Size:** S.
-  **Stage 0:** new; item 5 decides what a platform lacks.
+- **Fix:** [No optional services](#no-optional-services), in PR 4, with F5's and F6's in PR 3.
+  **Size:** S. **Stage 0:** new; item 5 decides what a platform lacks.
 
 ### F14. UpdatesViewModel is a service and a view model
 
@@ -457,29 +535,31 @@ Rules 6 and 8.
 
 - **Where:** [`UpdatesViewModel.cs:69`](../src/ContextSwitcher.App/ViewModels/UpdatesViewModel.cs#L69)
   owns the app's version, which `AppHost` reads at
-  [`:100`](../src/ContextSwitcher.App/Startup/AppHost.cs#L100), `:108`, `:173` and `:182`. It runs
+  [`:100`](../src/ContextSwitcher.App/Startup/AppHost.cs#L100), `:108`, `:175` and `:184`. It runs
   the daily check on a timer ([`:152`](../src/ContextSwitcher.App/ViewModels/UpdatesViewModel.cs#L152)-168),
   sends the notification, logs, and is what Settings shows.
 - **Why it matters:** stage 1 brings an updater for Windows (Velopack) and an update shown in the
   tray, not a notification. The checking and the showing change for different reasons, and the
   version - needed by the log and the CLI - should not come from a view model.
-- **Fix:** [piece 10](#10-the-apps-identity-and-the-update-checker). **Size:** M. **Stage 0:** new.
+- **Fix:** [The app's identity and the update checker](#the-apps-identity-and-the-update-checker),
+  in PR 2. **Size:** M. **Stage 0:** new.
 
 ### F15. AppHost does four jobs
 
 Rule 6.
 
-- **Where:** [`AppHost.cs`](../src/ContextSwitcher.App/Startup/AppHost.cs), 499 lines: the
+- **Where:** [`AppHost.cs`](../src/ContextSwitcher.App/Startup/AppHost.cs), 501 lines: the
   registrations (`Initialize`, from [`:83`](../src/ContextSwitcher.App/Startup/AppHost.cs#L83)); the
   start-up sequence, which reads and writes the settings and checks the file itself
-  ([`BootstrapAsync`, `:262`](../src/ContextSwitcher.App/Startup/AppHost.cs#L262)); the housekeeping
-  timers, the away pause and the follow-up ([`StartRuntimeServices`, `:369`](../src/ContextSwitcher.App/Startup/AppHost.cs#L369));
+  ([`BootstrapAsync`, `:264`](../src/ContextSwitcher.App/Startup/AppHost.cs#L264)); the housekeeping
+  timers, the away pause and the follow-up ([`StartRuntimeServices`, `:371`](../src/ContextSwitcher.App/Startup/AppHost.cs#L371));
   and the app's state (F1).
 - **Why it matters:** item 6 has to take the platform registrations out of a method that also starts
   timers and loads files. The start-up sequence - quarantined settings, crash recovery - can only be
   tested by starting the whole app.
-- **Fix:** [piece 11](#11-apphost-split-in-three), after piece 4. **Size:** M. **Stage 0:** item 6
-  takes the registrations; the rest is new.
+- **Fix:** [AppHost split in three](#apphost-split-in-three), in PR 2, with the platform
+  registrations in [PR 5](#pr-5---the-projects). **Size:** M. **Stage 0:** item 6 takes the
+  registrations; the rest is new.
 
 ### F16. Profile Setup is 871 lines
 
@@ -497,9 +577,9 @@ Rule 6.
 - **Why it matters:** stage 2 changes the browser section (Edge, Firefox, a window per profile) and
   item 5 hides what a machine lacks. Both mean editing one class that also holds Docker and quick
   links, and the browser rules there are not where `ConfigurationValidator` keeps its own copy (F19).
-- **Fix:** [piece 12](#12-profile-setup-in-sections). `FocusSettingsViewModel` and
-  `MediaSettingsViewModel` already show the shape. **Size:** M. **Stage 0:** new; the rules come from
-  item 5.
+- **Fix:** [Profile Setup in sections](#profile-setup-in-sections), in PR 4.
+  `FocusSettingsViewModel` and `MediaSettingsViewModel` already show the shape. **Size:** M.
+  **Stage 0:** new; the rules come from item 5.
 
 ### F17. Core opens files for the switch lock
 
@@ -511,7 +591,8 @@ Rule 1, and agent.md's rule that Core makes no file system calls.
 - **Why it matters:** how one process keeps another from switching is a platform question - its own
   comment relies on Unix's advisory lock - and it is the only part of the switch that can't be
   replaced in a test.
-- **Fix:** [piece 13](#13-the-switch-lock-out-of-core). **Size:** S. **Stage 0:** new.
+- **Fix:** [The switch lock out of Core](#the-switch-lock-out-of-core), in PR 1. **Size:** S.
+  **Stage 0:** new.
 
 ### F18. AppLog where a logger is at hand
 
@@ -539,17 +620,17 @@ Rule 8.
   [`ProfileSetupViewModel.cs:403`](../src/ContextSwitcher.App/ViewModels/ProfileSetupViewModel.cs#L403),
   [`BrowserProfileRowViewModel.cs:48`](../src/ContextSwitcher.App/ViewModels/BrowserProfileRowViewModel.cs#L48)
   and [`ConfigurationValidator.cs:221`](../src/ContextSwitcher.Core/Configuration/Validation/ConfigurationValidator.cs#L221).
-  Adding Edge means finding all four - a capability for item 5.
+  Adding Edge means finding all four - a capability for item 5, in [PR 4](#what-each-platform-can-do).
 - **`sips`** twice: [`SiteIcons.cs:186`](../src/ContextSwitcher.Infrastructure/Browser/SiteIcons.cs#L186)
   and [`InstalledAppsService.cs:145`](../src/ContextSwitcher.Infrastructure/Applications/InstalledAppsService.cs#L145)
-  ([piece 14](#14-one-image-converter)).
+  ([one image converter](#one-image-converter), in PR 1).
 - **Loading an icon** three times, catching different exceptions: `AppPickerViewModel` catches
   `NotSupportedException` and not `InvalidOperationException`; `AskOnSwitchViewModel` and
   `IgnoredAppsViewModel` the other way round (F8).
-- **The log line for invalid settings**, word for word, in [`AppHost.cs:313`](../src/ContextSwitcher.App/Startup/AppHost.cs#L313)
+- **The log line for invalid settings**, word for word, in [`AppHost.cs:315`](../src/ContextSwitcher.App/Startup/AppHost.cs#L315)
   and [`ConfigurationStore.cs:58`](../src/ContextSwitcher.App/Services/ConfigurationStore.cs#L58).
 - **"Is this the command line?"** four times: [`Program.cs:42`](../src/ContextSwitcher.App/Program.cs#L42)
-  and `:52`, [`AppHost.cs:194`](../src/ContextSwitcher.App/Startup/AppHost.cs#L194) and `:201`.
+  and `:52`, [`AppHost.cs:196`](../src/ContextSwitcher.App/Startup/AppHost.cs#L196) and `:203`.
 - **`RunInfo.Current(…)`** with the same arguments three times (F14).
 - **A new profile's id** by three rules in two classes: [`ProfilesViewModel.cs:240`](../src/ContextSwitcher.App/ViewModels/ProfilesViewModel.cs#L240),
   [`ProfileSetupViewModel.cs:833`](../src/ContextSwitcher.App/ViewModels/ProfileSetupViewModel.cs#L833)
@@ -579,13 +660,13 @@ Rule 8.
 
 - [`RunInfo.cs:10`](../src/ContextSwitcher.Infrastructure/Logging/RunInfo.cs#L10) calls the system's
   version `MacOs`; the log ([`TrailLogger.cs:208`](../src/ContextSwitcher.Infrastructure/Logging/TrailLogger.cs#L208))
-  and the report write it as "macOS". It becomes `SystemVersion` with piece 7.
+  and the report write it as "macOS". It becomes `SystemVersion` with the macOS helpers in PR 3.
 - [`ContextSwitchSource.cs:9`](../src/ContextSwitcher.Core/Contexts/ContextSwitchSource.cs#L9):
   the Profiles page and the setup wizard switch as `Dashboard`
   ([`ProfilesViewModel.cs:121`](../src/ContextSwitcher.App/ViewModels/ProfilesViewModel.cs#L121),
   [`OnboardingViewModel.cs:208`](../src/ContextSwitcher.App/ViewModels/OnboardingViewModel.cs#L208)),
   so the log can't tell them apart; `StartupRecovery` is never used; `MenuBar` is the tray on Windows.
-- [`AppHost.cs:358`](../src/ContextSwitcher.App/Startup/AppHost.cs#L358)-361 is a summary left from
+- [`AppHost.cs:360`](../src/ContextSwitcher.App/Startup/AppHost.cs#L360)-363 is a summary left from
   a method that moved, stacked on `StartRuntimeServices`'s own.
 - [`BrowserLauncher.cs:151`](../src/ContextSwitcher.Infrastructure/Browser/BrowserLauncher.cs#L151)
   drops what `TryFocusExistingTabAsync` returns, so its `TabProbeOutcome` enum says nothing to anyone.
@@ -602,8 +683,8 @@ Rules 1 and 8.
 - **Why it matters:** a new field for a step is a string written in Core and read in Infrastructure,
   with only a test to say they match. agent.md asks that the arguments carry everything the executor
   needs; typed records do that too.
-- **Fix:** [piece 16](#16-typed-step-arguments). **Size:** M. **Stage 0:** new; lowest priority,
-  since it works and is tested.
+- **Fix:** [Typed step arguments](#typed-step-arguments), in PR 3. **Size:** M. **Stage 0:** new;
+  lowest priority, since it works and is tested.
 
 ## Boundaries to keep
 
@@ -627,7 +708,7 @@ These look like breaks of the rules and are not, or not yet:
 - **`AppLanguages.Current`**: the language is the process's culture, chosen once before any window.
 - **Values given for tests** - a home folder in `SystemCatalog`, paths in `AppBundleUpdater` - are
   data, not services. Timings are the exception (F12).
-- **The `OperatingSystem.IsMacOS()` checks** stay until item 6 (F10).
+- **The `OperatingSystem.IsMacOS()` checks** stay until item 6, in PR 5 (F10).
 
 ## Checking a pull request
 
