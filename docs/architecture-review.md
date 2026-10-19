@@ -77,7 +77,9 @@ when they are merged stage 0 is done.
 
 ### PR 1 - Small fixes
 
-Five pieces that need nothing else first. **Size:** M. **Stage 0:** none.
+Five pieces that need nothing else first. **Size:** M. **Stage 0:** none. **Done** in [#81](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/81),
+except what it left to the pull requests that take those classes apart - listed under each of them
+as "From PR 1".
 
 #### Dispose the Settings page
 
@@ -116,6 +118,11 @@ in one place, one clock, the names.
 `AppHost` stops being a global and keeps only the composition. **Size:** L. **Stage 0:** none; the
 registrations for each platform are left for [PR 5](#pr-5---the-projects).
 
+**From PR 1:** the update checker takes `UpdatesViewModel`'s logging, through an `ILogger` rather
+than `AppLog` ([F18](#f18-applog-where-a-logger-is-at-hand)), and its time, through `IClock` rather
+than a `Func` ([F20](#f20-four-ways-to-tell-the-time)); `AppHost`'s own reads of the time go with its
+split.
+
 #### The app's state as a service
 
 An `IAppState` in the app - the configuration, its validation, the current state, `Update…` and the
@@ -150,6 +157,11 @@ services started in one place. **Done when** `AppHost` only builds the container
 
 Every piece of macOS the shared code and the app call is given through an interface, with today's
 code as its macOS version. **Size:** L. **Stage 0:** item 3, and the helpers it doesn't list.
+
+**From PR 1:** `BrowserLauncher` is given an `ILogger` ([F18](#f18-applog-where-a-logger-is-at-hand))
+and uses or drops what `TryFocusExistingTabAsync` returns; `RunInfo.MacOs` becomes `SystemVersion`
+([F21](#f21-names-that-mislead)); the browsers' application names live in one place
+([F19](#f19-the-same-thing-in-several-places)).
 
 #### A seam for links, files and system pages
 
@@ -195,6 +207,11 @@ class and read in another.
 
 What a machine can do, and the waits and lists that differ between platforms, become data the
 composition root chooses. **Size:** L. **Stage 0:** items 4 and 5.
+
+**From PR 1:** the Profiles page's own `SwitchNoticeViewModel`, made with `DateTimeOffset.UtcNow`
+when none is given, goes with the optional services ([F13](#f13-optional-services-and-defaults),
+[F20](#f20-four-ways-to-tell-the-time)); "Chrome or Brave" becomes a capability
+([F19](#f19-the-same-thing-in-several-places)).
 
 #### How a profile names an app
 
