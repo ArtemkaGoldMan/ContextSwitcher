@@ -410,6 +410,6 @@ public sealed class ProfileSetupInteractionTests : UiTest
         // that resumes on the wrong thread would look identical to one that does not.
         ConfigurationStore store = new(new YieldingJsonStore(jsonStore), paths, validator, this.appState, new TestLogger());
 
-        return (new ProfileSetupViewModel(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, configuration.Contexts[0]), store);
+        return (new ProfileSetupViewModel(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), configuration.Contexts[0]), store);
     }
 }

@@ -306,7 +306,7 @@ public sealed class ProfilesViewModelTests
         StubContextSwitchService switchService = new();
         ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator(), this.appState, new TestLogger());
 
-        ProfilesViewModel viewModel = new(this.appState, switchService, configurationStore);
+        ProfilesViewModel viewModel = new(this.appState, switchService, configurationStore, new SwitchNoticeViewModel(this.appState, DateTimeOffset.UtcNow));
         return (viewModel, switchService, jsonStore);
     }
 }

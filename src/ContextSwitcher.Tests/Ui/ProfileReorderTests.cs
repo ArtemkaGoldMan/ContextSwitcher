@@ -347,7 +347,7 @@ public sealed class ProfileReorderTests : UiTest
         ConfigurationStore store = new(jsonStore, paths, validator, this.appState, new TestLogger());
         StubContextSwitchService switchService = new();
 
-        return (new ProfilesViewModel(this.appState, switchService, store), switchService, store);
+        return (new ProfilesViewModel(this.appState, switchService, store, new SwitchNoticeViewModel(this.appState, DateTimeOffset.UtcNow)), switchService, store);
     }
 
     private static async Task WaitUntil(Func<bool> condition)

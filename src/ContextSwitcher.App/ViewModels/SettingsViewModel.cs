@@ -49,12 +49,12 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         DiagnosticsSources diagnostics,
         IPreferredLanguages preferredLanguages,
         PlatformCapabilities capabilities,
-        ILoginItem? loginItem = null,
-        IInstalledAppsService? installedApps = null)
+        ILoginItem loginItem,
+        IInstalledAppsService installedApps)
     {
         this.appState = appState;
         this.loginItem = loginItem;
-        this.loginItemStatus = loginItem?.Status ?? LoginItemStatus.Unavailable;
+        this.loginItemStatus = loginItem.Status;
         this.preferredLanguages = preferredLanguages;
         this.configurationStore = configurationStore;
         this.permissionsChecker = permissionsChecker;

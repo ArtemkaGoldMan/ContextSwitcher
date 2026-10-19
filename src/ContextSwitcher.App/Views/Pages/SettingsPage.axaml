@@ -117,7 +117,7 @@
           </ItemsControl>
           <TextBlock Text="{Binding IgnoredApps.Message}" Classes="caption" IsVisible="{Binding IgnoredApps.HasMessage}" TextWrapping="Wrap" />
           <!-- The picker reads the installed apps and their icons only when it's opened. -->
-          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddApp}" IsVisible="{Binding IgnoredApps.CanAdd}" Command="{Binding IgnoredApps.OpenPickerCommand}">
+          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddApp}" Command="{Binding IgnoredApps.OpenPickerCommand}">
             <Button.Flyout>
               <Flyout Placement="BottomEdgeAlignedLeft">
                 <StackPanel Width="{StaticResource PickerWidth}">

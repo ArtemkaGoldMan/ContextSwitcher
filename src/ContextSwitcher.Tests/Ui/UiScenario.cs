@@ -120,13 +120,13 @@ public sealed class UiScenario
     public MainAppViewModel MainApp() => new(
         this.AppState, this.SwitchService, this.ConfigurationStore,
         this.Permissions, this.Shell, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates, this.Diagnostics,
-        new FakePreferredLanguages(), PlatformCapabilities.MacOS);
+        new FakePreferredLanguages(), PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), FakeLoginItem.Unavailable());
 
     public ProfilesViewModel Profiles() =>
-        new(this.AppState, this.SwitchService, this.ConfigurationStore);
+        new(this.AppState, this.SwitchService, this.ConfigurationStore, new SwitchNoticeViewModel(this.AppState, DateTimeOffset.UtcNow));
 
     public SettingsViewModel Settings() =>
-        new(this.AppState, this.ConfigurationStore, this.Permissions, this.Shell, this.Updates, this.Diagnostics, new FakePreferredLanguages(), PlatformCapabilities.MacOS);
+        new(this.AppState, this.ConfigurationStore, this.Permissions, this.Shell, this.Updates, this.Diagnostics, new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), this.InstalledApps);
 
     public StatsViewModel Stats() => new(this.AppState, this.Analytics);
 
@@ -134,8 +134,8 @@ public sealed class UiScenario
         this.AppState, this.SwitchService, this.Analytics, this.Shell, this.Clock);
 
     public OnboardingViewModel Onboarding() =>
-        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.SwitchService);
+        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.SwitchService, FakeLoginItem.Unavailable());
 
     public ProfileSetupViewModel ProfileSetup(ContextDefinition? existing = null) =>
-        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.Catalog, this.Shell, this.FocusShortcuts, PlatformCapabilities.MacOS, existing);
+        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.Catalog, this.Shell, this.FocusShortcuts, PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), existing);
 }

@@ -73,15 +73,15 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         IShell shell,
         IFocusShortcutInstaller focusShortcuts,
         PlatformCapabilities capabilities,
-        ContextDefinition? existing,
-        IDefaultBrowser? defaultBrowser = null)
+        IDefaultBrowser defaultBrowser,
+        ContextDefinition? existing)
     {
         this.appState = appState;
         this.capabilities = capabilities;
         this.configurationStore = configurationStore;
         this.shell = shell;
         this.catalog = catalog;
-        this.systemDefault = defaultBrowser?.Get();
+        this.systemDefault = defaultBrowser.Get();
         this.IsNew = existing is null;
 
         ContextDefinition source = existing ?? CreateDefaultContext(this.appState.Configuration.Contexts);

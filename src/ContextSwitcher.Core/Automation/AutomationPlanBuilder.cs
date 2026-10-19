@@ -14,7 +14,7 @@ public sealed class AutomationPlanBuilder
 {
     private readonly PlatformCapabilities capabilities;
     private readonly StepBudgets budgets;
-    private readonly IDefaultBrowser? defaultBrowser;
+    private readonly IDefaultBrowser defaultBrowser;
 
     /// <param name="capabilities">What this computer can do; a profile's part that it can't is left out.</param>
     /// <param name="budgets">How long each step may take.</param>
@@ -22,10 +22,11 @@ public sealed class AutomationPlanBuilder
     /// Which browser "Default browser" means. A profile set to it is planned as that browser when
     /// it is one that can be scripted, so its tabs can be checked for duplicates and closed.
     /// </param>
-    public AutomationPlanBuilder(PlatformCapabilities capabilities, StepBudgets budgets, IDefaultBrowser? defaultBrowser = null)
+    public AutomationPlanBuilder(PlatformCapabilities capabilities, StepBudgets budgets, IDefaultBrowser defaultBrowser)
     {
         ArgumentNullException.ThrowIfNull(capabilities);
         ArgumentNullException.ThrowIfNull(budgets);
+        ArgumentNullException.ThrowIfNull(defaultBrowser);
 
         this.capabilities = capabilities;
         this.budgets = budgets;
@@ -57,7 +58,7 @@ public sealed class AutomationPlanBuilder
         List<AutomationStep> steps = [];
 
         // Asked once a switch; Default stays Default for a browser that can't be scripted.
-        BrowserKind systemDefault = this.defaultBrowser?.Get()?.Kind ?? BrowserKind.Default;
+        BrowserKind systemDefault = this.defaultBrowser.Get()?.Kind ?? BrowserKind.Default;
         BrowserKind Resolve(BrowserKind browser) => browser == BrowserKind.Default ? systemDefault : browser;
 
         if (previous is not null)

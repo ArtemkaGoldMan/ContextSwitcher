@@ -404,6 +404,6 @@ public sealed class EnvironmentChoicesTests
         jsonStore.Seed(paths.SettingsPath, configuration);
         ConfigurationStore store = new(jsonStore, paths, validator, this.appState, new TestLogger());
 
-        return new ProfileSetupViewModel(this.appState, store, new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, existing: null);
+        return new ProfileSetupViewModel(this.appState, store, new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), existing: null);
     }
 }

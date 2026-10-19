@@ -219,7 +219,7 @@ public sealed class ClosingAppsTests : IDisposable
         ContextSwitchService service = new(
             store,
             new FakeAutomationStepExecutor(),
-            new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default),
+            new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()),
             new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()),
             clock,
             new TestLogger(),
