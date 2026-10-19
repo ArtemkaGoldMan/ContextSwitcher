@@ -3,6 +3,8 @@ using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
+using ContextSwitcher.Core.Messages;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Core.Serialization;
 
 namespace ContextSwitcher.App.ViewModels;
@@ -14,24 +16,28 @@ namespace ContextSwitcher.App.ViewModels;
 /// The file is the settings file itself, in the same format. An import is checked before anything
 /// changes - a file that isn't Context Switcher's, or one that wouldn't pass the configuration check,
 /// is turned down with the reason - and then asked about, since it replaces every profile. The
-/// settings it replaces are backed up first, as on every save.
+/// settings it replaces are backed up first, as on every save. What of them this computer can't use
+/// is said once they are in, and stays in them for a computer that can.
 /// </summary>
 public sealed class SettingsTransferViewModel : ViewModelBase
 {
     private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
+    private readonly PlatformCapabilities capabilities;
     private string? message;
     private string? problem;
     private AppConfiguration? pending;
     private string? pendingName;
 
-    public SettingsTransferViewModel(IAppState appState, ConfigurationStore configurationStore)
+    public SettingsTransferViewModel(IAppState appState, ConfigurationStore configurationStore, PlatformCapabilities capabilities)
     {
         ArgumentNullException.ThrowIfNull(appState);
         ArgumentNullException.ThrowIfNull(configurationStore);
+        ArgumentNullException.ThrowIfNull(capabilities);
 
         this.appState = appState;
         this.configurationStore = configurationStore;
+        this.capabilities = capabilities;
         this.ExportCommand = new AsyncRelayCommand(this.ExportAsync);
         this.ImportCommand = new AsyncRelayCommand(this.ImportAsync);
         this.ConfirmImportCommand = new AsyncRelayCommand(this.ConfirmImportAsync);
@@ -172,7 +178,10 @@ public sealed class SettingsTransferViewModel : ViewModelBase
             return;
         }
 
-        this.Message = Localized.Format(Strings.Settings_Imported, name);
+        IReadOnlyList<UserMessage> unsupported = this.capabilities.Unsupported(configuration);
+        this.Message = unsupported.Count == 0
+            ? Localized.Format(Strings.Settings_Imported, name)
+            : Localized.Format(Strings.Settings_ImportedWithUnsupported, name, string.Join(" ", unsupported.Select(MessageText.Of)));
         this.Imported?.Invoke(this, EventArgs.Empty);
     }
 

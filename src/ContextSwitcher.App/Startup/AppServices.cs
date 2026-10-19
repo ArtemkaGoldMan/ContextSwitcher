@@ -3,9 +3,12 @@ using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Core.Automation;
+using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Logging;
+using ContextSwitcher.Core.Platform;
+using ContextSwitcher.Core.Security;
 using ContextSwitcher.Core.Updates;
 using ContextSwitcher.Infrastructure.AppleScript;
 using ContextSwitcher.Infrastructure.Applications;
@@ -69,7 +72,8 @@ public static class AppServices
         services.AddSingleton<ConfigurationValidator>();
         services.AddSingleton<IAnalyticsSessionStore, AnalyticsSessionStore>();
         services.AddSingleton<IAnalyticsService, AnalyticsService>();
-        services.AddSingleton(provider => new AutomationPlanBuilder(provider.GetRequiredService<IDefaultBrowser>()));
+        services.AddSingleton(provider => new AutomationPlanBuilder(
+            provider.GetRequiredService<PlatformCapabilities>(), provider.GetRequiredService<StepBudgets>(), provider.GetRequiredService<IDefaultBrowser>()));
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IOpenedTabsStore, OpenedTabsStore>();
         services.AddSingleton<IBrowserLauncher, BrowserLauncher>();
@@ -103,7 +107,8 @@ public static class AppServices
             provider.GetRequiredService<ContextSwitchService>(),
             provider.GetRequiredService<IAppProcesses>(),
             provider.GetRequiredService<IClock>(),
-            provider.GetRequiredService<ILogger>()));
+            provider.GetRequiredService<ILogger>(),
+            provider.GetRequiredService<FollowUpTimings>()));
 
         // Switches started in the app ask, when that's on, about everything else open; the command
         // line has no window to ask in, so it switches through the service itself.
@@ -148,6 +153,19 @@ public static class AppServices
         services.AddSingleton<UpdatesViewModel>();
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<MainAppViewModel>();
+
+        // Profile Setup is made when a profile is opened, for that profile - by the main window, which
+        // is given this rather than the services Profile Setup needs.
+        services.AddSingleton<Func<ContextDefinition?, ProfileSetupViewModel>>(provider => existing => new ProfileSetupViewModel(
+            provider.GetRequiredService<IAppState>(),
+            provider.GetRequiredService<ConfigurationStore>(),
+            provider.GetRequiredService<IInstalledAppsService>(),
+            provider.GetRequiredService<ISystemCatalog>(),
+            provider.GetRequiredService<IShell>(),
+            provider.GetRequiredService<IFocusShortcutInstaller>(),
+            provider.GetRequiredService<PlatformCapabilities>(),
+            provider.GetRequiredService<IDefaultBrowser>(),
+            existing));
         services.AddTransient<OnboardingViewModel>();
 
         // What runs while the app is up, started together, in this order, once Avalonia is - see
@@ -180,6 +198,16 @@ public static class AppServices
             settingsRoot: windows ? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) : null,
             development: provider.GetRequiredService<IAppInfo>().IsDevelopment));
         services.AddSingleton<IFileReplacer>(windows ? FileReplacer.RetryingWhileHeldOpen : FileReplacer.Once);
+
+        // What a Mac can do: everything the app does today; and what it may run.
+        services.AddSingleton(PlatformCapabilities.MacOS);
+        services.AddSingleton(CommandAllowlist.MacOS);
+
+        // How long a switch's steps may take and how they wait - what the app has always used.
+        services.AddSingleton(StepBudgets.Default);
+        services.AddSingleton(QuitTimings.Default);
+        services.AddSingleton(TabTimings.Default);
+        services.AddSingleton(FollowUpTimings.Default);
 
         services.AddSingleton<IShell, MacShell>();
         services.AddSingleton<IDefaultBrowser, MacDefaultBrowser>();
@@ -218,6 +246,6 @@ public static class AppServices
     {
         IAppInfo app = provider.GetRequiredService<IAppInfo>();
         ISystemVersion system = provider.GetRequiredService<ISystemVersion>();
-        return () => RunInfo.Current(app.Version.ToString(3), app.IsDevelopment, system.Read());
+        return () => RunInfo.Current(app.Version.ToString(3), app.IsDevelopment, system);
     }
 }

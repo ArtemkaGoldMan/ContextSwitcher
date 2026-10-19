@@ -16,7 +16,6 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
     private readonly IAppState appState;
     private readonly IContextSwitchService switchService;
     private readonly ConfigurationStore configurationStore;
-    private readonly bool ownsNotice;
 
     private IReadOnlyList<ProfileRowViewModel> rows = [];
     private string? errorMessage;
@@ -25,12 +24,11 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
         IAppState appState,
         IContextSwitchService switchService,
         ConfigurationStore configurationStore,
-        SwitchNoticeViewModel? notice = null)
+        SwitchNoticeViewModel notice)
     {
         this.appState = appState;
         this.switchService = switchService;
-        this.Notice = notice ?? new SwitchNoticeViewModel(appState, DateTimeOffset.UtcNow);
-        this.ownsNotice = notice is null;
+        this.Notice = notice;
         this.configurationStore = configurationStore;
 
         this.AddCommand = new RelayCommand(() => this.EditRequested?.Invoke(this, null));
@@ -75,10 +73,6 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
     {
         this.appState.ConfigurationChanged -= this.OnConfigurationOrStateChanged;
         this.appState.StateChanged -= this.OnConfigurationOrStateChanged;
-        if (this.ownsNotice)
-        {
-            this.Notice.Dispose();
-        }
     }
 
     private void OnConfigurationOrStateChanged(object? sender, EventArgs e) => this.Refresh();

@@ -1,65 +1,31 @@
-using System.Text.RegularExpressions;
 using System.Collections.ObjectModel;
-using Avalonia.Media.Imaging;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Applications;
-using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.App.Resources;
+using ContextSwitcher.Core.Platform;
 using System.Globalization;
 
 namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
 /// Backs the Profile Setup editor (agent.md section 11.1.2), reachable only from the Profiles
-/// page. Edits every <see cref="ContextDefinition"/> field for one profile. Nothing is written to disk until
-/// <see cref="SaveCommand"/> succeeds, so a cancelled "Add new profile" never touches config.
+/// page. Edits every <see cref="ContextDefinition"/> field for one profile: the name, the apps, the
+/// notes and what may fail here, and the rest through a view model per section - the look, the
+/// browser, Focus, media, Docker and the quick links, each with its own rules. Nothing is written to
+/// disk until <see cref="SaveCommand"/> succeeds, so a cancelled "Add new profile" never touches config.
 /// </summary>
 public sealed class ProfileSetupViewModel : ViewModelBase
 {
-    /// <summary>System Settings' Focus pane, where a Focus's Safari filter is set.</summary>
-
-    /// <summary>What every browser can do on a switch: nothing, or open pages.</summary>
-    private static readonly IReadOnlyList<Choice<BrowserManagementMode>> PageModes =
-    [
-        new(BrowserManagementMode.None, Strings.Browser_Mode_None),
-        new(BrowserManagementMode.Urls, Strings.Browser_Mode_Urls)
-    ];
-
-    /// <summary>Chrome and Brave can also open one of their profiles - a different signed-in person.</summary>
-    private static readonly IReadOnlyList<Choice<BrowserManagementMode>> ProfileModes =
-    [
-        .. PageModes,
-        new(BrowserManagementMode.Profiles, Strings.Browser_Mode_Profiles)
-    ];
-
     private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
-    private readonly IShell shell;
+    private readonly PlatformCapabilities capabilities;
     private readonly string originalContextId;
 
-    private readonly ISystemCatalog catalog;
-
-    private readonly AccentChoiceViewModel customAccent;
-
-    /// <summary>The browser macOS opens links in, which "Default browser" stands for.</summary>
-    private readonly DefaultBrowser? systemDefault;
-
     private string displayName;
-    private string accentColor;
-    private bool customAccentChosen;
-    private string icon;
-
-    private BrowserManagementMode browserMode;
-    private BrowserKind browserKind;
-    private bool avoidDuplicateTabs;
-
     private string notesText;
-
     private bool continueOnNonCriticalFailure;
-
-
     private string? errorMessage;
     private bool isSaving;
 
@@ -70,25 +36,20 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         ISystemCatalog catalog,
         IShell shell,
         IFocusShortcutInstaller focusShortcuts,
-        ContextDefinition? existing,
-        IDefaultBrowser? defaultBrowser = null)
+        PlatformCapabilities capabilities,
+        IDefaultBrowser defaultBrowser,
+        ContextDefinition? existing)
     {
         this.appState = appState;
         this.configurationStore = configurationStore;
-        this.shell = shell;
-        this.catalog = catalog;
-        this.systemDefault = defaultBrowser?.Get();
+        this.capabilities = capabilities;
         this.IsNew = existing is null;
 
         ContextDefinition source = existing ?? CreateDefaultContext(this.appState.Configuration.Contexts);
         this.originalContextId = source.Id;
 
         this.displayName = source.DisplayName;
-        this.accentColor = source.AccentColor;
-        this.customAccent = AccentChoiceViewModel.Custom(source.AccentColor);
-        this.AccentChoices = [.. AccentPalette.Select(entry => AccentChoiceViewModel.Preset(entry.Hex, entry.Name)), this.customAccent];
-        this.icon = source.Icon;
-        this.IconChoices = ProfileIcons.All.Select(icon => new IconChoiceViewModel(icon)).ToList();
+        this.Look = new ProfileLookViewModel(source.AccentColor, source.Icon);
 
         this.Apps = new ObservableCollection<AppRowViewModel>(
             source.LaunchApps.Concat(source.CloseApps).Concat(source.HideApps)
@@ -106,80 +67,11 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             () => this.Apps.Select(row => row.Name),
             this.AddAppByName);
 
-        this.browserMode = source.BrowserManagement.Mode;
-        this.browserKind = source.BrowserManagement.Browser;
-
-        // A profiles profile names its browser on each row, and the section's browser was not
-        // asked for; it is now the one the rows open in.
-        if (this.browserMode == BrowserManagementMode.Profiles &&
-            source.BrowserManagement.Profiles.Count > 0 &&
-            this.EffectiveBrowser != source.BrowserManagement.Profiles[0].Browser)
-        {
-            this.browserKind = source.BrowserManagement.Profiles[0].Browser;
-        }
-
-        this.BrowserKindChoices = this.BrowserChoices();
-
-        // Only reachable from settings the editor never wrote - profiles with no rows, say.
-        if (!this.BrowserModeChoices.Any(choice => choice.Value == this.browserMode))
-        {
-            this.browserMode = BrowserManagementMode.Urls;
-        }
-        this.avoidDuplicateTabs = source.BrowserManagement.AvoidDuplicateTabs;
-        this.BrowserUrls = new ObservableCollection<BrowserPageRowViewModel>(
-            source.BrowserManagement.Urls.Concat(source.BrowserManagement.CloseUrls)
-                .Distinct(StringComparer.Ordinal)
-                .Select(url => this.UrlRow(
-                    url,
-                    source.BrowserManagement.Urls.Contains(url),
-                    source.BrowserManagement.CloseUrls.Contains(url))));
-        this.BrowserProfiles = new ObservableCollection<BrowserProfileRowViewModel>(
-            source.BrowserManagement.Profiles.Select(profile => new BrowserProfileRowViewModel(
-                profile.Browser, profile.ProfileDirectory, profile.Urls, catalog.GetBrowserProfiles, this.RemoveBrowserProfile)));
-        this.UrlTabPicker = new ChoicePickerViewModel(
-            this.LoadOpenTabsAsync,
-            () => this.BrowserUrls.Select(row => row.Url.Trim()),
-            choice => this.BrowserUrls.Add(this.UrlRow(choice.Value)),
-            OpenTabsEmptyText,
-            OpenTabsUnavailableText,
-            "IconGlobe",
-            OpenTabsSearchText);
-
+        this.Browser = new BrowserSettingsViewModel(catalog, shell, capabilities, defaultBrowser.Get(), source.BrowserManagement);
         this.Focus = new FocusSettingsViewModel(catalog, shell, focusShortcuts, source.Focus);
-        this.Media = new MediaSettingsViewModel(catalog, source.Media);
-
-        // Containers already in config are names Docker gave them; shown, not offered for editing.
-        this.DockerStart = new ObservableCollection<EditableStringRowViewModel>(
-            source.Docker.Start.Select(name => this.ContainerRow(name, this.RemoveDockerStart, isEditable: false)));
-        this.DockerStop = new ObservableCollection<EditableStringRowViewModel>(
-            source.Docker.Stop.Select(name => this.ContainerRow(name, this.RemoveDockerStop, isEditable: false)));
-        this.DockerStartPicker = new ChoicePickerViewModel(
-            this.LoadContainersAsync,
-            () => this.DockerStart.Select(row => row.Value.Trim()),
-            choice => this.DockerStart.Add(this.ContainerRow(choice.Value, this.RemoveDockerStart, isEditable: false)),
-            ContainersEmptyText,
-            ContainersUnavailableText,
-            "IconBox",
-            ContainersSearchText);
-        this.DockerStopPicker = new ChoicePickerViewModel(
-            this.LoadContainersAsync,
-            () => this.DockerStop.Select(row => row.Value.Trim()),
-            choice => this.DockerStop.Add(this.ContainerRow(choice.Value, this.RemoveDockerStop, isEditable: false)),
-            ContainersEmptyText,
-            ContainersUnavailableText,
-            "IconBox",
-            ContainersSearchText);
-
-        this.QuickLinks = new ObservableCollection<QuickLinkRowViewModel>(
-            source.QuickLinks.Select(link => new QuickLinkRowViewModel(link.Title, link.Url, link.Icon, this.RemoveQuickLink)));
-        this.QuickLinkTabPicker = new ChoicePickerViewModel(
-            this.LoadOpenTabsAsync,
-            () => this.QuickLinks.Select(row => row.Url.Trim()),
-            choice => this.QuickLinks.Add(new QuickLinkRowViewModel(choice.Title, choice.Value, "link", this.RemoveQuickLink)),
-            OpenTabsEmptyText,
-            OpenTabsUnavailableText,
-            "IconGlobe",
-            OpenTabsSearchText);
+        this.Media = new MediaSettingsViewModel(catalog, capabilities, source.Media);
+        this.Docker = new DockerSettingsViewModel(catalog, source.Docker);
+        this.Links = new QuickLinksSettingsViewModel(this.Browser.LoadOpenTabsAsync, source.QuickLinks);
 
         this.notesText = string.Join(Environment.NewLine, source.Notes);
 
@@ -192,14 +84,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             .ToList();
 
         this.AddAppCommand = new RelayCommand(() => this.Apps.Add(new AppRowViewModel(string.Empty, true, true, this.RemoveApp, isEditable: true)));
-        this.AddBrowserUrlCommand = new RelayCommand(() => this.BrowserUrls.Add(this.UrlRow(string.Empty)));
-        this.AddBrowserProfileCommand = new RelayCommand(() => this.BrowserProfiles.Add(
-            new BrowserProfileRowViewModel(this.ProfilesBrowser, string.Empty, [], catalog.GetBrowserProfiles, this.RemoveBrowserProfile)));
-        this.OpenFocusSettingsCommand = new RelayCommand(() => this.shell.OpenSystemPage(SystemPage.FocusSettings));
-        this.AddDockerStartCommand = new RelayCommand(() => this.DockerStart.Add(this.ContainerRow(string.Empty, this.RemoveDockerStart, isEditable: true)));
-        this.AddDockerStopCommand = new RelayCommand(() => this.DockerStop.Add(this.ContainerRow(string.Empty, this.RemoveDockerStop, isEditable: true)));
-        this.AddQuickLinkCommand = new RelayCommand(() => this.QuickLinks.Add(new QuickLinkRowViewModel(string.Empty, string.Empty, "link", this.RemoveQuickLink)));
-
         this.SaveCommand = new AsyncRelayCommand(this.SaveAsync, () => !this.isSaving);
         this.CancelCommand = new RelayCommand(() => this.CancelRequested?.Invoke(this, EventArgs.Empty));
 
@@ -238,105 +122,8 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         }
     }
 
-    public string AccentColor
-    {
-        get => this.accentColor;
-        set
-        {
-            if (this.SetProperty(ref this.accentColor, value))
-            {
-                this.customAccent.Brush = this.AccentBrush;
-                this.OnPropertyChanged(nameof(this.AccentBrush));
-                this.OnPropertyChanged(nameof(this.AccentColorValue));
-                this.OnPropertyChanged(nameof(this.IsCustomAccent));
-                this.OnPropertyChanged(nameof(this.SelectedAccent));
-            }
-        }
-    }
-
-    public Avalonia.Media.IBrush AccentBrush => AccentColorParser.ToBrush(this.AccentColor);
-
-    /// <summary>
-    /// The accent dropdown: the presets, then "Custom". The presets are chosen to stay legible under
-    /// the white glyph drawn on top of them, which rules out a yellow; the first and the green are
-    /// the two colors onboarding gives its profiles.
-    /// </summary>
-    public IReadOnlyList<AccentChoiceViewModel> AccentChoices { get; }
-
-    public AccentChoiceViewModel SelectedAccent
-    {
-        get => this.IsCustomAccent ? this.customAccent : this.MatchingPreset() ?? this.customAccent;
-        set
-        {
-            // A ComboBox writes null while its items are being swapped; that is not a choice.
-            if (value is null)
-            {
-                return;
-            }
-
-            this.customAccentChosen = value.IsCustom;
-            if (value.Hex is not null)
-            {
-                this.AccentColor = value.Hex;
-            }
-
-            this.OnPropertyChanged(nameof(this.IsCustomAccent));
-            this.OnPropertyChanged(nameof(this.SelectedAccent));
-        }
-    }
-
-    /// <summary>
-    /// The color is custom, so the color picker shows under the dropdown: either "Custom" was chosen,
-    /// or the color is none of the presets (a saved custom color, or one typed into the config). It
-    /// stays custom while the picker is dragged, even across a preset's exact color, so the picker
-    /// does not vanish from under the pointer.
-    /// </summary>
-    public bool IsCustomAccent => this.customAccentChosen || this.MatchingPreset() is null;
-
-    /// <summary>
-    /// The accent as a <see cref="Avalonia.Media.Color"/> for the custom color picker. Config keeps
-    /// the plain #RRGGBB string it always has; the picker's alpha is ignored.
-    /// </summary>
-    public Avalonia.Media.Color AccentColorValue
-    {
-        get => Avalonia.Media.Color.TryParse(this.AccentColor, out Avalonia.Media.Color color) ? color : Avalonia.Media.Colors.Gray;
-        set => this.AccentColor = $"#{value.R:X2}{value.G:X2}{value.B:X2}";
-    }
-
-    /// <summary>
-    /// The stored icon name. An unknown name - a hand-edited config, or one saved by a build with more
-    /// icons - is kept as-is until the user picks another, and is drawn as the fallback meanwhile.
-    /// </summary>
-    public string Icon
-    {
-        get => this.icon;
-        set
-        {
-            if (this.SetProperty(ref this.icon, value))
-            {
-                this.OnPropertyChanged(nameof(this.SelectedIcon));
-            }
-        }
-    }
-
-    /// <summary>Every icon a profile can use, each drawn beside its name in the dropdown.</summary>
-    public IReadOnlyList<IconChoiceViewModel> IconChoices { get; }
-
-    /// <summary>
-    /// The dropdown's entry for <see cref="Icon"/>, or the fallback's for a name this build does not
-    /// know - which only shows it; the stored name changes only when another icon is picked.
-    /// </summary>
-    public IconChoiceViewModel SelectedIcon
-    {
-        get => this.IconChoices.First(choice => choice.Name == ProfileIcons.Find(this.Icon).Name);
-        set
-        {
-            if (value is not null)
-            {
-                this.Icon = value.Name;
-            }
-        }
-    }
+    /// <summary>The profile's colour and icon.</summary>
+    public ProfileLookViewModel Look { get; }
 
     public ObservableCollection<AppRowViewModel> Apps { get; }
 
@@ -345,195 +132,18 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     /// </summary>
     public AppPickerViewModel AppPicker { get; }
 
-    /// <summary>
-    /// What the chosen browser can be asked to do, and nothing it can't: opening one of its
-    /// profiles is Chrome's and Brave's alone. Safari's tab groups and profiles, and either
-    /// browser's tab groups, can't be opened by another app at all (docs/browser-control.md).
-    /// </summary>
-    public IReadOnlyList<Choice<BrowserManagementMode>> BrowserModeChoices =>
-        this.CanOpenBrowserProfiles ? ProfileModes : PageModes;
+    public BrowserSettingsViewModel Browser { get; }
 
-    /// <summary>
-    /// The default browser, naming the one it is when known - "Default browser (Google Chrome)" -
-    /// then each supported browser that is installed. One the profile already uses but that has
-    /// since been removed stays, marked, rather than the profile quietly being changed.
-    /// </summary>
-    public IReadOnlyList<Choice<BrowserKind>> BrowserKindChoices { get; }
-
-    public BrowserManagementMode BrowserMode
-    {
-        get => this.browserMode;
-        set
-        {
-            // Only what the chosen browser can do; anything else - which only code can ask for -
-            // opens pages, as every browser can.
-            if (!this.BrowserModeChoices.Any(choice => choice.Value == value))
-            {
-                value = BrowserManagementMode.Urls;
-            }
-
-            if (this.SetProperty(ref this.browserMode, value))
-            {
-                this.OnPropertyChanged(nameof(this.SelectedBrowserMode));
-                this.OnPropertyChanged(nameof(this.IsUrlsMode));
-                this.OnPropertyChanged(nameof(this.IsProfilesMode));
-            }
-        }
-    }
-
-    public Choice<BrowserManagementMode> SelectedBrowserMode
-    {
-        get => this.BrowserModeChoices.First(choice => choice.Value == this.BrowserMode);
-        set
-        {
-            // A ComboBox writes null while its items are being swapped; that is not a choice.
-            if (value is not null)
-            {
-                this.BrowserMode = value.Value;
-            }
-        }
-    }
-
-    public bool IsUrlsMode => this.BrowserMode == BrowserManagementMode.Urls;
-
-    public bool IsProfilesMode => this.BrowserMode == BrowserManagementMode.Profiles;
-
-    /// <summary>Whether the browser has profiles another app can open: Chrome and Brave do.</summary>
-    public bool CanOpenBrowserProfiles => this.EffectiveBrowser is BrowserKind.Chrome or BrowserKind.Brave;
-
-    /// <summary>
-    /// For Safari, where its tab groups and profiles are wanted: macOS switches Safari to one when
-    /// a Focus with that filter turns on, and this profile can turn the Focus on.
-    /// </summary>
-    public bool ShowsSafariFocusTip => this.EffectiveBrowser == BrowserKind.Safari;
-
-    public RelayCommand OpenFocusSettingsCommand { get; }
-
-    /// <summary>The browser a profiles row opens in: the chosen one, which offers profiles only when it is Chrome or Brave.</summary>
-    private BrowserKind ProfilesBrowser => this.CanOpenBrowserProfiles ? this.EffectiveBrowser : BrowserKind.Chrome;
-
-    public BrowserKind BrowserKind
-    {
-        get => this.browserKind;
-        set
-        {
-            if (this.SetProperty(ref this.browserKind, value))
-            {
-                this.OnPropertyChanged(nameof(this.SelectedBrowserKind));
-                this.OnPropertyChanged(nameof(this.CanAvoidDuplicateTabs));
-                this.OnPropertyChanged(nameof(this.AvoidDuplicateTabsHint));
-                this.OnPropertyChanged(nameof(this.CanCloseTabs));
-                this.OnPropertyChanged(nameof(this.CloseTabsHint));
-                this.OnPropertyChanged(nameof(this.CanOpenBrowserProfiles));
-                this.OnPropertyChanged(nameof(this.ShowsSafariFocusTip));
-                foreach (BrowserPageRowViewModel row in this.BrowserUrls)
-                {
-                    row.CanClose = this.CanCloseTabs;
-                }
-
-                // Profiles are opened in the section's browser; a row lists that browser's own.
-                if (this.CanOpenBrowserProfiles)
-                {
-                    foreach (BrowserProfileRowViewModel row in this.BrowserProfiles)
-                    {
-                        row.Browser = this.ProfilesBrowser;
-                    }
-                }
-
-                // A browser that can't open profiles leaves the pages - what every browser can do.
-                if (!this.BrowserModeChoices.Any(choice => choice.Value == this.BrowserMode))
-                {
-                    this.BrowserMode = BrowserManagementMode.Urls;
-                }
-
-                this.OnPropertyChanged(nameof(this.BrowserModeChoices));
-                this.OnPropertyChanged(nameof(this.SelectedBrowserMode));
-            }
-        }
-    }
-
-    public Choice<BrowserKind> SelectedBrowserKind
-    {
-        get => this.BrowserKindChoices.First(choice => choice.Value == this.BrowserKind);
-        set
-        {
-            if (value is not null)
-            {
-                this.BrowserKind = value.Value;
-            }
-        }
-    }
-
-    /// <summary>
-    /// The browser the profile's pages open in: the chosen one, or for "Default browser" the one
-    /// macOS opens links in - <see cref="BrowserKind.Default"/> still when that can't be scripted.
-    /// </summary>
-    private BrowserKind EffectiveBrowser => this.BrowserKind == BrowserKind.Default
-        ? this.systemDefault?.Kind ?? BrowserKind.Default
-        : this.BrowserKind;
-
-    /// <summary>
-    /// Whether duplicate-tab avoidance can do anything at all. Finding an already-open tab means
-    /// scripting the browser, which works for Chrome, Brave and Safari - chosen, or the default -
-    /// and not for others, such as Firefox. Surfacing that here is the difference between a toggle
-    /// that lies and one that explains.
-    /// </summary>
-    public bool CanAvoidDuplicateTabs => this.EffectiveBrowser != BrowserKind.Default;
-
-    public string AvoidDuplicateTabsHint => this.CanAvoidDuplicateTabs
-        ? Strings.Browser_AvoidDuplicates_On
-        : this.UnscriptableDefault is { } name
-            ? Localized.Format(Strings.Browser_AvoidDuplicates_Unsupported, name)
-            : Strings.Browser_AvoidDuplicates_NeedsBrowser;
-
-    /// <summary>Why Close is off, under the list of pages.</summary>
-    public string CloseTabsHint => this.UnscriptableDefault is { } name
-        ? Localized.Format(Strings.ProfileSetup_CloseTabsUnsupported, name)
-        : Strings.ProfileSetup_CloseTabsNeedsBrowser;
-
-    /// <summary>The default browser's name when it is the one in use and can't be scripted.</summary>
-    private string? UnscriptableDefault =>
-        this.BrowserKind == BrowserKind.Default && this.systemDefault is { Kind: BrowserKind.Default, Name.Length: > 0 } known
-            ? known.Name
-            : null;
-
-    /// <summary>
-    /// Whether pages can be closed on leaving: as with duplicates, it takes asking a named browser
-    /// for its tabs. The rows' Close stays visible but off, with the reason under the list.
-    /// </summary>
-    public bool CanCloseTabs => this.EffectiveBrowser != BrowserKind.Default;
-
-    public bool AvoidDuplicateTabs
-    {
-        get => this.avoidDuplicateTabs;
-        set => this.SetProperty(ref this.avoidDuplicateTabs, value);
-    }
-
-    public ObservableCollection<BrowserPageRowViewModel> BrowserUrls { get; }
-
-    public ObservableCollection<BrowserProfileRowViewModel> BrowserProfiles { get; }
-
-    /// <summary>"From open tabs" under Startup URLs: the pages open in the chosen browser right now.</summary>
-    public ChoicePickerViewModel UrlTabPicker { get; }
+    /// <summary>Whether this computer has Focus modes for the profile to turn on.</summary>
+    public bool ShowsFocus => this.capabilities.Focus;
 
     public FocusSettingsViewModel Focus { get; }
 
     public MediaSettingsViewModel Media { get; }
 
-    public ObservableCollection<EditableStringRowViewModel> DockerStart { get; }
+    public DockerSettingsViewModel Docker { get; }
 
-    public ObservableCollection<EditableStringRowViewModel> DockerStop { get; }
-
-    /// <summary>"+ Add container" for Start: the containers Docker has, or a note that it isn't running.</summary>
-    public ChoicePickerViewModel DockerStartPicker { get; }
-
-    /// <summary>"+ Add container" for Stop.</summary>
-    public ChoicePickerViewModel DockerStopPicker { get; }
-
-    public ObservableCollection<QuickLinkRowViewModel> QuickLinks { get; }
-
-    /// <summary>"From open tabs" under Quick links: picking a tab fills in both its title and URL.</summary>
-    public ChoicePickerViewModel QuickLinkTabPicker { get; }
+    public QuickLinksSettingsViewModel Links { get; }
 
     public string NotesText
     {
@@ -564,16 +174,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     public bool HasErrorMessage => !string.IsNullOrEmpty(this.ErrorMessage);
 
     public RelayCommand AddAppCommand { get; }
-
-    public RelayCommand AddBrowserUrlCommand { get; }
-
-    public RelayCommand AddBrowserProfileCommand { get; }
-
-    public RelayCommand AddDockerStartCommand { get; }
-
-    public RelayCommand AddDockerStopCommand { get; }
-
-    public RelayCommand AddQuickLinkCommand { get; }
 
     public AsyncRelayCommand SaveCommand { get; }
 
@@ -617,79 +217,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.Apps.Remove(row);
         this.AppPicker.Refresh();
     }
-
-    private void RemoveBrowserUrl(BrowserPageRowViewModel row)
-    {
-        this.BrowserUrls.Remove(row);
-        this.UrlTabPicker.Refresh();
-    }
-
-
-    private void RemoveBrowserProfile(BrowserProfileRowViewModel row) => this.BrowserProfiles.Remove(row);
-
-    private void RemoveDockerStart(EditableStringRowViewModel row)
-    {
-        this.DockerStart.Remove(row);
-        this.DockerStartPicker.Refresh();
-    }
-
-    private void RemoveDockerStop(EditableStringRowViewModel row)
-    {
-        this.DockerStop.Remove(row);
-        this.DockerStopPicker.Refresh();
-    }
-
-    private void RemoveQuickLink(QuickLinkRowViewModel row)
-    {
-        this.QuickLinks.Remove(row);
-        this.QuickLinkTabPicker.Refresh();
-    }
-
-    private List<Choice<BrowserKind>> BrowserChoices()
-    {
-        List<Choice<BrowserKind>> choices =
-        [
-            new(BrowserKind.Default, this.systemDefault is { Name.Length: > 0 } known
-                ? Localized.Format(Strings.Browser_DefaultIs, known.Name)
-                : Strings.Browser_Default)
-        ];
-
-        foreach ((BrowserKind kind, string name) in new[] { (BrowserKind.Safari, "Safari"), (BrowserKind.Chrome, "Google Chrome"), (BrowserKind.Brave, "Brave") })
-        {
-            if (this.catalog.IsBrowserInstalled(kind))
-            {
-                choices.Add(new(kind, name));
-            }
-            else if (kind == this.browserKind)
-            {
-                choices.Add(new(kind, Localized.Format(Strings.Browser_NotInstalled, name)));
-            }
-        }
-
-        return choices;
-    }
-
-    /// <summary>A page added now opens, as pages always did; closing it is opted into.</summary>
-    private BrowserPageRowViewModel UrlRow(string url, bool open = true, bool close = false) =>
-        new(url, open, close, this.CanCloseTabs, this.RemoveBrowserUrl);
-
-    private EditableStringRowViewModel ContainerRow(string name, Action<EditableStringRowViewModel> remove, bool isEditable) =>
-        new(name, remove, isEditable, "IconBox", Strings.ProfileSetup_ContainerName);
-
-    private async Task<IReadOnlyList<PickerChoice>?> LoadOpenTabsAsync(CancellationToken cancellationToken)
-    {
-        IReadOnlyList<OpenTab> tabs = await this.catalog.GetOpenTabsAsync(this.BrowserKind, cancellationToken).ConfigureAwait(true);
-        return tabs.Select(tab => new PickerChoice(tab.Url, tab.Title, HostOf(tab.Url))).ToList();
-    }
-
-    private async Task<IReadOnlyList<PickerChoice>?> LoadContainersAsync(CancellationToken cancellationToken)
-    {
-        IReadOnlyList<string>? containers = await this.catalog.GetDockerContainersAsync(cancellationToken).ConfigureAwait(true);
-        return containers?.Select(name => new PickerChoice(name, name)).ToList();
-    }
-
-    private static string HostOf(string url) =>
-        Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) ? uri.Host : string.Empty;
 
     private async Task SaveAsync()
     {
@@ -746,46 +273,16 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             // Not edited any more - nothing draws it. Kept in step with the name for the config
             // file's readers, the way onboarding has always written it.
             MenuBarLabel = this.DisplayName.Trim().ToUpperInvariant(),
-            AccentColor = this.AccentColor.Trim(),
-            Icon = this.Icon.Trim(),
+            AccentColor = this.Look.AccentColor.Trim(),
+            Icon = this.Look.Icon.Trim(),
             LaunchApps = this.Apps.Where(a => a.LaunchOnEnter && !string.IsNullOrWhiteSpace(a.Name)).Select(a => a.Name.Trim()).ToList(),
             CloseApps = this.Apps.Where(a => a.CloseOnLeave && !string.IsNullOrWhiteSpace(a.Name)).Select(a => a.Name.Trim()).ToList(),
             HideApps = this.Apps.Where(a => a.HideOnLeave && !string.IsNullOrWhiteSpace(a.Name)).Select(a => a.Name.Trim()).ToList(),
-            BrowserManagement = new BrowserManagementConfig
-            {
-                Mode = this.BrowserMode,
-                Browser = this.BrowserKind,
-                Urls = this.BrowserUrls.Where(u => u.OpenOnEnter && !string.IsNullOrWhiteSpace(u.Url)).Select(u => u.Url.Trim()).ToList(),
-
-                // Kept only where it can work, so switching to the default browser can't save a
-                // profile that fails its check.
-                CloseUrls = this.CanCloseTabs
-                    ? this.BrowserUrls.Where(u => u.CloseOnLeave && !string.IsNullOrWhiteSpace(u.Url)).Select(u => u.Url.Trim()).ToList()
-                    : [],
-                Profiles = this.BrowserProfiles
-                    .Where(p => !string.IsNullOrWhiteSpace(p.ProfileDirectory))
-                    .Select(p => new BrowserProfileConfig { Browser = p.Browser, ProfileDirectory = p.ProfileDirectory.Trim(), Urls = p.ParseUrls() })
-                    .ToList(),
-                AvoidDuplicateTabs = this.AvoidDuplicateTabs
-            },
+            BrowserManagement = this.Browser.ToConfig(),
             Focus = this.Focus.ToConfig(),
             Media = this.Media.ToConfig(),
-            Docker = new DockerResourceConfig
-            {
-                Start = this.DockerStart.Where(d => !string.IsNullOrWhiteSpace(d.Value)).Select(d => d.Value.Trim()).ToList(),
-                Stop = this.DockerStop.Where(d => !string.IsNullOrWhiteSpace(d.Value)).Select(d => d.Value.Trim()).ToList()
-            },
-            QuickLinks = this.QuickLinks
-                .Where(q => !string.IsNullOrWhiteSpace(q.Url))
-                .Select(q => new QuickLinkConfig
-                {
-                    // The dashboard shows a link by its title alone, so an untitled one would be a
-                    // blank button; the site's name is the obvious stand-in.
-                    Title = string.IsNullOrWhiteSpace(q.Title) ? HostOf(q.Url.Trim()) : q.Title.Trim(),
-                    Url = q.Url.Trim(),
-                    Icon = string.IsNullOrWhiteSpace(q.Icon) ? "link" : q.Icon.Trim()
-                })
-                .ToList(),
+            Docker = this.Docker.ToConfig(),
+            QuickLinks = this.Links.ToConfig(),
             Notes = this.NotesText
                 .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .ToList(),
@@ -796,33 +293,6 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             }
         };
     }
-
-    private static string OpenTabsEmptyText => Strings.Picker_OpenTabsEmpty;
-
-    private static string OpenTabsUnavailableText => Strings.Picker_OpenTabsUnavailable;
-
-    private static string ContainersEmptyText => Strings.Picker_ContainersEmpty;
-
-    private static string OpenTabsSearchText => Strings.Picker_SearchOpenTabs;
-
-    private static string ContainersSearchText => Strings.Picker_SearchContainers;
-
-    private static string ContainersUnavailableText => Strings.Picker_DockerNotRunning;
-
-    private static readonly (string Hex, string Name)[] AccentPalette =
-    [
-        ("#2F6FED", Strings.Accent_Blue),
-        ("#7B61FF", Strings.Accent_Violet),
-        ("#D6409F", Strings.Accent_Pink),
-        ("#E5484D", Strings.Accent_Red),
-        ("#F2994A", Strings.Accent_Orange),
-        ("#20A67A", Strings.Accent_Green),
-        ("#0FA3B1", Strings.Accent_Teal),
-        ("#6E7781", Strings.Accent_Graphite)
-    ];
-
-    private AccentChoiceViewModel? MatchingPreset() =>
-        this.AccentChoices.FirstOrDefault(choice => string.Equals(choice.Hex, this.AccentColor?.Trim(), StringComparison.OrdinalIgnoreCase));
 
     private static ContextDefinition CreateDefaultContext(IReadOnlyList<ContextDefinition> existing)
     {

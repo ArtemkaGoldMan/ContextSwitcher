@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using ContextSwitcher.Core.ProcessExecution;
+using ContextSwitcher.Core.Security;
 using ContextSwitcher.Infrastructure.ProcessExecution;
 
 namespace ContextSwitcher.Tests.ProcessExecution;
@@ -83,7 +84,7 @@ public sealed class ProcessRunnerTests
     [Fact]
     public async Task RunAsyncThrowsForExecutableOutsideAllowlist()
     {
-        ProcessRunner runner = new();
+        ProcessRunner runner = new(CommandAllowlist.MacOS);
         ProcessStartOptions options = new("echo", ["hello"], TimeSpan.FromSeconds(5));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => runner.RunAsync(options, CancellationToken.None));
@@ -95,7 +96,8 @@ public sealed class ProcessRunnerTests
             ? new("powershell", ["-NoProfile", "-NonInteractive", "-Command", powerShell], timeout, environment)
             : new("/bin/sh", ["-c", sh], timeout, environment);
 
-    private static ProcessRunner ShellRunner() => new(fileName => fileName is "/bin/sh" or "powershell");
+    /// <summary>A shell every system has, which no platform's own allowlist has a reason to allow.</summary>
+    private static ProcessRunner ShellRunner() => new(new CommandAllowlist(["/bin/sh", "powershell"]));
 
     /// <summary>
     /// The process id the probe wrote, once it has - waiting up to fifteen seconds, as PowerShell can

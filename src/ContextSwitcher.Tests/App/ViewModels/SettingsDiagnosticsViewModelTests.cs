@@ -191,7 +191,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
         this.shell,
         new DiagnosticsSources(
             this.paths,
-            () => new RunInfo("ContextSwitcher", "0.6.1", "26.6", "arm64", "release", 1),
+            () => new RunInfo("ContextSwitcher", "0.6.1", "macOS", "26.6", "arm64", "release", 1),
             () => DiagnosticsReport.ReadLog(this.paths.AppLogPath),
             () => [],
             new FakeClock { UtcNow = Now }),

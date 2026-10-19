@@ -16,57 +16,40 @@ namespace ContextSwitcher.Core.Contexts;
 /// </summary>
 public sealed class ClosingAppsFollowUp
 {
-    /// <summary>How long the apps are watched after the switch.</summary>
-    public static readonly TimeSpan DefaultWatchFor = TimeSpan.FromMinutes(2);
-
-    /// <summary>How often they are looked at.</summary>
-    public static readonly TimeSpan DefaultPollEvery = TimeSpan.FromSeconds(2);
-
-    /// <summary>How long a force quit is given to take effect before it counts as not having worked.</summary>
-    public static readonly TimeSpan DefaultForceQuitWait = TimeSpan.FromSeconds(3);
-
-    private static readonly TimeSpan ForceQuitPoll = TimeSpan.FromMilliseconds(100);
-
     private readonly ContextSwitchService switches;
     private readonly IAppProcesses processes;
     private readonly IClock clock;
     private readonly ILogger logger;
-    private readonly TimeSpan pollEvery;
-    private readonly TimeSpan forceQuitWait;
+    private readonly FollowUpTimings timings;
     private readonly Lock gate = new();
     private CancellationTokenSource? watching;
 
     /// <param name="logger">Records each app that quit late, and each force quit.</param>
-    /// <param name="watchFor">Overrides <see cref="DefaultWatchFor"/>, for tests.</param>
-    /// <param name="pollEvery">Overrides <see cref="DefaultPollEvery"/>, for tests.</param>
-    /// <param name="forceQuitWait">Overrides <see cref="DefaultForceQuitWait"/>, for tests.</param>
+    /// <param name="timings">How long the apps are watched, how often, and how long a force quit is given.</param>
     public ClosingAppsFollowUp(
         ContextSwitchService switches,
         IAppProcesses processes,
         IClock clock,
         ILogger logger,
-        TimeSpan? watchFor = null,
-        TimeSpan? pollEvery = null,
-        TimeSpan? forceQuitWait = null)
+        FollowUpTimings timings)
     {
         ArgumentNullException.ThrowIfNull(switches);
         ArgumentNullException.ThrowIfNull(processes);
         ArgumentNullException.ThrowIfNull(clock);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(timings);
 
         this.switches = switches;
         this.processes = processes;
         this.clock = clock;
         this.logger = logger;
-        this.WatchFor = watchFor ?? DefaultWatchFor;
-        this.pollEvery = pollEvery ?? DefaultPollEvery;
-        this.forceQuitWait = forceQuitWait ?? DefaultForceQuitWait;
+        this.timings = timings;
     }
 
     /// <summary>Raised, on a background thread, with the state as written each time a line changed.</summary>
     public event EventHandler<CurrentContextState>? StateAmended;
 
-    public TimeSpan WatchFor { get; }
+    public TimeSpan WatchFor => this.timings.WatchFor;
 
     /// <summary>The watch going on now, finished when there is none - for a test to wait on.</summary>
     public Task Watching { get; private set; } = Task.CompletedTask;
@@ -107,9 +90,9 @@ public sealed class ClosingAppsFollowUp
 
         bool asked = this.processes.ForceQuit(app);
         Stopwatch waited = Stopwatch.StartNew();
-        while (asked && this.processes.IsRunning(app) != false && waited.Elapsed < this.forceQuitWait)
+        while (asked && this.processes.IsRunning(app) != false && waited.Elapsed < this.timings.ForceQuitWait)
         {
-            await Task.Delay(ForceQuitPoll, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(this.timings.ForceQuitLookEvery, cancellationToken).ConfigureAwait(false);
         }
 
         bool gone = this.processes.IsRunning(app) == false;
@@ -139,7 +122,7 @@ public sealed class ClosingAppsFollowUp
         {
             while (pending.Count > 0 && watched.Elapsed < this.WatchFor)
             {
-                await Task.Delay(this.pollEvery, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(this.timings.LookEvery, cancellationToken).ConfigureAwait(false);
                 foreach (string app in pending.ToList())
                 {
                     if (this.processes.IsRunning(app) == false)

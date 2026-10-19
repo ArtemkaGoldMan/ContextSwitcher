@@ -7,6 +7,9 @@ public sealed class FakeLoginItem : ILoginItem
 {
     public LoginItemStatus Status { get; set; } = LoginItemStatus.Off;
 
+    /// <summary>A copy that isn't the installed app, so has no login item to offer - as when run from source.</summary>
+    public static FakeLoginItem Unavailable() => new() { Status = LoginItemStatus.Unavailable };
+
     /// <summary>Returned instead of success, as macOS's reason, when set.</summary>
     public string? Refusal { get; set; }
 

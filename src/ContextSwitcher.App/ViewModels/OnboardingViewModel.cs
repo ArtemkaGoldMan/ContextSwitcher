@@ -33,7 +33,7 @@ public sealed class OnboardingViewModel : ViewModelBase
     private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private readonly IContextSwitchService switchService;
-    private readonly ILoginItem? loginItem;
+    private readonly ILoginItem loginItem;
 
     private int stepIndex;
     private string? errorMessage;
@@ -44,13 +44,13 @@ public sealed class OnboardingViewModel : ViewModelBase
         ConfigurationStore configurationStore,
         IInstalledAppsService installedAppsService,
         IContextSwitchService switchService,
-        ILoginItem? loginItem = null)
+        ILoginItem loginItem)
     {
         this.appState = appState;
         this.configurationStore = configurationStore;
         this.switchService = switchService;
         this.loginItem = loginItem;
-        this.CanOpenAtLogin = loginItem is not null && loginItem.Status != LoginItemStatus.Unavailable;
+        this.CanOpenAtLogin = loginItem.Status != LoginItemStatus.Unavailable;
         this.OpenAtLogin = this.CanOpenAtLogin;
 
         this.Work = new OnboardingProfileViewModel(
@@ -203,7 +203,7 @@ public sealed class OnboardingViewModel : ViewModelBase
             // Should macOS refuse, Settings shows the switch off with macOS's reason; the setup carries on.
             if (this.OpenAtLogin && this.CanOpenAtLogin)
             {
-                this.loginItem!.SetEnabled(true);
+                this.loginItem.SetEnabled(true);
             }
 
             await this.switchService

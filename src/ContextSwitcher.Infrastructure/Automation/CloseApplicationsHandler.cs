@@ -9,38 +9,24 @@ namespace ContextSwitcher.Infrastructure.Automation;
 /// <summary>Asks the apps the context being left lists to quit, and says which of them stayed.</summary>
 public sealed class CloseApplicationsHandler : IStepHandler
 {
-    /// <summary>
-    /// How often to look again for an app that was asked to quit. Electron apps - VS Code, Cursor,
-    /// Slack - answer "quit" at once and then take a second or two to actually go, so a single check
-    /// straight after the quit reported them as "Could not close" while they were closing fine.
-    /// </summary>
-    private static readonly TimeSpan DefaultQuitConfirmInterval = TimeSpan.FromMilliseconds(300);
-
-    /// <summary>A bound on the checks for one app, whatever the interval.</summary>
-    private const int MaxQuitChecks = 15;
-
-    /// <summary>The longest one "is it running?" check may take; it normally takes about 0.1s.</summary>
-    private static readonly TimeSpan MaxCheckTimeout = TimeSpan.FromSeconds(2);
-
     private readonly IAppQuitter quitter;
     private readonly IAppProcesses processes;
     private readonly IClock clock;
-    private readonly TimeSpan quitConfirmInterval;
+    private readonly QuitTimings timings;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="CloseApplicationsHandler"/> class.
-    /// </summary>
-    /// <param name="quitConfirmInterval">Overrides <see cref="DefaultQuitConfirmInterval"/>, for tests.</param>
-    public CloseApplicationsHandler(IAppQuitter quitter, IAppProcesses processes, IClock clock, TimeSpan? quitConfirmInterval = null)
+    /// <summary>A handler that asks apps to quit through <paramref name="quitter"/> and looks for them through <paramref name="processes"/>.</summary>
+    /// <param name="timings">How an app's share of the step is spent, and how often it is looked for.</param>
+    public CloseApplicationsHandler(IAppQuitter quitter, IAppProcesses processes, IClock clock, QuitTimings timings)
     {
         ArgumentNullException.ThrowIfNull(quitter);
         ArgumentNullException.ThrowIfNull(processes);
         ArgumentNullException.ThrowIfNull(clock);
+        ArgumentNullException.ThrowIfNull(timings);
 
         this.quitter = quitter;
         this.processes = processes;
         this.clock = clock;
-        this.quitConfirmInterval = quitConfirmInterval ?? DefaultQuitConfirmInterval;
+        this.timings = timings;
     }
 
     /// <inheritdoc />
@@ -62,11 +48,11 @@ public sealed class CloseApplicationsHandler : IStepHandler
         // one such app consumed all of it. The step-level timeout then fired mid-quit, so the
         // warning below never ran and every later app in the list was never even asked to quit.
         //
-        // Half of an app's share goes to the quit itself, and most of the rest to confirming it went:
+        // Part of an app's share goes to the quit itself, and most of the rest to confirming it went:
         // together they stay inside the share, so the step's own timeout never cuts the report off.
         TimeSpan perApp = step.Timeout / Math.Max(apps.Count, 1);
-        TimeSpan quitTimeout = perApp * 0.5;
-        TimeSpan confirmWindow = perApp * 0.4;
+        TimeSpan quitTimeout = perApp * this.timings.QuitShare;
+        TimeSpan confirmWindow = perApp * this.timings.WatchShare;
 
         // The apps are quit concurrently. The budget above is already per app, so running them
         // together makes the step cost the slowest single quit instead of the sum of all of them -
@@ -120,7 +106,7 @@ public sealed class CloseApplicationsHandler : IStepHandler
     private async Task<bool> IsStillRunningAfterQuitAsync(string app, TimeSpan window, CancellationToken cancellationToken)
     {
         Stopwatch elapsed = Stopwatch.StartNew();
-        for (int attempt = 0; attempt < MaxQuitChecks; attempt++)
+        for (int attempt = 0; attempt < this.timings.MaxLooks; attempt++)
         {
             TimeSpan remaining = window - elapsed.Elapsed;
             if (attempt > 0 && remaining <= TimeSpan.Zero)
@@ -128,19 +114,19 @@ public sealed class CloseApplicationsHandler : IStepHandler
                 break;
             }
 
-            TimeSpan checkTimeout = remaining < MaxCheckTimeout && remaining > TimeSpan.Zero ? remaining : MaxCheckTimeout;
+            TimeSpan checkTimeout = remaining < this.timings.MaxLook && remaining > TimeSpan.Zero ? remaining : this.timings.MaxLook;
             bool? running = await this.quitter.IsRunningAsync(app, checkTimeout, cancellationToken).ConfigureAwait(false);
             if (running == false)
             {
                 return false;
             }
 
-            if (window - elapsed.Elapsed <= this.quitConfirmInterval)
+            if (window - elapsed.Elapsed <= this.timings.LookEvery)
             {
                 break;
             }
 
-            await Task.Delay(this.quitConfirmInterval, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(this.timings.LookEvery, cancellationToken).ConfigureAwait(false);
         }
 
         return true;

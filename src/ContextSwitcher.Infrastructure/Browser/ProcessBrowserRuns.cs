@@ -15,7 +15,7 @@ public sealed class ProcessBrowserRuns : IBrowserRuns
     /// <inheritdoc />
     public string? Current(BrowserKind browser)
     {
-        if (browser is not (BrowserKind.Chrome or BrowserKind.Brave))
+        if (!KnownBrowsers.KeepsTabIds(browser))
         {
             return null;
         }

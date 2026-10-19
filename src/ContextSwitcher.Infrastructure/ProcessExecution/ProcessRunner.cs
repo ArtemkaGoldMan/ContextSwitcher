@@ -15,26 +15,22 @@ namespace ContextSwitcher.Infrastructure.ProcessExecution;
 /// </summary>
 public sealed class ProcessRunner : IProcessRunner
 {
-    private readonly Func<string, bool> isAllowed;
+    private readonly CommandAllowlist allowlist;
 
-    /// <summary>A runner for what <see cref="CommandAllowlist"/> allows - the only one the app makes.</summary>
-    public ProcessRunner()
-        : this(CommandAllowlist.IsAllowed)
+    /// <summary>A runner for what <paramref name="allowlist"/> allows - the platform's, in the app.</summary>
+    public ProcessRunner(CommandAllowlist allowlist)
     {
-    }
+        ArgumentNullException.ThrowIfNull(allowlist);
 
-    /// <summary>
-    /// A runner with an allowlist of its own, for the tests: they run a shell every system has, which
-    /// <see cref="CommandAllowlist"/> rightly leaves out.
-    /// </summary>
-    internal ProcessRunner(Func<string, bool> isAllowed) => this.isAllowed = isAllowed;
+        this.allowlist = allowlist;
+    }
 
     /// <inheritdoc />
     public async Task<ProcessResult> RunAsync(ProcessStartOptions options, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        if (!this.isAllowed(options.FileName))
+        if (!this.allowlist.IsAllowed(options.FileName))
         {
             throw new InvalidOperationException($"Executable '{options.FileName}' is not in the command allowlist.");
         }

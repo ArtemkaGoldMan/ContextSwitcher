@@ -1,6 +1,7 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.App.Resources;
+using ContextSwitcher.Core.Platform;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -21,9 +22,15 @@ public sealed class MediaSettingsViewModel : ViewModelBase
     private bool isLoadingMusicPlaylists;
     private string musicStatus = string.Empty;
 
-    public MediaSettingsViewModel(ISystemCatalog catalog, MediaConfig media)
+    public MediaSettingsViewModel(ISystemCatalog catalog, PlatformCapabilities capabilities, MediaConfig media)
     {
         this.catalog = catalog;
+
+        // The players this computer has, and the profile's own even when it hasn't - from another
+        // computer's settings - rather than the profile quietly being changed.
+        this.Players = AllPlayers
+            .Where(choice => capabilities.Plays(choice.Value) || choice.Value == media.Player)
+            .ToList();
         this.selectedPlayer = this.Players.First(choice => choice.Value == media.Player);
         this.playlist = media.Playlist;
         this.autoPlay = media.AutoPlay;
@@ -38,7 +45,9 @@ public sealed class MediaSettingsViewModel : ViewModelBase
         }
     }
 
-    public IReadOnlyList<Choice<MediaPlayerKind>> Players { get; } =
+    public IReadOnlyList<Choice<MediaPlayerKind>> Players { get; }
+
+    private static IReadOnlyList<Choice<MediaPlayerKind>> AllPlayers { get; } =
     [
         new(MediaPlayerKind.None, Strings.Media_None),
         new(MediaPlayerKind.AppleMusic, "Apple Music"),

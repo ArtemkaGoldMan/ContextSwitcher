@@ -7,6 +7,7 @@ using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views.Pages;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Tests.TestDoubles;
 
@@ -138,8 +139,8 @@ public sealed class ProfileSetupInteractionTests : UiTest
         await OnUiThreadAsync(() =>
         {
             (ProfileSetupViewModel viewModel, _) = CreateViewModel();
-            viewModel.BrowserKind = BrowserKind.Chrome;
-            viewModel.BrowserMode = mode;
+            viewModel.Browser.BrowserKind = BrowserKind.Chrome;
+            viewModel.Browser.BrowserMode = mode;
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2400);
             ExpandSections(window);
 
@@ -170,21 +171,21 @@ public sealed class ProfileSetupInteractionTests : UiTest
         await OnUiThreadAsync(() =>
         {
             (ProfileSetupViewModel viewModel, _) = CreateViewModel();
-            viewModel.BrowserKind = BrowserKind.Chrome;
+            viewModel.Browser.BrowserKind = BrowserKind.Chrome;
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2400);
             ExpandSections(window);
 
-            viewModel.BrowserMode = BrowserManagementMode.None;
+            viewModel.Browser.BrowserMode = BrowserManagementMode.None;
             Settle(window);
             Assert.Empty(VisibleButtons(window, "+ Add URL"));
             Assert.Empty(VisibleButtons(window, "+ Add browser profile"));
 
-            viewModel.BrowserMode = BrowserManagementMode.Urls;
+            viewModel.Browser.BrowserMode = BrowserManagementMode.Urls;
             Settle(window);
             Assert.NotEmpty(VisibleButtons(window, "+ Add URL"));
             Assert.Empty(VisibleButtons(window, "+ Add browser profile"));
 
-            viewModel.BrowserMode = BrowserManagementMode.Profiles;
+            viewModel.Browser.BrowserMode = BrowserManagementMode.Profiles;
             Settle(window);
             Assert.NotEmpty(VisibleButtons(window, "+ Add browser profile"));
             Assert.Empty(VisibleButtons(window, "+ Add URL"));
@@ -209,16 +210,16 @@ public sealed class ProfileSetupInteractionTests : UiTest
             ComboBox onSwitch = Dropdown(window, "On switch");
             Assert.True(browser.TranslatePoint(new Point(0, 0), window)!.Value.Y < onSwitch.TranslatePoint(new Point(0, 0), window)!.Value.Y, "the browser comes before what to do with it");
 
-            viewModel.BrowserKind = BrowserKind.Chrome;
-            viewModel.BrowserMode = BrowserManagementMode.Profiles;
+            viewModel.Browser.BrowserKind = BrowserKind.Chrome;
+            viewModel.Browser.BrowserMode = BrowserManagementMode.Profiles;
             Settle(window);
             Assert.Equal(["Don't open anything", "Open web pages", "Open browser profiles"], onSwitch.Items.Cast<Choice<BrowserManagementMode>>().Select(c => c.Label));
             Assert.False(IsShown(window, Strings.ProfileSetup_SafariFocusTip));
 
-            viewModel.BrowserKind = BrowserKind.Safari;
+            viewModel.Browser.BrowserKind = BrowserKind.Safari;
             Settle(window);
             Assert.Equal(["Don't open anything", "Open web pages"], onSwitch.Items.Cast<Choice<BrowserManagementMode>>().Select(c => c.Label));
-            Assert.Equal(BrowserManagementMode.Urls, viewModel.BrowserMode);
+            Assert.Equal(BrowserManagementMode.Urls, viewModel.Browser.BrowserMode);
             Assert.Equal("Open web pages", Assert.IsType<Choice<BrowserManagementMode>>(onSwitch.SelectedItem).Label);
             Assert.True(IsShown(window, Strings.ProfileSetup_SafariFocusTip));
             Assert.NotEmpty(VisibleButtons(window, "Open Focus settings ↗"));
@@ -262,7 +263,7 @@ public sealed class ProfileSetupInteractionTests : UiTest
 
             ChooseFromDropdown(window, Dropdown(window, "Accent color"), "Violet");
 
-            Assert.Equal("#7B61FF", viewModel.AccentColor);
+            Assert.Equal("#7B61FF", viewModel.Look.AccentColor);
             Assert.Equal(Avalonia.Media.Color.Parse("#7B61FF"), Assert.IsAssignableFrom<Avalonia.Media.ISolidColorBrush>(preview.Background).Color);
             Assert.False(IsClickable(FindControl<ColorView>(window, _ => true)), "the custom color picker shows for a preset");
         });
@@ -282,7 +283,7 @@ public sealed class ProfileSetupInteractionTests : UiTest
 
             ChooseFromDropdown(window, Dropdown(window, "Accent color"), "Custom");
 
-            Assert.True(viewModel.IsCustomAccent);
+            Assert.True(viewModel.Look.IsCustomAccent);
             Assert.True(IsClickable(FindControl<ColorView>(window, _ => true)), "the custom color picker did not appear");
         });
     }
@@ -300,7 +301,7 @@ public sealed class ProfileSetupInteractionTests : UiTest
 
             ChooseFromDropdown(window, Dropdown(window, "Icon"), "Music");
 
-            Assert.Equal("music", viewModel.Icon);
+            Assert.Equal("music", viewModel.Look.Icon);
             Assert.NotSame(before, glyph.Data);
         });
     }
@@ -321,8 +322,8 @@ public sealed class ProfileSetupInteractionTests : UiTest
         await OnUiThreadAsync(() =>
         {
             (ProfileSetupViewModel viewModel, _) = CreateViewModel();
-            viewModel.BrowserKind = BrowserKind.Chrome;
-            viewModel.BrowserMode = mode;
+            viewModel.Browser.BrowserKind = BrowserKind.Chrome;
+            viewModel.Browser.BrowserMode = mode;
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
             ExpandSections(window);
 
@@ -381,8 +382,8 @@ public sealed class ProfileSetupInteractionTests : UiTest
     }
 
     private static int CountRows(ProfileSetupViewModel viewModel) =>
-        viewModel.BrowserUrls.Count + viewModel.BrowserProfiles.Count
-        + viewModel.QuickLinks.Count + viewModel.DockerStart.Count + viewModel.DockerStop.Count;
+        viewModel.Browser.BrowserUrls.Count + viewModel.Browser.BrowserProfiles.Count
+        + viewModel.Links.QuickLinks.Count + viewModel.Docker.DockerStart.Count + viewModel.Docker.DockerStop.Count;
 
     private static async Task WaitUntil(Func<bool> condition)
     {
@@ -409,6 +410,6 @@ public sealed class ProfileSetupInteractionTests : UiTest
         // that resumes on the wrong thread would look identical to one that does not.
         ConfigurationStore store = new(new YieldingJsonStore(jsonStore), paths, validator, this.appState, new TestLogger());
 
-        return (new ProfileSetupViewModel(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), configuration.Contexts[0]), store);
+        return (new ProfileSetupViewModel(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), configuration.Contexts[0]), store);
     }
 }

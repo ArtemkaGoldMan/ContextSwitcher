@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.ProcessExecution;
+using ContextSwitcher.Core.Security;
 using ContextSwitcher.Core.Updates;
 using ContextSwitcher.Infrastructure.ProcessExecution;
 using ContextSwitcher.Infrastructure.Updates;
@@ -72,7 +73,7 @@ public sealed class AppBundleUpdaterTests : IDisposable
         }
 
         string installed = await MakeBundleAsync(Path.Combine(this.root, "Applications"), "0.1.0", signAdHoc: true);
-        AppBundleUpdater updater = new(new HttpClient(this.handler), new ProcessRunner(), installed, this.root, "/usr/bin/true");
+        AppBundleUpdater updater = new(new HttpClient(this.handler), new ProcessRunner(CommandAllowlist.MacOS), installed, this.root, "/usr/bin/true");
 
         string? blocker = (await updater.GetInstallBlockerAsync(CancellationToken.None))?.English;
 
@@ -255,7 +256,7 @@ public sealed class AppBundleUpdaterTests : IDisposable
 
     private static async Task Run(string tool, params string[] arguments)
     {
-        ProcessResult result = await new ProcessRunner().RunAsync(new ProcessStartOptions(tool, arguments, TimeSpan.FromMinutes(1)), CancellationToken.None);
+        ProcessResult result = await new ProcessRunner(CommandAllowlist.MacOS).RunAsync(new ProcessStartOptions(tool, arguments, TimeSpan.FromMinutes(1)), CancellationToken.None);
         Assert.True(result.ExitCode == 0, $"{tool} failed: {result.StandardError}");
     }
 
@@ -287,7 +288,7 @@ public sealed class AppBundleUpdaterTests : IDisposable
     /// </summary>
     private sealed class CertificateRunner : IProcessRunner
     {
-        private readonly ProcessRunner real = new();
+        private readonly ProcessRunner real = new(CommandAllowlist.MacOS);
 
         public bool SignatureMatches { get; set; } = true;
 

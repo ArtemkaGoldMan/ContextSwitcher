@@ -3,6 +3,7 @@ using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Core.Serialization;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Tests.TestDoubles;
@@ -114,8 +115,30 @@ public sealed class SettingsTransferViewModelTests
         Assert.False(transfer.IsConfirmingImport);
     }
 
+    /// <summary>
+    /// Settings from a computer that can do more are imported whole, and what this one can't use is
+    /// said - not dropped, so a computer that can still has it.
+    /// </summary>
+    [Fact]
+    public async Task WhatThisComputerCantUseIsSaidAndKept()
+    {
+        this.picker.FileToOpen = Settings(""" "activeContextId": "deep", "contexts": [ { "id": "deep", "displayName": "Deep work", "focus": { "enabled": true, "modeName": "Work" } } ] """);
+        SettingsTransferViewModel transfer = this.Create(Platform.PlatformCapabilitiesTests.Lesser);
+
+        await transfer.ImportCommand.ExecuteAsync(null);
+        await transfer.ConfirmImportCommand.ExecuteAsync(null);
+
+        Assert.Equal(
+            "Imported: your profiles and settings now come from “settings backup.json”. Some of them this computer can't use, and they stay in the settings as they are: Deep work turns on a Focus, which this computer doesn't have.",
+            transfer.Message);
+        Assert.Equal("Work", this.jsonStore.Get<AppConfiguration>(this.configPaths.SettingsPath)!.Contexts[0].Focus.ModeName);
+    }
+
     private static string Settings(string body) => "{ \"schemaVersion\": 1, " + body + " }";
 
-    private SettingsTransferViewModel Create() =>
-        new(this.appState, new ConfigurationStore(this.jsonStore, this.configPaths, new ConfigurationValidator(), this.appState, new TestLogger())) { FilePicker = this.picker };
+    private SettingsTransferViewModel Create(PlatformCapabilities? capabilities = null) =>
+        new(this.appState, new ConfigurationStore(this.jsonStore, this.configPaths, new ConfigurationValidator(), this.appState, new TestLogger()), capabilities ?? PlatformCapabilities.MacOS)
+        {
+            FilePicker = this.picker
+        };
 }

@@ -201,11 +201,11 @@ public sealed class TrailLogger : ILogger
             Level = LogLevel.Information,
             Category = "Run",
             EventId = "RunStarted",
-            Message = $"{info.AppName} {info.Version} on macOS {info.SystemVersion} ({info.Architecture})",
+            Message = $"{info.AppName} {info.Version} on {info.SystemName} {info.SystemVersion} ({info.Architecture})",
             Data = new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 ["version"] = info.Version,
-                ["macOS"] = info.SystemVersion,
+                [info.SystemName] = info.SystemVersion,
                 ["architecture"] = info.Architecture,
                 ["build"] = info.Build,
                 ["pid"] = info.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture)

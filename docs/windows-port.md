@@ -240,14 +240,13 @@ These come before any Windows code, and none of them changes what the Mac app do
    `IAppProcesses`, `IRunningApplications`, `ILoginItem`, `ISystemNotifications`, `IDefaultBrowser`,
    `IAppUpdater`, `ISystemCatalog`, `IInstalledAppsService`, `IPermissionsChecker`.
 
-2. **How a profile names an app.** A profile stores the app's bundle name - "Visual Studio Code" -
+2. **How a profile names an app** - done in [#84](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/84), as the settings' `apps` map. A profile stores the app's bundle name - "Visual Studio Code" -
    which both `open -a` and AppleScript understand. On Windows the Start menu name is not the
    process (`Code.exe`), and Store apps are known by an AppUserModelID. Next to the name, a profile
    needs what the app was picked as: its AppUserModelID, and its executable to recognise it running.
-   A new optional field reads old files unchanged. **This is the decision to make before anything
-   else.**
+   The map is optional, so old files read unchanged.
 
-3. **What each platform can do.** Profile Setup hides what the platform lacks - Focus, Apple Music,
+3. **What each platform can do** - done in [#84](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/84), as `PlatformCapabilities`. Profile Setup hides what the platform lacks - Focus, Apple Music,
    Safari, closing tabs by id - and `AutomationPlanBuilder` plans no step for it. A profile imported
    from a Mac says which of its apps and settings this machine cannot use, rather than failing at
    switch time.

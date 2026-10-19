@@ -4,6 +4,7 @@ using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Infrastructure.Logging;
 using ContextSwitcher.Tests.TestDoubles;
@@ -51,7 +52,7 @@ public sealed class UiScenario
             this.Releases, this.Updater, new FakeSystemNotifications(), this.AppState, new FakeAppInfo(new Version(0, 1, 0)), this.Clock, new TestLogger());
         this.Updates = new UpdatesViewModel(this.UpdateChecker, this.Shell);
         this.Diagnostics = new DiagnosticsSources(
-            this.Paths, () => new RunInfo("ContextSwitcher", "0.1.0", "26.6", "arm64", "release", 1), () => [], () => [], this.Clock);
+            this.Paths, () => new RunInfo("ContextSwitcher", "0.1.0", "macOS", "26.6", "arm64", "release", 1), () => [], () => [], this.Clock);
     }
 
     /// <summary>The scenario's settings and state, which every view model it builds reads and saves to.</summary>
@@ -118,14 +119,14 @@ public sealed class UiScenario
 
     public MainAppViewModel MainApp() => new(
         this.AppState, this.SwitchService, this.ConfigurationStore,
-        this.Permissions, this.Shell, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates, this.Diagnostics,
-        new FakePreferredLanguages());
+        this.Permissions, this.Shell, this.Analytics, this.InstalledApps, this.Notice, this.Updates, this.Diagnostics,
+        new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), this.ProfileSetup);
 
     public ProfilesViewModel Profiles() =>
-        new(this.AppState, this.SwitchService, this.ConfigurationStore);
+        new(this.AppState, this.SwitchService, this.ConfigurationStore, new SwitchNoticeViewModel(this.AppState, DateTimeOffset.UtcNow));
 
     public SettingsViewModel Settings() =>
-        new(this.AppState, this.ConfigurationStore, this.Permissions, this.Shell, this.Updates, this.Diagnostics, new FakePreferredLanguages());
+        new(this.AppState, this.ConfigurationStore, this.Permissions, this.Shell, this.Updates, this.Diagnostics, new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), this.InstalledApps);
 
     public StatsViewModel Stats() => new(this.AppState, this.Analytics);
 
@@ -133,8 +134,8 @@ public sealed class UiScenario
         this.AppState, this.SwitchService, this.Analytics, this.Shell, this.Clock);
 
     public OnboardingViewModel Onboarding() =>
-        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.SwitchService);
+        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.SwitchService, FakeLoginItem.Unavailable());
 
     public ProfileSetupViewModel ProfileSetup(ContextDefinition? existing = null) =>
-        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.Catalog, this.Shell, this.FocusShortcuts, existing);
+        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.Catalog, this.Shell, this.FocusShortcuts, PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), existing);
 }

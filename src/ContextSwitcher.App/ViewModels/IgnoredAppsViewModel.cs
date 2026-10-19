@@ -19,21 +19,18 @@ public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
 {
     private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
-    private readonly IInstalledAppsService? installedApps;
+    private readonly IInstalledAppsService installedApps;
     private readonly Dictionary<string, Bitmap?> icons = new(StringComparer.OrdinalIgnoreCase);
     private bool pickerLoaded;
     private string? message;
 
-    public IgnoredAppsViewModel(IAppState appState, ConfigurationStore configurationStore, IInstalledAppsService? installedApps)
+    public IgnoredAppsViewModel(IAppState appState, ConfigurationStore configurationStore, IInstalledAppsService installedApps)
     {
         this.appState = appState;
         this.configurationStore = configurationStore;
         this.installedApps = installedApps;
         this.Apps = new ObservableCollection<IgnoredAppRowViewModel>();
-        if (installedApps is not null)
-        {
-            this.Picker = new AppPickerViewModel(installedApps, () => this.Apps.Select(row => row.Name), name => _ = this.AddAsync(name));
-        }
+        this.Picker = new AppPickerViewModel(installedApps, () => this.Apps.Select(row => row.Name), name => _ = this.AddAsync(name));
 
         this.OpenPickerCommand = new RelayCommand(() => _ = this.LoadPickerAsync());
         this.Reload();
@@ -46,10 +43,8 @@ public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
 
     public ObservableCollection<IgnoredAppRowViewModel> Apps { get; }
 
-    /// <summary>Picks an installed app to add; none where installed apps can't be read.</summary>
-    public AppPickerViewModel? Picker { get; }
-
-    public bool CanAdd => this.Picker is not null;
+    /// <summary>Picks an installed app to add.</summary>
+    public AppPickerViewModel Picker { get; }
 
     /// <summary>What adding one did - which profiles it was taken out of.</summary>
     public string? Message
@@ -91,7 +86,7 @@ public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
     /// <summary>Reads every installed app and its icon for the picker, the first time it is opened.</summary>
     private async Task LoadPickerAsync()
     {
-        if (this.Picker is null || this.pickerLoaded)
+        if (this.pickerLoaded)
         {
             return;
         }
@@ -103,7 +98,7 @@ public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
     /// <summary>The icons of the apps on the list - only those, whatever else is installed.</summary>
     private async Task LoadListedIconsAsync()
     {
-        if (this.installedApps is null || this.Apps.Count == 0)
+        if (this.Apps.Count == 0)
         {
             return;
         }
@@ -129,7 +124,7 @@ public sealed class IgnoredAppsViewModel : ViewModelBase, IDisposable
         this.Apps.Clear();
         foreach (string name in ignored)
         {
-            Bitmap? icon = this.icons.GetValueOrDefault(name) ?? this.Picker?.ResolveIcon(name);
+            Bitmap? icon = this.icons.GetValueOrDefault(name) ?? this.Picker.ResolveIcon(name);
             this.Apps.Add(new IgnoredAppRowViewModel(name, icon, row => _ = this.RemoveAsync(row)));
         }
 

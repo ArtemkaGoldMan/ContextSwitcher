@@ -1,32 +1,36 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.Core.Platform;
 
 namespace ContextSwitcher.Core.Automation;
 
 /// <summary>
 /// Builds the ordered <see cref="AutomationPlan"/> for a switch from one context to another,
-/// following the resource-freeing / environment / activation ordering in agent.md section 8.
+/// following the resource-freeing / environment / activation ordering in agent.md section 8. What
+/// this computer can't do - <see cref="PlatformCapabilities"/> - gets no step.
 /// </summary>
 public sealed class AutomationPlanBuilder
 {
-    private static readonly TimeSpan QuitAppTimeoutPerApp = TimeSpan.FromSeconds(10);
-    private static readonly TimeSpan LaunchAppTimeoutPerApp = TimeSpan.FromSeconds(15);
-    private static readonly TimeSpan BrowserContextTimeout = TimeSpan.FromSeconds(20);
-    private static readonly TimeSpan CloseTabsTimeout = TimeSpan.FromSeconds(10);
-    private static readonly TimeSpan HideAppsTimeout = TimeSpan.FromSeconds(5);
-    private static readonly TimeSpan FocusTimeout = TimeSpan.FromSeconds(10);
-    private static readonly TimeSpan MediaTimeout = TimeSpan.FromSeconds(8);
-    private static readonly TimeSpan DockerTimeout = TimeSpan.FromSeconds(45);
+    private readonly PlatformCapabilities capabilities;
+    private readonly StepBudgets budgets;
+    private readonly IDefaultBrowser defaultBrowser;
 
-    private readonly IDefaultBrowser? defaultBrowser;
-
+    /// <summary>A builder that plans only what this computer can do, each step in the time it is given.</summary>
+    /// <param name="capabilities">What this computer can do; a profile's part that it can't is left out.</param>
+    /// <param name="budgets">How long each step may take.</param>
     /// <param name="defaultBrowser">
     /// Which browser "Default browser" means. A profile set to it is planned as that browser when
     /// it is one that can be scripted, so its tabs can be checked for duplicates and closed.
     /// </param>
-    public AutomationPlanBuilder(IDefaultBrowser? defaultBrowser = null)
+    public AutomationPlanBuilder(PlatformCapabilities capabilities, StepBudgets budgets, IDefaultBrowser defaultBrowser)
     {
+        ArgumentNullException.ThrowIfNull(capabilities);
+        ArgumentNullException.ThrowIfNull(budgets);
+        ArgumentNullException.ThrowIfNull(defaultBrowser);
+
+        this.capabilities = capabilities;
+        this.budgets = budgets;
         this.defaultBrowser = defaultBrowser;
     }
 
@@ -55,41 +59,44 @@ public sealed class AutomationPlanBuilder
         List<AutomationStep> steps = [];
 
         // Asked once a switch; Default stays Default for a browser that can't be scripted.
-        BrowserKind systemDefault = this.defaultBrowser?.Get()?.Kind ?? BrowserKind.Default;
+        BrowserKind systemDefault = this.defaultBrowser.Get()?.Kind ?? BrowserKind.Default;
         BrowserKind Resolve(BrowserKind browser) => browser == BrowserKind.Default ? systemDefault : browser;
 
         if (previous is not null)
         {
-            AddStopDockerResources(steps, previous, target, criticalTypes);
+            this.AddStopDockerResources(steps, previous, target, criticalTypes);
 
             // Before the apps: if the browser itself is quit as well, its tabs are closed first, so
             // they don't come back when it next restores its last session.
-            AddCloseBrowserTabs(steps, previous, target, Resolve, criticalTypes);
+            this.AddCloseBrowserTabs(steps, previous, target, Resolve, criticalTypes);
         }
 
         // What the user chose to close of everything else open, then the profiles' own.
-        AddCloseOtherTabs(steps, extras, previous?.Id ?? target?.Id ?? string.Empty, criticalTypes);
-        AddCloseApplications(steps, previous, target, extras, ignored, criticalTypes);
+        this.AddCloseOtherTabs(steps, extras, previous?.Id ?? target?.Id ?? string.Empty, criticalTypes);
+        this.AddCloseApplications(steps, previous, target, extras, ignored, criticalTypes);
         if (previous is not null)
         {
-            AddHideApplications(steps, previous, target, ignored, criticalTypes);
+            this.AddHideApplications(steps, previous, target, ignored, criticalTypes);
         }
 
-        AddSetFocusMode(steps, previous, target, criticalTypes);
+        if (this.capabilities.Focus)
+        {
+            this.AddSetFocusMode(steps, previous, target, criticalTypes);
+        }
 
         if (target is not null)
         {
-            AddLaunchApplications(steps, target, ignored, criticalTypes);
-            AddManageBrowserContext(steps, target, Resolve, criticalTypes);
-            AddStartDockerResources(steps, target, criticalTypes);
-            AddControlMedia(steps, target, criticalTypes);
+            this.AddLaunchApplications(steps, target, ignored, criticalTypes);
+            this.AddManageBrowserContext(steps, target, Resolve, criticalTypes);
+            this.AddStartDockerResources(steps, target, criticalTypes);
+            this.AddControlMedia(steps, target, criticalTypes);
         }
 
         return new AutomationPlan(target?.Id ?? string.Empty, previous?.Id, steps);
     }
 
     /// <summary>A container the profile being entered starts again is left running.</summary>
-    private static void AddStopDockerResources(
+    private void AddStopDockerResources(
         List<AutomationStep> steps,
         ContextDefinition previous,
         ContextDefinition? target,
@@ -107,7 +114,7 @@ public sealed class AutomationPlanBuilder
             AutomationStepType.StopDockerResources,
             previous.Id,
             "Stop Docker resources",
-            DockerTimeout,
+            this.budgets.Docker,
             criticalTypes,
             new ContainersArguments(containers)));
     }
@@ -118,7 +125,7 @@ public sealed class AutomationPlanBuilder
     /// losing whatever was done in it. A default browser that can't be scripted is still planned -
     /// the step then says why nothing closed.
     /// </summary>
-    private static void AddCloseBrowserTabs(
+    private void AddCloseBrowserTabs(
         List<AutomationStep> steps,
         ContextDefinition previous,
         ContextDefinition? target,
@@ -126,7 +133,7 @@ public sealed class AutomationPlanBuilder
         HashSet<string> criticalTypes)
     {
         BrowserManagementConfig leaving = previous.BrowserManagement;
-        if (leaving.Mode != BrowserManagementMode.Urls || leaving.CloseUrls.Count == 0)
+        if (leaving.Mode != BrowserManagementMode.Urls || leaving.CloseUrls.Count == 0 || !this.capabilities.HasBrowser(leaving.Browser))
         {
             return;
         }
@@ -141,7 +148,7 @@ public sealed class AutomationPlanBuilder
             AutomationStepType.CloseBrowserTabs,
             previous.Id,
             "Close browser tabs",
-            CloseTabsTimeout,
+            this.budgets.CloseTabs,
             criticalTypes,
             new CloseTabsArguments(browser, leaving.CloseUrls, keep, previous.Id)));
     }
@@ -150,7 +157,7 @@ public sealed class AutomationPlanBuilder
     /// An app the profile being entered launches is left running: quitting it only to open it
     /// again lost its windows and work, and made the switch wait for both.
     /// </summary>
-    private static void AddCloseApplications(
+    private void AddCloseApplications(
         List<AutomationStep> steps,
         ContextDefinition? previous,
         ContextDefinition? target,
@@ -173,7 +180,7 @@ public sealed class AutomationPlanBuilder
             AutomationStepType.CloseApplications,
             previous?.Id ?? target?.Id ?? string.Empty,
             "Close applications",
-            QuitAppTimeoutPerApp * apps.Count,
+            this.budgets.QuitPerApp * apps.Count,
             criticalTypes,
             new AppsArguments(apps)));
     }
@@ -182,7 +189,7 @@ public sealed class AutomationPlanBuilder
     /// The apps the profile being left hides rather than quits. One the profile being entered
     /// launches is left alone: opening it would only bring it straight back.
     /// </summary>
-    private static void AddHideApplications(
+    private void AddHideApplications(
         List<AutomationStep> steps,
         ContextDefinition previous,
         ContextDefinition? target,
@@ -202,12 +209,12 @@ public sealed class AutomationPlanBuilder
             AutomationStepType.HideApplications,
             previous.Id,
             "Hide applications",
-            HideAppsTimeout,
+            this.budgets.HideApps,
             criticalTypes,
             new AppsArguments(apps)));
     }
 
-    private static void AddSetFocusMode(
+    private void AddSetFocusMode(
         List<AutomationStep> steps,
         ContextDefinition? previous,
         ContextDefinition? target,
@@ -230,7 +237,7 @@ public sealed class AutomationPlanBuilder
             AutomationStepType.SetFocusMode,
             (target ?? previous)!.Id,
             "Set Focus mode",
-            FocusTimeout,
+            this.budgets.Focus,
             criticalTypes,
             new FocusArguments(
                 targetUsesFocus,
@@ -246,7 +253,7 @@ public sealed class AutomationPlanBuilder
     private static bool UsesFocus(ContextDefinition context) =>
         context.Focus.Enabled && !string.IsNullOrWhiteSpace(context.Focus.ModeName);
 
-    private static void AddLaunchApplications(
+    private void AddLaunchApplications(
         List<AutomationStep> steps,
         ContextDefinition target,
         IReadOnlyCollection<string> ignored,
@@ -262,7 +269,7 @@ public sealed class AutomationPlanBuilder
             AutomationStepType.LaunchApplications,
             target.Id,
             "Launch applications",
-            LaunchAppTimeoutPerApp * apps.Count,
+            this.budgets.LaunchPerApp * apps.Count,
             criticalTypes,
             new AppsArguments(apps)));
     }
@@ -271,7 +278,7 @@ public sealed class AutomationPlanBuilder
     /// The tabs the user chose to close of the ones no profile had, a step per browser. They go by
     /// their own addresses, and with no profile's remembered tabs: those are the profile's own step's.
     /// </summary>
-    private static void AddCloseOtherTabs(List<AutomationStep> steps, SwitchExtras extras, string subjectId, HashSet<string> criticalTypes)
+    private void AddCloseOtherTabs(List<AutomationStep> steps, SwitchExtras extras, string subjectId, HashSet<string> criticalTypes)
     {
         foreach (IGrouping<BrowserKind, TabToClose> browser in extras.CloseTabs.GroupBy(tab => tab.Browser))
         {
@@ -279,25 +286,33 @@ public sealed class AutomationPlanBuilder
                 AutomationStepType.CloseBrowserTabs,
                 $"{subjectId}.others.{browser.Key}",
                 "Close other browser tabs",
-                CloseTabsTimeout,
+                this.budgets.CloseTabs,
                 criticalTypes,
                 new CloseTabsArguments(browser.Key, browser.Select(tab => tab.Url).Distinct(StringComparer.Ordinal).ToList(), [], ContextId: null)));
         }
     }
 
-    private static void AddManageBrowserContext(
+    private void AddManageBrowserContext(
         List<AutomationStep> steps,
         ContextDefinition target,
         Func<BrowserKind, BrowserKind> resolve,
         HashSet<string> criticalTypes)
     {
         BrowserManagementConfig browser = target.BrowserManagement;
+        BrowserKind resolved = resolve(browser.Browser);
+
+        // Only the profiles this computer can open.
+        IReadOnlyList<BrowserProfileConfig> profiles = browser.Profiles
+            .Where(profile => this.capabilities.OpensBrowserProfiles(profile.Browser))
+            .ToList();
 
         // A pages profile can list pages only to close them, with none to open.
         bool opensSomething = browser.Mode switch
         {
-            BrowserManagementMode.Urls => browser.Urls.Count > 0,
-            BrowserManagementMode.Profiles => true,
+            BrowserManagementMode.Urls => browser.Urls.Count > 0 && this.capabilities.HasBrowser(browser.Browser),
+            // With every profile left out, nothing; with none listed - settings the editor never
+            // writes - the step that opens nothing, as ever.
+            BrowserManagementMode.Profiles => profiles.Count > 0 || browser.Profiles.Count == 0,
             _ => false
         };
         if (!opensSomething)
@@ -305,23 +320,29 @@ public sealed class AutomationPlanBuilder
             return;
         }
 
+        // The pages that close on leaving: the tabs opened for them are remembered, in a browser
+        // whose tabs keep an id, so they close wherever they have gone.
+        IReadOnlyList<string> remember = browser.Mode == BrowserManagementMode.Urls && this.capabilities.ClosesTabsById(resolved)
+            ? browser.CloseUrls
+            : [];
+
         steps.Add(CreateStep(
             AutomationStepType.ManageBrowserContext,
             target.Id,
             "Manage browser context",
-            BrowserContextTimeout,
+            this.budgets.BrowserContext,
             criticalTypes,
             new BrowserContextArguments(
                 target.Id,
                 browser.Mode,
-                resolve(browser.Browser),
+                resolved,
                 browser.Urls,
-                browser.Mode == BrowserManagementMode.Urls ? browser.CloseUrls : [],
+                remember,
                 browser.AvoidDuplicateTabs,
-                browser.Profiles)));
+                profiles)));
     }
 
-    private static void AddStartDockerResources(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
+    private void AddStartDockerResources(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
     {
         if (target.Docker.Start.Count == 0)
         {
@@ -332,14 +353,14 @@ public sealed class AutomationPlanBuilder
             AutomationStepType.StartDockerResources,
             target.Id,
             "Start Docker resources",
-            DockerTimeout,
+            this.budgets.Docker,
             criticalTypes,
             new ContainersArguments(target.Docker.Start)));
     }
 
-    private static void AddControlMedia(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
+    private void AddControlMedia(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
     {
-        if (target.Media.Player == MediaPlayerKind.None)
+        if (target.Media.Player == MediaPlayerKind.None || !this.capabilities.Plays(target.Media.Player))
         {
             return;
         }
@@ -348,7 +369,7 @@ public sealed class AutomationPlanBuilder
             AutomationStepType.ControlMedia,
             target.Id,
             "Control media",
-            MediaTimeout,
+            this.budgets.Media,
             criticalTypes,
             new MediaArguments(target.Media.Player, target.Media.Playlist, target.Media.AutoPlay)));
     }

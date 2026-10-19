@@ -2,6 +2,7 @@ using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Tests.TestDoubles;
 
@@ -62,7 +63,7 @@ public sealed class IgnoredAppsViewModelTests
         (IgnoredAppsViewModel ignored, InMemoryJsonStore jsonStore, ConfigPaths paths) = Create();
         ignored.Dispose();
         ConfigurationStore store = new(jsonStore, paths, new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel settings = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), SettingsViewModelTests.Updates(this.appState), SettingsViewModelTests.Diagnostics(), new FakePreferredLanguages());
+        SettingsViewModel settings = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), SettingsViewModelTests.Updates(this.appState), SettingsViewModelTests.Diagnostics(), new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
 
         Assert.False(settings.AskOnSwitch);
         settings.AskOnSwitch = true;
@@ -91,6 +92,6 @@ public sealed class IgnoredAppsViewModelTests
         this.appState.UpdateConfiguration(configuration, validator.Validate(configuration));
         InMemoryJsonStore jsonStore = new();
         ConfigPaths paths = new("/tmp/context-switcher-ignored-tests");
-        return (new IgnoredAppsViewModel(this.appState, new ConfigurationStore(jsonStore, paths, validator, this.appState, new TestLogger()), installedApps: null), jsonStore, paths);
+        return (new IgnoredAppsViewModel(this.appState, new ConfigurationStore(jsonStore, paths, validator, this.appState, new TestLogger()), new FakeInstalledAppsService()), jsonStore, paths);
     }
 }

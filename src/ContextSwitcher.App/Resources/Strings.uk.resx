@@ -466,6 +466,9 @@
   <data name="Settings_Imported" xml:space="preserve">
     <value>Імпортовано: ваші профілі й параметри тепер з «{0}».</value>
   </data>
+  <data name="Settings_ImportedWithUnsupported" xml:space="preserve">
+    <value>Імпортовано: ваші профілі й параметри тепер з «{0}». Дещо з них цей комп’ютер використати не може, і воно лишається в параметрах як є: {1}</value>
+  </data>
   <data name="Settings_ImportNotSettings" xml:space="preserve">
     <value>«{0}» — не файл параметрів Context Switcher.</value>
   </data>
@@ -1003,6 +1006,18 @@
   <data name="Msg_Config_ProfileBrowserInvalid" xml:space="preserve">
     <value>Браузер профілю має бути Chrome або Brave.</value>
   </data>
+  <data name="Msg_Config_FocusNotHere" xml:space="preserve">
+    <value>«{0}» вмикає режим зосередження, якого на цьому комп’ютері немає.</value>
+  </data>
+  <data name="Msg_Config_AppleMusicNotHere" xml:space="preserve">
+    <value>«{0}» вмикає Apple Music, якої на цьому комп’ютері немає.</value>
+  </data>
+  <data name="Msg_Config_BrowserNotHere" xml:space="preserve">
+    <value>«{0}» відкриває сторінки в {1}, якого на цьому комп’ютері немає.</value>
+  </data>
+  <data name="Msg_Config_BrowserProfilesNotHere" xml:space="preserve">
+    <value>«{0}» відкриває профілі {1}, а цей комп’ютер так не може.</value>
+  </data>
   <data name="Msg_Config_ProfileDirectoryRequired" xml:space="preserve">
     <value>Потрібна тека профілю.</value>
   </data>
@@ -1340,7 +1355,7 @@
 Діагностика (Налаштування → Діагностика → Скопіювати діагностику). Вставте її сюди (⌘V):
 
 
-ContextSwitcher {0}, macOS {1}</value>
+ContextSwitcher {0}, {1} {2}</value>
   </data>
   <data name="Contact_EmailOpened" xml:space="preserve">
     <value>У вашій пошті відкрито новий лист, а діагностику скопійовано: вставте її в лист (⌘V).</value>

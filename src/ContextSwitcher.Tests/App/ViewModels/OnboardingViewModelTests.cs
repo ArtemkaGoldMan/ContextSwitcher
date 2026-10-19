@@ -50,7 +50,7 @@ public sealed class OnboardingViewModelTests
             },
             new ConfigurationValidationResult([]));
 
-        OnboardingViewModel viewModel = new(this.appState, store, installed, switchService);
+        OnboardingViewModel viewModel = new(this.appState, store, installed, switchService, FakeLoginItem.Unavailable());
         viewModel.FinishCommand.Execute(null);
 
         AppConfiguration? saved = jsonStore.Get<AppConfiguration>(configPaths.SettingsPath);
@@ -82,7 +82,7 @@ public sealed class OnboardingViewModelTests
             },
             new ConfigurationValidationResult([]));
 
-        OnboardingViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new StubContextSwitchService());
+        OnboardingViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new StubContextSwitchService(), FakeLoginItem.Unavailable());
         viewModel.SkipCommand.Execute(null);
 
         AppConfiguration? saved = jsonStore.Get<AppConfiguration>(configPaths.SettingsPath);
@@ -125,7 +125,7 @@ public sealed class OnboardingViewModelTests
             new ConfigurationValidationResult([]));
 
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        return new OnboardingViewModel(this.appState, store, installed, new StubContextSwitchService());
+        return new OnboardingViewModel(this.appState, store, installed, new StubContextSwitchService(), FakeLoginItem.Unavailable());
     }
 
     /// <summary>

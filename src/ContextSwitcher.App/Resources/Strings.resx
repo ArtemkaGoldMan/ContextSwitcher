@@ -620,6 +620,10 @@
     <value>Imported: your profiles and settings now come from “{0}”.</value>
     <comment>After importing. {0} = file name.</comment>
   </data>
+  <data name="Settings_ImportedWithUnsupported" xml:space="preserve">
+    <value>Imported: your profiles and settings now come from “{0}”. Some of them this computer can't use, and they stay in the settings as they are: {1}</value>
+    <comment>After importing settings from another computer. {0} = file name, {1} = what this one can't use, a sentence each.</comment>
+  </data>
   <data name="Settings_ImportNotSettings" xml:space="preserve">
     <value>“{0}” isn't a Context Switcher settings file.</value>
     <comment>Import refused. {0} = file name.</comment>
@@ -1320,6 +1324,22 @@
     <value>Profile browser must be Chrome or Brave.</value>
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
   </data>
+  <data name="Msg_Config_FocusNotHere" xml:space="preserve">
+    <value>{0} turns on a Focus, which this computer doesn't have.</value>
+    <comment>Settings imported from another computer: what this one can't use. {0} = profile name.</comment>
+  </data>
+  <data name="Msg_Config_AppleMusicNotHere" xml:space="preserve">
+    <value>{0} plays Apple Music, which this computer doesn't have.</value>
+    <comment>Settings imported from another computer: what this one can't use. {0} = profile name.</comment>
+  </data>
+  <data name="Msg_Config_BrowserNotHere" xml:space="preserve">
+    <value>{0} opens pages in {1}, which this computer doesn't have.</value>
+    <comment>Settings imported from another computer: what this one can't use. {0} = profile name, {1} = browser.</comment>
+  </data>
+  <data name="Msg_Config_BrowserProfilesNotHere" xml:space="preserve">
+    <value>{0} opens {1}'s profiles, which this computer can't.</value>
+    <comment>Settings imported from another computer: what this one can't use. {0} = profile name, {1} = browser.</comment>
+  </data>
   <data name="Msg_Config_ProfileDirectoryRequired" xml:space="preserve">
     <value>Profile directory is required.</value>
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
@@ -1735,8 +1755,8 @@ What did you do just before? Which profile did you switch from and to, and does 
 Diagnostics (Settings → Diagnostics → Copy diagnostics). Paste them here with ⌘V:
 
 
-ContextSwitcher {0}, macOS {1}</value>
-    <comment>Body of the email, as the person sees it to fill in. {0} = the app's version, {1} = the macOS version.</comment>
+ContextSwitcher {0}, {1} {2}</value>
+    <comment>Body of the email, as the person sees it to fill in. {0} = the app's version, {1} = the system (macOS), {2} = its version.</comment>
   </data>
   <data name="Contact_EmailOpened" xml:space="preserve">
     <value>A new message is open in your mail app, and the diagnostics are copied: paste them into it with ⌘V.</value>

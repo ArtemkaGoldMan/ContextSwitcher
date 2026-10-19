@@ -41,10 +41,11 @@
         <ctl:FormRow Title="{x:Static r:Strings.Settings_Theme}" Description="{x:Static r:Strings.Settings_MatchMacOSFollowsTheSystems}">
           <ComboBox ItemsSource="{Binding AppearanceChoices}" SelectedItem="{Binding SelectedAppearance}" AutomationProperties.Name="{x:Static r:Strings.Settings_Theme}" />
         </ctl:FormRow>
-        <Border Classes="divider" />
+        <Border Classes="divider" IsVisible="{Binding CanShowDockIcon}" />
         <ctl:FormRow
           Title="{x:Static r:Strings.Settings_ShowInTheDock}"
-          Description="{x:Static r:Strings.Settings_OffContextSwitcherLivesOnly}">
+          Description="{x:Static r:Strings.Settings_OffContextSwitcherLivesOnly}"
+          IsVisible="{Binding CanShowDockIcon}">
           <ToggleSwitch IsChecked="{Binding ShowDockIcon}" AutomationProperties.Name="{x:Static r:Strings.Settings_ShowInTheDock}" />
         </ctl:FormRow>
         <Border Classes="divider" />
@@ -116,7 +117,7 @@
           </ItemsControl>
           <TextBlock Text="{Binding IgnoredApps.Message}" Classes="caption" IsVisible="{Binding IgnoredApps.HasMessage}" TextWrapping="Wrap" />
           <!-- The picker reads the installed apps and their icons only when it's opened. -->
-          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddApp}" IsVisible="{Binding IgnoredApps.CanAdd}" Command="{Binding IgnoredApps.OpenPickerCommand}">
+          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddApp}" Command="{Binding IgnoredApps.OpenPickerCommand}">
             <Button.Flyout>
               <Flyout Placement="BottomEdgeAlignedLeft">
                 <StackPanel Width="{StaticResource PickerWidth}">

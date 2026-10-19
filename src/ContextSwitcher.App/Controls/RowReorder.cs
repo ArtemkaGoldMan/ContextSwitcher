@@ -47,11 +47,12 @@ public sealed class RowReorder : IDisposable
     private bool dragging;
     private List<Slot> slots = [];
 
+    /// <summary>Lets the cards of <paramref name="list"/> be put in a new order.</summary>
     /// <param name="list">The list whose cards are dragged; each item's card is a <c>profileCard</c> button.</param>
     /// <param name="move">Called with an item's data and the place it now goes to.</param>
     /// <param name="idOf">An item's identity, for putting the keyboard's focus back on it after it has moved.</param>
-    /// <param name="holdFor">How long a card is held before it is picked up; <see cref="DefaultHold"/> unless a test is in a hurry.</param>
-    public RowReorder(ItemsControl list, Func<object?, int, Task> move, Func<object?, string?> idOf, TimeSpan? holdFor = null)
+    /// <param name="holdFor">How long a card is held before it is picked up: <see cref="DefaultHold"/>, unless a test is in a hurry.</param>
+    public RowReorder(ItemsControl list, Func<object?, int, Task> move, Func<object?, string?> idOf, TimeSpan holdFor)
     {
         ArgumentNullException.ThrowIfNull(list);
         ArgumentNullException.ThrowIfNull(move);
@@ -60,7 +61,7 @@ public sealed class RowReorder : IDisposable
         this.list = list;
         this.move = move;
         this.idOf = idOf;
-        this.holdFor = holdFor ?? DefaultHold;
+        this.holdFor = holdFor;
 
         // Tunnelling, so this sees the press before the button does, and handled events too: a button
         // marks its own press handled.

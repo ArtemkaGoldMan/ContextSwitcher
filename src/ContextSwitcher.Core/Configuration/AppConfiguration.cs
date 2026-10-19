@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ContextSwitcher.Core.Configuration;
 
 /// <summary>
@@ -73,6 +75,15 @@ public sealed record AppConfiguration
     /// in a profile, by hand, is left alone all the same.
     /// </summary>
     public IReadOnlyList<string> IgnoredApps { get; init; } = [];
+
+    /// <summary>
+    /// Gets or sets how Windows finds each app the profiles name, by that name. Profiles keep listing
+    /// apps by name, so every settings file reads as before; Windows fills this in as apps are picked.
+    /// The Mac ignores it. Null - and left out of the file - when there is none, so a file written
+    /// on a Mac is saved as it was.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyDictionary<string, AppIdentity>? Apps { get; init; }
 
     /// <summary>
     /// Gets or sets analytics configuration for the app.

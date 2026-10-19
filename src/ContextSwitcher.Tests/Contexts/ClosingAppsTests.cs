@@ -2,6 +2,7 @@ using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Messages;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Contexts;
@@ -208,7 +209,7 @@ public sealed class ClosingAppsTests : IDisposable
     }
 
     private static ClosingAppsFollowUp FollowUp(ContextSwitchService service, FakeAppProcesses processes, TimeSpan? watchFor = null) =>
-        new(service, processes, new FakeClock(), new TestLogger(), watchFor ?? TimeSpan.FromMilliseconds(150), TimeSpan.FromMilliseconds(5), TimeSpan.FromMilliseconds(200));
+        new(service, processes, new FakeClock(), new TestLogger(), FollowUpTimings.Immediate with { WatchFor = watchFor ?? FollowUpTimings.Immediate.WatchFor });
 
     private (ContextSwitchService Service, InMemoryJsonStore Store, string StatePath) Service()
     {
@@ -218,7 +219,7 @@ public sealed class ClosingAppsTests : IDisposable
         ContextSwitchService service = new(
             store,
             new FakeAutomationStepExecutor(),
-            new AutomationPlanBuilder(),
+            new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()),
             new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()),
             clock,
             new TestLogger(),

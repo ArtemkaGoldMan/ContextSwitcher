@@ -2,6 +2,7 @@ using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.App.Resources;
+using ContextSwitcher.Core.Platform;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -23,6 +24,7 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
     private readonly IShell shell;
 
     private readonly IPreferredLanguages preferredLanguages;
+    private readonly PlatformCapabilities capabilities;
     private readonly ILoginItem? loginItem;
     private LoginItemStatus loginItemStatus;
     private string? loginItemProblem;
@@ -46,18 +48,20 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         UpdatesViewModel updates,
         DiagnosticsSources diagnostics,
         IPreferredLanguages preferredLanguages,
-        ILoginItem? loginItem = null,
-        IInstalledAppsService? installedApps = null)
+        PlatformCapabilities capabilities,
+        ILoginItem loginItem,
+        IInstalledAppsService installedApps)
     {
         this.appState = appState;
         this.loginItem = loginItem;
-        this.loginItemStatus = loginItem?.Status ?? LoginItemStatus.Unavailable;
+        this.loginItemStatus = loginItem.Status;
         this.preferredLanguages = preferredLanguages;
         this.configurationStore = configurationStore;
         this.permissionsChecker = permissionsChecker;
         this.shell = shell;
         this.Updates = updates;
-        this.Transfer = new SettingsTransferViewModel(appState, configurationStore);
+        this.capabilities = capabilities;
+        this.Transfer = new SettingsTransferViewModel(appState, configurationStore, capabilities);
         this.IgnoredApps = new IgnoredAppsViewModel(appState, configurationStore, installedApps);
         this.Diagnostics = new SettingsDiagnosticsViewModel(appState, configurationStore, shell, diagnostics, () => this.AutomationGranted);
         this.askOnSwitch = this.appState.Configuration.AskOnSwitch;
@@ -159,6 +163,9 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
 
     /// <summary>The detailed log, and the report to send when something is wrong.</summary>
     public SettingsDiagnosticsViewModel Diagnostics { get; }
+
+    /// <summary>Whether this computer has a Dock for the app to show in.</summary>
+    public bool CanShowDockIcon => this.capabilities.DockIcon;
 
     public bool ShowDockIcon
     {

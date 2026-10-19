@@ -1,6 +1,7 @@
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Automation;
@@ -10,7 +11,7 @@ public sealed class AutomationPlanBuilderTests
     [Fact]
     public void BuildOrdersStepsAsResourceFreeingThenEnvironmentThenActivation()
     {
-        AutomationPlanBuilder builder = new();
+        AutomationPlanBuilder builder = new(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser());
 
         ContextDefinition previous = new()
         {
@@ -56,7 +57,7 @@ public sealed class AutomationPlanBuilderTests
     [Fact]
     public void BuildOmitsStepsForEmptyOrDefaultConfiguration()
     {
-        AutomationPlanBuilder builder = new();
+        AutomationPlanBuilder builder = new(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser());
 
         ContextDefinition target = new()
         {
@@ -80,7 +81,7 @@ public sealed class AutomationPlanBuilderTests
     [Fact]
     public void BuildClosesThePreviousContextsAppsAndNotTheTargets()
     {
-        AutomationPlanBuilder builder = new();
+        AutomationPlanBuilder builder = new(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser());
 
         ContextDefinition previous = new()
         {
@@ -105,7 +106,7 @@ public sealed class AutomationPlanBuilderTests
     [Fact]
     public void BuildOmitsCloseApplicationsWhenThereIsNoPreviousContext()
     {
-        AutomationPlanBuilder builder = new();
+        AutomationPlanBuilder builder = new(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser());
 
         ContextDefinition target = new()
         {
@@ -122,7 +123,7 @@ public sealed class AutomationPlanBuilderTests
     [Fact]
     public void BuildMarksStepCriticalWhenTypeNameIsInSwitchPolicy()
     {
-        AutomationPlanBuilder builder = new();
+        AutomationPlanBuilder builder = new(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser());
 
         ContextDefinition target = new()
         {
@@ -150,7 +151,7 @@ public sealed class AutomationPlanBuilderTests
     [Fact]
     public void BuildOmitsFocusStepWhenNeitherContextUsesFocus()
     {
-        AutomationPlanBuilder builder = new();
+        AutomationPlanBuilder builder = new(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser());
 
         ContextDefinition previous = new() { Id = "personal", DisplayName = "Personal" };
         ContextDefinition target = new() { Id = "work", DisplayName = "Work", LaunchApps = ["Slack"] };
@@ -163,7 +164,7 @@ public sealed class AutomationPlanBuilderTests
     [Fact]
     public void BuildIncludesFocusStepWhenTheTargetEnablesIt()
     {
-        AutomationPlanBuilder builder = new();
+        AutomationPlanBuilder builder = new(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser());
 
         ContextDefinition target = new()
         {
@@ -186,7 +187,7 @@ public sealed class AutomationPlanBuilderTests
     [Fact]
     public void BuildIncludesFocusStepToClearFocusLeftOnByThePreviousContext()
     {
-        AutomationPlanBuilder builder = new();
+        AutomationPlanBuilder builder = new(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser());
 
         ContextDefinition previous = new()
         {
@@ -213,7 +214,7 @@ public sealed class AutomationPlanBuilderTests
     [Fact]
     public void FocusEnabledWithNoModeNamedIsNotUsingFocus()
     {
-        AutomationPlanBuilder builder = new();
+        AutomationPlanBuilder builder = new(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser());
         ContextDefinition noMode = new() { Id = "test-work", DisplayName = "Work", Focus = new FocusConfig { Enabled = true, ModeName = "  " } };
         ContextDefinition none = new() { Id = "personal", DisplayName = "Personal" };
 
@@ -257,7 +258,7 @@ public sealed class AutomationPlanBuilderTests
             }
         };
 
-        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(previous, target);
 
         Assert.Equal(
             [AutomationStepType.CloseBrowserTabs, AutomationStepType.CloseApplications, AutomationStepType.ManageBrowserContext],
@@ -270,7 +271,7 @@ public sealed class AutomationPlanBuilderTests
 
         // Entering, the profile says whose pages it opens and which of them close later, so the tabs
         // opened for those can be remembered - and found again when it is left.
-        AutomationStep entering = new AutomationPlanBuilder().Build(target, previous).Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext);
+        AutomationStep entering = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(target, previous).Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext);
         Assert.Equal("work", BrowserContextArguments.From(entering.Arguments).ContextId);
         Assert.Equal(["https://linear.app/", "https://mail.google.com/"], BrowserContextArguments.From(entering.Arguments).RememberUrls);
     }
@@ -302,7 +303,7 @@ public sealed class AutomationPlanBuilderTests
             }
         };
 
-        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(previous, target);
 
         Assert.Empty(CloseTabsArguments.From(plan.Steps.Single(step => step.Type == AutomationStepType.CloseBrowserTabs).Arguments).KeepUrls);
     }
@@ -314,7 +315,7 @@ public sealed class AutomationPlanBuilderTests
     [Fact]
     public void NothingClosesWithoutPagesToClose()
     {
-        AutomationPlanBuilder builder = new();
+        AutomationPlanBuilder builder = new(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser());
         ContextDefinition closeOnly = new()
         {
             Id = "focus",
@@ -358,7 +359,7 @@ public sealed class AutomationPlanBuilderTests
             SwitchPolicy = new SwitchPolicyConfig { CriticalSteps = ["CloseApplications"] }
         };
 
-        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target: null);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(previous, target: null);
 
         Assert.Equal(
             [AutomationStepType.StopDockerResources, AutomationStepType.CloseBrowserTabs, AutomationStepType.CloseApplications, AutomationStepType.SetFocusMode],
@@ -392,13 +393,13 @@ public sealed class AutomationPlanBuilderTests
             Docker = new DockerResourceConfig { Start = ["postgres"] }
         };
 
-        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(previous, target);
 
         Assert.Equal(["Visual Studio Code"], AppsArguments.From(plan.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments).Apps);
         Assert.Equal(["redis"], ContainersArguments.From(plan.Steps.Single(step => step.Type == AutomationStepType.StopDockerResources).Arguments).Containers);
 
         // Leaving for no profile at all, everything listed goes.
-        AutomationPlan off = new AutomationPlanBuilder().Build(previous, target: null);
+        AutomationPlan off = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(previous, target: null);
         Assert.Equal(["Slack", "Visual Studio Code"], AppsArguments.From(off.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments).Apps);
     }
 
@@ -408,7 +409,7 @@ public sealed class AutomationPlanBuilderTests
         ContextDefinition previous = new() { Id = "work", DisplayName = "Work", CloseApps = ["Slack"] };
         ContextDefinition target = new() { Id = "side", DisplayName = "Side", LaunchApps = ["Slack"] };
 
-        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(previous, target);
 
         Assert.DoesNotContain(plan.Steps, step => step.Type == AutomationStepType.CloseApplications);
     }
@@ -444,14 +445,14 @@ public sealed class AutomationPlanBuilderTests
             }
         };
 
-        AutomationPlan plan = new AutomationPlanBuilder(new FakeDefaultBrowser(BrowserKind.Chrome, "Google Chrome")).Build(previous, target);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeDefaultBrowser(BrowserKind.Chrome, "Google Chrome")).Build(previous, target);
 
         AutomationStep closing = plan.Steps.Single(step => step.Type == AutomationStepType.CloseBrowserTabs);
         Assert.Equal((BrowserKind.Chrome, "https://mail.google.com/"), (CloseTabsArguments.From(closing.Arguments).Browser, Assert.Single(CloseTabsArguments.From(closing.Arguments).KeepUrls)));
 
         // Entering a Default profile opens its pages in that browser too, checking for duplicates.
         ContextDefinition entering = previous with { BrowserManagement = previous.BrowserManagement with { Urls = ["https://linear.app/"] } };
-        AutomationPlan opening = new AutomationPlanBuilder(new FakeDefaultBrowser(BrowserKind.Safari, "Safari")).Build(null, entering);
+        AutomationPlan opening = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeDefaultBrowser(BrowserKind.Safari, "Safari")).Build(null, entering);
         Assert.Equal(BrowserKind.Safari, BrowserContextArguments.From(opening.Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext).Arguments).Browser);
     }
 
@@ -470,8 +471,8 @@ public sealed class AutomationPlanBuilderTests
         };
         ContextDefinition other = new() { Id = "personal", DisplayName = "Personal" };
 
-        AutomationPlan entering = new AutomationPlanBuilder().Build(other, groups);
-        AutomationPlan leaving = new AutomationPlanBuilder().Build(groups, other);
+        AutomationPlan entering = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(other, groups);
+        AutomationPlan leaving = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(groups, other);
 
         Assert.DoesNotContain(entering.Steps, step => step.Type is AutomationStepType.ManageBrowserContext or AutomationStepType.CloseBrowserTabs);
         Assert.DoesNotContain(leaving.Steps, step => step.Type is AutomationStepType.ManageBrowserContext or AutomationStepType.CloseBrowserTabs);
@@ -492,7 +493,7 @@ public sealed class AutomationPlanBuilderTests
             ["Figma", "slack", "Notes"],
             [new TabToClose(BrowserKind.Chrome, "https://a.example/"), new TabToClose(BrowserKind.Safari, "https://b.example/"), new TabToClose(BrowserKind.Chrome, "https://c.example/")]);
 
-        AutomationPlan plan = new AutomationPlanBuilder().Build(work, personal, extras);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(work, personal, extras);
 
         AutomationStep apps = plan.Steps.Single(step => step.Type == AutomationStepType.CloseApplications);
         Assert.Equal(["Slack", "Figma"], AppsArguments.From(apps.Arguments).Apps);
@@ -511,7 +512,7 @@ public sealed class AutomationPlanBuilderTests
     {
         ContextDefinition personal = new() { Id = "personal", DisplayName = "Personal" };
 
-        AutomationPlan plan = new AutomationPlanBuilder().Build(null, personal, new SwitchExtras(["Figma"], []));
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(null, personal, new SwitchExtras(["Figma"], []));
 
         Assert.Equal(["Figma"], AppsArguments.From(plan.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments).Apps);
     }
@@ -523,8 +524,8 @@ public sealed class AutomationPlanBuilderTests
         ContextDefinition work = new() { Id = "work", DisplayName = "Work", CloseApps = ["Telegram", "Slack"], HideApps = ["telegram"] };
         ContextDefinition personal = new() { Id = "personal", DisplayName = "Personal", LaunchApps = ["Telegram"] };
 
-        AutomationPlan leaving = new AutomationPlanBuilder().Build(work, personal, ignoredApps: ["Telegram"]);
-        AutomationPlan entering = new AutomationPlanBuilder().Build(null, personal, ignoredApps: ["Telegram"]);
+        AutomationPlan leaving = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(work, personal, ignoredApps: ["Telegram"]);
+        AutomationPlan entering = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(null, personal, ignoredApps: ["Telegram"]);
 
         Assert.Equal(["Slack"], AppsArguments.From(leaving.Steps.Single(step => step.Type == AutomationStepType.CloseApplications).Arguments).Apps);
         Assert.DoesNotContain(leaving.Steps, step => step.Type == AutomationStepType.HideApplications);
@@ -542,7 +543,7 @@ public sealed class AutomationPlanBuilderTests
             BrowserManagement = new BrowserManagementConfig { Mode = BrowserManagementMode.Urls, CloseUrls = ["https://linear.app/"] }
         };
 
-        AutomationPlan plan = new AutomationPlanBuilder(new FakeDefaultBrowser(BrowserKind.Default, "Firefox")).Build(previous, target: null);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeDefaultBrowser(BrowserKind.Default, "Firefox")).Build(previous, target: null);
 
         Assert.Equal(BrowserKind.Default, CloseTabsArguments.From(plan.Steps.Single(step => step.Type == AutomationStepType.CloseBrowserTabs).Arguments).Browser);
     }
@@ -563,7 +564,7 @@ public sealed class AutomationPlanBuilderTests
         };
         ContextDefinition target = new() { Id = "personal", DisplayName = "Personal", LaunchApps = ["Notion"] };
 
-        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(previous, target);
 
         Assert.Equal(
             [AutomationStepType.CloseApplications, AutomationStepType.HideApplications, AutomationStepType.LaunchApplications],
