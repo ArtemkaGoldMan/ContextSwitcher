@@ -19,19 +19,22 @@ public sealed class ConfigurationStore
     private readonly IJsonStore jsonStore;
     private readonly ConfigPaths configPaths;
     private readonly ConfigurationValidator validator;
+    private readonly ILogger logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConfigurationStore"/> class.
     /// </summary>
-    public ConfigurationStore(IJsonStore jsonStore, ConfigPaths configPaths, ConfigurationValidator validator)
+    public ConfigurationStore(IJsonStore jsonStore, ConfigPaths configPaths, ConfigurationValidator validator, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(jsonStore);
         ArgumentNullException.ThrowIfNull(configPaths);
         ArgumentNullException.ThrowIfNull(validator);
+        ArgumentNullException.ThrowIfNull(logger);
 
         this.jsonStore = jsonStore;
         this.configPaths = configPaths;
         this.validator = validator;
+        this.logger = logger;
     }
 
     /// <summary>Checks <paramref name="configuration"/> as a save would, without saving it.</summary>
@@ -51,11 +54,11 @@ public sealed class ConfigurationStore
         {
             // A save the editors should not have been able to ask for. Which settings, by their paths
             // without the profile's number - nothing the person typed.
-            AppLog.Warn(
+            this.logger.Warn(
                 "Configuration",
                 "SaveRejected",
                 $"A save was refused with {validation.Errors.Count} problem(s): "
-                    + string.Join("; ", validation.Errors.Select(error => $"{System.Text.RegularExpressions.Regex.Replace(error.Path, @"\[\d+\]", "[]")} ({error.Detail?.Key ?? "no key"})")));
+                    + validation.DescribeForLog());
             return ConfigurationSaveResult.Invalid(validation.Errors.Select(MessageText.Of).ToList());
         }
 
@@ -72,7 +75,7 @@ public sealed class ConfigurationStore
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            AppLog.Error("Files", "SettingsNotSaved", "settings.json could not be saved, so the change was lost.", ex);
+            this.logger.Error("Files", "SettingsNotSaved", "settings.json could not be saved, so the change was lost.", ex);
             throw;
         }
 

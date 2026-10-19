@@ -2,6 +2,7 @@ using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Configuration;
 
@@ -50,7 +51,7 @@ public sealed class RemovedFeaturesCompatibilityTests
             ConfigPaths paths = new(directory);
             await File.WriteAllTextAsync(paths.SettingsPath, LegacySettings);
 
-            AppConfiguration? loaded = await new JsonFileStore(FileReplacer.Once).ReadAsync<AppConfiguration>(paths.SettingsPath);
+            AppConfiguration? loaded = await new JsonFileStore(FileReplacer.Once, new TestLogger()).ReadAsync<AppConfiguration>(paths.SettingsPath);
 
             Assert.NotNull(loaded);
             Assert.Equal(["work", "personal"], loaded!.Contexts.Select(c => c.Id));
@@ -95,7 +96,7 @@ public sealed class RemovedFeaturesCompatibilityTests
                 }
                 """);
 
-            AppConfiguration? loaded = await new JsonFileStore(FileReplacer.Once).ReadAsync<AppConfiguration>(paths.SettingsPath);
+            AppConfiguration? loaded = await new JsonFileStore(FileReplacer.Once, new TestLogger()).ReadAsync<AppConfiguration>(paths.SettingsPath);
 
             Assert.NotNull(loaded);
             Assert.Equal(["work", "personal"], loaded!.Contexts.Select(c => c.Id));
@@ -125,7 +126,7 @@ public sealed class RemovedFeaturesCompatibilityTests
         {
             ConfigPaths paths = new(directory);
             await File.WriteAllTextAsync(paths.SettingsPath, LegacySettings);
-            AppConfiguration loaded = (await new JsonFileStore(FileReplacer.Once).ReadAsync<AppConfiguration>(paths.SettingsPath))!;
+            AppConfiguration loaded = (await new JsonFileStore(FileReplacer.Once, new TestLogger()).ReadAsync<AppConfiguration>(paths.SettingsPath))!;
 
             AutomationPlan plan = new AutomationPlanBuilder().Build(loaded.Contexts[1], loaded.Contexts[0]);
 
@@ -150,7 +151,7 @@ public sealed class RemovedFeaturesCompatibilityTests
         try
         {
             ConfigPaths paths = new(directory);
-            JsonFileStore store = new(FileReplacer.Once);
+            JsonFileStore store = new(FileReplacer.Once, new TestLogger());
             await File.WriteAllTextAsync(paths.SettingsPath, LegacySettings);
             AppConfiguration loaded = (await store.ReadAsync<AppConfiguration>(paths.SettingsPath))!;
 

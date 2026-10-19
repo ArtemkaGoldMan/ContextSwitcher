@@ -39,7 +39,7 @@ internal static class Program
         // crash report. A window needs a screen anyway, so wait for one - before AppHost.Initialize,
         // which starts counting time: nothing has begun until there is somewhere to show it. The
         // command line never draws, so it never waits.
-        bool interactive = args.Length == 0 || !CliCommandRouter.IsHeadlessCommand(args[0]);
+        bool interactive = !CliCommandRouter.IsHeadless(args);
         TimeSpan waitedForDisplay = interactive ? DisplayAvailability.WaitUntilAvailable() : TimeSpan.Zero;
 
         AppHost.Initialize(args);
@@ -49,7 +49,7 @@ internal static class Program
             LogWaitedForDisplay(waitedForDisplay);
         }
 
-        if (args.Length > 0 && CliCommandRouter.IsHeadlessCommand(args[0]))
+        if (CliCommandRouter.IsHeadless(args))
         {
             CliCommandRouter router = AppHost.Services.GetRequiredService<CliCommandRouter>();
             int exitCode = router.RunAsync(args, AppHost.Configuration, AppHost.ConfigurationValidation, AppHost.State, Console.Out, CancellationToken.None, AppHost.ConfigurationWasQuarantined)

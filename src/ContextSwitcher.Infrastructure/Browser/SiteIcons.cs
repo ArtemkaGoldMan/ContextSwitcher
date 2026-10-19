@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
 using ContextSwitcher.Core.Abstractions;
-using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Files;
 
 namespace ContextSwitcher.Infrastructure.Browser;
@@ -9,7 +8,7 @@ namespace ContextSwitcher.Infrastructure.Browser;
 /// <summary>
 /// Gets a website's tab icon from the site itself - the one open in the tab, so no one else learns of
 /// it: first its <c>/favicon.ico</c>, then the icon its home page names. It's turned into a 32×32 PNG
-/// with the built-in <c>sips</c> and kept in the icon cache, so a site is asked once; a site with none
+/// by the platform's image converter and kept in the icon cache, so a site is asked once; a site with none
 /// is noted too, and asked again after a week.
 ///
 /// Kept light: each request gets 2 seconds and at most 100 KB, a home page at most 200 KB, and no
@@ -24,15 +23,18 @@ public sealed partial class SiteIcons : ISiteIcons
     private static readonly TimeSpan AskAgainAfter = TimeSpan.FromDays(7);
 
     private readonly HttpClient http;
-    private readonly IProcessRunner processRunner;
+    private readonly IImageConverter imageConverter;
     private readonly string cacheDirectory;
 
-    public SiteIcons(IProcessRunner processRunner, ConfigPaths configPaths, HttpMessageHandler? handler = null)
+    /// <param name="imageConverter">Turns a downloaded icon into a PNG.</param>
+    /// <param name="configPaths">Where the icons are cached.</param>
+    /// <param name="handler">Sends the requests; the network's own unless a test gives one.</param>
+    public SiteIcons(IImageConverter imageConverter, ConfigPaths configPaths, HttpMessageHandler? handler = null)
     {
-        ArgumentNullException.ThrowIfNull(processRunner);
+        ArgumentNullException.ThrowIfNull(imageConverter);
         ArgumentNullException.ThrowIfNull(configPaths);
 
-        this.processRunner = processRunner;
+        this.imageConverter = imageConverter;
         this.cacheDirectory = Path.Combine(configPaths.IconCacheDirectory, "sites");
         this.http = new HttpClient(handler ?? new HttpClientHandler { UseCookies = false, MaxAutomaticRedirections = 3 })
         {
@@ -119,7 +121,7 @@ public sealed partial class SiteIcons : ISiteIcons
         return null;
     }
 
-    /// <summary>Whether the bytes start as a picture <c>sips</c> can read: ICO, PNG, GIF, JPEG or BMP.</summary>
+    /// <summary>Whether the bytes start as a picture an image converter reads: ICO, PNG, GIF, JPEG or BMP.</summary>
     public static bool LooksLikeImage(ReadOnlySpan<byte> bytes) =>
         bytes.Length >= 4 && (
             (bytes[0] == 0x00 && bytes[1] == 0x00 && bytes[2] == 0x01 && bytes[3] == 0x00)
@@ -183,10 +185,7 @@ public sealed partial class SiteIcons : ISiteIcons
         try
         {
             await File.WriteAllBytesAsync(download, icon, cancellationToken).ConfigureAwait(false);
-            ProcessResult result = await this.processRunner
-                .RunAsync(new ProcessStartOptions("sips", ["-s", "format", "png", "-Z", IconSize.ToString(System.Globalization.CultureInfo.InvariantCulture), download, "--out", iconPath], RequestTimeout), cancellationToken)
-                .ConfigureAwait(false);
-            return result.ExitCode == 0 && File.Exists(iconPath);
+            return await this.imageConverter.ToPngAsync(download, iconPath, IconSize, cancellationToken).ConfigureAwait(false);
         }
         finally
         {

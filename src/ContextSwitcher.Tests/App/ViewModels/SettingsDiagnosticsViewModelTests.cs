@@ -23,7 +23,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
     {
         Directory.CreateDirectory(this.directory);
         this.paths = new ConfigPaths(this.directory);
-        this.store = new ConfigurationStore(this.jsonStore, this.paths, new ConfigurationValidator());
+        this.store = new ConfigurationStore(this.jsonStore, this.paths, new ConfigurationValidator(), new TestLogger());
         AppHost.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] },
             new ConfigurationValidationResult([]));
@@ -196,7 +196,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
             this.paths,
             () => new RunInfo("ContextSwitcher", "0.6.1", "26.6", "arm64", "release", 1),
             () => [],
-            () => Now),
+            new FakeClock { UtcNow = Now }),
         () => true);
 
     private static async Task WaitUntilAsync(Func<bool> condition)

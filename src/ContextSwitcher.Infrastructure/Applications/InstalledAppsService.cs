@@ -1,18 +1,16 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Applications;
-using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Files;
 
 namespace ContextSwitcher.Infrastructure.Applications;
 
 /// <summary>
 /// Enumerates <c>.app</c> bundles from the standard macOS application directories and extracts each
-/// icon to a cached PNG via the built-in <c>sips</c> tool (measured ~28ms per icon, then cached to
-/// disk so later opens are instant).
+/// icon to a cached PNG with the platform's image converter, then cached to disk so later opens are
+/// instant.
 /// </summary>
 public sealed class InstalledAppsService : IInstalledAppsService
 {
-    private static readonly TimeSpan IconTimeout = TimeSpan.FromSeconds(5);
     private const int IconSize = 64;
 
     /// <summary>
@@ -28,20 +26,22 @@ public sealed class InstalledAppsService : IInstalledAppsService
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Applications")
     ];
 
-    private readonly IProcessRunner processRunner;
+    private readonly IImageConverter imageConverter;
     private readonly ConfigPaths configPaths;
     private readonly IReadOnlyList<string> searchDirectories;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="InstalledAppsService"/> class.
     /// </summary>
+    /// <param name="imageConverter">Turns each app's icon into a PNG.</param>
+    /// <param name="configPaths">Where the PNGs are cached.</param>
     /// <param name="searchDirectories">Overrides where apps are looked for, for tests.</param>
-    public InstalledAppsService(IProcessRunner processRunner, ConfigPaths configPaths, IReadOnlyList<string>? searchDirectories = null)
+    public InstalledAppsService(IImageConverter imageConverter, ConfigPaths configPaths, IReadOnlyList<string>? searchDirectories = null)
     {
-        ArgumentNullException.ThrowIfNull(processRunner);
+        ArgumentNullException.ThrowIfNull(imageConverter);
         ArgumentNullException.ThrowIfNull(configPaths);
 
-        this.processRunner = processRunner;
+        this.imageConverter = imageConverter;
         this.configPaths = configPaths;
         this.searchDirectories = searchDirectories ?? DefaultSearchDirectories;
     }
@@ -142,14 +142,9 @@ public sealed class InstalledAppsService : IInstalledAppsService
             return null;
         }
 
-        ProcessResult result = await this.processRunner.RunAsync(
-            new ProcessStartOptions(
-                "sips",
-                ["-s", "format", "png", "-Z", IconSize.ToString(), icnsPath, "--out", cachedPath],
-                IconTimeout),
-            cancellationToken).ConfigureAwait(false);
-
-        return result.ExitCode == 0 && File.Exists(cachedPath) ? cachedPath : null;
+        return await this.imageConverter.ToPngAsync(icnsPath, cachedPath, IconSize, cancellationToken).ConfigureAwait(false)
+            ? cachedPath
+            : null;
     }
 
     private static string? FindIcnsPath(string bundlePath)

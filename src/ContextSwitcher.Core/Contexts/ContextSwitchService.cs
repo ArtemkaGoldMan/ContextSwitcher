@@ -24,6 +24,7 @@ public sealed class ContextSwitchService : IContextSwitchService
     private readonly IAnalyticsService analyticsService;
     private readonly IClock clock;
     private readonly ILogger logger;
+    private readonly ISwitchLock crossProcessLock;
     private readonly string settingsPath;
     private readonly string statePath;
     private readonly SemaphoreSlim switchLock = new(1, 1);
@@ -31,6 +32,7 @@ public sealed class ContextSwitchService : IContextSwitchService
     /// <summary>
     /// Initializes a new instance of the <see cref="ContextSwitchService"/> class.
     /// </summary>
+    /// <param name="crossProcessLock">Keeps another process from switching at the same time.</param>
     public ContextSwitchService(
         IJsonStore jsonStore,
         IAutomationStepExecutor executor,
@@ -38,6 +40,7 @@ public sealed class ContextSwitchService : IContextSwitchService
         IAnalyticsService analyticsService,
         IClock clock,
         ILogger logger,
+        ISwitchLock crossProcessLock,
         string settingsPath,
         string statePath)
     {
@@ -47,6 +50,7 @@ public sealed class ContextSwitchService : IContextSwitchService
         ArgumentNullException.ThrowIfNull(analyticsService);
         ArgumentNullException.ThrowIfNull(clock);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(crossProcessLock);
         ArgumentException.ThrowIfNullOrWhiteSpace(settingsPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(statePath);
 
@@ -56,6 +60,7 @@ public sealed class ContextSwitchService : IContextSwitchService
         this.analyticsService = analyticsService;
         this.clock = clock;
         this.logger = logger;
+        this.crossProcessLock = crossProcessLock;
         this.settingsPath = settingsPath;
         this.statePath = statePath;
     }
@@ -79,9 +84,9 @@ public sealed class ContextSwitchService : IContextSwitchService
         // The semaphore above only guards this process. Section 10 has macOS Shortcuts and Siri
         // triggering switches through the CLI, and every one of those is a separate process - two
         // fired together used to run their AppleScript concurrently and interleave their state
-        // writes, with neither one rejected. The file lock makes "one switch at a time" true across
-        // processes; the OS releases it if a holder dies, so a crash cannot wedge it.
-        FileStream? processLock = this.TryAcquireCrossProcessLock();
+        // writes, with neither one rejected. The cross-process lock makes "one switch at a time" true
+        // across processes; how it is held, and let go if a holder dies, is the platform's.
+        IDisposable? processLock = this.crossProcessLock.TryAcquire();
         if (processLock is null)
         {
             this.switchLock.Release();
@@ -126,7 +131,7 @@ public sealed class ContextSwitchService : IContextSwitchService
             return null;
         }
 
-        FileStream? processLock = this.TryAcquireCrossProcessLock();
+        IDisposable? processLock = this.crossProcessLock.TryAcquire();
         if (processLock is null)
         {
             this.switchLock.Release();
@@ -158,7 +163,7 @@ public sealed class ContextSwitchService : IContextSwitchService
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            AppLog.Warn("ContextSwitch", "StateNotAmended", "Could not update the last switch's warnings.", ex);
+            this.logger.Warn("ContextSwitch", "StateNotAmended", "Could not update the last switch's warnings.", ex);
             return null;
         }
         finally
@@ -167,51 +172,6 @@ public sealed class ContextSwitchService : IContextSwitchService
             this.switchLock.Release();
         }
     }
-
-    /// <summary>
-    /// Takes an exclusive lock on a file beside <c>state.json</c>, or returns <see langword="null"/>
-    /// when another process already holds it. <see cref="FileShare.None"/> is enforced with an
-    /// advisory lock on Unix, which the kernel drops when the owning process exits.
-    /// </summary>
-    private FileStream? TryAcquireCrossProcessLock()
-    {
-        try
-        {
-            // A bare filename has an empty directory part, not a null one - Directory.CreateDirectory
-            // throws on empty, so fall back to the working directory explicitly.
-            string directory = Path.GetDirectoryName(this.statePath) is { Length: > 0 } parent
-                ? parent
-                : Directory.GetCurrentDirectory();
-
-            Directory.CreateDirectory(directory);
-
-            return new FileStream(
-                Path.Combine(directory, $"{Path.GetFileName(this.statePath)}.lock"),
-                FileMode.OpenOrCreate,
-                FileAccess.ReadWrite,
-                FileShare.None);
-        }
-        catch (IOException)
-        {
-            // Not logged: held by another switch, which the switch that finds it says.
-            // Held by another switch.
-            return null;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            // Can't create the lock file at all - a read-only config directory, say. Serialising
-            // across processes is a safeguard, not a precondition, so let the switch proceed
-            // rather than making the app unusable.
-            return NoLockNeeded();
-        }
-    }
-
-    /// <summary>
-    /// A disposable stand-in used when the lock file cannot be created, so the caller's
-    /// <c>finally</c> stays uniform.
-    /// </summary>
-    private static FileStream NoLockNeeded() =>
-        new(Path.Combine(Path.GetTempPath(), $"cs-switch-{Guid.NewGuid():N}.lock"), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite, 1, FileOptions.DeleteOnClose);
 
     private async Task<ContextSwitchResult> RunSwitchAsync(
         ContextSwitchRequest request,

@@ -345,10 +345,10 @@ public sealed class ProfileReorderTests : UiTest
         ConfigPaths paths = new("/tmp/context-switcher-ui-tests");
         inner.Seed(paths.SettingsPath, configuration);
         YieldingJsonStore jsonStore = new(inner);
-        ConfigurationStore store = new(jsonStore, paths, validator);
+        ConfigurationStore store = new(jsonStore, paths, validator, new TestLogger());
         StubContextSwitchService switchService = new();
 
-        return (new ProfilesViewModel(switchService, store, jsonStore, paths), switchService, store);
+        return (new ProfilesViewModel(switchService, store), switchService, store);
     }
 
     private static async Task WaitUntil(Func<bool> condition)

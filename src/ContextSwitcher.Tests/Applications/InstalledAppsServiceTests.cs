@@ -26,7 +26,7 @@ public sealed class InstalledAppsServiceTests : IDisposable
         Bundle(applications, "Calculator.app", "Contents", "Helper.app");
         Bundle(applications, "Tools", "More", "Too Deep.app");
 
-        InstalledAppsService service = new(new FakeProcessRunner(), new ConfigPaths(Path.Combine(this.root, "config")), [applications]);
+        InstalledAppsService service = new(new FakeImageConverter(), new ConfigPaths(Path.Combine(this.root, "config")), [applications]);
 
         IReadOnlyList<InstalledApp> apps = await service.GetInstalledAppsAsync(CancellationToken.None);
 

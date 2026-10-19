@@ -113,7 +113,7 @@ public sealed class ReadmeScreenshots : UiTest
         AppHost.UpdateState(new CurrentContextState { CurrentContextId = "personal" });
         UpdatesViewModel updates = new(scenario.Releases, scenario.Updater, scenario.ProcessRunner, new FakeSystemNotifications(), UpdatesViewModel.RunningVersion);
         MainAppViewModel viewModel = new(
-            scenario.SwitchService, scenario.ConfigurationStore, scenario.JsonStore, scenario.Paths, scenario.Permissions,
+            scenario.SwitchService, scenario.ConfigurationStore, scenario.Permissions,
             scenario.ProcessRunner, scenario.Analytics, scenario.InstalledApps, scenario.Catalog, scenario.FocusShortcuts,
             scenario.Notice, updates, loginItem: new FakeLoginItem { Status = LoginItemStatus.On });
 

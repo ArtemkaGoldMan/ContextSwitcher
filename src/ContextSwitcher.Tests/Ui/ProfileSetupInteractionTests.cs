@@ -408,7 +408,7 @@ public sealed class ProfileSetupInteractionTests : UiTest
         jsonStore.Seed(paths.SettingsPath, configuration);
         // Deliberately the yielding wrapper: the plain in-memory store never suspends, so a save
         // that resumes on the wrong thread would look identical to one that does not.
-        ConfigurationStore store = new(new YieldingJsonStore(jsonStore), paths, validator);
+        ConfigurationStore store = new(new YieldingJsonStore(jsonStore), paths, validator, new TestLogger());
 
         return (new ProfileSetupViewModel(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), configuration.Contexts[0]), store);
     }

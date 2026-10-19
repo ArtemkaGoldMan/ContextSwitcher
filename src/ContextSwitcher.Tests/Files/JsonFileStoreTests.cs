@@ -13,7 +13,7 @@ public sealed class JsonFileStoreTests
     {
         string tempDirectory = CreateTempDirectory();
         string settingsPath = Path.Combine(tempDirectory, "settings.json");
-        JsonFileStore store = new(FileReplacer.Once);
+        JsonFileStore store = new(FileReplacer.Once, new TestLogger());
 
         AppConfiguration configuration = new()
         {
@@ -53,7 +53,7 @@ public sealed class JsonFileStoreTests
     [Fact]
     public async Task ReadAsyncReturnsNullWhenFileDoesNotExist()
     {
-        JsonFileStore store = new(FileReplacer.Once);
+        JsonFileStore store = new(FileReplacer.Once, new TestLogger());
 
         AppConfiguration? configuration = await store.ReadAsync<AppConfiguration>(
             Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.json"));
@@ -67,7 +67,7 @@ public sealed class JsonFileStoreTests
         string tempDirectory = CreateTempDirectory();
         string settingsPath = Path.Combine(tempDirectory, "settings.json");
         await File.WriteAllTextAsync(settingsPath, "{ invalid json");
-        JsonFileStore store = new(FileReplacer.Once);
+        JsonFileStore store = new(FileReplacer.Once, new TestLogger());
 
         try
         {
@@ -91,11 +91,10 @@ public sealed class JsonFileStoreTests
         string statePath = Path.Combine(tempDirectory, "state.json");
         await File.WriteAllTextAsync(statePath, "{ \"currentContextId\": \"secret-profile\", broken");
         TestLogger logger = new();
-        using IDisposable scope = AppLog.UseForThisFlow(logger);
 
         try
         {
-            await new JsonFileStore(FileReplacer.Once).ReadAsync<CurrentContextState>(statePath);
+            await new JsonFileStore(FileReplacer.Once, logger).ReadAsync<CurrentContextState>(statePath);
 
             LogEntry entry = Assert.Single(logger.Entries);
             Assert.Equal("FileQuarantined", entry.EventId);
@@ -114,7 +113,7 @@ public sealed class JsonFileStoreTests
         string tempDirectory = CreateTempDirectory();
         string settingsPath = Path.Combine(tempDirectory, "settings.json");
         string backupDirectory = Path.Combine(tempDirectory, "backups");
-        JsonFileStore store = new(FileReplacer.Once);
+        JsonFileStore store = new(FileReplacer.Once, new TestLogger());
         await store.WriteAsync(settingsPath, new AppConfiguration { ActiveContextId = "work" });
 
         try
@@ -140,7 +139,7 @@ public sealed class JsonFileStoreTests
         string tempDirectory = CreateTempDirectory();
         string settingsPath = Path.Combine(tempDirectory, "settings.json");
         string backupDirectory = Path.Combine(tempDirectory, "backups");
-        JsonFileStore store = new(FileReplacer.Once);
+        JsonFileStore store = new(FileReplacer.Once, new TestLogger());
 
         try
         {
@@ -175,7 +174,7 @@ public sealed class JsonFileStoreTests
 
         try
         {
-            JsonFileStore store = new(FileReplacer.Once);
+            JsonFileStore store = new(FileReplacer.Once, new TestLogger());
             await store.WriteAsync(settings, new AppConfiguration { ActiveContextId = "work" });
 
             for (int i = 0; i < 25; i++)
@@ -205,7 +204,7 @@ public sealed class JsonFileStoreTests
 
         try
         {
-            JsonFileStore store = new(FileReplacer.Once);
+            JsonFileStore store = new(FileReplacer.Once, new TestLogger());
             await store.WriteAsync(settings, new AppConfiguration { ActiveContextId = "work" });
 
             await store.BackupAsync(settings, backups);
@@ -231,7 +230,7 @@ public sealed class JsonFileStoreTests
 
         try
         {
-            JsonFileStore store = new(FileReplacer.Once);
+            JsonFileStore store = new(FileReplacer.Once, new TestLogger());
             await store.WriteAsync(settings, new AppConfiguration { ActiveContextId = "work" });
             await store.WriteAsync(state, new AppConfiguration { ActiveContextId = "personal" });
 

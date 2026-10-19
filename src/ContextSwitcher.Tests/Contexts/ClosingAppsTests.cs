@@ -208,7 +208,7 @@ public sealed class ClosingAppsTests : IDisposable
     }
 
     private static ClosingAppsFollowUp FollowUp(ContextSwitchService service, FakeAppProcesses processes, TimeSpan? watchFor = null) =>
-        new(service, processes, new FakeClock(), watchFor ?? TimeSpan.FromMilliseconds(150), TimeSpan.FromMilliseconds(5), TimeSpan.FromMilliseconds(200));
+        new(service, processes, new FakeClock(), new TestLogger(), watchFor ?? TimeSpan.FromMilliseconds(150), TimeSpan.FromMilliseconds(5), TimeSpan.FromMilliseconds(200));
 
     private (ContextSwitchService Service, InMemoryJsonStore Store, string StatePath) Service()
     {
@@ -222,6 +222,7 @@ public sealed class ClosingAppsTests : IDisposable
             new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()),
             clock,
             new TestLogger(),
+            new FakeSwitchLock(),
             Path.Combine(this.folder, "settings.json"),
             statePath);
         return (service, store, statePath);

@@ -152,6 +152,17 @@ public sealed class CliCommandRouterTests
         Assert.True(CliCommandRouter.IsHeadlessCommand("anything-else"));
     }
 
+    /// <summary>Started with no arguments, or to open the dashboard, the app shows its windows; with any other command it runs it and exits.</summary>
+    [Theory]
+    [InlineData(new string[0], false)]
+    [InlineData(new[] { "open-dashboard" }, false)]
+    [InlineData(new[] { "switch", "--context", "work" }, true)]
+    [InlineData(new[] { "status" }, true)]
+    public void TheAppRunsACommandAndExitsOnlyWhenGivenOne(string[] args, bool headless)
+    {
+        Assert.Equal(headless, CliCommandRouter.IsHeadless(args));
+    }
+
     private static ConfigurationValidationResult Valid { get; } = new([]);
 
 

@@ -43,6 +43,16 @@ public sealed class CliCommandRouter
     public static bool IsHeadlessCommand(string command) => command != OpenDashboardCommand;
 
     /// <summary>
+    /// Whether the app was started to run a command and exit, rather than with its windows: there are
+    /// arguments, and the first is a headless command (<see cref="IsHeadlessCommand"/>).
+    /// </summary>
+    public static bool IsHeadless(IReadOnlyList<string> args)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+        return args.Count > 0 && IsHeadlessCommand(args[0]);
+    }
+
+    /// <summary>
     /// Runs the given command-line arguments against already-loaded startup state and returns the
     /// process exit code.
     /// </summary>

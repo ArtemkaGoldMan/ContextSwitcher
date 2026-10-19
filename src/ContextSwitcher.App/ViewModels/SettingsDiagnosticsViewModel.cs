@@ -124,7 +124,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
         this.OnPropertyChanged(nameof(this.HasDetailedLogStatus));
     }
 
-    private DateTimeOffset Now => this.sources?.Now() ?? DateTimeOffset.UtcNow;
+    private DateTimeOffset Now => this.sources?.Clock.UtcNow ?? DateTimeOffset.UtcNow;
 
     private async Task SetDetailedLogAsync(bool on)
     {

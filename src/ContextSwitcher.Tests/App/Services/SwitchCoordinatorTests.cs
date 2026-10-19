@@ -26,13 +26,30 @@ public sealed class SwitchCoordinatorTests
     private readonly InMemoryJsonStore jsonStore = new();
     private readonly ConfigPaths paths = new("/tmp/context-switcher-coordinator-tests");
 
+    /// <summary>
+    /// Whatever started the switch - the menu bar, the popover, the Profiles page, the setup wizard - the
+    /// state it wrote is published at once, rather than each of them reading it back for itself.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EverySwitchPublishesTheStateItWrote(bool askOnSwitch)
+    {
+        SwitchCoordinator coordinator = this.Create(askOnSwitch);
+        await this.jsonStore.WriteAsync(this.paths.StatePath, new CurrentContextState { CurrentContextId = "personal" });
+
+        await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.TrayMenu), CancellationToken.None);
+
+        Assert.Equal("personal", AppHost.State.CurrentContextId);
+    }
+
     [Fact]
     public async Task WithAskingOffItNeverAsks()
     {
         SwitchCoordinator coordinator = this.Create(askOnSwitch: false);
         this.running.Apps.Add(new RunningApp("Figma"));
 
-        await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.MenuBar), CancellationToken.None);
+        await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.TrayMenu), CancellationToken.None);
 
         Assert.Empty(this.presenter.Asked);
         Assert.Null(this.inner.LastRequest!.Extras);
@@ -44,7 +61,7 @@ public sealed class SwitchCoordinatorTests
         SwitchCoordinator coordinator = this.Create(askOnSwitch: true);
         this.running.Apps.Add(new RunningApp("Slack"));
 
-        await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.MenuBar), CancellationToken.None);
+        await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.TrayMenu), CancellationToken.None);
 
         Assert.Empty(this.presenter.Asked);
         Assert.Equal("personal", this.inner.LastRequest!.TargetContextId);
@@ -101,7 +118,7 @@ public sealed class SwitchCoordinatorTests
         SwitchCoordinator coordinator = this.Create(askOnSwitch: true);
         this.running.Apps.Add(new RunningApp("Figma"));
 
-        await coordinator.SwitchAsync(ContextSwitchRequest.TurnOff(ContextSwitchSource.MenuBar), CancellationToken.None);
+        await coordinator.SwitchAsync(ContextSwitchRequest.TurnOff(ContextSwitchSource.TrayMenu), CancellationToken.None);
 
         Assert.Equal("Turning Work off", Assert.Single(this.presenter.Asked).Title);
         Assert.True(this.inner.LastRequest!.IsTurnOff);
@@ -116,7 +133,7 @@ public sealed class SwitchCoordinatorTests
         SwitchCoordinator coordinator = this.Create(askOnSwitch: true);
         this.running.Apps.Add(new RunningApp("Figma"));
 
-        await coordinator.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.MenuBar), CancellationToken.None);
+        await coordinator.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.TrayMenu), CancellationToken.None);
 
         Assert.Empty(this.presenter.Asked);
     }
@@ -130,7 +147,7 @@ public sealed class SwitchCoordinatorTests
         AskOnSwitchViewModel? open = null;
         this.presenter.Answer = viewModel => open = viewModel;
 
-        Task<ContextSwitchResult> first = coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.MenuBar), CancellationToken.None);
+        Task<ContextSwitchResult> first = coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.TrayMenu), CancellationToken.None);
         ContextSwitchResult second = await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.Dashboard), CancellationToken.None);
 
         Assert.Equal(ContextSwitchStatus.Cancelled, second.Status);
@@ -154,7 +171,7 @@ public sealed class SwitchCoordinatorTests
         ConfigurationValidator validator = new();
         AppHost.UpdateConfiguration(configuration, validator.Validate(configuration));
         AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
-        ConfigurationStore store = new(this.jsonStore, this.paths, validator);
-        return new SwitchCoordinator(this.inner, store, this.running, this.catalog, this.presenter);
+        ConfigurationStore store = new(this.jsonStore, this.paths, validator, new TestLogger());
+        return new SwitchCoordinator(this.inner, store, this.running, this.catalog, this.presenter, new FakeClock(), this.jsonStore, this.paths.StatePath);
     }
 }

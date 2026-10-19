@@ -205,7 +205,7 @@ public sealed class OnboardingViewModel : ViewModelBase
             }
 
             await this.switchService
-                .SwitchAsync(new ContextSwitchRequest(this.Work.Id, ContextSwitchSource.Dashboard), CancellationToken.None)
+                .SwitchAsync(new ContextSwitchRequest(this.Work.Id, ContextSwitchSource.SetupWizard), CancellationToken.None)
                 .ConfigureAwait(true);
 
             this.Completed?.Invoke(this, EventArgs.Empty);

@@ -30,11 +30,13 @@ public sealed class ClosingAppsFollowUp
     private readonly ContextSwitchService switches;
     private readonly IAppProcesses processes;
     private readonly IClock clock;
+    private readonly ILogger logger;
     private readonly TimeSpan pollEvery;
     private readonly TimeSpan forceQuitWait;
     private readonly Lock gate = new();
     private CancellationTokenSource? watching;
 
+    /// <param name="logger">Records each app that quit late, and each force quit.</param>
     /// <param name="watchFor">Overrides <see cref="DefaultWatchFor"/>, for tests.</param>
     /// <param name="pollEvery">Overrides <see cref="DefaultPollEvery"/>, for tests.</param>
     /// <param name="forceQuitWait">Overrides <see cref="DefaultForceQuitWait"/>, for tests.</param>
@@ -42,6 +44,7 @@ public sealed class ClosingAppsFollowUp
         ContextSwitchService switches,
         IAppProcesses processes,
         IClock clock,
+        ILogger logger,
         TimeSpan? watchFor = null,
         TimeSpan? pollEvery = null,
         TimeSpan? forceQuitWait = null)
@@ -49,10 +52,12 @@ public sealed class ClosingAppsFollowUp
         ArgumentNullException.ThrowIfNull(switches);
         ArgumentNullException.ThrowIfNull(processes);
         ArgumentNullException.ThrowIfNull(clock);
+        ArgumentNullException.ThrowIfNull(logger);
 
         this.switches = switches;
         this.processes = processes;
         this.clock = clock;
+        this.logger = logger;
         this.WatchFor = watchFor ?? DefaultWatchFor;
         this.pollEvery = pollEvery ?? DefaultPollEvery;
         this.forceQuitWait = forceQuitWait ?? DefaultForceQuitWait;
@@ -108,7 +113,7 @@ public sealed class ClosingAppsFollowUp
         }
 
         bool gone = this.processes.IsRunning(app) == false;
-        AppLog.Record(
+        this.logger.Record(
             "ContextSwitch",
             gone ? "AppForceQuit" : "AppForceQuitFailed",
             gone ? $"{app} was force quit, as asked." : $"{app} was still running after being force quit.");
@@ -156,7 +161,7 @@ public sealed class ClosingAppsFollowUp
                 // Unknown counts as a window: "may be asking to save" is the safer thing to say, and
                 // offers nothing to end by force.
                 bool hasWindow = this.processes.HasWindowOnScreen(app) ?? true;
-                AppLog.Record(
+                this.logger.Record(
                     "ContextSwitch",
                     "AppStillRunning",
                     hasWindow
@@ -173,7 +178,7 @@ public sealed class ClosingAppsFollowUp
 
     private async Task QuitAsync(DateTimeOffset completedAt, string app, CancellationToken cancellationToken)
     {
-        AppLog.Record("ContextSwitch", "AppQuitLater", $"{app} quit {this.SecondsSince(completedAt)} seconds after the switch.");
+        this.logger.Record("ContextSwitch", "AppQuitLater", $"{app} quit {this.SecondsSince(completedAt)} seconds after the switch.");
         await this.AmendAsync(completedAt, errors => ClosingApps.Quit(errors, app), cancellationToken).ConfigureAwait(false);
     }
 

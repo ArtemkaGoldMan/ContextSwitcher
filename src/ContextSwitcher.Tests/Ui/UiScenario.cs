@@ -29,7 +29,7 @@ public sealed class UiScenario
         // Completes off-context the way real file IO does; the in-memory store on its own never
         // suspends, which hides anything that resumes on the wrong thread.
         this.JsonStore = new YieldingJsonStore(inner);
-        this.ConfigurationStore = new ConfigurationStore(this.JsonStore, this.Paths, validator);
+        this.ConfigurationStore = new ConfigurationStore(this.JsonStore, this.Paths, validator, new TestLogger());
         this.SwitchService = new StubContextSwitchService();
         this.ProcessRunner = new FakeProcessRunner();
         this.Permissions = new FakePermissionsChecker();
@@ -102,11 +102,11 @@ public sealed class UiScenario
     public static UiScenario With(AppConfiguration configuration) => new(configuration);
 
     public MainAppViewModel MainApp() => new(
-        this.SwitchService, this.ConfigurationStore, this.JsonStore, this.Paths,
+        this.SwitchService, this.ConfigurationStore,
         this.Permissions, this.ProcessRunner, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates);
 
     public ProfilesViewModel Profiles() =>
-        new(this.SwitchService, this.ConfigurationStore, this.JsonStore, this.Paths);
+        new(this.SwitchService, this.ConfigurationStore);
 
     public SettingsViewModel Settings() =>
         new(this.ConfigurationStore, this.Permissions, this.ProcessRunner, this.Updates);
@@ -114,7 +114,7 @@ public sealed class UiScenario
     public StatsViewModel Stats() => new(this.Analytics);
 
     public DashboardViewModel Dashboard() => new(
-        this.SwitchService, this.Analytics, this.JsonStore, this.ProcessRunner, this.Paths, this.Clock);
+        this.SwitchService, this.Analytics, this.ProcessRunner, this.Clock);
 
     public OnboardingViewModel Onboarding() =>
         new(this.ConfigurationStore, this.InstalledApps, this.SwitchService);

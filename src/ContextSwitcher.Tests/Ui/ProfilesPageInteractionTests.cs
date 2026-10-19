@@ -249,9 +249,9 @@ public sealed class ProfilesPageInteractionTests : UiTest
         // Completes off-context like real file IO, so a save that resumes on the wrong thread is
         // actually observable here.
         YieldingJsonStore jsonStore = new(inner);
-        ConfigurationStore store = new(jsonStore, paths, validator);
+        ConfigurationStore store = new(jsonStore, paths, validator, new TestLogger());
         StubContextSwitchService switchService = new();
 
-        return (new ProfilesViewModel(switchService, store, jsonStore, paths), switchService, store);
+        return (new ProfilesViewModel(switchService, store), switchService, store);
     }
 }

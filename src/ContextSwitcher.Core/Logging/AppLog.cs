@@ -75,9 +75,16 @@ public static class AppLog
         }
     }
 
-    private static void Write(LogLevel level, string category, string eventId, string message, Exception? exception, IReadOnlyDictionary<string, string>? data, bool keep = false)
+    private static void Write(LogLevel level, string category, string eventId, string message, Exception? exception, IReadOnlyDictionary<string, string>? data, bool keep = false) =>
+        WriteTo(Scoped.Value ?? shared, level, category, eventId, message, exception, data, keep);
+
+    /// <summary>
+    /// Writes one entry to <paramref name="logger"/> before returning, and swallows a failure to: the
+    /// way <see cref="LoggerExtensions"/> write too, so a class given a logger logs as this does.
+    /// </summary>
+    internal static void WriteTo(
+        ILogger? logger, LogLevel level, string category, string eventId, string message, Exception? exception, IReadOnlyDictionary<string, string>? data, bool keep = false)
     {
-        ILogger? logger = Scoped.Value ?? shared;
         if (logger is null)
         {
             return;

@@ -90,7 +90,7 @@ public static class AppHost
         AddPlatformFileServices(services);
         services.AddSingleton<IJsonStore, JsonFileStore>();
         services.AddSingleton(provider => new LocalJsonLogger(
-            provider.GetRequiredService<ConfigPaths>(), provider.GetRequiredService<IFileReplacer>()));
+            provider.GetRequiredService<ConfigPaths>(), provider.GetRequiredService<IFileReplacer>(), provider.GetRequiredService<IClock>()));
 
         // What happens is remembered and only a problem is written, with the trail that led to it - see
         // TrailLogger. CONTEXTSWITCHER_LOG_LEVEL=information (or debug, trace) writes from that level on
@@ -107,7 +107,7 @@ public static class AppHost
             provider.GetRequiredService<ConfigPaths>(),
             () => RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), AppBuild.IsDevelopment),
             () => provider.GetRequiredService<TrailLogger>().Remembered(),
-            () => DateTimeOffset.UtcNow));
+            provider.GetRequiredService<IClock>()));
         services.AddSingleton<ConfigurationValidator>();
         services.AddSingleton<IAnalyticsSessionStore, AnalyticsSessionStore>();
         services.AddSingleton<IAnalyticsService, AnalyticsService>();
@@ -126,6 +126,7 @@ public static class AppHost
         services.AddSingleton<IApplicationHider, MacApplicationHider>();
         services.AddSingleton<IAppProcesses, MacAppProcesses>();
         services.AddSingleton<IAutomationStepExecutor, AutomationStepExecutor>();
+        services.AddSingleton<ISwitchLock>(provider => new FileSwitchLock(provider.GetRequiredService<ConfigPaths>().SwitchLockPath));
         services.AddSingleton(provider => new ContextSwitchService(
             provider.GetRequiredService<IJsonStore>(),
             provider.GetRequiredService<IAutomationStepExecutor>(),
@@ -133,24 +134,30 @@ public static class AppHost
             provider.GetRequiredService<IAnalyticsService>(),
             provider.GetRequiredService<IClock>(),
             provider.GetRequiredService<ILogger>(),
+            provider.GetRequiredService<ISwitchLock>(),
             provider.GetRequiredService<ConfigPaths>().SettingsPath,
             provider.GetRequiredService<ConfigPaths>().StatePath));
         services.AddSingleton(provider => new ClosingAppsFollowUp(
             provider.GetRequiredService<ContextSwitchService>(),
             provider.GetRequiredService<IAppProcesses>(),
-            provider.GetRequiredService<IClock>()));
+            provider.GetRequiredService<IClock>(),
+            provider.GetRequiredService<ILogger>()));
 
         // Switches started in the app ask, when that's on, about everything else open; the command
         // line has no window to ask in, so it switches through the service itself.
         services.AddSingleton<IRunningApplications, MacRunningApplications>();
-        services.AddSingleton<ISiteIcons>(provider => new SiteIcons(provider.GetRequiredService<IProcessRunner>(), provider.GetRequiredService<ConfigPaths>()));
+        services.AddSingleton<IImageConverter>(provider => new SipsImageConverter(provider.GetRequiredService<IProcessRunner>(), SipsImageConverter.DefaultTimeout));
+        services.AddSingleton<ISiteIcons>(provider => new SiteIcons(provider.GetRequiredService<IImageConverter>(), provider.GetRequiredService<ConfigPaths>()));
         services.AddSingleton<IAskOnSwitchPresenter, WindowAskOnSwitchPresenter>();
         services.AddSingleton<IContextSwitchService>(provider => new SwitchCoordinator(
             provider.GetRequiredService<ContextSwitchService>(),
             provider.GetRequiredService<ConfigurationStore>(),
             provider.GetRequiredService<IRunningApplications>(),
             provider.GetRequiredService<ISystemCatalog>(),
-            provider.GetRequiredService<IAskOnSwitchPresenter>()));
+            provider.GetRequiredService<IAskOnSwitchPresenter>(),
+            provider.GetRequiredService<IClock>(),
+            provider.GetRequiredService<IJsonStore>(),
+            provider.GetRequiredService<ConfigPaths>().StatePath));
         services.AddSingleton(provider => new CliCommandRouter(provider.GetRequiredService<ContextSwitchService>()));
         services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
         services.AddSingleton<IInstalledAppsService, InstalledAppsService>();
@@ -193,14 +200,14 @@ public static class AppHost
 
         // A log is a week long. Looked at on every start, so one nothing was written to for a month
         // does not still hold what it did in the month before.
-        if (args.Length == 0 || !CliCommandRouter.IsHeadlessCommand(args[0]))
+        if (!CliCommandRouter.IsHeadless(args))
         {
             Services.GetRequiredService<LocalJsonLogger>().TidyAsync().GetAwaiter().GetResult();
         }
 
         // A headless CLI invocation is a one-shot process that exits immediately; starting an
         // analytics session or a persistent global hook for it would be pointless and wasteful.
-        bool isInteractive = args.Length == 0 || !CliCommandRouter.IsHeadlessCommand(args[0]);
+        bool isInteractive = !CliCommandRouter.IsHeadless(args);
         BootstrapAsync(isInteractive).GetAwaiter().GetResult();
     }
 
@@ -312,7 +319,7 @@ public static class AppHost
                 "Configuration",
                 "ConfigurationInvalid",
                 $"The settings have {ConfigurationValidation.Errors.Count} problem(s): "
-                    + string.Join("; ", ConfigurationValidation.Errors.Select(error => $"{System.Text.RegularExpressions.Regex.Replace(error.Path, @"\[\d+\]", "[]")} ({error.Detail?.Key ?? "no key"})")));
+                    + ConfigurationValidation.DescribeForLog());
         }
 
         analyticsService.Enabled = Configuration.Analytics.Enabled;
@@ -357,10 +364,6 @@ public static class AppHost
             : state.CurrentContextId;
     }
 
-    /// <summary>
-    /// Re-prunes analytics on a slow timer for the life of the process. Fire-and-forget on purpose:
-    /// housekeeping must never take the app down, and the next tick retries anyway.
-    /// </summary>
     /// <summary>
     /// Starts the things that need Avalonia's dispatcher, and so cannot run during
     /// <see cref="Initialize"/> - that happens before the platform is set up, and merely
