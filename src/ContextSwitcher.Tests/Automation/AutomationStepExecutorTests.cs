@@ -3,6 +3,7 @@ using ContextSwitcher.Core.Messages;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Automation;
 using ContextSwitcher.Infrastructure.Browser;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Automation;
@@ -559,14 +560,64 @@ public sealed class AutomationStepExecutorTests
         return new AutomationStep("SetFocusMode.work", AutomationStepType.SetFocusMode, "Set Focus mode", isCritical, TimeSpan.FromSeconds(10), arguments);
     }
 
+    /// <summary>
+    /// Every handler, with the Mac's ways of asking the system over fake runners, so what each step
+    /// would run on a Mac is what is checked.
+    /// </summary>
     private static AutomationStepExecutor CreateExecutor(FakeProcessRunner processRunner, FakeScriptRunner scriptRunner, FakeClock clock, FakeApplicationHider? hider = null, FakeAppProcesses? processes = null)
     {
         // No wait between "is it still running?" checks, so a test of an app that never quits does
         // not sit through the real interval. Never the real hider: it would hide this Mac's apps -
         // nor the real processes, whose windows are this Mac's.
+        BrowserLauncher browser = new(processRunner, scriptRunner);
         return new AutomationStepExecutor(
-            processRunner, scriptRunner, new BrowserLauncher(processRunner, scriptRunner), clock, quitConfirmInterval: TimeSpan.Zero,
-            hider: hider ?? new FakeApplicationHider(), processes: processes ?? new FakeAppProcesses());
+            [
+                new CloseApplicationsHandler(new MacAppQuitter(scriptRunner), processes ?? new FakeAppProcesses(), clock, quitConfirmInterval: TimeSpan.Zero),
+                new LaunchApplicationsHandler(new MacAppLauncher(processRunner), clock),
+                new HideApplicationsHandler(hider ?? new FakeApplicationHider(), clock),
+                new ManageBrowserContextHandler(browser, clock),
+                new CloseBrowserTabsHandler(browser, clock),
+                new DockerContainersHandler(AutomationStepType.StartDockerResources, processRunner, clock),
+                new DockerContainersHandler(AutomationStepType.StopDockerResources, processRunner, clock),
+                new ControlMediaHandler(new MacMediaPlayer(scriptRunner), clock),
+                new SetFocusModeHandler(new MacShortcutRunner(processRunner), clock),
+            ],
+            clock);
+    }
+
+    /// <summary>A step goes to the handler for its type, and to no other.</summary>
+    [Fact]
+    public async Task AStepGoesToTheHandlerForItsType()
+    {
+        FakeStepHandler launching = new(AutomationStepType.LaunchApplications);
+        FakeStepHandler closing = new(AutomationStepType.CloseApplications);
+        AutomationStepExecutor executor = new([launching, closing], new FakeClock());
+
+        await executor.ExecuteAsync(LaunchApplicationsStep(["Notes"], isCritical: false), CancellationToken.None);
+
+        Assert.Equal(["LaunchApplications.work"], launching.Ran);
+        Assert.Empty(closing.Ran);
+    }
+
+    /// <summary>Two handlers for one type is a mistake in the registrations, said when the executor is made.</summary>
+    [Fact]
+    public void TwoHandlersForOneTypeAreRefused()
+    {
+        Assert.Throws<ArgumentException>(() => new AutomationStepExecutor(
+            [new FakeStepHandler(AutomationStepType.SetFocusMode), new FakeStepHandler(AutomationStepType.SetFocusMode)], new FakeClock()));
+    }
+
+    private sealed class FakeStepHandler(AutomationStepType type) : IStepHandler
+    {
+        public List<string> Ran { get; } = [];
+
+        public AutomationStepType Type => type;
+
+        public Task<AutomationResult> ExecuteAsync(AutomationStep step, CancellationToken cancellationToken)
+        {
+            this.Ran.Add(step.Id);
+            return Task.FromResult(new AutomationResult(step.Id, step.Type, AutomationResultStatus.Succeeded, "Ran.", 0, null, null, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch));
+        }
     }
 
     /// <summary>

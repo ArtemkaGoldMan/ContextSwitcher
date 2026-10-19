@@ -77,6 +77,20 @@ public static class AppServices
             provider.GetRequiredService<IScriptRunner>(),
             provider.GetRequiredService<IOpenedTabsStore>(),
             provider.GetRequiredService<IBrowserRuns>()));
+
+        // What runs each type of step; a type with none is reported as skipped. A new type of step is
+        // a new handler and a line here.
+        services.AddSingleton<IStepHandler, CloseApplicationsHandler>();
+        services.AddSingleton<IStepHandler, LaunchApplicationsHandler>();
+        services.AddSingleton<IStepHandler, HideApplicationsHandler>();
+        services.AddSingleton<IStepHandler, ManageBrowserContextHandler>();
+        services.AddSingleton<IStepHandler, CloseBrowserTabsHandler>();
+        services.AddSingleton<IStepHandler>(provider => new DockerContainersHandler(
+            AutomationStepType.StartDockerResources, provider.GetRequiredService<IProcessRunner>(), provider.GetRequiredService<IClock>()));
+        services.AddSingleton<IStepHandler>(provider => new DockerContainersHandler(
+            AutomationStepType.StopDockerResources, provider.GetRequiredService<IProcessRunner>(), provider.GetRequiredService<IClock>()));
+        services.AddSingleton<IStepHandler, ControlMediaHandler>();
+        services.AddSingleton<IStepHandler, SetFocusModeHandler>();
         services.AddSingleton<IAutomationStepExecutor, AutomationStepExecutor>();
         services.AddSingleton<ISwitchLock>(provider => new FileSwitchLock(provider.GetRequiredService<ConfigPaths>().SwitchLockPath));
         services.AddSingleton(provider => new ContextSwitchService(
@@ -178,6 +192,10 @@ public static class AppServices
         services.AddSingleton<IBrowserRuns, ProcessBrowserRuns>();
         services.AddSingleton<IApplicationHider, MacApplicationHider>();
         services.AddSingleton<IAppProcesses, MacAppProcesses>();
+        services.AddSingleton<IAppLauncher, MacAppLauncher>();
+        services.AddSingleton<IAppQuitter, MacAppQuitter>();
+        services.AddSingleton<IMediaPlayer, MacMediaPlayer>();
+        services.AddSingleton<IShortcutRunner, MacShortcutRunner>();
         services.AddSingleton<IRunningApplications, MacRunningApplications>();
         services.AddSingleton<IImageConverter>(provider => new SipsImageConverter(provider.GetRequiredService<IProcessRunner>(), SipsImageConverter.DefaultTimeout));
         services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
