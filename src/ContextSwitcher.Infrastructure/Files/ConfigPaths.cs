@@ -15,21 +15,28 @@ public sealed class ConfigPaths
     /// Initializes a new instance of the <see cref="ConfigPaths"/> class.
     /// </summary>
     /// <param name="baseDirectory">An optional override for the config root.</param>
-    public ConfigPaths(string? baseDirectory = null)
+    /// <param name="settingsRoot">
+    /// The folder this system keeps apps' settings in, when it isn't <c>~/.config</c>: the app's
+    /// composition root gives <c>%APPDATA%</c> on Windows.
+    /// </param>
+    public ConfigPaths(string? baseDirectory = null, string? settingsRoot = null)
     {
         BaseDirectory = ResolveBaseDirectory(
             baseDirectory,
             Environment.GetEnvironmentVariable(DirectoryVariable),
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            AppBuild.IsDevelopment);
+            AppBuild.IsDevelopment,
+            settingsRoot);
     }
 
     /// <summary>
     /// Where everything is kept: the folder given, else the one <see cref="DirectoryVariable"/> names,
-    /// else <c>~/.config/ContextSwitcher</c> - or <c>~/.config/ContextSwitcher-dev</c> for a
-    /// development build, which so never reads or changes the installed app's profiles and time.
+    /// else <c>ContextSwitcher</c> in <paramref name="settingsRoot"/> - <c>~/.config</c> unless another
+    /// is given - or <c>ContextSwitcher-dev</c> for a development build, which so never reads or
+    /// changes the installed app's profiles and time.
     /// </summary>
-    public static string ResolveBaseDirectory(string? explicitDirectory, string? environmentDirectory, string userHome, bool isDevelopment)
+    public static string ResolveBaseDirectory(
+        string? explicitDirectory, string? environmentDirectory, string userHome, bool isDevelopment, string? settingsRoot = null)
     {
         if (!string.IsNullOrWhiteSpace(explicitDirectory))
         {
@@ -45,7 +52,10 @@ public sealed class ConfigPaths
                 : directory;
         }
 
-        return Path.Combine(userHome, ".config", isDevelopment ? "ContextSwitcher-dev" : "ContextSwitcher");
+        string name = isDevelopment ? "ContextSwitcher-dev" : "ContextSwitcher";
+        return string.IsNullOrWhiteSpace(settingsRoot)
+            ? Path.Combine(userHome, ".config", name)
+            : Path.Combine(settingsRoot, name);
     }
 
     /// <summary>

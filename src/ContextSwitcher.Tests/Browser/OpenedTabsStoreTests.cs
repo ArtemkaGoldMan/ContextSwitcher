@@ -17,12 +17,12 @@ public sealed class OpenedTabsStoreTests : IDisposable
     {
         ConfigPaths paths = new(this.directory);
         Directory.CreateDirectory(this.directory);
-        OpenedTabsStore store = new(new JsonFileStore(), paths);
+        OpenedTabsStore store = new(new JsonFileStore(FileReplacer.Once), paths);
 
         await store.SetAsync("work", new OpenedTabs(BrowserKind.Chrome, "123@2026-10-13T20:00:00.0000000Z", [7, 8]), CancellationToken.None);
         await store.SetAsync("personal", new OpenedTabs(BrowserKind.Brave, "456@2026-10-13T20:00:00.0000000Z", [3]), CancellationToken.None);
 
-        OpenedTabs? work = await new OpenedTabsStore(new JsonFileStore(), paths).GetAsync("work", CancellationToken.None);
+        OpenedTabs? work = await new OpenedTabsStore(new JsonFileStore(FileReplacer.Once), paths).GetAsync("work", CancellationToken.None);
         Assert.NotNull(work);
         Assert.Equal((BrowserKind.Chrome, "123@2026-10-13T20:00:00.0000000Z"), (work.Browser, work.BrowserRun));
         Assert.Equal([7, 8], work.TabIds);
@@ -37,7 +37,7 @@ public sealed class OpenedTabsStoreTests : IDisposable
     [Fact]
     public async Task NothingRememberedYetIsNothing()
     {
-        OpenedTabsStore store = new(new JsonFileStore(), new ConfigPaths(this.directory));
+        OpenedTabsStore store = new(new JsonFileStore(FileReplacer.Once), new ConfigPaths(this.directory));
 
         Assert.Null(await store.GetAsync("work", CancellationToken.None));
         await store.RemoveAsync("work", CancellationToken.None);

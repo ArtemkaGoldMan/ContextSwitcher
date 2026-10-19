@@ -11,7 +11,7 @@ public sealed class LocalJsonLoggerTests
     public async Task LogAsyncAppendsOneJsonObjectPerLine()
     {
         string directory = CreateTempDirectory();
-        LocalJsonLogger logger = new(new ConfigPaths(directory));
+        LocalJsonLogger logger = new(new ConfigPaths(directory), FileReplacer.Once);
 
         try
         {
@@ -41,8 +41,8 @@ public sealed class LocalJsonLoggerTests
     {
         const int PerLogger = 150;
         string directory = CreateTempDirectory();
-        LocalJsonLogger first = new(new ConfigPaths(directory));
-        LocalJsonLogger second = new(new ConfigPaths(directory));
+        LocalJsonLogger first = new(new ConfigPaths(directory), FileReplacer.Once);
+        LocalJsonLogger second = new(new ConfigPaths(directory), FileReplacer.Once);
 
         try
         {

@@ -32,8 +32,8 @@ On Windows 11 in October 2026, with no change to the code:
   `/bin/ps`, five look for the app's executable without `.exe`, five compare paths written with `/`,
   and two ask macOS itself (sleep and wake, the default browser). Much of the macOS code already
   checks `OperatingSystem.IsMacOS()` and does nothing elsewhere, which is why so little fails.
-  Since [#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76) 2,004 pass on Windows and
-  the 4 that test macOS itself are skipped.
+  [#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76) fixed them or marked them
+  macOS-only.
 - **The command line.** `ContextSwitcher.exe status` runs and answers.
 - **The app.** It starts, and the setup wizard opens and draws correctly, in Segoe UI with Windows'
   own title bar. A console window opens with it: the app is built as a console program
@@ -269,12 +269,15 @@ These come before any Windows code, and none of them changes what the Mac app do
    [`JsonFileStore`](../src/ContextSwitcher.Infrastructure/Files/JsonFileStore.cs) and
    `AnalyticsSessionStore` save, and how
    [`LocalJsonLogger`](../src/ContextSwitcher.Infrastructure/Logging/LocalJsonLogger.cs) rolls its log;
-   each needs a short retry.
+   each needs a short retry. Both are done, in
+   [#78](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/78): the folder, and an
+   `IFileReplacer` all three are given - on Windows a
+   [`FileReplacer`](../src/ContextSwitcher.Infrastructure/Files/FileReplacer.cs) that tries again.
 
 ## Tests and CI
 
-- There are 668 test methods, 2,008 cases. On Windows 2,004 pass and the 4 that test macOS itself
-  are skipped; on macOS all of them run.
+- Every test runs on both systems, apart from the few that test macOS itself or Windows itself,
+  which the other system skips.
 - CI builds with warnings as errors and runs the tests on Windows too, in **Build and test
   (Windows)** ([#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76)). The release
   workflow gains a Windows build in stage 1 of [the plan](windows-plan.md).

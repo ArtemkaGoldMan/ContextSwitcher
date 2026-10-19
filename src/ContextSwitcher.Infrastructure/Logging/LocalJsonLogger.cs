@@ -29,6 +29,7 @@ public sealed class LocalJsonLogger : ILogger
     private static readonly TimeSpan LockRetryDelay = TimeSpan.FromMilliseconds(2);
 
     private readonly string path;
+    private readonly IFileReplacer fileReplacer;
     private readonly TimeProvider time;
     private readonly SemaphoreSlim writeLock = new(1, 1);
 
@@ -36,11 +37,14 @@ public sealed class LocalJsonLogger : ILogger
     /// Initializes a new instance of the <see cref="LocalJsonLogger"/> class.
     /// </summary>
     /// <param name="configPaths">Resolves the local application log path.</param>
+    /// <param name="fileReplacer">Moves a full or week-old log aside, over the previous one.</param>
     /// <param name="time">The clock a log's age is read against; the system's, unless a test says otherwise.</param>
-    public LocalJsonLogger(ConfigPaths configPaths, TimeProvider? time = null)
+    public LocalJsonLogger(ConfigPaths configPaths, IFileReplacer fileReplacer, TimeProvider? time = null)
     {
         ArgumentNullException.ThrowIfNull(configPaths);
+        ArgumentNullException.ThrowIfNull(fileReplacer);
         this.path = configPaths.AppLogPath;
+        this.fileReplacer = fileReplacer;
         this.time = time ?? TimeProvider.System;
     }
 
@@ -85,7 +89,7 @@ public sealed class LocalJsonLogger : ILogger
             FileStream? processLock = await this.TryAcquireCrossProcessLockAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                this.RollIfDue();
+                await this.RollIfDueAsync(cancellationToken).ConfigureAwait(false);
 
                 FileStream stream = new(
                     this.path,
@@ -125,7 +129,7 @@ public sealed class LocalJsonLogger : ILogger
             FileStream? processLock = await this.TryAcquireCrossProcessLockAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                this.RollIfDue();
+                await this.RollIfDueAsync(cancellationToken).ConfigureAwait(false);
 
                 string previous = this.path + ".1";
                 if (File.Exists(previous) && this.time.GetUtcNow() - File.GetLastWriteTimeUtc(previous) >= MaxAge)
@@ -154,7 +158,7 @@ public sealed class LocalJsonLogger : ILogger
     /// processes cannot roll it at the same time. Failures are swallowed deliberately: losing the roll
     /// is a far better outcome than a switch that fails because its log could not be tidied.
     /// </summary>
-    private void RollIfDue()
+    private async Task RollIfDueAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -172,7 +176,7 @@ public sealed class LocalJsonLogger : ILogger
             }
 
             string previous = this.path + ".1";
-            File.Move(this.path, previous, overwrite: true);
+            await this.fileReplacer.ReplaceAsync(this.path, previous, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

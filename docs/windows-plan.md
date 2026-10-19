@@ -200,8 +200,8 @@ on macOS and on Windows, and Mac users see no difference. Worth doing even if Wi
    tests run `/bin/sh`, or PowerShell on Windows, through a runner with an allowlist of their own;
    the start-up smoke tests find `ContextSwitcher.exe` and, on Windows, name the app's folder
    outright; the path tests build what they expect with `Path.Combine`; and the four tests of macOS
-   itself carry `[MacOSFact]`, which skips them anywhere else. On Windows 2,004 pass and 4 are
-   skipped; on macOS all 2,008 run.
+   itself carry `[MacOSFact]`, which skips them anywhere else. When it merged, 2,004 passed on
+   Windows with those 4 skipped, and all 2,008 ran on macOS.
 2. **CI on Windows** - done in [#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76).
    **Build and test (Windows)** runs on `windows-latest` next to **Build and test** on macOS: a
    Release build with warnings as errors, then the tests. Both summarise with
@@ -211,9 +211,9 @@ on macOS and on Windows, and Mac users see no difference. Worth doing even if Wi
    link or showing a file. `AutomationStepExecutor` and `BrowserLauncher` take them instead of
    building AppleScript and running `open` themselves, and the six view models that run `open` use
    the one for links and files. The macOS versions are today's code, moved and not changed.
-4. **How a profile names an app** - the decision to make first. A suggestion: profiles keep listing
-   apps by name, so every settings file reads as before, and the settings gain one map from a name
-   to how Windows finds that app, filled in when it is picked:
+4. **How a profile names an app** ([decided](#decisions-made)). Profiles keep listing apps by name,
+   so every settings file reads as before, and the settings gain one map from a name to how Windows
+   finds that app, filled in when it is picked:
 
    ```json
    "apps": {
@@ -233,8 +233,15 @@ on macOS and on Windows, and Mac users see no difference. Worth doing even if Wi
    The app targets `net10.0` and `net10.0-windows10.0.19041.0`, and registers the services of the
    platform it is built for. The platform projects are marked for their system, so the compiler
    flags shared code that reaches into them, and `EnableWindowsTargeting` lets a Mac compile it all.
-7. **Files.** Saving with `File.Move(…, overwrite: true)` gets a short retry, as Windows refuses it
-   while anything has the file open. On Windows settings live in `%APPDATA%\ContextSwitcher`.
+7. **Files** - done in [#78](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/78). Moving a
+   new file over the old one - the settings, time, the log - goes through an `IFileReplacer` each
+   class is given. `AppHost` gives Windows `FileReplacer.RetryingWhileHeldOpen`, which tries again
+   for under a second while another process has either file open, and macOS `FileReplacer.Once`, as
+   before. It also gives `ConfigPaths` Windows' settings root, so everything lives in
+   `%APPDATA%\ContextSwitcher`, or `ContextSwitcher-dev` for a development build - not
+   `%LOCALAPPDATA%`, where Velopack puts the app and which it replaces on each update. Both choices
+   sit in one method, `AddPlatformFileServices`, for item 6 to move into each platform's
+   registrations.
 8. **Releases** ([versions and releases](#versions-and-releases)). The release workflow is started
    by hand with the version and the platforms, and becomes a macOS job and a publishing job; the
    Windows job joins in stage 1. "Latest" is only ever given to a release with Mac files, and the
@@ -285,7 +292,7 @@ The rest of this stage:
 - **Quick links** open in the default browser.
 - **Text**: every string this stage shows gets its Windows wording - the taskbar instead of the menu
   bar, Ctrl instead of ⌘, the PC instead of the Mac - in English and Ukrainian.
-- **Releases**: an installer that updates itself (Velopack - [decisions](#decisions-to-make)), for
+- **Releases**: an installer that updates itself (Velopack - [decided](#decisions-made)), for
   `win-x64` and `win-arm64`, unsigned and marked preview. It goes into the same GitHub releases as
   the Mac app whenever something changed for Windows
   ([versions and releases](#versions-and-releases)). Windows warns once before the first run, and the
@@ -375,21 +382,26 @@ no warning, and finds their way with the README.
 - **A browser profile of the app's own**, driven through the DevTools protocol: exact control of
   tabs without an extension, for people who want it.
 
+## Decisions made
+
+On 19 October 2026:
+
+- **How a profile names an app on Windows**: the map from a name to its AppUserModelID and
+  executable, [in stage 0](#stage-0---groundwork-on-the-mac). Rejected: turning the lists of names
+  into lists of objects, a breaking change to `settings.json`; and the name alone, looked up in the
+  Start menu at every switch, which is slow and fails when names repeat or change.
+- **Where Windows keeps everything**: `%APPDATA%\ContextSwitcher`, where Windows apps keep their
+  settings. Not `%LOCALAPPDATA%`, which Velopack replaces on each update, nor `~/.config` as on the
+  Mac, where nobody on Windows looks.
+- **Versions**: one number for both platforms, each release carrying the platforms that changed
+  ([versions and releases](#versions-and-releases)).
+- **How the preview ships**: Velopack on GitHub releases - quick and free, unsigned, with a warning
+  on the first run. The Microsoft Store can come at [Windows 1.0](#stage-4---windows-10).
+
 ## Decisions to make
-
-Before stage 0:
-
-- **How a profile names an app on Windows** - the map suggested in stage 0, or something else.
 
 Before stage 1:
 
-- **How the preview ships**: Velopack on GitHub releases (quick, unsigned, a warning on first run),
-  or the Microsoft Store from the start (signed and updated by the Store, but every release waits
-  for its review).
-- **Versions**: one number for both, each release carrying the platforms that changed (suggested
-  in [versions and releases](#versions-and-releases)); or every release for both platforms, which
-  is simpler but asks people to update when nothing changed for them; or a number of its own for
-  each platform.
 - **Windows 10**: Windows 11 only, or Windows 10 too. Windows 10's support has ended for most
   people.
 
