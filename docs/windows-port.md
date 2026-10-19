@@ -10,7 +10,9 @@ profiles. The first version of this page, written against 0.6.3, came from readi
 ## In short
 
 It can be done without starting over, and less is missing than it looked. The solution builds on
-Windows as it is, 1,991 of its 2,008 tests pass there, and the app opens its setup window. About four
+Windows as it is, its tests pass there - all but 17 did from the start, and those were fixed or
+marked macOS-only in [#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76) - and the app
+opens its setup window. About four
 fifths of the code carries over: all of the profile, switching, time and logging logic, and nearly
 all of the interface. What has to be written again is the layer that talks to macOS - AppleScript,
 the Objective-C calls, `open`, `sips`, `shortcuts`, `codesign` and the updater.
@@ -30,6 +32,8 @@ On Windows 11 in October 2026, with no change to the code:
   `/bin/ps`, five look for the app's executable without `.exe`, five compare paths written with `/`,
   and two ask macOS itself (sleep and wake, the default browser). Much of the macOS code already
   checks `OperatingSystem.IsMacOS()` and does nothing elsewhere, which is why so little fails.
+  Since [#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76) 2,004 pass on Windows and
+  the 4 that test macOS itself are skipped.
 - **The command line.** `ContextSwitcher.exe status` runs and answers.
 - **The app.** It starts, and the setup wizard opens and draws correctly, in Segoe UI with Windows'
   own title bar. A console window opens with it: the app is built as a console program
@@ -269,10 +273,11 @@ These come before any Windows code, and none of them changes what the Mac app do
 
 ## Tests and CI
 
-- There are 668 test methods, 2,008 cases. On Windows today 1,991 pass and 17 fail (above). The
-  failing ones are fixed or marked macOS-only, and from then on CI keeps both green.
-- CI gains a `windows-latest` job that builds with warnings as errors and runs the tests, and the
-  release workflow a Windows build.
+- There are 668 test methods, 2,008 cases. On Windows 2,004 pass and the 4 that test macOS itself
+  are skipped; on macOS all of them run.
+- CI builds with warnings as errors and runs the tests on Windows too, in **Build and test
+  (Windows)** ([#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76)). The release
+  workflow gains a Windows build in stage 1 of [the plan](windows-plan.md).
 - CI cannot tell whether closing Slack actually works. That needs a Windows PC, or Windows 11 on Arm
   in Parallels or UTM on a Mac, running the `win-arm64` build.
 
