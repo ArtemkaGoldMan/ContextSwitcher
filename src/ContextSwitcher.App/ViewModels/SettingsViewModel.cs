@@ -16,7 +16,7 @@ namespace ContextSwitcher.App.ViewModels;
 /// at the top of a page of toggles left it unclear whether a flipped switch had taken effect - and a
 /// change made and then navigated away from was simply lost.
 /// </summary>
-public sealed class SettingsViewModel : ViewModelBase
+public sealed class SettingsViewModel : ViewModelBase, IDisposable
 {
     private const string AutomationSettingsUrl = "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation";
 
@@ -64,15 +64,7 @@ public sealed class SettingsViewModel : ViewModelBase
         this.Diagnostics = new SettingsDiagnosticsViewModel(configurationStore, processRunner, diagnostics, () => this.AutomationGranted);
         this.askOnSwitch = AppHost.Configuration.AskOnSwitch;
 
-        // "Don't ask again", in the window that asks, turns this off from outside Settings.
-        AppHost.ConfigurationChanged += (_, _) =>
-        {
-            if (this.askOnSwitch != AppHost.Configuration.AskOnSwitch)
-            {
-                this.askOnSwitch = AppHost.Configuration.AskOnSwitch;
-                this.OnPropertyChanged(nameof(this.AskOnSwitch));
-            }
-        };
+        AppHost.ConfigurationChanged += this.OnConfigurationChanged;
         this.Transfer.Imported += (_, _) =>
         {
             this.ReloadFromConfiguration();
@@ -325,6 +317,26 @@ public sealed class SettingsViewModel : ViewModelBase
 
     /// <summary>"Export and import": profiles and settings to and from a file.</summary>
     public SettingsTransferViewModel Transfer { get; }
+
+    /// <summary>
+    /// Lets go of the app's configuration events, for itself and the ignored-apps list it holds. The
+    /// main window's page outlives the window otherwise, and keeps answering every save.
+    /// </summary>
+    public void Dispose()
+    {
+        AppHost.ConfigurationChanged -= this.OnConfigurationChanged;
+        this.IgnoredApps.Dispose();
+    }
+
+    /// <summary>"Don't ask again", in the window that asks, turns this off from outside Settings.</summary>
+    private void OnConfigurationChanged(object? sender, EventArgs e)
+    {
+        if (this.askOnSwitch != AppHost.Configuration.AskOnSwitch)
+        {
+            this.askOnSwitch = AppHost.Configuration.AskOnSwitch;
+            this.OnPropertyChanged(nameof(this.AskOnSwitch));
+        }
+    }
 
     /// <summary>
     /// Shows the settings as they are now, without saving them again - after an import replaced them.

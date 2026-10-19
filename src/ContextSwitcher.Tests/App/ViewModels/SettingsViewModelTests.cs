@@ -191,6 +191,29 @@ public sealed class SettingsViewModelTests
         Assert.Contains(viewModel.RetentionChoices, choice => choice.Value == 45);
     }
 
+    /// <summary>
+    /// Closing the main window disposes its Settings page, which then lets go of the app's events - it
+    /// used to stay alive, with its ignored-apps list, answering every save for as long as the app ran.
+    /// </summary>
+    [Fact]
+    public void AClosedSettingsPageNoLongerAnswersSavedChanges()
+    {
+        AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }], AskOnSwitch = false };
+        AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator());
+        SettingsViewModel open = new(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
+        SettingsViewModel closed = new(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
+        closed.Dispose();
+
+        AppHost.UpdateConfiguration(configuration with { AskOnSwitch = true, IgnoredApps = ["Telegram"] }, new ConfigurationValidationResult([]));
+
+        Assert.True(open.AskOnSwitch);
+        Assert.Equal(["Telegram"], open.IgnoredApps.Apps.Select(app => app.Name));
+        Assert.False(closed.AskOnSwitch);
+        Assert.Empty(closed.IgnoredApps.Apps);
+        open.Dispose();
+    }
+
     internal static UpdatesViewModel Updates() =>
         new(new FakeReleaseSource(), new FakeAppUpdater(), new FakeProcessRunner(), new FakeSystemNotifications(), new Version(0, 1, 0));
 }
