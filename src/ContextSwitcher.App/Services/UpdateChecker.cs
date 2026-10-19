@@ -1,5 +1,6 @@
 using Avalonia.Threading;
 using ContextSwitcher.App.Resources;
+using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Messages;
@@ -19,7 +20,7 @@ namespace ContextSwitcher.App.Services;
 /// A version found by the daily check is also announced in a notification, once: the menu bar entry is
 /// easy to miss, and is hidden altogether when macOS has no room for the icon.
 /// </summary>
-public sealed class UpdateChecker
+public sealed class UpdateChecker : IHousekeeping
 {
     /// <summary>The notification's id: a newer version's notice replaces the older one.</summary>
     public const string NotificationId = "update";
@@ -81,7 +82,7 @@ public sealed class UpdateChecker
     /// Starts the background checks: one shortly after launch - not at launch, when the app has
     /// better things to do - and then one a day. Each one first asks whether checks are still wanted.
     /// </summary>
-    public void StartAutomaticChecks()
+    public void Start()
     {
         if (this.timer is not null)
         {

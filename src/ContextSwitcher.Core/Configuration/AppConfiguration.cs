@@ -85,8 +85,8 @@ public sealed record AppConfiguration
     /// <remarks>
     /// Defaults to <see langword="true"/> on purpose. A <c>settings.json</c> written before this
     /// field existed simply omits it, and must deserialize as already-onboarded so upgrading users
-    /// are never shown the wizard. Only <see cref="AppHost"/>'s freshly-created default
-    /// configuration writes <see langword="false"/> explicitly, so the wizard appears exactly once,
+    /// are never shown the wizard. Only the app's start-up (<c>AppStartup</c>), creating a default
+    /// configuration, writes <see langword="false"/> explicitly, so the wizard appears exactly once,
     /// on a genuinely new install.
     /// </remarks>
     public bool OnboardingCompleted { get; init; } = true;

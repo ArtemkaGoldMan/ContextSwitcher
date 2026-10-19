@@ -11,7 +11,7 @@ public sealed class ActiveAtStartupTests
     [Fact]
     public void BeforeAnySwitchTheConfiguredProfileCounts()
     {
-        Assert.Equal("work", AppHost.ActiveAtStartup(new CurrentContextState(), Configuration));
+        Assert.Equal("work", AppStartup.ActiveAtStartup(new CurrentContextState(), Configuration));
     }
 
     [Fact]
@@ -19,7 +19,7 @@ public sealed class ActiveAtStartupTests
     {
         CurrentContextState state = new() { CurrentContextId = "personal", LastSwitchCompletedAt = DateTimeOffset.UtcNow };
 
-        Assert.Equal("personal", AppHost.ActiveAtStartup(state, Configuration));
+        Assert.Equal("personal", AppStartup.ActiveAtStartup(state, Configuration));
     }
 
     /// <summary>A profile turned off stays off across a restart: no time is counted for any.</summary>
@@ -28,6 +28,6 @@ public sealed class ActiveAtStartupTests
     {
         CurrentContextState state = new() { PreviousContextId = "work", LastSwitchCompletedAt = DateTimeOffset.UtcNow };
 
-        Assert.Equal(string.Empty, AppHost.ActiveAtStartup(state, Configuration));
+        Assert.Equal(string.Empty, AppStartup.ActiveAtStartup(state, Configuration));
     }
 }

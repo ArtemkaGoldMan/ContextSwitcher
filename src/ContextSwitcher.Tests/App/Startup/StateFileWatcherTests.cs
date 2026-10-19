@@ -36,6 +36,7 @@ public sealed class StateFileWatcherTests : UiTest
                     .GetAwaiter().GetResult();
 
                 using StateFileWatcher watcher = new(appState, store, paths);
+                watcher.Start();
                 bool reloaded = false;
                 watcher.StateReloaded += (_, _) => reloaded = true;
 
@@ -80,6 +81,7 @@ public sealed class StateFileWatcherTests : UiTest
                 appState.UpdateState(state);
 
                 using StateFileWatcher watcher = new(appState, store, paths);
+                watcher.Start();
                 int reloads = 0;
                 watcher.StateReloaded += (_, _) => reloads++;
 
