@@ -44,7 +44,7 @@ public sealed class IgnoredAppsViewModelTests
         (IgnoredAppsViewModel _, InMemoryJsonStore jsonStore, ConfigPaths paths) = Create();
         FakeInstalledAppsService installed = new();
         installed.Apps.Add(new Core.Applications.InstalledApp("Telegram", null));
-        IgnoredAppsViewModel viewModel = new(new ConfigurationStore(jsonStore, paths, new ConfigurationValidator()), installed);
+        IgnoredAppsViewModel viewModel = new(new ConfigurationStore(jsonStore, paths, new ConfigurationValidator(), new TestLogger()), installed);
 
         Assert.Equal(0, installed.Reads);
 
@@ -61,7 +61,7 @@ public sealed class IgnoredAppsViewModelTests
     {
         (IgnoredAppsViewModel ignored, InMemoryJsonStore jsonStore, ConfigPaths paths) = Create();
         ignored.Dispose();
-        ConfigurationStore store = new(jsonStore, paths, new ConfigurationValidator());
+        ConfigurationStore store = new(jsonStore, paths, new ConfigurationValidator(), new TestLogger());
         SettingsViewModel settings = new(store, new FakePermissionsChecker(), new FakeProcessRunner(), SettingsViewModelTests.Updates());
 
         Assert.False(settings.AskOnSwitch);
@@ -91,6 +91,6 @@ public sealed class IgnoredAppsViewModelTests
         AppHost.UpdateConfiguration(configuration, validator.Validate(configuration));
         InMemoryJsonStore jsonStore = new();
         ConfigPaths paths = new("/tmp/context-switcher-ignored-tests");
-        return (new IgnoredAppsViewModel(new ConfigurationStore(jsonStore, paths, validator), installedApps: null), jsonStore, paths);
+        return (new IgnoredAppsViewModel(new ConfigurationStore(jsonStore, paths, validator, new TestLogger()), installedApps: null), jsonStore, paths);
     }
 }

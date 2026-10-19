@@ -402,7 +402,7 @@ public sealed class EnvironmentChoicesTests
         jsonStore = new InMemoryJsonStore();
         paths = new ConfigPaths("/tmp/context-switcher-tests");
         jsonStore.Seed(paths.SettingsPath, configuration);
-        ConfigurationStore store = new(jsonStore, paths, validator);
+        ConfigurationStore store = new(jsonStore, paths, validator, new TestLogger());
 
         return new ProfileSetupViewModel(store, new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
     }

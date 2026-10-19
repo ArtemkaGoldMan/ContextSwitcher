@@ -3,6 +3,7 @@ using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Tests.TestDoubles;
 using ContextSwitcher.Tests.App;
 using ContextSwitcher.Tests.Ui;
 
@@ -29,7 +30,7 @@ public sealed class StateFileWatcherTests : UiTest
             try
             {
                 ConfigPaths paths = new(directory);
-                JsonFileStore store = new(FileReplacer.Once);
+                JsonFileStore store = new(FileReplacer.Once, new TestLogger());
                 SeedAppHost();
 
                 store.WriteAsync(paths.StatePath, new CurrentContextState { CurrentContextId = "work" })
@@ -72,7 +73,7 @@ public sealed class StateFileWatcherTests : UiTest
             try
             {
                 ConfigPaths paths = new(directory);
-                JsonFileStore store = new(FileReplacer.Once);
+                JsonFileStore store = new(FileReplacer.Once, new TestLogger());
                 SeedAppHost();
 
                 CurrentContextState state = new() { CurrentContextId = "work", LastSwitchCompletedAt = DateTimeOffset.UnixEpoch };

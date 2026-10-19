@@ -23,7 +23,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
     {
         Directory.CreateDirectory(this.directory);
         this.paths = new ConfigPaths(this.directory);
-        this.store = new ConfigurationStore(this.jsonStore, this.paths, new ConfigurationValidator());
+        this.store = new ConfigurationStore(this.jsonStore, this.paths, new ConfigurationValidator(), new TestLogger());
         AppHost.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] },
             new ConfigurationValidationResult([]));

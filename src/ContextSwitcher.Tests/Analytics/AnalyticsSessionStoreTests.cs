@@ -1,6 +1,7 @@
 using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Infrastructure.Analytics;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Analytics;
 
@@ -139,7 +140,7 @@ public sealed class AnalyticsSessionStoreTests
     {
         string tempDirectory = Path.Combine(Path.GetTempPath(), $"ContextSwitcherTests-{Guid.NewGuid():N}");
         ConfigPaths configPaths = new(tempDirectory);
-        JsonFileStore jsonStore = new(FileReplacer.Once);
+        JsonFileStore jsonStore = new(FileReplacer.Once, new TestLogger());
         return (new AnalyticsSessionStore(configPaths, jsonStore, FileReplacer.Once), tempDirectory);
     }
 

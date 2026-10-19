@@ -19,15 +19,19 @@ public sealed class JsonFileStore : IJsonStore
     private const int MaxBackupsPerFile = 10;
 
     private readonly IFileReplacer fileReplacer;
+    private readonly ILogger logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonFileStore"/> class.
     /// </summary>
     /// <param name="fileReplacer">Puts each newly written file in place of the old one.</param>
-    public JsonFileStore(IFileReplacer fileReplacer)
+    /// <param name="logger">Says when a file is moved aside, or old backups can't be cleared.</param>
+    public JsonFileStore(IFileReplacer fileReplacer, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(fileReplacer);
+        ArgumentNullException.ThrowIfNull(logger);
         this.fileReplacer = fileReplacer;
+        this.logger = logger;
     }
 
     /// <summary>
@@ -67,7 +71,7 @@ public sealed class JsonFileStore : IJsonStore
         }
         catch (JsonException ex)
         {
-            QuarantineCorruptFile(path, ex);
+            this.QuarantineCorruptFile(path, ex);
             return null;
         }
     }
@@ -157,7 +161,7 @@ public sealed class JsonFileStore : IJsonStore
         string unique = Guid.NewGuid().ToString("N")[..8];
         File.Copy(path, Path.Combine(backupDirectory, $"{stem}.{timestamp}.{unique}{extension}"), overwrite: false);
 
-        PruneBackups(backupDirectory, stem, extension);
+        this.PruneBackups(backupDirectory, stem, extension);
 
         return Task.CompletedTask;
     }
@@ -166,7 +170,7 @@ public sealed class JsonFileStore : IJsonStore
     /// Keeps the newest <see cref="MaxBackupsPerFile"/> backups of one file and deletes the rest.
     /// Nothing pruned these before, so the directory grew by one file per save, forever.
     /// </summary>
-    private static void PruneBackups(string backupDirectory, string stem, string extension)
+    private void PruneBackups(string backupDirectory, string stem, string extension)
     {
         try
         {
@@ -182,20 +186,20 @@ public sealed class JsonFileStore : IJsonStore
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            AppLog.Warn("Files", "BackupsNotPruned", "Old backups could not be cleared away.", ex);
+            this.logger.Warn("Files", "BackupsNotPruned", "Old backups could not be cleared away.", ex);
             // Housekeeping must never fail the save that triggered it. A backup that outlives its
             // welcome is harmless; losing the write is not.
         }
     }
 
-    private static void QuarantineCorruptFile(string path, JsonException reason)
+    private void QuarantineCorruptFile(string path, JsonException reason)
     {
         string timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMddTHHmmssfffZ");
         string corruptPath = $"{path}.corrupt.{timestamp}";
         File.Move(path, corruptPath, overwrite: false);
 
         // Where the JSON broke, not what it said: the reason carries a line and a position and no content.
-        AppLog.Warn(
+        this.logger.Warn(
             "Files",
             "FileQuarantined",
             $"{Path.GetFileName(path)} could not be read and was moved aside as {Path.GetFileName(corruptPath)}.",

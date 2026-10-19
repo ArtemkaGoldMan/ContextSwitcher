@@ -24,7 +24,7 @@ public sealed class ConfigurationStoreTests
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
         jsonStore.Seed(configPaths.SettingsPath, new AppConfiguration());
-        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator());
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
         AppHost.UpdateConfiguration(new AppConfiguration(), new ConfigurationValidationResult([]));
 
         ConfigurationSaveResult result = await store.SaveAsync(ValidConfiguration, CancellationToken.None);
@@ -44,9 +44,8 @@ public sealed class ConfigurationStoreTests
     public async Task ARefusedSaveIsLoggedByItsSettingsAndNotByName()
     {
         TestLogger logger = new();
-        using IDisposable scope = AppLog.UseForThisFlow(logger);
         InMemoryJsonStore jsonStore = new();
-        ConfigurationStore store = new(jsonStore, new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator());
+        ConfigurationStore store = new(jsonStore, new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), logger);
         AppConfiguration invalid = new()
         {
             ActiveContextId = "work",
@@ -67,11 +66,10 @@ public sealed class ConfigurationStoreTests
     public async Task AFailedWriteIsLoggedAndStillThrown()
     {
         TestLogger logger = new();
-        using IDisposable scope = AppLog.UseForThisFlow(logger);
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
         jsonStore.WriteFailurePaths.Add(configPaths.SettingsPath);
-        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator());
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), logger);
 
         await Assert.ThrowsAsync<IOException>(() => store.SaveAsync(ValidConfiguration, CancellationToken.None));
 
@@ -99,7 +97,7 @@ public sealed class ConfigurationStoreTests
         // continuation stays on the calling thread whatever ConfigureAwait says. Real file IO does
         // yield, so make this one yield too or the test cannot see the bug at all.
         YieldingJsonStore jsonStore = new(inner);
-        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator());
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
         AppHost.UpdateConfiguration(new AppConfiguration(), new ConfigurationValidationResult([]));
 
         int publishedOn = 0;
@@ -176,7 +174,7 @@ public sealed class ConfigurationStoreTests
     {
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
-        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator());
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
         AppConfiguration original = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
         AppHost.UpdateConfiguration(original, new ConfigurationValidationResult([]));
 

@@ -140,7 +140,8 @@ public static class AppHost
         services.AddSingleton(provider => new ClosingAppsFollowUp(
             provider.GetRequiredService<ContextSwitchService>(),
             provider.GetRequiredService<IAppProcesses>(),
-            provider.GetRequiredService<IClock>()));
+            provider.GetRequiredService<IClock>(),
+            provider.GetRequiredService<ILogger>()));
 
         // Switches started in the app ask, when that's on, about everything else open; the command
         // line has no window to ask in, so it switches through the service itself.

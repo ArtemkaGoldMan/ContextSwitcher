@@ -38,7 +38,7 @@ public sealed class OnboardingViewModelTests
 
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
-        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator());
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
         StubContextSwitchService switchService = new();
 
         AppHost.UpdateConfiguration(
@@ -71,7 +71,7 @@ public sealed class OnboardingViewModelTests
     {
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
-        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator());
+        ConfigurationStore store = new(jsonStore, configPaths, new ConfigurationValidator(), new TestLogger());
 
         AppHost.UpdateConfiguration(
             new AppConfiguration
@@ -124,7 +124,7 @@ public sealed class OnboardingViewModelTests
             },
             new ConfigurationValidationResult([]));
 
-        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator());
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), new TestLogger());
         return new OnboardingViewModel(store, installed, new StubContextSwitchService());
     }
 
@@ -193,7 +193,7 @@ public sealed class OnboardingViewModelTests
         AppHost.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "default", OnboardingCompleted = false, Contexts = [new ContextDefinition { Id = "default", DisplayName = "Default" }] },
             new ConfigurationValidationResult([]));
-        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator());
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), new TestLogger());
         return new OnboardingViewModel(store, new FakeInstalledAppsService(), new StubContextSwitchService(), loginItem);
     }
 }

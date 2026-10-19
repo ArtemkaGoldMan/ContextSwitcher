@@ -163,7 +163,7 @@ public sealed class ContextSwitchService : IContextSwitchService
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            AppLog.Warn("ContextSwitch", "StateNotAmended", "Could not update the last switch's warnings.", ex);
+            this.logger.Warn("ContextSwitch", "StateNotAmended", "Could not update the last switch's warnings.", ex);
             return null;
         }
         finally

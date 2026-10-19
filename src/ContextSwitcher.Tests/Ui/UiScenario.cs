@@ -29,7 +29,7 @@ public sealed class UiScenario
         // Completes off-context the way real file IO does; the in-memory store on its own never
         // suspends, which hides anything that resumes on the wrong thread.
         this.JsonStore = new YieldingJsonStore(inner);
-        this.ConfigurationStore = new ConfigurationStore(this.JsonStore, this.Paths, validator);
+        this.ConfigurationStore = new ConfigurationStore(this.JsonStore, this.Paths, validator, new TestLogger());
         this.SwitchService = new StubContextSwitchService();
         this.ProcessRunner = new FakeProcessRunner();
         this.Permissions = new FakePermissionsChecker();
