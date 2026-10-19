@@ -18,6 +18,18 @@ public sealed class JsonFileStore : IJsonStore
     /// </summary>
     private const int MaxBackupsPerFile = 10;
 
+    private readonly IFileReplacer fileReplacer;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonFileStore"/> class.
+    /// </summary>
+    /// <param name="fileReplacer">Puts each newly written file in place of the old one.</param>
+    public JsonFileStore(IFileReplacer fileReplacer)
+    {
+        ArgumentNullException.ThrowIfNull(fileReplacer);
+        this.fileReplacer = fileReplacer;
+    }
+
     /// <summary>
     /// Reads a JSON file and returns the deserialized value.
     /// </summary>
@@ -106,7 +118,7 @@ public sealed class JsonFileStore : IJsonStore
                 await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            await FileMoves.ReplaceAsync(tempPath, path, cancellationToken).ConfigureAwait(false);
+            await this.fileReplacer.ReplaceAsync(tempPath, path, cancellationToken).ConfigureAwait(false);
         }
         finally
         {

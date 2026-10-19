@@ -7,15 +7,15 @@ namespace ContextSwitcher.Tests.Files;
 /// <summary>
 /// Saving settings, time and the log ends by moving a new file over the old one. Windows refuses that
 /// while another process has the file open - the app and the command line at once, an antivirus, the
-/// search indexer - so there a refused move is tried again for a moment before it fails.
+/// search indexer - so the replacer the app gives Windows tries again for a moment before it fails.
 /// </summary>
-public sealed class FileMovesTests : IDisposable
+public sealed class FileReplacerTests : IDisposable
 {
     private readonly string directory = Path.Combine(Path.GetTempPath(), $"ContextSwitcherTests-{Guid.NewGuid():N}");
     private readonly string source;
     private readonly string destination;
 
-    public FileMovesTests()
+    public FileReplacerTests()
     {
         Directory.CreateDirectory(this.directory);
         this.source = Path.Combine(this.directory, "new.json");
@@ -26,10 +26,13 @@ public sealed class FileMovesTests : IDisposable
 
     public void Dispose() => Directory.Delete(this.directory, recursive: true);
 
-    [Fact]
-    public async Task TheNewFileTakesTheOldOnesPlace()
+    public static TheoryData<string> Policies => new() { nameof(FileReplacer.Once), nameof(FileReplacer.RetryingWhileHeldOpen) };
+
+    [Theory]
+    [MemberData(nameof(Policies))]
+    public async Task TheNewFileTakesTheOldOnesPlace(string policy)
     {
-        await FileMoves.ReplaceAsync(this.source, this.destination);
+        await Policy(policy).ReplaceAsync(this.source, this.destination);
 
         Assert.Equal("new", await File.ReadAllTextAsync(this.destination));
         Assert.False(File.Exists(this.source));
@@ -39,10 +42,10 @@ public sealed class FileMovesTests : IDisposable
     [Fact]
     public async Task AMissingFileIsNotWaitedFor()
     {
+        FileReplacer patient = new([TimeSpan.FromSeconds(5)]);
         Stopwatch watch = Stopwatch.StartNew();
 
-        await Assert.ThrowsAsync<FileNotFoundException>(() => FileMoves.ReplaceAsync(
-            Path.Combine(this.directory, "missing.json"), this.destination, [TimeSpan.FromSeconds(5)], CancellationToken.None));
+        await Assert.ThrowsAsync<FileNotFoundException>(() => patient.ReplaceAsync(Path.Combine(this.directory, "missing.json"), this.destination));
 
         Assert.True(watch.Elapsed < TimeSpan.FromSeconds(2), $"It waited {watch.Elapsed} for a file that isn't there.");
     }
@@ -51,10 +54,11 @@ public sealed class FileMovesTests : IDisposable
     [WindowsFact]
     public async Task OnWindowsAFileHeldOpenForAMomentIsReplacedOnceLetGo()
     {
+        FileReplacer patient = new(Enumerable.Repeat(TimeSpan.FromMilliseconds(100), 20).ToList());
         FileStream holder = new(this.destination, FileMode.Open, FileAccess.Read, FileShare.Read);
         Task letGo = Task.Delay(TimeSpan.FromMilliseconds(300)).ContinueWith(_ => holder.Dispose(), TaskScheduler.Default);
 
-        await FileMoves.ReplaceAsync(this.source, this.destination, Enumerable.Repeat(TimeSpan.FromMilliseconds(100), 20).ToList(), CancellationToken.None);
+        await patient.ReplaceAsync(this.source, this.destination);
         await letGo;
 
         Assert.Equal("new", await File.ReadAllTextAsync(this.destination));
@@ -64,10 +68,11 @@ public sealed class FileMovesTests : IDisposable
     [WindowsFact]
     public async Task OnWindowsAFileHeldOpenTooLongStillFails()
     {
+        FileReplacer brief = new([TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(10)]);
+
         using (new FileStream(this.destination, FileMode.Open, FileAccess.Read, FileShare.Read))
         {
-            Exception? failure = await Record.ExceptionAsync(() => FileMoves.ReplaceAsync(
-                this.source, this.destination, [TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(10)], CancellationToken.None));
+            Exception? failure = await Record.ExceptionAsync(() => brief.ReplaceAsync(this.source, this.destination));
 
             Assert.True(failure is IOException or UnauthorizedAccessException, $"It failed with {failure?.GetType().Name ?? "nothing"}.");
         }
@@ -75,4 +80,7 @@ public sealed class FileMovesTests : IDisposable
         Assert.Equal("old", await File.ReadAllTextAsync(this.destination));
         Assert.Equal("new", await File.ReadAllTextAsync(this.source));
     }
+
+    private static FileReplacer Policy(string name) =>
+        name == nameof(FileReplacer.Once) ? FileReplacer.Once : FileReplacer.RetryingWhileHeldOpen;
 }

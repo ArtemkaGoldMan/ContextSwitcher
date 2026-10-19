@@ -16,18 +16,24 @@ public sealed class AnalyticsSessionStore : IAnalyticsSessionStore
 {
     private readonly ConfigPaths configPaths;
     private readonly IJsonStore jsonStore;
+    private readonly IFileReplacer fileReplacer;
     private readonly SemaphoreSlim writeLock = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AnalyticsSessionStore"/> class.
     /// </summary>
-    public AnalyticsSessionStore(ConfigPaths configPaths, IJsonStore jsonStore)
+    /// <param name="configPaths">Where the session log and the active-session marker are kept.</param>
+    /// <param name="jsonStore">Reads and writes the active-session marker.</param>
+    /// <param name="fileReplacer">Puts a rewritten session log in place of the old one.</param>
+    public AnalyticsSessionStore(ConfigPaths configPaths, IJsonStore jsonStore, IFileReplacer fileReplacer)
     {
         ArgumentNullException.ThrowIfNull(configPaths);
         ArgumentNullException.ThrowIfNull(jsonStore);
+        ArgumentNullException.ThrowIfNull(fileReplacer);
 
         this.configPaths = configPaths;
         this.jsonStore = jsonStore;
+        this.fileReplacer = fileReplacer;
     }
 
     /// <inheritdoc />
@@ -124,7 +130,7 @@ public sealed class AnalyticsSessionStore : IAnalyticsSessionStore
                     await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
                 }
 
-                await FileMoves.ReplaceAsync(tempPath, path, cancellationToken).ConfigureAwait(false);
+                await this.fileReplacer.ReplaceAsync(tempPath, path, cancellationToken).ConfigureAwait(false);
             }
             finally
             {

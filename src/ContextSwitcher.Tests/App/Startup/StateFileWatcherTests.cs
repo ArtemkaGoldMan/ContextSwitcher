@@ -29,7 +29,7 @@ public sealed class StateFileWatcherTests : UiTest
             try
             {
                 ConfigPaths paths = new(directory);
-                JsonFileStore store = new();
+                JsonFileStore store = new(FileReplacer.Once);
                 SeedAppHost();
 
                 store.WriteAsync(paths.StatePath, new CurrentContextState { CurrentContextId = "work" })
@@ -72,7 +72,7 @@ public sealed class StateFileWatcherTests : UiTest
             try
             {
                 ConfigPaths paths = new(directory);
-                JsonFileStore store = new();
+                JsonFileStore store = new(FileReplacer.Once);
                 SeedAppHost();
 
                 CurrentContextState state = new() { CurrentContextId = "work", LastSwitchCompletedAt = DateTimeOffset.UnixEpoch };

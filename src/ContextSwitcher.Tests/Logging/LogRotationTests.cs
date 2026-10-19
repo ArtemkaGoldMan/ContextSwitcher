@@ -19,7 +19,7 @@ public sealed class LogRotationTests
         try
         {
             await File.WriteAllBytesAsync(path, new byte[LocalJsonLogger.MaxLogBytes + 1]);
-            LocalJsonLogger logger = new(new ConfigPaths(directory));
+            LocalJsonLogger logger = new(new ConfigPaths(directory), FileReplacer.Once);
 
             await logger.LogAsync(Entry("AfterRoll"));
 
@@ -42,7 +42,7 @@ public sealed class LogRotationTests
 
         try
         {
-            LocalJsonLogger logger = new(new ConfigPaths(directory));
+            LocalJsonLogger logger = new(new ConfigPaths(directory), FileReplacer.Once);
             await logger.LogAsync(Entry("First"));
             await logger.LogAsync(Entry("Second"));
 
@@ -66,7 +66,7 @@ public sealed class LogRotationTests
         {
             await File.WriteAllTextAsync(path, "{\"old\":true}\n");
             File.SetCreationTimeUtc(path, DateTime.UtcNow - LocalJsonLogger.MaxAge - TimeSpan.FromHours(1));
-            LocalJsonLogger logger = new(new ConfigPaths(directory));
+            LocalJsonLogger logger = new(new ConfigPaths(directory), FileReplacer.Once);
 
             await logger.LogAsync(Entry("New"));
 
@@ -91,7 +91,7 @@ public sealed class LogRotationTests
         {
             await File.WriteAllTextAsync(path, "{\"recent\":true}\n");
             File.SetCreationTimeUtc(path, DateTime.UtcNow - TimeSpan.FromDays(3));
-            LocalJsonLogger logger = new(new ConfigPaths(directory));
+            LocalJsonLogger logger = new(new ConfigPaths(directory), FileReplacer.Once);
 
             await logger.LogAsync(Entry("Second"));
 
@@ -117,7 +117,7 @@ public sealed class LogRotationTests
             File.SetCreationTimeUtc(path, DateTime.UtcNow - TimeSpan.FromDays(20));
             await File.WriteAllTextAsync(path + ".1", "{\"older\":true}\n");
             File.SetLastWriteTimeUtc(path + ".1", DateTime.UtcNow - TimeSpan.FromDays(20));
-            LocalJsonLogger logger = new(new ConfigPaths(directory));
+            LocalJsonLogger logger = new(new ConfigPaths(directory), FileReplacer.Once);
 
             await logger.TidyAsync();
 

@@ -87,9 +87,10 @@ public static class AppHost
         ServiceCollection services = new();
 
         services.AddSingleton<IClock, SystemClock>();
-        services.AddSingleton<ConfigPaths>();
+        AddPlatformFileServices(services);
         services.AddSingleton<IJsonStore, JsonFileStore>();
-        services.AddSingleton(provider => new LocalJsonLogger(provider.GetRequiredService<ConfigPaths>()));
+        services.AddSingleton(provider => new LocalJsonLogger(
+            provider.GetRequiredService<ConfigPaths>(), provider.GetRequiredService<IFileReplacer>()));
 
         // What happens is remembered and only a problem is written, with the trail that led to it - see
         // TrailLogger. CONTEXTSWITCHER_LOG_LEVEL=information (or debug, trace) writes from that level on
@@ -199,6 +200,21 @@ public static class AppHost
         // analytics session or a persistent global hook for it would be pointless and wasteful.
         bool isInteractive = args.Length == 0 || !CliCommandRouter.IsHeadlessCommand(args[0]);
         BootstrapAsync(isInteractive).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// What differs between macOS and Windows for the app's files, chosen here once rather than in the
+    /// classes that use them: where everything is kept - <c>~/.config</c>, or <c>%APPDATA%</c> on
+    /// Windows - and whether a move refused for a file held open elsewhere is tried again, which only
+    /// Windows needs. Moves into each platform's own registrations with stage 0 of
+    /// <c>docs/windows-plan.md</c>.
+    /// </summary>
+    private static void AddPlatformFileServices(IServiceCollection services)
+    {
+        bool windows = OperatingSystem.IsWindows();
+        services.AddSingleton(_ => new ConfigPaths(
+            settingsRoot: windows ? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) : null));
+        services.AddSingleton<IFileReplacer>(windows ? FileReplacer.RetryingWhileHeldOpen : FileReplacer.Once);
     }
 
     /// <summary>

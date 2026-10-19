@@ -11,12 +11,12 @@ public sealed class ConfigPathsTests
 {
     private const string Home = "/Users/someone";
 
+    /// <summary>Windows' settings root, %APPDATA%, as the app's composition root gives it there.</summary>
     private const string AppData = @"C:\Users\someone\AppData\Roaming";
 
-    /// <summary>
-    /// The default is under ~/.config, or %APPDATA% on Windows - this build's folder: its own for a
-    /// development build.
-    /// </summary>
+    private static string ThisBuildsFolder => AppBuild.IsDevelopment ? "ContextSwitcher-dev" : "ContextSwitcher";
+
+    /// <summary>The default is under ~/.config - this build's folder: its own for a development build.</summary>
     [Fact]
     public void DefaultBaseDirectoryUsesUserConfigContextSwitcherPath()
     {
@@ -27,12 +27,23 @@ public sealed class ConfigPathsTests
 
         ConfigPaths paths = new();
 
-        string name = AppBuild.IsDevelopment ? "ContextSwitcher-dev" : "ContextSwitcher";
-        string expected = OperatingSystem.IsWindows()
-            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), name)
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", name);
+        Assert.Equal(
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", ThisBuildsFolder),
+            paths.BaseDirectory);
+    }
 
-        Assert.Equal(expected, paths.BaseDirectory);
+    /// <summary>Given another settings root - %APPDATA% on Windows - this build's folder is in there.</summary>
+    [Fact]
+    public void ASettingsRootGivenTakesThePlaceOfDotConfig()
+    {
+        if (Environment.GetEnvironmentVariable(ConfigPaths.DirectoryVariable) is { Length: > 0 })
+        {
+            return;
+        }
+
+        ConfigPaths paths = new(settingsRoot: AppData);
+
+        Assert.Equal(Path.Combine(AppData, ThisBuildsFolder), paths.BaseDirectory);
     }
 
     /// <summary>What the variable can name; a folder under the home one is put together with this system's separator.</summary>
@@ -66,13 +77,13 @@ public sealed class ConfigPathsTests
     [Fact]
     public void OnWindowsAReleaseKeepsItsFilesInAppData()
     {
-        Assert.Equal(Path.Combine(AppData, "ContextSwitcher"), ConfigPaths.ResolveBaseDirectory(null, null, Home, isDevelopment: false, AppData));
+        Assert.Equal(Path.Combine(AppData, "ContextSwitcher"), ConfigPaths.ResolveBaseDirectory(null, null, Home, isDevelopment: false, settingsRoot: AppData));
     }
 
     [Fact]
     public void OnWindowsADevelopmentBuildKeepsItsOwnFolderInAppData()
     {
-        Assert.Equal(Path.Combine(AppData, "ContextSwitcher-dev"), ConfigPaths.ResolveBaseDirectory(null, null, Home, isDevelopment: true, AppData));
+        Assert.Equal(Path.Combine(AppData, "ContextSwitcher-dev"), ConfigPaths.ResolveBaseDirectory(null, null, Home, isDevelopment: true, settingsRoot: AppData));
     }
 
     /// <summary>The variable, and a "~/" in it, mean the same on Windows: only the default moves.</summary>
@@ -80,7 +91,7 @@ public sealed class ConfigPathsTests
     [MemberData(nameof(NamedFolders))]
     public void OnWindowsTheEnvironmentVariableStillNamesAnyFolder(string variable, string expected)
     {
-        Assert.Equal(expected, ConfigPaths.ResolveBaseDirectory(null, variable, Home, isDevelopment: false, AppData));
+        Assert.Equal(expected, ConfigPaths.ResolveBaseDirectory(null, variable, Home, isDevelopment: false, settingsRoot: AppData));
     }
 
     [Fact]

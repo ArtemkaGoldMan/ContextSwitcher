@@ -269,8 +269,10 @@ These come before any Windows code, and none of them changes what the Mac app do
    [`JsonFileStore`](../src/ContextSwitcher.Infrastructure/Files/JsonFileStore.cs) and
    `AnalyticsSessionStore` save, and how
    [`LocalJsonLogger`](../src/ContextSwitcher.Infrastructure/Logging/LocalJsonLogger.cs) rolls its log;
-   each needs a short retry. Both are done, in [#78](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/78): the folder, and
-   [`FileMoves`](../src/ContextSwitcher.Infrastructure/Files/FileMoves.cs), which all three use.
+   each needs a short retry. Both are done, in
+   [#78](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/78): the folder, and an
+   `IFileReplacer` all three are given - on Windows a
+   [`FileReplacer`](../src/ContextSwitcher.Infrastructure/Files/FileReplacer.cs) that tries again.
 
 ## Tests and CI
 

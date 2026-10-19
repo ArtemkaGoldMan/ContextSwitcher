@@ -233,11 +233,15 @@ on macOS and on Windows, and Mac users see no difference. Worth doing even if Wi
    The app targets `net10.0` and `net10.0-windows10.0.19041.0`, and registers the services of the
    platform it is built for. The platform projects are marked for their system, so the compiler
    flags shared code that reaches into them, and `EnableWindowsTargeting` lets a Mac compile it all.
-7. **Files** - done in [#78](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/78). Moving a new file over the old one - the settings, time, the log -
-   is tried again for under a second on Windows when another process has either file open
-   (`FileMoves`); macOS makes it once, as before. On Windows everything lives in
+7. **Files** - done in [#78](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/78). Moving a
+   new file over the old one - the settings, time, the log - goes through an `IFileReplacer` each
+   class is given. `AppHost` gives Windows `FileReplacer.RetryingWhileHeldOpen`, which tries again
+   for under a second while another process has either file open, and macOS `FileReplacer.Once`, as
+   before. It also gives `ConfigPaths` Windows' settings root, so everything lives in
    `%APPDATA%\ContextSwitcher`, or `ContextSwitcher-dev` for a development build - not
-   `%LOCALAPPDATA%`, where Velopack puts the app and which it replaces on each update.
+   `%LOCALAPPDATA%`, where Velopack puts the app and which it replaces on each update. Both choices
+   sit in one method, `AddPlatformFileServices`, for item 6 to move into each platform's
+   registrations.
 8. **Releases** ([versions and releases](#versions-and-releases)). The release workflow is started
    by hand with the version and the platforms, and becomes a macOS job and a publishing job; the
    Windows job joins in stage 1. "Latest" is only ever given to a release with Mac files, and the

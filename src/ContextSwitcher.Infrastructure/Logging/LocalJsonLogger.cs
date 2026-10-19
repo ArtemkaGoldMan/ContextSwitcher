@@ -29,6 +29,7 @@ public sealed class LocalJsonLogger : ILogger
     private static readonly TimeSpan LockRetryDelay = TimeSpan.FromMilliseconds(2);
 
     private readonly string path;
+    private readonly IFileReplacer fileReplacer;
     private readonly TimeProvider time;
     private readonly SemaphoreSlim writeLock = new(1, 1);
 
@@ -36,11 +37,14 @@ public sealed class LocalJsonLogger : ILogger
     /// Initializes a new instance of the <see cref="LocalJsonLogger"/> class.
     /// </summary>
     /// <param name="configPaths">Resolves the local application log path.</param>
+    /// <param name="fileReplacer">Moves a full or week-old log aside, over the previous one.</param>
     /// <param name="time">The clock a log's age is read against; the system's, unless a test says otherwise.</param>
-    public LocalJsonLogger(ConfigPaths configPaths, TimeProvider? time = null)
+    public LocalJsonLogger(ConfigPaths configPaths, IFileReplacer fileReplacer, TimeProvider? time = null)
     {
         ArgumentNullException.ThrowIfNull(configPaths);
+        ArgumentNullException.ThrowIfNull(fileReplacer);
         this.path = configPaths.AppLogPath;
+        this.fileReplacer = fileReplacer;
         this.time = time ?? TimeProvider.System;
     }
 
@@ -172,7 +176,7 @@ public sealed class LocalJsonLogger : ILogger
             }
 
             string previous = this.path + ".1";
-            await FileMoves.ReplaceAsync(this.path, previous, cancellationToken).ConfigureAwait(false);
+            await this.fileReplacer.ReplaceAsync(this.path, previous, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

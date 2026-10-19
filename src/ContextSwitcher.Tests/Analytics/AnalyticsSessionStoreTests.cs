@@ -139,8 +139,8 @@ public sealed class AnalyticsSessionStoreTests
     {
         string tempDirectory = Path.Combine(Path.GetTempPath(), $"ContextSwitcherTests-{Guid.NewGuid():N}");
         ConfigPaths configPaths = new(tempDirectory);
-        JsonFileStore jsonStore = new();
-        return (new AnalyticsSessionStore(configPaths, jsonStore), tempDirectory);
+        JsonFileStore jsonStore = new(FileReplacer.Once);
+        return (new AnalyticsSessionStore(configPaths, jsonStore, FileReplacer.Once), tempDirectory);
     }
 
     private static void CleanUp(string tempDirectory)
