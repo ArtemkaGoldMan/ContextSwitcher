@@ -2,32 +2,27 @@ using System.Net;
 using System.Net.Http.Headers;
 using ContextSwitcher.Infrastructure.Browser;
 using ContextSwitcher.Infrastructure.Files;
-using ContextSwitcher.Infrastructure.ProcessExecution;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Browser;
 
 /// <summary>
 /// A tab's site icon comes from the site itself - its /favicon.ico, else the icon its home page names -
-/// and is kept, as a 32×32 PNG made by the real <c>sips</c>, so a site is asked once. No network here:
-/// the sites are stubbed.
+/// and is kept, as a 32×32 PNG made by the platform's image converter, so a site is asked once. No
+/// network here, and no <c>sips</c>: the sites are stubbed, and the converter copies the file as it is.
 /// </summary>
 public sealed class SiteIconsTests : IDisposable
 {
-    /// <summary>A real 1×1 PNG, which <c>sips</c> reads like any icon.</summary>
+    /// <summary>A real 1×1 PNG, which the checks for a picture accept like any icon.</summary>
     private static readonly byte[] Png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
 
     private readonly string directory = Path.Combine(Path.GetTempPath(), "cs-site-icons-" + Guid.NewGuid().ToString("N"));
     private readonly StubHttpHandler http = new();
+    private readonly FakeImageConverter converter = new();
 
     [Fact]
     public async Task TheSitesFaviconIsKeptAndNotAskedForAgain()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return;
-        }
-
         this.http.Respond = request => request.RequestUri!.AbsolutePath == "/favicon.ico" ? Image(Png) : new HttpResponseMessage(HttpStatusCode.NotFound);
         SiteIcons icons = this.Create();
 
@@ -37,17 +32,13 @@ public sealed class SiteIconsTests : IDisposable
         Assert.NotNull(path);
         Assert.Equal(path, again);
         Assert.True(File.Exists(path));
+        Assert.Equal(32, Assert.Single(this.converter.Calls).Size);
         Assert.Equal("https://www.github.com/favicon.ico", Assert.Single(this.http.Requests).RequestUri!.ToString());
     }
 
     [Fact]
     public async Task WithoutAFaviconTheIconTheHomePageNamesIsUsed()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return;
-        }
-
         this.http.Respond = request => request.RequestUri!.AbsolutePath switch
         {
             "/favicon.ico" => Page("<html>not here</html>"),
@@ -113,7 +104,7 @@ public sealed class SiteIconsTests : IDisposable
         }
     }
 
-    private SiteIcons Create() => new(new ProcessRunner(), new ConfigPaths(this.directory), this.http);
+    private SiteIcons Create() => new(this.converter, new ConfigPaths(this.directory), this.http);
 
     private static HttpResponseMessage Image(byte[] bytes) =>
         new(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) { Headers = { ContentType = new MediaTypeHeaderValue("image/png") } } };
