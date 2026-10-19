@@ -2,6 +2,7 @@ name: CI
 
 # What every pull request - and every push to main - has to pass before it can be merged:
 #   Build and test   the whole solution with warnings as errors, every test, and how much of the code they reach
+#   Build and test (Windows)   the same on Windows, where the tests of macOS itself are skipped
 #   App bundle       the signed-or-not .app is built the way a release builds it, checked, and run through its
 #                    command line on a machine with no screen; the .app is kept for a week to try by hand
 #   Workflows and scripts   the workflows and the shell scripts are linted
@@ -50,29 +51,57 @@ jobs:
 
       - name: Summarise
         if: always()
-        run: |
-          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import glob, re, xml.etree.ElementTree as ET
-          print("### Tests")
-          for trx in glob.glob("TestResults/**/*.trx", recursive=True):
-              counters = ET.parse(trx).getroot().find(".//{*}Counters")
-              if counters is not None:
-                  total, passed, failed = (int(counters.get(k, 0)) for k in ("total", "passed", "failed"))
-                  print(f"{passed} of {total} passed, {failed} failed")
-          rates = []
-          for report in glob.glob("TestResults/**/coverage.cobertura.xml", recursive=True):
-              root = ET.parse(report).getroot()
-              rates.append((float(root.get("line-rate", 0)), float(root.get("branch-rate", 0))))
-          if rates:
-              line, branch = rates[0]
-              print("\n### Coverage")
-              print(f"{line:.1%} of lines, {branch:.1%} of branches")
-          PY
+        run: python3 scripts/summarise-tests.py >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results
+          path: TestResults
+          retention-days: 14
+
+  # The same on Windows, so a change to shared code is tried on both systems. A job of its own, named
+  # apart from "Build and test", which main's protection already asks for by that name.
+  build-and-test-windows:
+    name: Build and test (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 25
+    # Git's bash, so the steps read as on the Mac.
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Build
+        run: dotnet build --configuration Release -warnaserror --nologo
+
+      - name: Test
+        run: >
+          dotnet test --configuration Release --no-build --nologo
+          --logger "trx;LogFileName=results.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults
+
+      # The Windows runner's Python is python, not python3.
+      - name: Summarise
+        if: always()
+        run: python scripts/summarise-tests.py >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: test-results-windows
           path: TestResults
           retention-days: 14
 

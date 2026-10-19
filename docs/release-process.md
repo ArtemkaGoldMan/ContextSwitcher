@@ -54,11 +54,12 @@ gh secret set CS_SIGNING_PASSWORD < ~/.contextswitcher-signing/signing-password.
 ## What is checked before a change reaches main
 
 Every pull request, and every push to `main`, runs [`ci.yml`](../.github/workflows/ci.yml), and `main`
-does not accept a change until its first two checks pass (Settings → Branches):
+does not accept a change until its first three checks pass (Settings → Branches):
 
 | Check | What it does |
 | --- | --- |
 | **Build and test** | The whole solution with warnings as errors, every test, and how much of the code they reach (shown in the run's summary). The test results are kept for two weeks. |
+| **Build and test (Windows)** | The same on Windows, so a change to shared code is tried on both systems. The tests of macOS itself - AppleScript, AppKit, the default browser - are skipped there. |
 | **App bundle** | Builds the `.app` the way a release does (signed ad hoc: pull requests have no secrets), checks its version, bundle identifier, `LSUIElement` and architecture, and runs it through its command line on a machine with no screen - [`scripts/smoke-test-app.sh`](../scripts/smoke-test-app.sh) switches profiles, refuses one that isn't there, and checks the log is silent after clean switches and tells the whole story after a failing one. The `.app` is kept for a week, so a pull request can be tried without building it. |
 | **Workflows and scripts** | Lints the workflows ([actionlint](https://github.com/rhysd/actionlint)) and the shell scripts ([ShellCheck](https://www.shellcheck.net)). |
 
