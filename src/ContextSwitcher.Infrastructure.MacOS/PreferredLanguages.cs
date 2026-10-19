@@ -19,11 +19,6 @@ public sealed class PreferredLanguages : IPreferredLanguages
     /// <summary>The list from macOS, or the current culture alone where macOS can't be asked.</summary>
     public IReadOnlyList<string> Get()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return [CultureInfo.CurrentUICulture.Name];
-        }
-
         try
         {
             IntPtr pool = objc_autoreleasePoolPush();

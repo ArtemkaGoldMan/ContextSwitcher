@@ -25,7 +25,7 @@ public sealed class MacRunningApplications : IRunningApplications
     /// <inheritdoc />
     public IReadOnlyList<RunningApp> List()
     {
-        if (!OperatingSystem.IsMacOS() || !NativeLibrary.TryLoad(AppKit, out _))
+        if (!NativeLibrary.TryLoad(AppKit, out _))
         {
             return [];
         }

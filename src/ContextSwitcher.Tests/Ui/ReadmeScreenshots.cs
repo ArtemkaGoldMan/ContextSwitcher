@@ -17,7 +17,7 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Messages;
-using ContextSwitcher.Core.Platform;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Ui;
@@ -116,7 +116,7 @@ public sealed class ReadmeScreenshots : UiTest
         MainAppViewModel viewModel = new(
             scenario.AppState, scenario.SwitchService, scenario.ConfigurationStore, scenario.Permissions,
             scenario.Shell, scenario.Analytics, scenario.InstalledApps,
-            scenario.Notice, new UpdatesViewModel(checker, scenario.Shell), scenario.Diagnostics, new FakePreferredLanguages(), PlatformCapabilities.MacOS,
+            scenario.Notice, new UpdatesViewModel(checker, scenario.Shell), scenario.Diagnostics, new FakePreferredLanguages(), MacPlatform.Capabilities,
             new FakeLoginItem { Status = LoginItemStatus.On }, scenario.ProfileSetup);
 
         // See-through from the start: a window takes its transparency when it is first shown.

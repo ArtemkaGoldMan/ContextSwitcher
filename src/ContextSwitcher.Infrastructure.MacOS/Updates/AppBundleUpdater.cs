@@ -5,7 +5,7 @@ using ContextSwitcher.Core.Updates;
 using ContextSwitcher.Core.Messages;
 using System.Globalization;
 
-namespace ContextSwitcher.Infrastructure.Updates;
+namespace ContextSwitcher.Infrastructure.MacOS.Updates;
 
 /// <summary>
 /// Installs a newer release over the running app.

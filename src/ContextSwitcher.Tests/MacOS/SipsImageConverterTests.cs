@@ -1,5 +1,4 @@
 using ContextSwitcher.Core.ProcessExecution;
-using ContextSwitcher.Core.Security;
 using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Infrastructure.ProcessExecution;
 using ContextSwitcher.Tests.TestDoubles;
@@ -43,7 +42,7 @@ public sealed class SipsImageConverterTests : IDisposable
         string destination = Path.Combine(this.directory, "small.png");
         await File.WriteAllBytesAsync(source, Png);
 
-        bool converted = await new SipsImageConverter(new ProcessRunner(CommandAllowlist.MacOS), SipsImageConverter.DefaultTimeout)
+        bool converted = await new SipsImageConverter(new ProcessRunner(MacPlatform.AllowedCommands), SipsImageConverter.DefaultTimeout)
             .ToPngAsync(source, destination, 32, CancellationToken.None);
 
         Assert.True(converted);

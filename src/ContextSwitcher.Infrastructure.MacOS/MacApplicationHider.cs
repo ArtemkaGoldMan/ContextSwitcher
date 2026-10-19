@@ -22,7 +22,7 @@ public sealed class MacApplicationHider : IApplicationHider
     public int Hide(IReadOnlyList<string> apps)
     {
         ArgumentNullException.ThrowIfNull(apps);
-        if (apps.Count == 0 || !OperatingSystem.IsMacOS() || !NativeLibrary.TryLoad(AppKit, out _))
+        if (apps.Count == 0 || !NativeLibrary.TryLoad(AppKit, out _))
         {
             return 0;
         }

@@ -27,15 +27,10 @@ public sealed class DisplayAvailability : IDisplayAvailability
     /// <summary>
     /// Whether a display link can be started right now - the very thing Avalonia is about to do, asked
     /// the same way, so the answer cannot disagree with it. <see langword="true"/> where it cannot be
-    /// asked (not macOS, or CoreVideo missing, as in a test host): not knowing is no reason to wait.
+    /// asked (CoreVideo missing): not knowing is no reason to wait.
     /// </summary>
     public static bool CanDraw()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return true;
-        }
-
         try
         {
             if (CVDisplayLinkCreateWithActiveCGDisplays(out IntPtr link) != 0 || link == IntPtr.Zero)

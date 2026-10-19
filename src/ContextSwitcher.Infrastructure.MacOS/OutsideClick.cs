@@ -82,8 +82,7 @@ public static class OutsideClick
     /// Struct returns from objc_msgSend come back in registers only on arm64; on x86_64 a rect
     /// would need objc_msgSend_stret. The app ships for Apple Silicon, so anything else opts out.
     /// </summary>
-    private static bool CanCall() =>
-        OperatingSystem.IsMacOS() && RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
+    private static bool CanCall() => RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
 
     [DllImport(ObjectiveC)]
     private static extern IntPtr objc_getClass([MarshalAs(UnmanagedType.LPUTF8Str)] string name);

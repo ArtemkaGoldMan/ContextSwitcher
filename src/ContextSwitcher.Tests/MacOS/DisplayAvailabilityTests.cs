@@ -50,7 +50,7 @@ public sealed class DisplayAvailabilityTests
     /// The answer depends on whether this machine has a display awake - a CI runner may not - so only
     /// that asking does not throw is checked.
     /// </summary>
-    [Fact]
+    [MacOSFact]
     public void AskingTheSystemDoesNotThrow()
     {
         _ = DisplayAvailability.CanDraw();

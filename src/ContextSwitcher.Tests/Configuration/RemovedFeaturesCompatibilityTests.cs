@@ -1,8 +1,8 @@
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
-using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Configuration;
@@ -129,7 +129,7 @@ public sealed class RemovedFeaturesCompatibilityTests
             await File.WriteAllTextAsync(paths.SettingsPath, LegacySettings);
             AppConfiguration loaded = (await new JsonFileStore(FileReplacer.Once, new TestLogger()).ReadAsync<AppConfiguration>(paths.SettingsPath))!;
 
-            AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(loaded.Contexts[1], loaded.Contexts[0]);
+            AutomationPlan plan = new AutomationPlanBuilder(MacPlatform.Capabilities, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(loaded.Contexts[1], loaded.Contexts[0]);
 
             AutomationStep launch = Assert.Single(plan.Steps, s => s.Type == AutomationStepType.LaunchApplications);
             Assert.True(launch.IsCritical);

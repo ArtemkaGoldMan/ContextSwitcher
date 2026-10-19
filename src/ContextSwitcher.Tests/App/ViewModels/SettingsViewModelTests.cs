@@ -5,9 +5,9 @@ using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Core.Configuration.Validation;
-using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Infrastructure.Logging;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
@@ -34,7 +34,7 @@ public sealed class SettingsViewModelTests
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
         ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel viewModel = new(this.appState, configurationStore, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
+        SettingsViewModel viewModel = new(this.appState, configurationStore, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), MacPlatform.Capabilities, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
 
         // On by default now; turning it off is the change.
         viewModel.ShowDockIcon = false;
@@ -73,7 +73,7 @@ public sealed class SettingsViewModelTests
         this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
 
         ConfigurationStore configurationStore = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel viewModel = new(this.appState, configurationStore, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
+        SettingsViewModel viewModel = new(this.appState, configurationStore, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), MacPlatform.Capabilities, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
 
         Assert.Equal(
             ["1 week", "30 days", "90 days", "6 months", "1 year", "2 years", "3 years"],
@@ -98,7 +98,7 @@ public sealed class SettingsViewModelTests
 
         FakeShell shell = new();
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel viewModel = new(this.appState, store, new FakePermissionsChecker(), shell, Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
+        SettingsViewModel viewModel = new(this.appState, store, new FakePermissionsChecker(), shell, Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), MacPlatform.Capabilities, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
 
         viewModel.SupportDeveloperCommand.Execute(null);
 
@@ -168,7 +168,7 @@ public sealed class SettingsViewModelTests
         this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
 
-        using SettingsViewModel mac = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
+        using SettingsViewModel mac = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), MacPlatform.Capabilities, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
         using SettingsViewModel lesser = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), Platform.PlatformCapabilitiesTests.Lesser, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
 
         Assert.True(mac.CanShowDockIcon);
@@ -180,7 +180,7 @@ public sealed class SettingsViewModelTests
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
         this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        return new SettingsViewModel(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), PlatformCapabilities.MacOS, loginItem, new FakeInstalledAppsService());
+        return new SettingsViewModel(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), MacPlatform.Capabilities, loginItem, new FakeInstalledAppsService());
     }
 
     /// <summary>After an import the page shows the imported settings, without saving them over again.</summary>
@@ -190,7 +190,7 @@ public sealed class SettingsViewModelTests
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
         this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel viewModel = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
+        SettingsViewModel viewModel = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), MacPlatform.Capabilities, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
         FakeSettingsFilePicker picker = new()
         {
             FileToOpen = """{ "activeContextId": "work", "showDockIcon": false, "checkForUpdates": false, "contexts": [ { "id": "work", "displayName": "Work" } ], "analytics": { "enabled": true, "retentionDays": 45 } }"""
@@ -216,8 +216,8 @@ public sealed class SettingsViewModelTests
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }], AskOnSwitch = false };
         this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel open = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
-        SettingsViewModel closed = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
+        SettingsViewModel open = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), MacPlatform.Capabilities, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
+        SettingsViewModel closed = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), MacPlatform.Capabilities, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
         closed.Dispose();
 
         this.appState.UpdateConfiguration(configuration with { AskOnSwitch = true, IgnoredApps = ["Telegram"] }, new ConfigurationValidationResult([]));

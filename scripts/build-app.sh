@@ -32,8 +32,10 @@ echo "building ContextSwitcher $version (osx-arm64, self-contained)"
 publish="$(mktemp -d)"
 trap 'rm -rf "$publish"' EXIT
 
+# The project builds for Windows as well; net10.0 is the Mac app.
 dotnet publish "$proj" \
   --configuration Release \
+  --framework net10.0 \
   --runtime osx-arm64 \
   --self-contained true \
   --output "$publish" \

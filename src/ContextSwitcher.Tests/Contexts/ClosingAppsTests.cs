@@ -2,7 +2,7 @@ using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Messages;
-using ContextSwitcher.Core.Platform;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Contexts;
@@ -219,7 +219,7 @@ public sealed class ClosingAppsTests : IDisposable
         ContextSwitchService service = new(
             store,
             new FakeAutomationStepExecutor(),
-            new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()),
+            new AutomationPlanBuilder(MacPlatform.Capabilities, StepBudgets.Default, new FakeUnknownDefaultBrowser()),
             new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()),
             clock,
             new TestLogger(),

@@ -37,10 +37,10 @@ public sealed class OutsideClickTests
     /// a wrong struct declaration would read garbage rather than fail. Run with AppKit loaded, as the
     /// app has it; the pointer is somewhere on screen, and on a test run no button is held.
     /// </summary>
-    [Fact]
+    [MacOSFact]
     public void AppKitAnswersWithAPlausiblePointerAndButtonState()
     {
-        if (!OperatingSystem.IsMacOS() || RuntimeInformation.ProcessArchitecture != Architecture.Arm64)
+        if (RuntimeInformation.ProcessArchitecture != Architecture.Arm64)
         {
             Assert.Null(OutsideClick.PointerLocation());
             return;

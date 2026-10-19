@@ -2,7 +2,7 @@ using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.ProcessExecution;
 
-namespace ContextSwitcher.Infrastructure.AppleScript;
+namespace ContextSwitcher.Infrastructure.MacOS.AppleScript;
 
 /// <summary>
 /// Runs AppleScript source through <c>osascript</c> via <see cref="IProcessRunner"/>.

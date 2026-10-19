@@ -36,11 +36,6 @@ public sealed class DockIcon : IDockIcon
     /// <summary>The running NSApplication, or zero outside a Mac app - in the test host, say.</summary>
     private static IntPtr Application()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return IntPtr.Zero;
-        }
-
         IntPtr type = objc_getClass("NSApplication");
         return type == IntPtr.Zero ? IntPtr.Zero : Send(type, sel_registerName("sharedApplication"));
     }

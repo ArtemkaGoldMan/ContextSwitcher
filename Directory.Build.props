@@ -1,0 +1,9 @@
+<Project>
+
+  <!-- The Windows projects build on a Mac too - without this the SDK stops at them (NETSDK1100) - so a
+       mistake in them shows on either machine, though their tests run only on Windows. -->
+  <PropertyGroup>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+</Project>

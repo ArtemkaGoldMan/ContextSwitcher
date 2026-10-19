@@ -59,6 +59,7 @@ ContextSwitcher/
   .gitignore
   global.json
   ContextSwitcher.sln
+  Directory.Build.props            lets any machine build the Windows projects
   src/
     ContextSwitcher.App/
       ContextSwitcher.App.csproj
@@ -147,11 +148,8 @@ ContextSwitcher/
       Security/
         CommandAllowlist.cs
         CommandTemplate.cs
-    ContextSwitcher.Infrastructure/
+    ContextSwitcher.Infrastructure/  shared by both systems
       ContextSwitcher.Infrastructure.csproj
-      AppleScript/
-        AppleScriptBuilder.cs
-        AppleScriptRunner.cs
       Browser/
         BrowserLauncher.cs
       Cli/
@@ -164,12 +162,21 @@ ContextSwitcher/
         LocalJsonLogger.cs
       Time/
         SystemClock.cs
-      MacOS/
-        MacPermissionsChecker.cs
       ProcessExecution/
         ProcessRunner.cs
       Automation/
         AutomationStepExecutor.cs
+    ContextSwitcher.Infrastructure.MacOS/  the Mac's, in the net10.0 app only
+      ContextSwitcher.Infrastructure.MacOS.csproj
+      PlatformServices.cs          what the app has on a Mac
+      MacPlatform.cs               what a Mac can do, and the commands it may run
+      MacPermissionsChecker.cs
+      AppleScript/
+        AppleScriptBuilder.cs
+        AppleScriptRunner.cs
+    ContextSwitcher.Infrastructure.Windows/  Windows', in the net10.0-windows app only
+      ContextSwitcher.Infrastructure.Windows.csproj
+      PlatformServices.cs
     ContextSwitcher.Tests/
       ContextSwitcher.Tests.csproj
       App/
@@ -201,9 +208,14 @@ ContextSwitcher/
 
 Project references:
 
-- `ContextSwitcher.App` references `Core` and `Infrastructure`.
-- `ContextSwitcher.Infrastructure` references `Core`.
-- `ContextSwitcher.Tests` references `Core` and `Infrastructure`.
+- `ContextSwitcher.App` references `Core` and `Infrastructure`, and one platform project for each of
+  its two targets: `Infrastructure.MacOS` for `net10.0`, the Mac app, and `Infrastructure.Windows`
+  for `net10.0-windows10.0.19041.0`. It calls that project's `PlatformServices.Register`, the same
+  name in both, and names no platform class.
+- `ContextSwitcher.Infrastructure` references `Core`; the platform projects reference both, and are
+  marked for their system so the compiler flags code meant for every system that reaches into them.
+- `ContextSwitcher.Tests` references `Core`, `Infrastructure`, `Infrastructure.MacOS` and the app;
+  a test that needs macOS itself is a `[MacOSFact]`.
 - `Core` must not reference Avalonia, macOS-specific APIs, shell execution libraries, or UI packages.
 
 ## 4. Architectural Boundaries
@@ -222,7 +234,7 @@ Core rules:
 
 ### 4.2 Infrastructure
 
-`ContextSwitcher.Infrastructure` implements macOS automation, filesystem persistence, AppleScript execution, browser launching, process execution, and CLI routing.
+`ContextSwitcher.Infrastructure` implements filesystem persistence, browser launching, process execution, the step handlers, and CLI routing - what every system shares. `ContextSwitcher.Infrastructure.MacOS` implements macOS automation and AppleScript execution, and `ContextSwitcher.Infrastructure.Windows` will hold Windows'; neither checks which system it runs on, since only that system's app registers it.
 
 Infrastructure rules:
 

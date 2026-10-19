@@ -1,4 +1,4 @@
-namespace ContextSwitcher.Infrastructure.AppleScript;
+namespace ContextSwitcher.Infrastructure.MacOS.AppleScript;
 
 /// <summary>
 /// Builds AppleScript source for the automation templates in agent.md section 9. All string

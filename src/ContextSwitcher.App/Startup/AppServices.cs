@@ -8,18 +8,14 @@ using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Platform;
-using ContextSwitcher.Core.Security;
 using ContextSwitcher.Core.Updates;
-using ContextSwitcher.Infrastructure.AppleScript;
-using ContextSwitcher.Infrastructure.Applications;
 using ContextSwitcher.Infrastructure.Automation;
-using ContextSwitcher.Infrastructure.Catalog;
 using ContextSwitcher.Infrastructure.Analytics;
 using ContextSwitcher.Infrastructure.Browser;
 using ContextSwitcher.Infrastructure.Cli;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Infrastructure.Logging;
-using ContextSwitcher.Infrastructure.MacOS;
+using ContextSwitcher.Infrastructure.Platform;
 using ContextSwitcher.Infrastructure.ProcessExecution;
 using ContextSwitcher.Infrastructure.Time;
 using ContextSwitcher.Infrastructure.Updates;
@@ -29,7 +25,8 @@ namespace ContextSwitcher.App.Startup;
 
 /// <summary>
 /// What the app is made of: every service and which implementation it has. What differs between macOS
-/// and Windows is chosen together, in <see cref="RegisterPlatform"/>.
+/// and Windows is each platform project's <see cref="PlatformServices.Register"/>; the app's build
+/// brings in one of them.
 /// </summary>
 public static class AppServices
 {
@@ -41,7 +38,18 @@ public static class AppServices
         services.AddSingleton<IAppState, AppState>();
         services.AddSingleton<IAppInfo, AppInfo>();
         services.AddSingleton<IClock, SystemClock>();
-        RegisterPlatform(services);
+        PlatformServices.Register(services);
+
+        // Everything is kept in the platform's folder for settings - or a development build's own.
+        services.AddSingleton(provider => new ConfigPaths(
+            settingsRoot: provider.GetRequiredService<SettingsRoot>().Path,
+            development: provider.GetRequiredService<IAppInfo>().IsDevelopment));
+
+        // How long a switch's steps may take and how they wait - what the app has always used.
+        services.AddSingleton(StepBudgets.Default);
+        services.AddSingleton(QuitTimings.Default);
+        services.AddSingleton(TabTimings.Default);
+        services.AddSingleton(FollowUpTimings.Default);
 
         services.AddSingleton<IJsonStore, JsonFileStore>();
         services.AddSingleton(provider => new LocalJsonLogger(
@@ -182,63 +190,6 @@ public static class AppServices
         services.AddSingleton<IHousekeeping, AwayWatcher>();
         services.AddSingleton<IHousekeeping, ClosingAppsWatcher>();
         services.AddSingleton<IHousekeeping>(provider => provider.GetRequiredService<UpdateChecker>());
-    }
-
-    /// <summary>
-    /// What differs between macOS and Windows, chosen here once rather than in the classes that use it:
-    /// where everything is kept - <c>~/.config</c>, or <c>%APPDATA%</c> on Windows - whether a move
-    /// refused for a file held open elsewhere is tried again, which only Windows needs, and the macOS
-    /// versions of what the shared code asks of the system. Moves into each platform's own registrations
-    /// with stage 0 of <c>docs/windows-plan.md</c>.
-    /// </summary>
-    private static void RegisterPlatform(IServiceCollection services)
-    {
-        bool windows = OperatingSystem.IsWindows();
-        services.AddSingleton(provider => new ConfigPaths(
-            settingsRoot: windows ? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) : null,
-            development: provider.GetRequiredService<IAppInfo>().IsDevelopment));
-        services.AddSingleton<IFileReplacer>(windows ? FileReplacer.RetryingWhileHeldOpen : FileReplacer.Once);
-
-        // What a Mac can do: everything the app does today; and what it may run.
-        services.AddSingleton(PlatformCapabilities.MacOS);
-        services.AddSingleton(CommandAllowlist.MacOS);
-
-        // How long a switch's steps may take and how they wait - what the app has always used.
-        services.AddSingleton(StepBudgets.Default);
-        services.AddSingleton(QuitTimings.Default);
-        services.AddSingleton(TabTimings.Default);
-        services.AddSingleton(FollowUpTimings.Default);
-
-        services.AddSingleton<IShell, MacShell>();
-        services.AddSingleton<IDefaultBrowser, MacDefaultBrowser>();
-        services.AddSingleton<ILoginItem, MacLoginItem>();
-        services.AddSingleton<IScriptRunner, AppleScriptRunner>();
-        services.AddSingleton<IBrowserRuns, ProcessBrowserRuns>();
-        services.AddSingleton<IBrowserControl, MacBrowserControl>();
-        services.AddSingleton<IApplicationHider, MacApplicationHider>();
-        services.AddSingleton<IAppProcesses, MacAppProcesses>();
-        services.AddSingleton<IAppLauncher, MacAppLauncher>();
-        services.AddSingleton<IAppQuitter, MacAppQuitter>();
-        services.AddSingleton<IMediaPlayer, MacMediaPlayer>();
-        services.AddSingleton<IShortcutRunner, MacShortcutRunner>();
-        services.AddSingleton<IRunningApplications, MacRunningApplications>();
-        services.AddSingleton<IImageConverter>(provider => new SipsImageConverter(provider.GetRequiredService<IProcessRunner>(), SipsImageConverter.DefaultTimeout));
-        services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
-        services.AddSingleton<IInstalledAppsService, InstalledAppsService>();
-        services.AddSingleton<ISystemCatalog, SystemCatalog>();
-        services.AddSingleton<IFocusShortcutInstaller, FocusShortcutInstaller>();
-        services.AddSingleton<ISystemNotifications, MacNotifications>();
-        services.AddSingleton<IAwayEvents, AwayEvents>();
-        services.AddSingleton<IDockIcon, DockIcon>();
-        services.AddSingleton<IPreferredLanguages, PreferredLanguages>();
-        services.AddSingleton<IDisplayAvailability, DisplayAvailability>();
-        services.AddSingleton<ISystemVersion, MacSystemVersion>();
-        services.AddSingleton<IPopoverWindow, MacPopoverWindow>();
-
-        // The updater, and which releases are the Mac's: the zip and the disk image.
-        services.AddSingleton<IAppUpdater>(provider => new AppBundleUpdater(
-            provider.GetRequiredService<HttpClient>(), provider.GetRequiredService<IProcessRunner>()));
-        services.AddSingleton(AppBundleUpdater.Assets);
     }
 
     /// <summary>Which app, which build, on which system: the first line of a log and of a diagnostic report.</summary>

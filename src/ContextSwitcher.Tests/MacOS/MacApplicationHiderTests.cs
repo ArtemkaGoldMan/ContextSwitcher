@@ -19,7 +19,7 @@ public sealed class MacApplicationHiderTests
     }
 
     /// <summary>Asked about apps that aren't running, it looks at the real running apps and hides nothing.</summary>
-    [Fact]
+    [MacOSFact]
     public void AnAppThatIsntRunningIsLeftAlone()
     {
         Assert.Equal(0, new MacApplicationHider().Hide(["ContextSwitcher Test App That Does Not Exist"]));

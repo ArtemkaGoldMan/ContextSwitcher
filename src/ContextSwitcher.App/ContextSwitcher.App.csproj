@@ -2,7 +2,9 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- Built once for each system: net10.0 is the Mac app, and the Windows target the Windows one.
+         Each brings in only its own platform's project. -->
+    <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0</TargetFrameworks>
     <RuntimeIdentifiers>osx-arm64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -18,6 +20,18 @@
   <ItemGroup>
     <ProjectReference Include="..\ContextSwitcher.Core\ContextSwitcher.Core.csproj" />
     <ProjectReference Include="..\ContextSwitcher.Infrastructure\ContextSwitcher.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <!-- The Mac app is marked macOS, as the Windows one is marked Windows by its target, so each may use
+       its platform's project. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <ProjectReference Include="..\ContextSwitcher.Infrastructure.MacOS\ContextSwitcher.Infrastructure.MacOS.csproj" />
+    <AssemblyAttribute Include="System.Runtime.Versioning.SupportedOSPlatformAttribute">
+      <_Parameter1>macos</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net10.0'">
+    <ProjectReference Include="..\ContextSwitcher.Infrastructure.Windows\ContextSwitcher.Infrastructure.Windows.csproj" />
   </ItemGroup>
 
   <ItemGroup>

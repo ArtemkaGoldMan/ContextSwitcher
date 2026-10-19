@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- What the app will do on Windows, from stage 1 of docs/windows-plan.md. Its toast notifications
+       and media session controls need Windows 10 version 2004 (10.0.19041); the target also marks the
+       project for Windows, so the compiler flags code meant for every system that reaches in here. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\ContextSwitcher.Core\ContextSwitcher.Core.csproj" />
+    <ProjectReference Include="..\ContextSwitcher.Infrastructure\ContextSwitcher.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

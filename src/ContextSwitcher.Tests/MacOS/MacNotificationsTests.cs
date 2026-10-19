@@ -9,7 +9,7 @@ public sealed class MacNotificationsTests
     /// The test host is no app bundle, the same as running from source. macOS's notification center
     /// throws an Objective-C exception there that would end the process, so it must never be called.
     /// </summary>
-    [Fact]
+    [MacOSFact]
     public void OutsideAnAppBundleNothingIsShownAndNothingBreaks()
     {
         MacNotifications notifications = new(new TestLogger(), new FakeClock());

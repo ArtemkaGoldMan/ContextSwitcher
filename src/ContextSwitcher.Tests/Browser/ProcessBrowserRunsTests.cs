@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Infrastructure.Browser;
+using ContextSwitcher.Infrastructure.MacOS.Browser;
 
 namespace ContextSwitcher.Tests.Browser;
 

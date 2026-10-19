@@ -6,6 +6,7 @@ using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Core.Serialization;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
@@ -137,7 +138,7 @@ public sealed class SettingsTransferViewModelTests
     private static string Settings(string body) => "{ \"schemaVersion\": 1, " + body + " }";
 
     private SettingsTransferViewModel Create(PlatformCapabilities? capabilities = null) =>
-        new(this.appState, new ConfigurationStore(this.jsonStore, this.configPaths, new ConfigurationValidator(), this.appState, new TestLogger()), capabilities ?? PlatformCapabilities.MacOS)
+        new(this.appState, new ConfigurationStore(this.jsonStore, this.configPaths, new ConfigurationValidator(), this.appState, new TestLogger()), capabilities ?? MacPlatform.Capabilities)
         {
             FilePicker = this.picker
         };

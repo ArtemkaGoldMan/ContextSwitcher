@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Core.Security;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Infrastructure.ProcessExecution;
 
 namespace ContextSwitcher.Tests.ProcessExecution;
@@ -84,7 +85,7 @@ public sealed class ProcessRunnerTests
     [Fact]
     public async Task RunAsyncThrowsForExecutableOutsideAllowlist()
     {
-        ProcessRunner runner = new(CommandAllowlist.MacOS);
+        ProcessRunner runner = new(MacPlatform.AllowedCommands);
         ProcessStartOptions options = new("echo", ["hello"], TimeSpan.FromSeconds(5));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => runner.RunAsync(options, CancellationToken.None));

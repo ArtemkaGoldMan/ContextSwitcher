@@ -16,16 +16,11 @@ public static class FrontmostApplication
     private const string ObjectiveC = "/usr/lib/libobjc.A.dylib";
 
     /// <summary>
-    /// The frontmost application's process id, or <see langword="null"/> when it cannot be read - not
-    /// on macOS, or AppKit not loaded, as in a test host.
+    /// The frontmost application's process id, or <see langword="null"/> when it cannot be read - AppKit
+    /// not loaded, as in a test host.
     /// </summary>
     public static int? ProcessId()
     {
-        if (!OperatingSystem.IsMacOS())
-        {
-            return null;
-        }
-
         try
         {
             IntPtr workspaceClass = objc_getClass("NSWorkspace");

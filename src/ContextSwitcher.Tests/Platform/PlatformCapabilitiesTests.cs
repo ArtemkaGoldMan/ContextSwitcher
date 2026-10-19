@@ -2,6 +2,7 @@ using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Messages;
 using ContextSwitcher.Core.Platform;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Platform;
@@ -13,7 +14,7 @@ namespace ContextSwitcher.Tests.Platform;
 public sealed class PlatformCapabilitiesTests
 {
     /// <summary>No Focus, no Apple Music, no Dock, and Chrome alone.</summary>
-    internal static readonly PlatformCapabilities Lesser = PlatformCapabilities.MacOS with
+    internal static readonly PlatformCapabilities Lesser = MacPlatform.Capabilities with
     {
         Focus = false,
         AppleMusic = false,
@@ -34,7 +35,7 @@ public sealed class PlatformCapabilitiesTests
     [Fact]
     public void AMacHasEverythingTheAppDoes()
     {
-        PlatformCapabilities mac = PlatformCapabilities.MacOS;
+        PlatformCapabilities mac = MacPlatform.Capabilities;
 
         Assert.True(mac.Focus && mac.AppleMusic && mac.DockIcon);
         Assert.Equal([BrowserKind.Safari, BrowserKind.Chrome, BrowserKind.Brave], mac.Browsers);
@@ -89,8 +90,8 @@ public sealed class PlatformCapabilitiesTests
     {
         ContextDefinition chrome = Everything with { BrowserManagement = Everything.BrowserManagement with { Browser = BrowserKind.Chrome } };
 
-        AutomationStep safari = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(null, Everything).Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext);
-        AutomationStep chromeStep = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(null, chrome).Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext);
+        AutomationStep safari = new AutomationPlanBuilder(MacPlatform.Capabilities, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(null, Everything).Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext);
+        AutomationStep chromeStep = new AutomationPlanBuilder(MacPlatform.Capabilities, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(null, chrome).Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext);
 
         Assert.Empty(BrowserContextArguments.From(safari.Arguments).RememberUrls);
         Assert.Equal(["https://linear.app/"], BrowserContextArguments.From(chromeStep.Arguments).RememberUrls);

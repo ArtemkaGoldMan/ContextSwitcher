@@ -2,8 +2,8 @@ using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
-using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
@@ -63,7 +63,7 @@ public sealed class IgnoredAppsViewModelTests
         (IgnoredAppsViewModel ignored, InMemoryJsonStore jsonStore, ConfigPaths paths) = Create();
         ignored.Dispose();
         ConfigurationStore store = new(jsonStore, paths, new ConfigurationValidator(), this.appState, new TestLogger());
-        SettingsViewModel settings = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), SettingsViewModelTests.Updates(this.appState), SettingsViewModelTests.Diagnostics(), new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
+        SettingsViewModel settings = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), SettingsViewModelTests.Updates(this.appState), SettingsViewModelTests.Diagnostics(), new FakePreferredLanguages(), MacPlatform.Capabilities, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
 
         Assert.False(settings.AskOnSwitch);
         settings.AskOnSwitch = true;
