@@ -35,6 +35,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         SwitchNoticeViewModel switchNotice,
         UpdatesViewModel updates,
         DiagnosticsSources diagnostics,
+        IPreferredLanguages preferredLanguages,
         IDefaultBrowser? defaultBrowser = null,
         ILoginItem? loginItem = null)
     {
@@ -47,7 +48,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         this.shell = shell;
 
         this.Profiles = new ProfilesViewModel(appState, switchService, configurationStore, switchNotice);
-        this.Settings = new SettingsViewModel(appState, configurationStore, permissionsChecker, shell, updates, diagnostics, loginItem: loginItem, installedApps: installedAppsService);
+        this.Settings = new SettingsViewModel(appState, configurationStore, permissionsChecker, shell, updates, diagnostics, preferredLanguages, loginItem: loginItem, installedApps: installedAppsService);
         this.Stats = new StatsViewModel(appState, analyticsService);
 
         this.Profiles.EditRequested += this.OnEditRequested;

@@ -40,7 +40,7 @@ public static class DiagnosticsReport
         report.AppendLine(CultureInfo.InvariantCulture, $"Made {input.Now:yyyy-MM-dd HH:mm 'UTC'}");
         report.AppendLine();
         report.AppendLine(CultureInfo.InvariantCulture, $"Version: {input.Run.Version} ({input.Run.Build})");
-        report.AppendLine(CultureInfo.InvariantCulture, $"macOS: {input.Run.MacOs} ({input.Run.Architecture})");
+        report.AppendLine(CultureInfo.InvariantCulture, $"macOS: {input.Run.SystemVersion} ({input.Run.Architecture})");
         report.AppendLine(CultureInfo.InvariantCulture, $"Language: {config.Language}, appearance: {config.Appearance}");
         report.AppendLine(CultureInfo.InvariantCulture, $"Automation permission: {Describe(input.Automation)}");
         report.AppendLine();

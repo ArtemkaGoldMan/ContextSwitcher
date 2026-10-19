@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
+using ContextSwitcher.Core.Abstractions;
 
 namespace ContextSwitcher.Infrastructure.MacOS;
 
@@ -11,12 +12,12 @@ namespace ContextSwitcher.Infrastructure.MacOS;
 /// .NET's own culture only reflects the first of them, so a Polish-first Mac that also lists
 /// Ukrainian would get English rather than the Ukrainian it would prefer to Polish-less English.
 /// </summary>
-public static class PreferredLanguages
+public sealed class PreferredLanguages : IPreferredLanguages
 {
     private const string ObjectiveC = "/usr/lib/libobjc.A.dylib";
 
     /// <summary>The list from macOS, or the current culture alone where macOS can't be asked.</summary>
-    public static IReadOnlyList<string> Get()
+    public IReadOnlyList<string> Get()
     {
         if (!OperatingSystem.IsMacOS())
         {

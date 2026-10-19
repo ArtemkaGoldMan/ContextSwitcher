@@ -7,7 +7,6 @@ using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Infrastructure.Cli;
-using ContextSwitcher.Infrastructure.MacOS;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App;
@@ -40,8 +39,10 @@ internal static class Program
         // crash report. A window needs a screen anyway, so wait for one - before AppHost.Initialize,
         // which starts counting time: nothing has begun until there is somewhere to show it. The
         // command line never draws, so it never waits.
+        AppHost.Build();
+        IDisplayAvailability displays = AppHost.Services.GetRequiredService<IDisplayAvailability>();
         bool interactive = !CliCommandRouter.IsHeadless(args);
-        TimeSpan waitedForDisplay = interactive ? DisplayAvailability.WaitUntilAvailable() : TimeSpan.Zero;
+        TimeSpan waitedForDisplay = interactive ? displays.WaitUntilAvailable() : TimeSpan.Zero;
 
         StartupOutcome startup = AppHost.Initialize(args);
         ReportCrashes();
@@ -63,18 +64,18 @@ internal static class Program
 
         // Before any window, so every text is read in it. The command line above stays English: scripts
         // read it.
-        AppLanguages.Apply(AppLanguages.Resolve(appState.Configuration.Language, PreferredLanguages.Get()));
+        AppLanguages.Apply(AppLanguages.Resolve(appState.Configuration.Language, AppHost.Services.GetRequiredService<IPreferredLanguages>().Get()));
 
         try
         {
             BuildAvaloniaApp(appState.Configuration.ShowDockIcon)
                 .StartWithClassicDesktopLifetime(args);
         }
-        catch (InvalidOperationException ex) when (DisplayAvailability.IsRenderTimerFailure(ex) && StartAttempt() < MaxStartAttempts)
+        catch (InvalidOperationException ex) when (displays.IsRenderTimerFailure(ex) && StartAttempt() < MaxStartAttempts)
         {
             // The screen went dark between the look above and Avalonia's own: Avalonia cannot be set up
             // a second time in this process, so a fresh one takes over once a display is awake.
-            StartOver(args);
+            StartOver(args, displays);
         }
     }
 
@@ -101,7 +102,7 @@ internal static class Program
     private static int StartAttempt() =>
         int.TryParse(Environment.GetEnvironmentVariable(StartAttemptVariable), NumberStyles.None, CultureInfo.InvariantCulture, out int attempt) ? attempt : 0;
 
-    private static void StartOver(string[] args)
+    private static void StartOver(string[] args, IDisplayAvailability displays)
     {
         if (Environment.ProcessPath is not { } self)
         {
@@ -110,7 +111,7 @@ internal static class Program
 
         // Ends the time session this run began, rather than leaving it to be repaired at the next start.
         AppHost.ShutdownAsync().GetAwaiter().GetResult();
-        DisplayAvailability.WaitUntilAvailable();
+        displays.WaitUntilAvailable();
 
         ProcessStartInfo start = new(self) { UseShellExecute = false };
         foreach (string argument in args)

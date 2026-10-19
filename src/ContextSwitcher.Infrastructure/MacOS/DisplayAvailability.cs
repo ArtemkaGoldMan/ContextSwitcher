@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Logging;
 using System.Runtime.InteropServices;
+using ContextSwitcher.Core.Abstractions;
 
 namespace ContextSwitcher.Infrastructure.MacOS;
 
@@ -10,7 +11,7 @@ namespace ContextSwitcher.Infrastructure.MacOS;
 /// "Avalonia.Native was not able to start the RenderTimer. Native error code is: -6661"
 /// (<c>kCVReturnInvalidDisplay</c>), and macOS offered the user a crash report.
 /// </summary>
-public static class DisplayAvailability
+public sealed class DisplayAvailability : IDisplayAvailability
 {
     /// <summary>How often a launch that finds every display asleep looks again: soon enough that the app is up when the screen wakes.</summary>
     public static readonly TimeSpan PollEvery = TimeSpan.FromSeconds(3);
@@ -61,7 +62,7 @@ public static class DisplayAvailability
     }
 
     /// <summary>Whether <paramref name="exception"/> is Avalonia failing to start its render timer - what a launch with no display awake ends in.</summary>
-    public static bool IsRenderTimerFailure(Exception exception)
+    public bool IsRenderTimerFailure(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
 
@@ -69,8 +70,8 @@ public static class DisplayAvailability
             && exception.Message.Contains("RenderTimer", StringComparison.Ordinal);
     }
 
-    /// <summary>Returns once a display is awake, having waited that long: zero when one already was.</summary>
-    public static TimeSpan WaitUntilAvailable() => WaitUntilAvailable(CanDraw, PollEvery, Thread.Sleep);
+    /// <inheritdoc />
+    public TimeSpan WaitUntilAvailable() => WaitUntilAvailable(CanDraw, PollEvery, Thread.Sleep);
 
     /// <summary>
     /// Polls <paramref name="canDraw"/> every <paramref name="pollEvery"/> until it says yes; the wait is

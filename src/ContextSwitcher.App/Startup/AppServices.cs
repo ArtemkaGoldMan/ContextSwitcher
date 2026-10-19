@@ -53,7 +53,7 @@ public static class AppServices
             IClock clock = provider.GetRequiredService<IClock>();
             return new TrailLogger(
                 provider.GetRequiredService<LocalJsonLogger>(),
-                RunOf(provider.GetRequiredService<IAppInfo>()),
+                RunOf(provider),
 
                 // Settings → Detailed log: everything is written, as it happens, until the week is up.
                 detailed: () => appState.Configuration.DetailedLogUntil is { } until && until > clock.UtcNow,
@@ -62,7 +62,7 @@ public static class AppServices
         services.AddSingleton<ILogger>(provider => provider.GetRequiredService<TrailLogger>());
         services.AddSingleton(provider => new DiagnosticsSources(
             provider.GetRequiredService<ConfigPaths>(),
-            RunOf(provider.GetRequiredService<IAppInfo>()),
+            RunOf(provider),
             () => DiagnosticsReport.ReadLog(provider.GetRequiredService<ConfigPaths>().AppLogPath),
             () => provider.GetRequiredService<TrailLogger>().Remembered(),
             provider.GetRequiredService<IClock>()));
@@ -200,7 +200,12 @@ public static class AppServices
         services.AddSingleton<ISystemCatalog, SystemCatalog>();
         services.AddSingleton<IFocusShortcutInstaller, FocusShortcutInstaller>();
         services.AddSingleton<ISystemNotifications, MacNotifications>();
-        services.AddSingleton<AwayEvents>();
+        services.AddSingleton<IAwayEvents, AwayEvents>();
+        services.AddSingleton<IDockIcon, DockIcon>();
+        services.AddSingleton<IPreferredLanguages, PreferredLanguages>();
+        services.AddSingleton<IDisplayAvailability, DisplayAvailability>();
+        services.AddSingleton<ISystemVersion, MacSystemVersion>();
+        services.AddSingleton<IPopoverWindow, MacPopoverWindow>();
 
         // The updater, and which releases are the Mac's: the zip and the disk image.
         services.AddSingleton<IAppUpdater>(provider => new AppBundleUpdater(
@@ -208,6 +213,11 @@ public static class AppServices
         services.AddSingleton(AppBundleUpdater.Assets);
     }
 
-    /// <summary>Which app, which build, on which Mac: the first line of a log and of a diagnostic report.</summary>
-    private static Func<RunInfo> RunOf(IAppInfo app) => () => RunInfo.Current(app.Version.ToString(3), app.IsDevelopment);
+    /// <summary>Which app, which build, on which system: the first line of a log and of a diagnostic report.</summary>
+    private static Func<RunInfo> RunOf(IServiceProvider provider)
+    {
+        IAppInfo app = provider.GetRequiredService<IAppInfo>();
+        ISystemVersion system = provider.GetRequiredService<ISystemVersion>();
+        return () => RunInfo.Current(app.Version.ToString(3), app.IsDevelopment, system.Read());
+    }
 }

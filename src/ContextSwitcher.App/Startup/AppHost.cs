@@ -11,6 +11,8 @@ namespace ContextSwitcher.App.Startup;
 /// Composition root: builds the container from <see cref="AppServices"/> and starts the app - the
 /// start-up sequence (<see cref="AppStartup"/>) before the Avalonia UI thread starts, what runs while
 /// it is up (<see cref="IHousekeeping"/>) once it has, and the end of the time session when it quits.
+/// Building starts nothing, so <see cref="Program"/> can ask the system what it needs - whether a
+/// display is awake - before anything begins.
 /// </summary>
 public static class AppHost
 {
@@ -20,20 +22,24 @@ public static class AppHost
     /// </summary>
     public static IServiceProvider Services { get; private set; } = null!;
 
-    /// <summary>
-    /// Builds the service container and runs the synchronous startup sequence.
-    /// Must be called once, before the Avalonia application starts.
-    /// </summary>
-    public static StartupOutcome Initialize(string[] args)
+    /// <summary>Builds the service container. Must be called once, first; it starts nothing.</summary>
+    public static void Build()
     {
-        ArgumentNullException.ThrowIfNull(args);
-
         ServiceCollection services = new();
         AppServices.Register(services);
         Services = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
         // For the places that cannot be handed a logger: a callback from macOS, a catch in a static helper.
         AppLog.Use(Services.GetRequiredService<ILogger>());
+    }
+
+    /// <summary>
+    /// Runs the synchronous startup sequence. Must be called once, after <see cref="Build"/> and
+    /// before the Avalonia application starts.
+    /// </summary>
+    public static StartupOutcome Initialize(string[] args)
+    {
+        ArgumentNullException.ThrowIfNull(args);
 
         // A headless CLI invocation is a one-shot process that exits immediately: it has no window to
         // show a switch's problems in, and starts none of what runs while the app is up.

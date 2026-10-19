@@ -45,15 +45,16 @@ public sealed partial class App : Application
             this.themeFollower = new ThemeFollower(appState, this);
 
             // The Dock icon too changes the moment the setting does, on the UI thread like the theme.
+            IDockIcon dockIcon = AppHost.Services.GetRequiredService<IDockIcon>();
             appState.ConfigurationChanged += (_, _) =>
             {
                 if (this.CheckAccess())
                 {
-                    this.ApplyDockIcon(appState);
+                    this.ApplyDockIcon(appState, dockIcon);
                 }
                 else
                 {
-                    this.Dispatcher.Post(() => this.ApplyDockIcon(appState));
+                    this.Dispatcher.Post(() => this.ApplyDockIcon(appState, dockIcon));
                 }
             };
 
@@ -110,15 +111,15 @@ public sealed partial class App : Application
     /// start. Leaving the Dock makes an app give up being frontmost, so the main window - where the
     /// switch was flipped - is brought back.
     /// </summary>
-    private void ApplyDockIcon(IAppState appState)
+    private void ApplyDockIcon(IAppState appState, IDockIcon dockIcon)
     {
         bool wanted = appState.Configuration.ShowDockIcon;
-        if (Infrastructure.MacOS.DockIcon.IsShown() is not { } shown || shown == wanted)
+        if (dockIcon.IsShown() is not { } shown || shown == wanted)
         {
             return;
         }
 
-        Infrastructure.MacOS.DockIcon.Show(wanted);
+        dockIcon.Show(wanted);
         this.mainAppWindow?.Activate();
     }
 
@@ -249,7 +250,11 @@ public sealed partial class App : Application
         if (this.dashboardWindow is null)
         {
             DashboardViewModel viewModel = AppHost.Services.GetRequiredService<DashboardViewModel>();
-            this.dashboardWindow = new DashboardWindow(viewModel, this.ShowMainApp) { Title = AppHost.Services.GetRequiredService<IAppInfo>().DisplayName };
+            this.dashboardWindow = new DashboardWindow(
+                viewModel, this.ShowMainApp, AppHost.Services.GetRequiredService<IPopoverWindow>(), AppHost.Services.GetRequiredService<ILogger>())
+            {
+                Title = AppHost.Services.GetRequiredService<IAppInfo>().DisplayName
+            };
             this.dashboardWindow.Closed += (_, _) => this.dashboardWindow = null;
         }
 

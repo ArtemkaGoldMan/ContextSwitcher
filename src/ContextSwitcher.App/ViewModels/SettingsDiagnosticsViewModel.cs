@@ -166,7 +166,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
         string link = MailTo(
             AppLinks.ContactEmail,
             Localized.Format(Strings.Contact_EmailSubject, run.Version),
-            Localized.Format(Strings.Contact_EmailBody, run.Version, run.MacOs));
+            Localized.Format(Strings.Contact_EmailBody, run.Version, run.SystemVersion));
         bool opened = await this.shell.OpenLinkAsync(link, CancellationToken.None).ConfigureAwait(true);
         this.ContactMessage = !opened
             ? Localized.Format(Strings.Contact_NoMailApp, AppLinks.ContactEmail)

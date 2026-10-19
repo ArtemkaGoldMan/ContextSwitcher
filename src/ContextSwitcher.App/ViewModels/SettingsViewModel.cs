@@ -2,7 +2,6 @@ using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.App.Resources;
-using ContextSwitcher.Infrastructure.MacOS;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -23,7 +22,7 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
     private readonly IPermissionsChecker permissionsChecker;
     private readonly IShell shell;
 
-    private readonly Func<IReadOnlyList<string>> preferredLanguages;
+    private readonly IPreferredLanguages preferredLanguages;
     private readonly ILoginItem? loginItem;
     private LoginItemStatus loginItemStatus;
     private string? loginItemProblem;
@@ -46,14 +45,14 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         IShell shell,
         UpdatesViewModel updates,
         DiagnosticsSources diagnostics,
-        Func<IReadOnlyList<string>>? preferredLanguages = null,
+        IPreferredLanguages preferredLanguages,
         ILoginItem? loginItem = null,
         IInstalledAppsService? installedApps = null)
     {
         this.appState = appState;
         this.loginItem = loginItem;
         this.loginItemStatus = loginItem?.Status ?? LoginItemStatus.Unavailable;
-        this.preferredLanguages = preferredLanguages ?? PreferredLanguages.Get;
+        this.preferredLanguages = preferredLanguages;
         this.configurationStore = configurationStore;
         this.permissionsChecker = permissionsChecker;
         this.shell = shell;
@@ -135,12 +134,12 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
     /// the page says rather than leaving the choice looking ignored.
     /// </summary>
     public bool IsLanguagePending =>
-        !string.Equals(AppLanguages.Resolve(this.SelectedLanguage.Value, this.preferredLanguages()), AppLanguages.Current, StringComparison.OrdinalIgnoreCase);
+        !string.Equals(AppLanguages.Resolve(this.SelectedLanguage.Value, this.preferredLanguages.Get()), AppLanguages.Current, StringComparison.OrdinalIgnoreCase);
 
     public string LanguagePendingText =>
         Localized.Format(
             Strings.Settings_Language_RestartHint,
-            AppLanguages.Supported.First(l => l.Code == AppLanguages.Resolve(this.SelectedLanguage.Value, this.preferredLanguages())).NativeName);
+            AppLanguages.Supported.First(l => l.Code == AppLanguages.Resolve(this.SelectedLanguage.Value, this.preferredLanguages.Get())).NativeName);
 
     /// <summary>Whether a switch first asks about the apps and tabs neither profile has.</summary>
     public bool AskOnSwitch

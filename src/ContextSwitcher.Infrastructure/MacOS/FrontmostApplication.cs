@@ -45,35 +45,6 @@ public static class FrontmostApplication
         }
     }
 
-    /// <summary>
-    /// Whether a popover opened while <paramref name="baseline"/> was frontmost should now close,
-    /// and the baseline to carry forward. Kept apart from the native call so it can be tested.
-    ///
-    /// Our own app coming forward - a click inside the popover - moves the baseline to us rather than
-    /// closing it; any other app coming forward means the user clicked somewhere else. An app that was
-    /// already frontmost when the popover opened does not count, since nothing changed.
-    /// </summary>
-    public static (bool Dismiss, int? Baseline) Evaluate(int? baseline, int? now, int self)
-    {
-        if (now is null)
-        {
-            return (false, baseline);
-        }
-
-        // Nothing to compare against yet: the first reading becomes the reference point.
-        if (baseline is null)
-        {
-            return (false, now);
-        }
-
-        if (now == self)
-        {
-            return (false, self);
-        }
-
-        return (now != baseline, baseline);
-    }
-
     [DllImport(ObjectiveC)]
     private static extern IntPtr objc_getClass([MarshalAs(UnmanagedType.LPUTF8Str)] string name);
 

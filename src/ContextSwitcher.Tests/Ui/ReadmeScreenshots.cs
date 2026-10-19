@@ -115,7 +115,7 @@ public sealed class ReadmeScreenshots : UiTest
         MainAppViewModel viewModel = new(
             scenario.AppState, scenario.SwitchService, scenario.ConfigurationStore, scenario.Permissions,
             scenario.Shell, scenario.Analytics, scenario.InstalledApps, scenario.Catalog, scenario.FocusShortcuts,
-            scenario.Notice, new UpdatesViewModel(checker, scenario.Shell), scenario.Diagnostics,
+            scenario.Notice, new UpdatesViewModel(checker, scenario.Shell), scenario.Diagnostics, new FakePreferredLanguages(),
             loginItem: new FakeLoginItem { Status = LoginItemStatus.On });
 
         // See-through from the start: a window takes its transparency when it is first shown.

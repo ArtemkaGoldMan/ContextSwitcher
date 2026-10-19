@@ -36,14 +36,14 @@ public sealed class DisplayAvailabilityTests
     {
         InvalidOperationException failure = new("Avalonia.Native was not able to start the RenderTimer. Native error code is: -6661");
 
-        Assert.True(DisplayAvailability.IsRenderTimerFailure(failure));
+        Assert.True(new DisplayAvailability().IsRenderTimerFailure(failure));
     }
 
     [Fact]
     public void ItLeavesEveryOtherFailureAlone()
     {
-        Assert.False(DisplayAvailability.IsRenderTimerFailure(new InvalidOperationException("Sequence contains no elements")));
-        Assert.False(DisplayAvailability.IsRenderTimerFailure(new ArgumentException("RenderTimer")));
+        Assert.False(new DisplayAvailability().IsRenderTimerFailure(new InvalidOperationException("Sequence contains no elements")));
+        Assert.False(new DisplayAvailability().IsRenderTimerFailure(new ArgumentException("RenderTimer")));
     }
 
     /// <summary>

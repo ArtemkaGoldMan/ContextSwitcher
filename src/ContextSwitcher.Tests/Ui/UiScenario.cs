@@ -118,13 +118,14 @@ public sealed class UiScenario
 
     public MainAppViewModel MainApp() => new(
         this.AppState, this.SwitchService, this.ConfigurationStore,
-        this.Permissions, this.Shell, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates, this.Diagnostics);
+        this.Permissions, this.Shell, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates, this.Diagnostics,
+        new FakePreferredLanguages());
 
     public ProfilesViewModel Profiles() =>
         new(this.AppState, this.SwitchService, this.ConfigurationStore);
 
     public SettingsViewModel Settings() =>
-        new(this.AppState, this.ConfigurationStore, this.Permissions, this.Shell, this.Updates, this.Diagnostics);
+        new(this.AppState, this.ConfigurationStore, this.Permissions, this.Shell, this.Updates, this.Diagnostics, new FakePreferredLanguages());
 
     public StatsViewModel Stats() => new(this.AppState, this.Analytics);
 
