@@ -3,7 +3,9 @@
 The order to build a Windows version in, one release at a time: first apps, then the browser, then
 the rest. What Windows can and can't do, and why, is in [A Windows version](windows-port.md).
 
-Written in October 2026 against 0.6.7. Nothing here is built yet.
+Written in October 2026 against 0.6.7. Stage 0 has begun: its first two items are done
+([#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76)). Nothing for Windows users is
+built yet.
 
 ## How it goes
 
@@ -192,15 +194,19 @@ Homebrew would download a 404. So:
 **The aim.** Every macOS-only piece sits behind an interface, the solution builds and its tests pass
 on macOS and on Windows, and Mac users see no difference. Worth doing even if Windows never comes.
 
-1. **The tests on Windows.** 17 of 2,008 fail there today
-   ([what was tried](windows-port.md#tried-on-windows)). The `ProcessRunner` and `AppleScriptRunner`
-   tests that start `osascript` or `/bin/ps` get a command each platform has, or are marked
-   macOS-only; the start-up smoke tests find `ContextSwitcher.exe`; the path tests build what they
-   expect with `Path.Combine`; the sleep-and-wake and default-browser tests are macOS-only. A fact
-   attribute that skips itself off macOS keeps that in one place.
-2. **CI on Windows.** A `windows-latest` job builds with warnings as errors and runs the tests, next
-   to the macOS one, and both are required ([CI](#ci)). From then on every pull request keeps both
-   green.
+1. **The tests on Windows** - done in
+   [#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76). The 17 that failed there
+   ([what was tried](windows-port.md#tried-on-windows)) now pass or are skipped. `ProcessRunner`'s
+   tests run `/bin/sh`, or PowerShell on Windows, through a runner with an allowlist of their own;
+   the start-up smoke tests find `ContextSwitcher.exe` and, on Windows, name the app's folder
+   outright; the path tests build what they expect with `Path.Combine`; and the four tests of macOS
+   itself carry `[MacOSFact]`, which skips them anywhere else. On Windows 2,004 pass and 4 are
+   skipped; on macOS all 2,008 run.
+2. **CI on Windows** - done in [#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76).
+   **Build and test (Windows)** runs on `windows-latest` next to **Build and test** on macOS: a
+   Release build with warnings as errors, then the tests. Both summarise with
+   `scripts/summarise-tests.py`. Making it a required check is a setting on GitHub (Settings →
+   Branches) ([CI](#ci)).
 3. **Seams.** Interfaces for launching and closing apps, browser tabs, media, Focus, and opening a
    link or showing a file. `AutomationStepExecutor` and `BrowserLauncher` take them instead of
    building AppleScript and running `open` themselves, and the six view models that run `open` use
