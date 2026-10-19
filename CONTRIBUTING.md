@@ -43,4 +43,5 @@ checked, and whether the release notes, the docs or the README need a line.
 | [Performance](docs/performance.md) | What the app costs in memory and CPU, measured, and what did not help |
 | [Browser control](docs/browser-control.md) | What another app can do to Chrome and Safari: tabs, tab groups and profiles |
 | [Usage statistics](docs/usage-statistics.md) | The downloads and visitors collected every night, and the plan for counting people |
-| [A Windows version](docs/windows-port.md) | What would carry over to Windows, what would be written again, and what Windows can't do |
+| [A Windows version](docs/windows-port.md) | What carries over to Windows, what has to be written again, and what Windows can't do - tried on Windows 11 |
+| [The Windows plan](docs/windows-plan.md) | The order to build it in: apps first, then the browser, then the rest |
