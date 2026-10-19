@@ -11,7 +11,12 @@ public sealed class ConfigPathsTests
 {
     private const string Home = "/Users/someone";
 
-    /// <summary>The default is under ~/.config - this build's folder: its own for a development build.</summary>
+    private const string AppData = @"C:\Users\someone\AppData\Roaming";
+
+    /// <summary>
+    /// The default is under ~/.config, or %APPDATA% on Windows - this build's folder: its own for a
+    /// development build.
+    /// </summary>
     [Fact]
     public void DefaultBaseDirectoryUsesUserConfigContextSwitcherPath()
     {
@@ -22,10 +27,10 @@ public sealed class ConfigPathsTests
 
         ConfigPaths paths = new();
 
-        string expected = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            ".config",
-            AppBuild.IsDevelopment ? "ContextSwitcher-dev" : "ContextSwitcher");
+        string name = AppBuild.IsDevelopment ? "ContextSwitcher-dev" : "ContextSwitcher";
+        string expected = OperatingSystem.IsWindows()
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), name)
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", name);
 
         Assert.Equal(expected, paths.BaseDirectory);
     }
@@ -56,6 +61,26 @@ public sealed class ConfigPathsTests
     {
         Assert.Equal(expected, ConfigPaths.ResolveBaseDirectory(null, variable, Home, isDevelopment: true));
         Assert.Equal(expected, ConfigPaths.ResolveBaseDirectory(null, variable, Home, isDevelopment: false));
+    }
+
+    [Fact]
+    public void OnWindowsAReleaseKeepsItsFilesInAppData()
+    {
+        Assert.Equal(Path.Combine(AppData, "ContextSwitcher"), ConfigPaths.ResolveBaseDirectory(null, null, Home, isDevelopment: false, AppData));
+    }
+
+    [Fact]
+    public void OnWindowsADevelopmentBuildKeepsItsOwnFolderInAppData()
+    {
+        Assert.Equal(Path.Combine(AppData, "ContextSwitcher-dev"), ConfigPaths.ResolveBaseDirectory(null, null, Home, isDevelopment: true, AppData));
+    }
+
+    /// <summary>The variable, and a "~/" in it, mean the same on Windows: only the default moves.</summary>
+    [Theory]
+    [MemberData(nameof(NamedFolders))]
+    public void OnWindowsTheEnvironmentVariableStillNamesAnyFolder(string variable, string expected)
+    {
+        Assert.Equal(expected, ConfigPaths.ResolveBaseDirectory(null, variable, Home, isDevelopment: false, AppData));
     }
 
     [Fact]

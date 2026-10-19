@@ -124,7 +124,7 @@ public sealed class AnalyticsSessionStore : IAnalyticsSessionStore
                     await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
                 }
 
-                File.Move(tempPath, path, overwrite: true);
+                await FileMoves.ReplaceAsync(tempPath, path, cancellationToken).ConfigureAwait(false);
             }
             finally
             {

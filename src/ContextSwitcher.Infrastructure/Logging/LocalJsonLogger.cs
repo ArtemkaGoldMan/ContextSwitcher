@@ -85,7 +85,7 @@ public sealed class LocalJsonLogger : ILogger
             FileStream? processLock = await this.TryAcquireCrossProcessLockAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                this.RollIfDue();
+                await this.RollIfDueAsync(cancellationToken).ConfigureAwait(false);
 
                 FileStream stream = new(
                     this.path,
@@ -125,7 +125,7 @@ public sealed class LocalJsonLogger : ILogger
             FileStream? processLock = await this.TryAcquireCrossProcessLockAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                this.RollIfDue();
+                await this.RollIfDueAsync(cancellationToken).ConfigureAwait(false);
 
                 string previous = this.path + ".1";
                 if (File.Exists(previous) && this.time.GetUtcNow() - File.GetLastWriteTimeUtc(previous) >= MaxAge)
@@ -154,7 +154,7 @@ public sealed class LocalJsonLogger : ILogger
     /// processes cannot roll it at the same time. Failures are swallowed deliberately: losing the roll
     /// is a far better outcome than a switch that fails because its log could not be tidied.
     /// </summary>
-    private void RollIfDue()
+    private async Task RollIfDueAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -172,7 +172,7 @@ public sealed class LocalJsonLogger : ILogger
             }
 
             string previous = this.path + ".1";
-            File.Move(this.path, previous, overwrite: true);
+            await FileMoves.ReplaceAsync(this.path, previous, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

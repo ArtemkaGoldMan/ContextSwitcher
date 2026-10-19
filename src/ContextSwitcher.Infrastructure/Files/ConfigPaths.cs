@@ -21,15 +21,20 @@ public sealed class ConfigPaths
             baseDirectory,
             Environment.GetEnvironmentVariable(DirectoryVariable),
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            AppBuild.IsDevelopment);
+            AppBuild.IsDevelopment,
+            OperatingSystem.IsWindows() ? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) : null);
     }
 
     /// <summary>
     /// Where everything is kept: the folder given, else the one <see cref="DirectoryVariable"/> names,
     /// else <c>~/.config/ContextSwitcher</c> - or <c>~/.config/ContextSwitcher-dev</c> for a
     /// development build, which so never reads or changes the installed app's profiles and time.
+    /// On Windows, where <paramref name="windowsAppData"/> is <c>%APPDATA%</c>, the folder is in there
+    /// instead: <c>%APPDATA%\ContextSwitcher</c>, where Windows apps keep their settings. Not
+    /// <c>%LOCALAPPDATA%</c>, where the installer puts the app and which it replaces on each update.
     /// </summary>
-    public static string ResolveBaseDirectory(string? explicitDirectory, string? environmentDirectory, string userHome, bool isDevelopment)
+    public static string ResolveBaseDirectory(
+        string? explicitDirectory, string? environmentDirectory, string userHome, bool isDevelopment, string? windowsAppData = null)
     {
         if (!string.IsNullOrWhiteSpace(explicitDirectory))
         {
@@ -45,7 +50,10 @@ public sealed class ConfigPaths
                 : directory;
         }
 
-        return Path.Combine(userHome, ".config", isDevelopment ? "ContextSwitcher-dev" : "ContextSwitcher");
+        string name = isDevelopment ? "ContextSwitcher-dev" : "ContextSwitcher";
+        return string.IsNullOrWhiteSpace(windowsAppData)
+            ? Path.Combine(userHome, ".config", name)
+            : Path.Combine(windowsAppData, name);
     }
 
     /// <summary>
