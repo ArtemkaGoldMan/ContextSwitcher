@@ -15,7 +15,7 @@ work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
 dotnet publish "$root/src/ContextSwitcher.App/ContextSwitcher.App.csproj" \
-  --configuration Release --runtime osx-arm64 --self-contained true \
+  --configuration Release --framework net10.0 --runtime osx-arm64 --self-contained true \
   --output "$work/app" --nologo --verbosity quiet
 
 measure() {

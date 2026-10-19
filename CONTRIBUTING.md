@@ -10,8 +10,10 @@ You need the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 ```bash
 git clone https://github.com/ArtemkaGoldMan/ContextSwitcher.git
 cd ContextSwitcher
-dotnet run --project src/ContextSwitcher.App/ContextSwitcher.App.csproj
+dotnet run --project src/ContextSwitcher.App/ContextSwitcher.App.csproj --framework net10.0
 ```
+
+The app builds for Windows as well, which is not ready to run yet; `net10.0` is the Mac app.
 
 Run this way, it's a **development build**: it keeps its settings in `~/.config/ContextSwitcher-dev`,
 apart from an installed copy's `~/.config/ContextSwitcher`, and says *DEV* in its name — so you can

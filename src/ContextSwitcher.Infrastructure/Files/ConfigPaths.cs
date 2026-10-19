@@ -16,8 +16,8 @@ public sealed class ConfigPaths
     /// </summary>
     /// <param name="baseDirectory">An optional override for the config root.</param>
     /// <param name="settingsRoot">
-    /// The folder this system keeps apps' settings in, when it isn't <c>~/.config</c>: the app's
-    /// composition root gives <c>%APPDATA%</c> on Windows.
+    /// The folder this system keeps apps' settings in - the platform's <see cref="SettingsRoot"/> - or
+    /// none for <c>~/.config</c>.
     /// </param>
     /// <param name="development">
     /// Whether this is a development build, which keeps a folder of its own: the app's composition root

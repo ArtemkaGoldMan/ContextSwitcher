@@ -1,6 +1,11 @@
 using ContextSwitcher.App.Startup;
+using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Automation;
+using ContextSwitcher.Core.Platform;
+using ContextSwitcher.Core.Security;
 using ContextSwitcher.Infrastructure.Automation;
+using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Infrastructure.MacOS;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.Tests.Startup;
@@ -23,5 +28,25 @@ public sealed class AppServicesTests
         Assert.Equal(
             Enum.GetValues<AutomationStepType>().Except(neverPlanned).Order(),
             provider.GetServices<IStepHandler>().Select(handler => handler.Type).Order());
+    }
+
+    /// <summary>
+    /// The tests build the Mac app, whose platform registrations choose what it has always had:
+    /// everything in <c>~/.config</c>, a file replaced with one move, and the Mac's capabilities and
+    /// commands.
+    /// </summary>
+    [Fact]
+    public void TheMacAppKeepsWhatItHasAlwaysChosen()
+    {
+        ServiceCollection services = new();
+        AppServices.Register(services);
+        using ServiceProvider provider = services.BuildServiceProvider();
+
+        Assert.Equal(
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config"),
+            provider.GetRequiredService<SettingsRoot>().Path);
+        Assert.Same(FileReplacer.Once, provider.GetRequiredService<IFileReplacer>());
+        Assert.Same(MacPlatform.Capabilities, provider.GetRequiredService<PlatformCapabilities>());
+        Assert.Same(MacPlatform.AllowedCommands, provider.GetRequiredService<CommandAllowlist>());
     }
 }
