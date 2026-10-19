@@ -32,20 +32,20 @@ public sealed class BrowserProfileRowViewModel : ViewModelBase
     {
         this.profilesOf = profilesOf;
 
-        // The only browsers ConfigurationValidator accepts for profile-directory mode.
-        this.browser = browser == BrowserKind.Brave ? BrowserKind.Brave : BrowserKind.Chrome;
+        // One whose profiles can be opened: Profile Setup gives no other.
+        this.browser = browser;
         this.urlsText = string.Join(Environment.NewLine, urls);
         this.RefreshProfiles(profileDirectory.Trim());
         this.RemoveCommand = new RelayCommand(() => remove(this));
     }
 
-    /// <summary>Chrome or Brave: the browser whose profile this is.</summary>
+    /// <summary>The browser whose profile this is - one whose profiles another app can open.</summary>
     public BrowserKind Browser
     {
         get => this.browser;
         set
         {
-            if (value is BrowserKind.Chrome or BrowserKind.Brave && this.SetProperty(ref this.browser, value))
+            if (KnownBrowsers.HasProfiles(value) && this.SetProperty(ref this.browser, value))
             {
                 // Folder names are per browser; one Chrome has may not exist in Brave.
                 this.RefreshProfiles(this.ProfileDirectory);
@@ -101,7 +101,7 @@ public sealed class BrowserProfileRowViewModel : ViewModelBase
 
     /// <summary>Why there is nothing to choose, when there isn't.</summary>
     public string NoProfilesText =>
-        Localized.Format(Strings.Browser_NoProfiles, this.Browser == BrowserKind.Brave ? "Brave" : "Google Chrome");
+        Localized.Format(Strings.Browser_NoProfiles, KnownBrowsers.Name(this.Browser));
 
     /// <summary>
     /// Rebuilds the profile list for the current browser and selects <paramref name="keep"/>: only

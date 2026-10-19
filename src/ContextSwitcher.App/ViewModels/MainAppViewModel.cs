@@ -1,6 +1,7 @@
 using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Core.Platform;
 
 namespace ContextSwitcher.App.ViewModels;
 
@@ -19,6 +20,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
     private readonly IShell shell;
     private readonly IFocusShortcutInstaller focusShortcuts;
     private readonly IDefaultBrowser? defaultBrowser;
+    private readonly PlatformCapabilities capabilities;
 
     private object currentPage;
 
@@ -36,19 +38,21 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         UpdatesViewModel updates,
         DiagnosticsSources diagnostics,
         IPreferredLanguages preferredLanguages,
+        PlatformCapabilities capabilities,
         IDefaultBrowser? defaultBrowser = null,
         ILoginItem? loginItem = null)
     {
         this.appState = appState;
         this.focusShortcuts = focusShortcuts;
         this.defaultBrowser = defaultBrowser;
+        this.capabilities = capabilities;
         this.configurationStore = configurationStore;
         this.installedAppsService = installedAppsService;
         this.catalog = catalog;
         this.shell = shell;
 
         this.Profiles = new ProfilesViewModel(appState, switchService, configurationStore, switchNotice);
-        this.Settings = new SettingsViewModel(appState, configurationStore, permissionsChecker, shell, updates, diagnostics, preferredLanguages, loginItem: loginItem, installedApps: installedAppsService);
+        this.Settings = new SettingsViewModel(appState, configurationStore, permissionsChecker, shell, updates, diagnostics, preferredLanguages, capabilities, loginItem: loginItem, installedApps: installedAppsService);
         this.Stats = new StatsViewModel(appState, analyticsService);
 
         this.Profiles.EditRequested += this.OnEditRequested;
@@ -105,7 +109,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
 
     private void OnEditRequested(object? sender, ContextDefinition? context)
     {
-        ProfileSetupViewModel setup = new(this.appState, this.configurationStore, this.installedAppsService, this.catalog, this.shell, this.focusShortcuts, context, this.defaultBrowser);
+        ProfileSetupViewModel setup = new(this.appState, this.configurationStore, this.installedAppsService, this.catalog, this.shell, this.focusShortcuts, this.capabilities, context, this.defaultBrowser);
         setup.Saved += this.OnProfileSetupFinished;
         setup.CancelRequested += this.OnProfileSetupFinished;
         this.CurrentPage = setup;

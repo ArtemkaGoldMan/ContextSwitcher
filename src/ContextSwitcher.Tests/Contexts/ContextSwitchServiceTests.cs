@@ -4,6 +4,7 @@ using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Messages;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Contexts;
@@ -324,7 +325,7 @@ public sealed class ContextSwitchServiceTests
         FakeClock clock = new();
         FakeSwitchLock crossProcessLock = new() { HeldElsewhere = true };
         ContextSwitchService service = new(
-            store, executor, new AutomationPlanBuilder(), new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()), clock, logger, crossProcessLock, SettingsPath, StatePath);
+            store, executor, new AutomationPlanBuilder(PlatformCapabilities.MacOS), new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()), clock, logger, crossProcessLock, SettingsPath, StatePath);
         store.Seed(SettingsPath, TwoContextConfiguration());
 
         ContextSwitchResult result = await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
@@ -382,7 +383,7 @@ public sealed class ContextSwitchServiceTests
         FakeAutomationStepExecutor executor = new();
         FakeClock clock = new();
         ContextSwitchService service = new(
-            store, executor, new AutomationPlanBuilder(), new AnalyticsService(clock, sessions), clock, new TestLogger(), new FakeSwitchLock(), SettingsPath, StatePath);
+            store, executor, new AutomationPlanBuilder(PlatformCapabilities.MacOS), new AnalyticsService(clock, sessions), clock, new TestLogger(), new FakeSwitchLock(), SettingsPath, StatePath);
         return (service, store, executor);
     }
     private static (ContextSwitchService Service, InMemoryJsonStore Store, FakeAutomationStepExecutor Executor, FakeClock Clock, TestLogger Logger) CreateService()
@@ -392,7 +393,7 @@ public sealed class ContextSwitchServiceTests
         FakeClock clock = new();
         TestLogger logger = new();
         AnalyticsService analytics = new(clock, new InMemoryAnalyticsSessionStore());
-        AutomationPlanBuilder planBuilder = new();
+        AutomationPlanBuilder planBuilder = new(PlatformCapabilities.MacOS);
 
         ContextSwitchService service = new(
             store,

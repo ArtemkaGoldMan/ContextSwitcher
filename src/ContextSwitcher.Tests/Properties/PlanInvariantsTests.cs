@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Core.Platform;
 
 namespace ContextSwitcher.Tests.Properties;
 
@@ -22,7 +23,7 @@ public sealed class PlanInvariantsTests
     {
         (ContextDefinition? previous, ContextDefinition? target, string[] ignored) = Draw(seed);
 
-        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target, null, ignored);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS).Build(previous, target, null, ignored);
 
         foreach (string app in ignored)
         {
@@ -37,7 +38,7 @@ public sealed class PlanInvariantsTests
     {
         (ContextDefinition? previous, ContextDefinition? target, string[] ignored) = Draw(seed);
 
-        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target, null, ignored);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS).Build(previous, target, null, ignored);
 
         string[] closed = AppsOf(plan, AutomationStepType.CloseApplications);
         string[] launched = AppsOf(plan, AutomationStepType.LaunchApplications);
@@ -51,7 +52,7 @@ public sealed class PlanInvariantsTests
     {
         (ContextDefinition? previous, ContextDefinition? target, string[] ignored) = Draw(seed);
 
-        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target, null, ignored);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS).Build(previous, target, null, ignored);
 
         Assert.Empty(AppsOf(plan, AutomationStepType.HideApplications).Intersect(AppsOf(plan, AutomationStepType.CloseApplications), StringComparer.OrdinalIgnoreCase));
     }
@@ -62,7 +63,7 @@ public sealed class PlanInvariantsTests
     {
         (ContextDefinition? previous, ContextDefinition? target, string[] ignored) = Draw(seed);
 
-        AutomationPlan plan = new AutomationPlanBuilder().Build(previous, target, null, ignored);
+        AutomationPlan plan = new AutomationPlanBuilder(PlatformCapabilities.MacOS).Build(previous, target, null, ignored);
 
         Assert.Equal(plan.Steps.Count, plan.Steps.Select(step => step.Id).Distinct().Count());
     }
@@ -74,8 +75,8 @@ public sealed class PlanInvariantsTests
     {
         (ContextDefinition? previous, ContextDefinition? target, string[] ignored) = Draw(seed);
 
-        string once = Describe(new AutomationPlanBuilder().Build(previous, target, null, ignored));
-        string twice = Describe(new AutomationPlanBuilder().Build(previous, target, null, ignored));
+        string once = Describe(new AutomationPlanBuilder(PlatformCapabilities.MacOS).Build(previous, target, null, ignored));
+        string twice = Describe(new AutomationPlanBuilder(PlatformCapabilities.MacOS).Build(previous, target, null, ignored));
 
         Assert.Equal(once, twice);
     }
@@ -84,7 +85,7 @@ public sealed class PlanInvariantsTests
     [Fact]
     public void NoProfilesMeansNoSteps()
     {
-        Assert.DoesNotContain(new AutomationPlanBuilder().Build(null, null, null, []).Steps, step => step.Type != AutomationStepType.WriteState && step.Type != AutomationStepType.AnalyticsBoundary);
+        Assert.DoesNotContain(new AutomationPlanBuilder(PlatformCapabilities.MacOS).Build(null, null, null, []).Steps, step => step.Type != AutomationStepType.WriteState && step.Type != AutomationStepType.AnalyticsBoundary);
     }
 
     private static (ContextDefinition? Previous, ContextDefinition? Target, string[] Ignored) Draw(int seed)

@@ -4,6 +4,7 @@ using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Tests.TestDoubles;
@@ -29,7 +30,7 @@ public sealed class ProfileSetupViewModelTests
         this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
 
-        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), existing: null);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, existing: null);
 
         Assert.True(viewModel.IsNew);
         Assert.Equal("new-profile", viewModel.Id);
@@ -58,7 +59,7 @@ public sealed class ProfileSetupViewModelTests
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
 
-        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context);
         viewModel.DisplayName = "Office";
 
         Assert.Equal("work", viewModel.Id);
@@ -79,7 +80,7 @@ public sealed class ProfileSetupViewModelTests
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out _, out _);
 
-        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context);
 
         Assert.Equal("work", viewModel.Id);
         Assert.Equal(3, viewModel.Apps.Count);
@@ -100,7 +101,7 @@ public sealed class ProfileSetupViewModelTests
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
 
-        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), context)
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context)
         {
             DisplayName = "Work Renamed"
         };
@@ -177,7 +178,7 @@ public sealed class ProfileSetupViewModelTests
         ContextDefinition context = new() { Id = "work", DisplayName = "Work", AccentColor = "#2f6fed" };
         this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
 
-        ProfileSetupViewModel viewModel = new(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context);
 
         Assert.Equal("Blue", viewModel.SelectedAccent.Name);
         Assert.False(viewModel.IsCustomAccent);
@@ -204,10 +205,39 @@ public sealed class ProfileSetupViewModelTests
         ContextDefinition context = new() { Id = "work", DisplayName = "Work", Icon = "rocket" };
         this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
 
-        ProfileSetupViewModel viewModel = new(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context);
 
         Assert.Equal("rocket", viewModel.Icon);
         Assert.Equal("circle", viewModel.SelectedIcon.Name);
+    }
+
+    /// <summary>
+    /// A computer without Focus, Apple Music or Safari offers none of them. A profile that names one
+    /// anyway - from a Mac's settings - keeps it, marked, rather than being changed.
+    /// </summary>
+    [Fact]
+    public void OnlyWhatTheComputerHasIsOffered()
+    {
+        ConfigurationStore store = CreateStore(out _, out _);
+        PlatformCapabilities lesser = Platform.PlatformCapabilitiesTests.Lesser;
+
+        ProfileSetupViewModel blank = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), lesser, existing: null);
+        ProfileSetupViewModel fromAMac = new(
+            this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), lesser,
+            new ContextDefinition
+            {
+                Id = "work",
+                DisplayName = "Work",
+                Media = new MediaConfig { Player = MediaPlayerKind.AppleMusic, Playlist = "Deep Focus" },
+                BrowserManagement = new BrowserManagementConfig { Mode = BrowserManagementMode.Urls, Browser = BrowserKind.Safari, Urls = ["https://linear.app/"] }
+            });
+
+        Assert.False(blank.ShowsFocus);
+        Assert.Equal([MediaPlayerKind.None, MediaPlayerKind.Spotify], blank.Media.Players.Select(choice => choice.Value));
+        Assert.Equal([BrowserKind.Default, BrowserKind.Chrome], blank.BrowserKindChoices.Select(choice => choice.Value));
+        Assert.Equal(MediaPlayerKind.AppleMusic, fromAMac.Media.SelectedPlayer.Value);
+        Assert.Equal("Safari (not installed)", fromAMac.SelectedBrowserKind.Label);
+        Assert.False(fromAMac.ShowsFocusFilterTip);
     }
 
     private ProfileSetupViewModel NewProfile()
@@ -215,7 +245,7 @@ public sealed class ProfileSetupViewModelTests
         this.appState.UpdateConfiguration(
             new AppConfiguration { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] },
             new ConfigurationValidationResult([]));
-        return new ProfileSetupViewModel(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), existing: null);
+        return new ProfileSetupViewModel(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, existing: null);
     }
 
     [Fact]
@@ -227,7 +257,7 @@ public sealed class ProfileSetupViewModelTests
             new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
 
-        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), existing: null) { DisplayName = "Should not persist" };
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, existing: null) { DisplayName = "Should not persist" };
         bool cancelled = false;
         viewModel.CancelRequested += (_, _) => cancelled = true;
 
@@ -251,7 +281,7 @@ public sealed class ProfileSetupViewModelTests
         installed.Apps.Add(new InstalledApp("Discord", null));
         installed.Apps.Add(new InstalledApp("Docker", null));
 
-        ProfileSetupViewModel viewModel = new(this.appState, store, installed, new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, installed, new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context);
 
         // Slack is already on the profile, so the picker must not offer it again.
         Assert.DoesNotContain(viewModel.AppPicker.FilteredApps, app => app.Name == "Slack");
@@ -274,7 +304,7 @@ public sealed class ProfileSetupViewModelTests
         FakeInstalledAppsService installed = new();
         installed.Apps.Add(new InstalledApp("Discord", null));
 
-        ProfileSetupViewModel viewModel = new(this.appState, store, installed, new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, installed, new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context);
         InstalledAppViewModel discord = Assert.Single(viewModel.AppPicker.FilteredApps);
 
         discord.PickCommand.Execute(null);
@@ -308,7 +338,7 @@ public sealed class ProfileSetupViewModelTests
         };
         this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
-        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context);
 
         Assert.Equal(
             [("https://github.com/", true, false), ("https://linear.app/", true, true), ("https://youtube.com/", false, true)],
@@ -344,7 +374,7 @@ public sealed class ProfileSetupViewModelTests
         };
         this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
-        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context);
         Assert.True(viewModel.BrowserUrls[0].CanClose);
 
         viewModel.BrowserKind = BrowserKind.Default;
@@ -385,7 +415,7 @@ public sealed class ProfileSetupViewModelTests
         this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
         ProfileSetupViewModel viewModel = new(
-            this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), context,
+            this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context,
             new FakeDefaultBrowser(BrowserKind.Chrome, "Google Chrome"));
 
         Assert.Equal("Default browser (Google Chrome)", viewModel.SelectedBrowserKind.Label);
@@ -405,7 +435,7 @@ public sealed class ProfileSetupViewModelTests
     public void AnUnscriptableDefaultBrowserIsNamedInTheReason()
     {
         ProfileSetupViewModel viewModel = new(
-            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), existing: null,
+            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, existing: null,
             new FakeDefaultBrowser(BrowserKind.Default, "Firefox"));
         viewModel.BrowserKind = BrowserKind.Default;
 
@@ -428,7 +458,7 @@ public sealed class ProfileSetupViewModelTests
     public void EachBrowserOffersWhatItCanDo(BrowserKind chosen, BrowserKind systemDefault, bool offersProfiles, bool showsFocusTip)
     {
         ProfileSetupViewModel viewModel = new(
-            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), existing: null,
+            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, existing: null,
             new FakeDefaultBrowser(systemDefault, systemDefault == BrowserKind.Default ? "Firefox" : systemDefault.ToString()));
         viewModel.BrowserKind = chosen;
 
@@ -437,7 +467,7 @@ public sealed class ProfileSetupViewModelTests
             : [BrowserManagementMode.None, BrowserManagementMode.Urls];
         Assert.Equal(expected, viewModel.BrowserModeChoices.Select(choice => choice.Value));
         Assert.DoesNotContain(viewModel.BrowserModeChoices, choice => choice.Value == BrowserManagementMode.Groups);
-        Assert.Equal(showsFocusTip, viewModel.ShowsSafariFocusTip);
+        Assert.Equal(showsFocusTip, viewModel.ShowsFocusFilterTip);
     }
 
     /// <summary>
@@ -484,7 +514,7 @@ public sealed class ProfileSetupViewModelTests
         FakeSystemCatalog catalog = new();
         catalog.BrowserProfiles[BrowserKind.Chrome] = [new("Default", "Artem"), new("Profile 2", "Client")];
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
-        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context);
 
         Assert.Equal(BrowserKind.Brave, viewModel.BrowserKind);
         Assert.Equal(BrowserManagementMode.Profiles, viewModel.BrowserMode);
@@ -512,7 +542,7 @@ public sealed class ProfileSetupViewModelTests
         this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] }, new ConfigurationValidationResult([]));
 
         ProfileSetupViewModel viewModel = new(
-            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), existing: null,
+            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, existing: null,
             new FakeDefaultBrowser(BrowserKind.Safari, "Safari"));
 
         Assert.Equal(["Default browser (Safari)", "Safari", "Google Chrome"], viewModel.BrowserKindChoices.Select(choice => choice.Label));
@@ -537,7 +567,7 @@ public sealed class ProfileSetupViewModelTests
         catalog.InstalledBrowsers.Remove(BrowserKind.Chrome);
 
         ProfileSetupViewModel viewModel = new(
-            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), context);
+            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context);
 
         Assert.Equal(["Default browser", "Safari", "Brave (not installed)"], viewModel.BrowserKindChoices.Select(choice => choice.Label));
         Assert.Equal("Brave (not installed)", viewModel.SelectedBrowserKind.Label);
@@ -549,7 +579,7 @@ public sealed class ProfileSetupViewModelTests
     {
         FakeShell shell = new();
         ProfileSetupViewModel viewModel = new(
-            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), shell, new FakeFocusShortcutInstaller(), existing: null);
+            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), shell, new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, existing: null);
         viewModel.BrowserKind = BrowserKind.Safari;
 
         viewModel.OpenFocusSettingsCommand.Execute(null);
@@ -582,7 +612,7 @@ public sealed class ProfileSetupViewModelTests
         };
         this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
-        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), context);
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, context);
 
         Assert.Equal(
             [("Visual Studio Code", true, false, true), ("Notion", false, false, true)],
@@ -646,7 +676,7 @@ public sealed class ProfileSetupViewModelTests
             },
             new ConfigurationValidationResult([]));
 
-        return new ProfileSetupViewModel(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), existing: null);
+        return new ProfileSetupViewModel(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, existing: null);
     }
 
 }

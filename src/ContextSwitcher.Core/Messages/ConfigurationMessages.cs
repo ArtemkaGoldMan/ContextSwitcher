@@ -39,6 +39,18 @@ public static class ConfigurationMessages
 
     public static readonly MessageTemplate ProfileBrowserInvalid = new("Config_ProfileBrowserInvalid", "Profile browser must be Chrome or Brave.");
 
+    /// <summary>{0} is the profile.</summary>
+    public static readonly MessageTemplate FocusNotHere = new("Config_FocusNotHere", "{0} turns on a Focus, which this computer doesn't have.");
+
+    /// <summary>{0} is the profile.</summary>
+    public static readonly MessageTemplate AppleMusicNotHere = new("Config_AppleMusicNotHere", "{0} plays Apple Music, which this computer doesn't have.");
+
+    /// <summary>{0} is the profile, {1} the browser.</summary>
+    public static readonly MessageTemplate BrowserNotHere = new("Config_BrowserNotHere", "{0} opens pages in {1}, which this computer doesn't have.");
+
+    /// <summary>{0} is the profile, {1} the browser.</summary>
+    public static readonly MessageTemplate BrowserProfilesNotHere = new("Config_BrowserProfilesNotHere", "{0} opens {1}'s profiles, which this computer can't.");
+
     public static readonly MessageTemplate ProfileDirectoryRequired = new("Config_ProfileDirectoryRequired", "Profile directory is required.");
 
     public static readonly MessageTemplate QuickLinkUrlInvalid = new("Config_QuickLinkUrlInvalid", "Quick link '{0}' must start with http or https.");

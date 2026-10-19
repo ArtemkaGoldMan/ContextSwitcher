@@ -140,7 +140,7 @@
         </ctl:FormRow>
 
         <!-- Safari's tab groups and profiles can't be opened by another app; a Focus filter can. -->
-        <StackPanel Spacing="4" IsVisible="{Binding ShowsSafariFocusTip}">
+        <StackPanel Spacing="4" IsVisible="{Binding ShowsFocusFilterTip}">
           <TextBlock Text="{x:Static r:Strings.ProfileSetup_SafariFocusTip}" Classes="caption" TextWrapping="Wrap" />
           <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_OpenFocusSettings}" Command="{Binding OpenFocusSettingsCommand}" />
         </StackPanel>
@@ -203,7 +203,7 @@
       </Expander.Header>
       <StackPanel Spacing="20">
         <!-- Focus -->
-        <Border Classes="panel">
+        <Border Classes="panel" IsVisible="{Binding ShowsFocus}">
           <StackPanel Spacing="10">
             <TextBlock Text="{x:Static r:Strings.ProfileSetup_Focus_Section}" Classes="sectionTitle" />
             <TextBlock

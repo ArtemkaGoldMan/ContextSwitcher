@@ -8,6 +8,7 @@ using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Tests.TestDoubles;
 using ContextSwitcher.Core.Messages;
+using ContextSwitcher.Core.Platform;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
 
@@ -166,7 +167,7 @@ public sealed class EnvironmentChoicesTests
         FakeSystemCatalog catalog = new() { IsMusicRunning = true };
         catalog.MusicPlaylists!.AddRange(["Deep Focus", "Running"]);
 
-        MediaSettingsViewModel media = new(catalog, new MediaConfig { Player = MediaPlayerKind.AppleMusic, Playlist = "Running" });
+        MediaSettingsViewModel media = new(catalog, PlatformCapabilities.MacOS, new MediaConfig { Player = MediaPlayerKind.AppleMusic, Playlist = "Running" });
 
         Assert.Equal(["Deep Focus", "Running"], media.MusicPlaylists);
         Assert.Equal("Running", media.Playlist);
@@ -184,7 +185,7 @@ public sealed class EnvironmentChoicesTests
         FakeSystemCatalog catalog = new() { IsMusicRunning = false };
         catalog.MusicPlaylists!.Add("Deep Focus");
 
-        MediaSettingsViewModel media = new(catalog, new MediaConfig { Player = MediaPlayerKind.AppleMusic, Playlist = "Old Favourite" });
+        MediaSettingsViewModel media = new(catalog, PlatformCapabilities.MacOS, new MediaConfig { Player = MediaPlayerKind.AppleMusic, Playlist = "Old Favourite" });
 
         Assert.Equal([false], catalog.MusicRequests);
         Assert.True(media.CanLoadMusicPlaylists);
@@ -202,7 +203,7 @@ public sealed class EnvironmentChoicesTests
     public void MusicThatCannotBeReadSaysWhy()
     {
         FakeSystemCatalog catalog = new() { MusicPlaylists = null };
-        MediaSettingsViewModel media = new(catalog, new MediaConfig { Player = MediaPlayerKind.AppleMusic });
+        MediaSettingsViewModel media = new(catalog, PlatformCapabilities.MacOS, new MediaConfig { Player = MediaPlayerKind.AppleMusic });
 
         media.LoadMusicPlaylistsCommand.Execute(null);
 
@@ -212,7 +213,7 @@ public sealed class EnvironmentChoicesTests
     [Fact]
     public void ChangingPlayerDropsAPlaylistTheNewPlayerCannotUse()
     {
-        MediaSettingsViewModel media = new(new FakeSystemCatalog(), new MediaConfig { Player = MediaPlayerKind.Spotify, Playlist = "spotify:playlist:abc", AutoPlay = true });
+        MediaSettingsViewModel media = new(new FakeSystemCatalog(), PlatformCapabilities.MacOS, new MediaConfig { Player = MediaPlayerKind.Spotify, Playlist = "spotify:playlist:abc", AutoPlay = true });
 
         media.SelectedPlayer = media.Players.Single(p => p.Value == MediaPlayerKind.AppleMusic);
 
@@ -224,7 +225,7 @@ public sealed class EnvironmentChoicesTests
     [Fact]
     public void APastedSpotifyLinkIsSavedAsTheUriSpotifyPlays()
     {
-        MediaSettingsViewModel media = new(new FakeSystemCatalog(), new MediaConfig { Player = MediaPlayerKind.Spotify })
+        MediaSettingsViewModel media = new(new FakeSystemCatalog(), PlatformCapabilities.MacOS, new MediaConfig { Player = MediaPlayerKind.Spotify })
         {
             Playlist = "https://open.spotify.com/playlist/37i9dQZF1DX0XUsuxWHRQd?si=x"
         };
@@ -403,6 +404,6 @@ public sealed class EnvironmentChoicesTests
         jsonStore.Seed(paths.SettingsPath, configuration);
         ConfigurationStore store = new(jsonStore, paths, validator, this.appState, new TestLogger());
 
-        return new ProfileSetupViewModel(this.appState, store, new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), existing: null);
+        return new ProfileSetupViewModel(this.appState, store, new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, existing: null);
     }
 }

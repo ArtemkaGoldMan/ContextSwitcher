@@ -119,7 +119,8 @@ public sealed class MacBrowserControl : IBrowserControl
         return result.ExitCode == 0 ? null : Problem(result);
     }
 
-    private static bool IsChromium(BrowserKind browser) => browser is BrowserKind.Chrome or BrowserKind.Brave;
+    /// <summary>Chrome and Brave: their tabs are listed and closed with their ids.</summary>
+    private static bool IsChromium(BrowserKind browser) => KnownBrowsers.KeepsTabIds(browser);
 
     /// <summary>What kind of failure the script's was, from what it said.</summary>
     private static BrowserProblem Problem(ProcessResult failure)

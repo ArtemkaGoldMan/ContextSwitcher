@@ -82,10 +82,10 @@ public sealed class BrowserLauncher : IBrowserLauncher
         bool probeTabs = request.AvoidDuplicateTabs && browser != BrowserKind.Default;
         TimeSpan probeTimeout = timeout < TabProbeTimeout ? timeout : TabProbeTimeout;
 
-        // A page that closes on leaving is remembered by the tab it opened in, in Chrome and Brave,
-        // whose tabs keep an id wherever they navigate - see RememberOpenedTabsAsync.
-        bool remember = IsChromium(browser)
-            && request.ContextId is not null
+        // A page that closes on leaving is remembered by the tab it opened in - see
+        // RememberOpenedTabsAsync. The plan asks for it only in a browser whose tabs keep an id
+        // wherever they navigate.
+        bool remember = request.ContextId is not null
             && request.Urls.Any(url => closeLater.Contains(url, StringComparer.Ordinal));
 
         // One sweep of the browser's tabs for the whole context. This used to be a tab sweep per
@@ -350,7 +350,7 @@ public sealed class BrowserLauncher : IBrowserLauncher
             }
 
             await this.openedTabs.RemoveAsync(contextId, cancellationToken).ConfigureAwait(false);
-            return remembered.Browser == browser && IsChromium(browser) && this.browserRuns.Current(browser) == remembered.BrowserRun
+            return remembered.Browser == browser && this.browserRuns.Current(browser) == remembered.BrowserRun
                 ? remembered
                 : null;
         }
@@ -402,8 +402,6 @@ public sealed class BrowserLauncher : IBrowserLauncher
 
         return new BrowserLaunchOutcome(warnings);
     }
-
-    private static bool IsChromium(BrowserKind browser) => browser is BrowserKind.Chrome or BrowserKind.Brave;
 
     /// <summary>
     /// What tells one tab from another: its id where the browser gives one - which it keeps however its

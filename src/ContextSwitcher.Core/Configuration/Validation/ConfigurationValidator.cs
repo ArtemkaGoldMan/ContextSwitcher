@@ -213,11 +213,11 @@ public sealed class ConfigurationValidator
 
     private static bool IsSupportedInteractiveBrowser(BrowserKind browser)
     {
-        return browser is BrowserKind.Default or BrowserKind.Chrome or BrowserKind.Brave or BrowserKind.Safari;
+        return Enum.IsDefined(browser);
     }
 
     private static bool IsSupportedProfileBrowser(BrowserKind browser)
     {
-        return browser is BrowserKind.Chrome or BrowserKind.Brave;
+        return KnownBrowsers.HasProfiles(browser);
     }
 }

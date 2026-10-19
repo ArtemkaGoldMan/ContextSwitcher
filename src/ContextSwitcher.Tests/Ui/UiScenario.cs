@@ -4,6 +4,7 @@ using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Infrastructure.Logging;
 using ContextSwitcher.Tests.TestDoubles;
@@ -119,13 +120,13 @@ public sealed class UiScenario
     public MainAppViewModel MainApp() => new(
         this.AppState, this.SwitchService, this.ConfigurationStore,
         this.Permissions, this.Shell, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates, this.Diagnostics,
-        new FakePreferredLanguages());
+        new FakePreferredLanguages(), PlatformCapabilities.MacOS);
 
     public ProfilesViewModel Profiles() =>
         new(this.AppState, this.SwitchService, this.ConfigurationStore);
 
     public SettingsViewModel Settings() =>
-        new(this.AppState, this.ConfigurationStore, this.Permissions, this.Shell, this.Updates, this.Diagnostics, new FakePreferredLanguages());
+        new(this.AppState, this.ConfigurationStore, this.Permissions, this.Shell, this.Updates, this.Diagnostics, new FakePreferredLanguages(), PlatformCapabilities.MacOS);
 
     public StatsViewModel Stats() => new(this.AppState, this.Analytics);
 
@@ -136,5 +137,5 @@ public sealed class UiScenario
         new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.SwitchService);
 
     public ProfileSetupViewModel ProfileSetup(ContextDefinition? existing = null) =>
-        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.Catalog, this.Shell, this.FocusShortcuts, existing);
+        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.Catalog, this.Shell, this.FocusShortcuts, PlatformCapabilities.MacOS, existing);
 }

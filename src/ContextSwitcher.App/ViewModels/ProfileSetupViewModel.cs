@@ -7,6 +7,7 @@ using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.App.Resources;
+using ContextSwitcher.Core.Platform;
 using System.Globalization;
 
 namespace ContextSwitcher.App.ViewModels;
@@ -37,6 +38,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private readonly IShell shell;
+    private readonly PlatformCapabilities capabilities;
     private readonly string originalContextId;
 
     private readonly ISystemCatalog catalog;
@@ -70,10 +72,12 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         ISystemCatalog catalog,
         IShell shell,
         IFocusShortcutInstaller focusShortcuts,
+        PlatformCapabilities capabilities,
         ContextDefinition? existing,
         IDefaultBrowser? defaultBrowser = null)
     {
         this.appState = appState;
+        this.capabilities = capabilities;
         this.configurationStore = configurationStore;
         this.shell = shell;
         this.catalog = catalog;
@@ -135,7 +139,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                     source.BrowserManagement.CloseUrls.Contains(url))));
         this.BrowserProfiles = new ObservableCollection<BrowserProfileRowViewModel>(
             source.BrowserManagement.Profiles.Select(profile => new BrowserProfileRowViewModel(
-                profile.Browser, profile.ProfileDirectory, profile.Urls, catalog.GetBrowserProfiles, this.RemoveBrowserProfile)));
+                this.capabilities.OpensBrowserProfiles(profile.Browser) ? profile.Browser : this.ProfilesBrowser, profile.ProfileDirectory, profile.Urls, catalog.GetBrowserProfiles, this.RemoveBrowserProfile)));
         this.UrlTabPicker = new ChoicePickerViewModel(
             this.LoadOpenTabsAsync,
             () => this.BrowserUrls.Select(row => row.Url.Trim()),
@@ -146,7 +150,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             OpenTabsSearchText);
 
         this.Focus = new FocusSettingsViewModel(catalog, shell, focusShortcuts, source.Focus);
-        this.Media = new MediaSettingsViewModel(catalog, source.Media);
+        this.Media = new MediaSettingsViewModel(catalog, capabilities, source.Media);
 
         // Containers already in config are names Docker gave them; shown, not offered for editing.
         this.DockerStart = new ObservableCollection<EditableStringRowViewModel>(
@@ -347,7 +351,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     /// <summary>
     /// What the chosen browser can be asked to do, and nothing it can't: opening one of its
-    /// profiles is Chrome's and Brave's alone. Safari's tab groups and profiles, and either
+    /// profiles is for the browsers the capabilities say can - Chrome and Brave, on a Mac. Safari's tab groups and profiles, and either
     /// browser's tab groups, can't be opened by another app at all (docs/browser-control.md).
     /// </summary>
     public IReadOnlyList<Choice<BrowserManagementMode>> BrowserModeChoices =>
@@ -398,19 +402,23 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     public bool IsProfilesMode => this.BrowserMode == BrowserManagementMode.Profiles;
 
-    /// <summary>Whether the browser has profiles another app can open: Chrome and Brave do.</summary>
-    public bool CanOpenBrowserProfiles => this.EffectiveBrowser is BrowserKind.Chrome or BrowserKind.Brave;
+    /// <summary>Whether the browser has profiles another app can open here.</summary>
+    public bool CanOpenBrowserProfiles => this.capabilities.OpensBrowserProfiles(this.EffectiveBrowser);
 
     /// <summary>
-    /// For Safari, where its tab groups and profiles are wanted: macOS switches Safari to one when
-    /// a Focus with that filter turns on, and this profile can turn the Focus on.
+    /// For a browser whose tab groups and profiles no other app can open - Safari, on a Mac: the
+    /// system switches it to one when a Focus with that filter turns on, and this profile can turn
+    /// the Focus on.
     /// </summary>
-    public bool ShowsSafariFocusTip => this.EffectiveBrowser == BrowserKind.Safari;
+    public bool ShowsFocusFilterTip => this.capabilities.FocusFiltersBrowser(this.EffectiveBrowser);
+
+    /// <summary>Whether this computer has Focus modes for the profile to turn on.</summary>
+    public bool ShowsFocus => this.capabilities.Focus;
 
     public RelayCommand OpenFocusSettingsCommand { get; }
 
-    /// <summary>The browser a profiles row opens in: the chosen one, which offers profiles only when it is Chrome or Brave.</summary>
-    private BrowserKind ProfilesBrowser => this.CanOpenBrowserProfiles ? this.EffectiveBrowser : BrowserKind.Chrome;
+    /// <summary>The browser a profiles row opens in: the chosen one when it has profiles, else the first that does.</summary>
+    private BrowserKind ProfilesBrowser => this.CanOpenBrowserProfiles ? this.EffectiveBrowser : this.capabilities.BrowsersWithProfiles.FirstOrDefault();
 
     public BrowserKind BrowserKind
     {
@@ -425,7 +433,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 this.OnPropertyChanged(nameof(this.CanCloseTabs));
                 this.OnPropertyChanged(nameof(this.CloseTabsHint));
                 this.OnPropertyChanged(nameof(this.CanOpenBrowserProfiles));
-                this.OnPropertyChanged(nameof(this.ShowsSafariFocusTip));
+                this.OnPropertyChanged(nameof(this.ShowsFocusFilterTip));
                 foreach (BrowserPageRowViewModel row in this.BrowserUrls)
                 {
                     row.CanClose = this.CanCloseTabs;
@@ -654,9 +662,15 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 : Strings.Browser_Default)
         ];
 
-        foreach ((BrowserKind kind, string name) in new[] { (BrowserKind.Safari, "Safari"), (BrowserKind.Chrome, "Google Chrome"), (BrowserKind.Brave, "Brave") })
+        // The browsers this computer can have, and one the profile names that it can't - from
+        // another computer's settings - marked as not installed rather than changed.
+        IEnumerable<BrowserKind> offered = this.capabilities.HasBrowser(this.browserKind)
+            ? this.capabilities.Browsers
+            : [.. this.capabilities.Browsers, this.browserKind];
+        foreach (BrowserKind kind in offered)
         {
-            if (this.catalog.IsBrowserInstalled(kind))
+            string name = KnownBrowsers.Name(kind);
+            if (this.capabilities.HasBrowser(kind) && this.catalog.IsBrowserInstalled(kind))
             {
                 choices.Add(new(kind, name));
             }
