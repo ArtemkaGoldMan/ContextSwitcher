@@ -90,7 +90,7 @@ public static class AppHost
         AddPlatformFileServices(services);
         services.AddSingleton<IJsonStore, JsonFileStore>();
         services.AddSingleton(provider => new LocalJsonLogger(
-            provider.GetRequiredService<ConfigPaths>(), provider.GetRequiredService<IFileReplacer>()));
+            provider.GetRequiredService<ConfigPaths>(), provider.GetRequiredService<IFileReplacer>(), provider.GetRequiredService<IClock>()));
 
         // What happens is remembered and only a problem is written, with the trail that led to it - see
         // TrailLogger. CONTEXTSWITCHER_LOG_LEVEL=information (or debug, trace) writes from that level on
@@ -107,7 +107,7 @@ public static class AppHost
             provider.GetRequiredService<ConfigPaths>(),
             () => RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), AppBuild.IsDevelopment),
             () => provider.GetRequiredService<TrailLogger>().Remembered(),
-            () => DateTimeOffset.UtcNow));
+            provider.GetRequiredService<IClock>()));
         services.AddSingleton<ConfigurationValidator>();
         services.AddSingleton<IAnalyticsSessionStore, AnalyticsSessionStore>();
         services.AddSingleton<IAnalyticsService, AnalyticsService>();
@@ -155,6 +155,7 @@ public static class AppHost
             provider.GetRequiredService<IRunningApplications>(),
             provider.GetRequiredService<ISystemCatalog>(),
             provider.GetRequiredService<IAskOnSwitchPresenter>(),
+            provider.GetRequiredService<IClock>(),
             provider.GetRequiredService<IJsonStore>(),
             provider.GetRequiredService<ConfigPaths>().StatePath));
         services.AddSingleton(provider => new CliCommandRouter(provider.GetRequiredService<ContextSwitchService>()));

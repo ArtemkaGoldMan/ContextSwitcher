@@ -24,6 +24,7 @@ public sealed class SwitchCoordinator : IContextSwitchService
     private readonly IRunningApplications runningApps;
     private readonly ISystemCatalog catalog;
     private readonly IAskOnSwitchPresenter presenter;
+    private readonly IClock clock;
     private readonly IJsonStore jsonStore;
     private readonly string statePath;
     private bool asking;
@@ -33,6 +34,7 @@ public sealed class SwitchCoordinator : IContextSwitchService
     /// <param name="runningApps">The apps open now, to ask about.</param>
     /// <param name="catalog">The browser tabs open now, to ask about.</param>
     /// <param name="presenter">Shows the question.</param>
+    /// <param name="clock">Times a switch turned away while a question is open.</param>
     /// <param name="jsonStore">Reads the state the switch wrote.</param>
     /// <param name="statePath">Where the switch writes its state: <c>state.json</c>.</param>
     public SwitchCoordinator(
@@ -41,6 +43,7 @@ public sealed class SwitchCoordinator : IContextSwitchService
         IRunningApplications runningApps,
         ISystemCatalog catalog,
         IAskOnSwitchPresenter presenter,
+        IClock clock,
         IJsonStore jsonStore,
         string statePath)
     {
@@ -49,6 +52,7 @@ public sealed class SwitchCoordinator : IContextSwitchService
         this.runningApps = runningApps;
         this.catalog = catalog;
         this.presenter = presenter;
+        this.clock = clock;
         this.jsonStore = jsonStore;
         this.statePath = statePath;
     }
@@ -77,7 +81,7 @@ public sealed class SwitchCoordinator : IContextSwitchService
         // while one runs is.
         if (this.asking)
         {
-            DateTimeOffset now = DateTimeOffset.UtcNow;
+            DateTimeOffset now = this.clock.UtcNow;
             return new ContextSwitchResult(request.TargetContextId, AppHost.State.CurrentContextId, ContextSwitchStatus.Cancelled, [], now, now, request.CorrelationId ?? Guid.NewGuid().ToString("N"));
         }
 

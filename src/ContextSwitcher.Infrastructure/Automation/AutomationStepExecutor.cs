@@ -479,9 +479,9 @@ public sealed class AutomationStepExecutor : IAutomationStepExecutor
     private static IReadOnlyList<string> DeserializeStrings(string json) =>
         JsonSerializer.Deserialize<IReadOnlyList<string>>(json, ContextSwitcherJson.CompactOptions) ?? [];
 
-    private static Task<AutomationResult> NotImplemented(AutomationStep step)
+    private Task<AutomationResult> NotImplemented(AutomationStep step)
     {
-        DateTimeOffset now = DateTimeOffset.UtcNow;
+        DateTimeOffset now = this.clock.UtcNow;
         return Task.FromResult(new AutomationResult(
             step.Id, step.Type, AutomationResultStatus.Skipped,
             $"{step.Type} automation is not implemented yet.", null, null, null, now, now));

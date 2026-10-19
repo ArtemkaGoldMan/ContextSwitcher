@@ -172,6 +172,6 @@ public sealed class SwitchCoordinatorTests
         AppHost.UpdateConfiguration(configuration, validator.Validate(configuration));
         AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
         ConfigurationStore store = new(this.jsonStore, this.paths, validator, new TestLogger());
-        return new SwitchCoordinator(this.inner, store, this.running, this.catalog, this.presenter, this.jsonStore, this.paths.StatePath);
+        return new SwitchCoordinator(this.inner, store, this.running, this.catalog, this.presenter, new FakeClock(), this.jsonStore, this.paths.StatePath);
     }
 }

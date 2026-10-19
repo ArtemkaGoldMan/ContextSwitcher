@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Infrastructure.Time;
 using ContextSwitcher.Infrastructure.Logging;
 
 namespace ContextSwitcher.Tests.Logging;
@@ -258,7 +259,7 @@ public sealed class TrailLoggerTests : IDisposable
     }
 
     private TrailLogger NewLogger(Func<bool>? detailed = null, LogLevel? writeFrom = null) => new(
-        new LocalJsonLogger(new ConfigPaths(this.directory), FileReplacer.Once),
+        new LocalJsonLogger(new ConfigPaths(this.directory), FileReplacer.Once, new SystemClock()),
         () => new RunInfo("ContextSwitcher", "0.6.0", "26.6", "arm64", "release", 1),
         detailed,
         writeFrom);

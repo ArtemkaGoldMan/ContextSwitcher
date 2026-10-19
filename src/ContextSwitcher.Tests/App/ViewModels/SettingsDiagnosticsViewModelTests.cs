@@ -196,7 +196,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
             this.paths,
             () => new RunInfo("ContextSwitcher", "0.6.1", "26.6", "arm64", "release", 1),
             () => [],
-            () => Now),
+            new FakeClock { UtcNow = Now }),
         () => true);
 
     private static async Task WaitUntilAsync(Func<bool> condition)

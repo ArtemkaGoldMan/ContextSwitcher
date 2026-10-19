@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Infrastructure.Time;
 using ContextSwitcher.Infrastructure.Logging;
 
 namespace ContextSwitcher.Tests.Logging;
@@ -11,7 +12,7 @@ public sealed class LocalJsonLoggerTests
     public async Task LogAsyncAppendsOneJsonObjectPerLine()
     {
         string directory = CreateTempDirectory();
-        LocalJsonLogger logger = new(new ConfigPaths(directory), FileReplacer.Once);
+        LocalJsonLogger logger = new(new ConfigPaths(directory), FileReplacer.Once, new SystemClock());
 
         try
         {
@@ -41,8 +42,8 @@ public sealed class LocalJsonLoggerTests
     {
         const int PerLogger = 150;
         string directory = CreateTempDirectory();
-        LocalJsonLogger first = new(new ConfigPaths(directory), FileReplacer.Once);
-        LocalJsonLogger second = new(new ConfigPaths(directory), FileReplacer.Once);
+        LocalJsonLogger first = new(new ConfigPaths(directory), FileReplacer.Once, new SystemClock());
+        LocalJsonLogger second = new(new ConfigPaths(directory), FileReplacer.Once, new SystemClock());
 
         try
         {

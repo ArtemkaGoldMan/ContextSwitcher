@@ -30,7 +30,7 @@ public sealed class LocalJsonLogger : ILogger
 
     private readonly string path;
     private readonly IFileReplacer fileReplacer;
-    private readonly TimeProvider time;
+    private readonly IClock clock;
     private readonly SemaphoreSlim writeLock = new(1, 1);
 
     /// <summary>
@@ -38,14 +38,15 @@ public sealed class LocalJsonLogger : ILogger
     /// </summary>
     /// <param name="configPaths">Resolves the local application log path.</param>
     /// <param name="fileReplacer">Moves a full or week-old log aside, over the previous one.</param>
-    /// <param name="time">The clock a log's age is read against; the system's, unless a test says otherwise.</param>
-    public LocalJsonLogger(ConfigPaths configPaths, IFileReplacer fileReplacer, TimeProvider? time = null)
+    /// <param name="clock">The clock a log's age is read against.</param>
+    public LocalJsonLogger(ConfigPaths configPaths, IFileReplacer fileReplacer, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(configPaths);
         ArgumentNullException.ThrowIfNull(fileReplacer);
+        ArgumentNullException.ThrowIfNull(clock);
         this.path = configPaths.AppLogPath;
         this.fileReplacer = fileReplacer;
-        this.time = time ?? TimeProvider.System;
+        this.clock = clock;
     }
 
     /// <inheritdoc />
@@ -132,7 +133,7 @@ public sealed class LocalJsonLogger : ILogger
                 await this.RollIfDueAsync(cancellationToken).ConfigureAwait(false);
 
                 string previous = this.path + ".1";
-                if (File.Exists(previous) && this.time.GetUtcNow() - File.GetLastWriteTimeUtc(previous) >= MaxAge)
+                if (File.Exists(previous) && this.clock.UtcNow - File.GetLastWriteTimeUtc(previous) >= MaxAge)
                 {
                     File.Delete(previous);
                 }
@@ -169,7 +170,7 @@ public sealed class LocalJsonLogger : ILogger
             }
 
             bool tooBig = current.Length >= MaxLogBytes;
-            bool tooOld = this.time.GetUtcNow() - File.GetCreationTimeUtc(this.path) >= MaxAge;
+            bool tooOld = this.clock.UtcNow - File.GetCreationTimeUtc(this.path) >= MaxAge;
             if (!tooBig && !tooOld)
             {
                 return;
