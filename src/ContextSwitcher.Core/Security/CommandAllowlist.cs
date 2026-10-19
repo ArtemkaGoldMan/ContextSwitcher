@@ -1,14 +1,26 @@
 namespace ContextSwitcher.Core.Security;
 
 /// <summary>
-/// The fixed set of executables ContextSwitcher is allowed to run. <see cref="Abstractions.IProcessRunner"/>
-/// implementations must reject anything outside this list; a request to run something else indicates a bug,
-/// not an expected automation failure.
+/// The executables ContextSwitcher may run, which differ by platform: <see cref="MacOS"/> on a Mac,
+/// chosen with the platform's services. <see cref="Abstractions.IProcessRunner"/> implementations
+/// must reject anything outside it; a request to run something else indicates a bug, not an expected
+/// automation failure.
 /// </summary>
-public static class CommandAllowlist
+public sealed class CommandAllowlist
 {
-    private static readonly HashSet<string> AllowedExecutables = new(StringComparer.Ordinal)
+    private readonly HashSet<string> allowed;
+
+    /// <summary>An allowlist of exactly <paramref name="executables"/>, matched by exact name.</summary>
+    public CommandAllowlist(IEnumerable<string> executables)
     {
+        ArgumentNullException.ThrowIfNull(executables);
+
+        this.allowed = new HashSet<string>(executables, StringComparer.Ordinal);
+    }
+
+    /// <summary>What the app runs on a Mac.</summary>
+    public static CommandAllowlist MacOS { get; } = new(
+    [
         "osascript",
         "open",
         "docker",
@@ -24,10 +36,8 @@ public static class CommandAllowlist
         "ditto",
         "plutil",
         "codesign"
-    };
+    ]);
 
-    /// <summary>
-    /// Returns whether the given executable name is allowed to run.
-    /// </summary>
-    public static bool IsAllowed(string fileName) => AllowedExecutables.Contains(fileName);
+    /// <summary>Whether <paramref name="fileName"/> may run.</summary>
+    public bool IsAllowed(string fileName) => this.allowed.Contains(fileName);
 }

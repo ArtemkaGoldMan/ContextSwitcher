@@ -77,7 +77,7 @@ public sealed class PlatformCapabilitiesTests
     {
         ContextDefinition target = Everything with { LaunchApps = ["Slack"] };
 
-        AutomationPlan plan = new AutomationPlanBuilder(Lesser).Build(previous: null, target);
+        AutomationPlan plan = new AutomationPlanBuilder(Lesser, StepBudgets.Default).Build(previous: null, target);
 
         Assert.Equal([AutomationStepType.LaunchApplications], plan.Steps.Select(step => step.Type));
     }
@@ -88,8 +88,8 @@ public sealed class PlatformCapabilitiesTests
     {
         ContextDefinition chrome = Everything with { BrowserManagement = Everything.BrowserManagement with { Browser = BrowserKind.Chrome } };
 
-        AutomationStep safari = new AutomationPlanBuilder(PlatformCapabilities.MacOS).Build(null, Everything).Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext);
-        AutomationStep chromeStep = new AutomationPlanBuilder(PlatformCapabilities.MacOS).Build(null, chrome).Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext);
+        AutomationStep safari = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default).Build(null, Everything).Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext);
+        AutomationStep chromeStep = new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default).Build(null, chrome).Steps.Single(step => step.Type == AutomationStepType.ManageBrowserContext);
 
         Assert.Empty(BrowserContextArguments.From(safari.Arguments).RememberUrls);
         Assert.Equal(["https://linear.app/"], BrowserContextArguments.From(chromeStep.Arguments).RememberUrls);

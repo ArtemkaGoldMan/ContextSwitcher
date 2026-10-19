@@ -576,5 +576,5 @@ public sealed class BrowserLauncherTests
     }
 
     /// <summary>No wait between looks for the tabs just opened, so the tests don't sit through the real one.</summary>
-    private BrowserLauncher Create() => new(this.browser, this.store, this.runs, this.logger, TimeSpan.Zero);
+    private BrowserLauncher Create() => new(this.browser, this.store, this.runs, this.logger, TabTimings.Immediate);
 }

@@ -15,47 +15,36 @@ namespace ContextSwitcher.Infrastructure.Browser;
 /// </summary>
 public sealed class BrowserLauncher : IBrowserLauncher
 {
-    /// <summary>
-    /// Duplicate-tab inspection is a best-effort nicety, so it gets a small slice of the step's
-    /// budget rather than all of it. A browser that answers AppleEvents at all answers in
-    /// milliseconds; one that does not (no Automation permission, or a wedged process) blocks until
-    /// the script is killed. Handing it the whole step timeout used to starve the plain
-    /// <c>open</c> fallback that agent.md section 9.3 requires, so no URL opened at all.
-    /// </summary>
-    private static readonly TimeSpan TabProbeTimeout = TimeSpan.FromSeconds(3);
-
-    /// <summary>How many times to look for the tabs just opened before settling for what has appeared.</summary>
-    private const int OpenedTabLooks = 8;
-
     private readonly IBrowserControl browsers;
     private readonly IOpenedTabsStore openedTabs;
     private readonly IBrowserRuns browserRuns;
     private readonly ILogger logger;
-    private readonly TimeSpan openedTabPollInterval;
+    private readonly TabTimings timings;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BrowserLauncher"/> class.
     /// </summary>
     /// <param name="openedTabs">Where the tabs a profile opened are remembered.</param>
     /// <param name="browserRuns">Tells one run of Chrome or Brave from the next, so remembered tab ids are never another run's.</param>
-    /// <param name="openedTabPollInterval">How long to wait between looks for the tabs just opened.</param>
+    /// <param name="timings">How long a browser has to list its tabs, and how the tabs just opened are looked for.</param>
     public BrowserLauncher(
         IBrowserControl browsers,
         IOpenedTabsStore openedTabs,
         IBrowserRuns browserRuns,
         ILogger logger,
-        TimeSpan? openedTabPollInterval = null)
+        TabTimings timings)
     {
         ArgumentNullException.ThrowIfNull(browsers);
         ArgumentNullException.ThrowIfNull(openedTabs);
         ArgumentNullException.ThrowIfNull(browserRuns);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(timings);
 
         this.browsers = browsers;
         this.openedTabs = openedTabs;
         this.browserRuns = browserRuns;
         this.logger = logger;
-        this.openedTabPollInterval = openedTabPollInterval ?? TimeSpan.FromMilliseconds(250);
+        this.timings = timings;
     }
 
     /// <inheritdoc />
@@ -80,7 +69,7 @@ public sealed class BrowserLauncher : IBrowserLauncher
 
         // The default browser is unknown ahead of time, so it cannot be asked for its tabs.
         bool probeTabs = request.AvoidDuplicateTabs && browser != BrowserKind.Default;
-        TimeSpan probeTimeout = timeout < TabProbeTimeout ? timeout : TabProbeTimeout;
+        TimeSpan probeTimeout = timeout < this.timings.Probe ? timeout : this.timings.Probe;
 
         // A page that closes on leaving is remembered by the tab it opened in - see
         // RememberOpenedTabsAsync. The plan asks for it only in a browser whose tabs keep an id
@@ -182,9 +171,9 @@ public sealed class BrowserLauncher : IBrowserLauncher
         List<BrowserTab> fresh = [];
 
         // `open` returns once the browser has the address; its tab appears a moment later.
-        for (int look = 0; look < OpenedTabLooks && opened.Count > 0 && fresh.Count < opened.Count; look++)
+        for (int look = 0; look < this.timings.OpenedLooks && opened.Count > 0 && fresh.Count < opened.Count; look++)
         {
-            await Task.Delay(this.openedTabPollInterval, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(this.timings.LookForOpenedEvery, cancellationToken).ConfigureAwait(false);
             TabListing listing = await this.browsers.ListTabsAsync(browser, startIfNeeded: false, timeout, cancellationToken).ConfigureAwait(false);
             if (listing.Tabs is not { } tabs)
             {
@@ -291,7 +280,7 @@ public sealed class BrowserLauncher : IBrowserLauncher
             return new TabClosingOutcome(closing.Count ?? 0, null);
         }
 
-        TimeSpan lookTimeout = timeout / 4 < TabProbeTimeout ? timeout / 4 : TabProbeTimeout;
+        TimeSpan lookTimeout = timeout / 4 < this.timings.Probe ? timeout / 4 : this.timings.Probe;
         TabListing after = await this.browsers.ListTabsAsync(browser, startIfNeeded: false, lookTimeout, cancellationToken).ConfigureAwait(false);
         List<BrowserTab> remaining = (after.Tabs ?? []).Where(tab => meant.Contains(TabKey.Of(tab))).ToList();
 

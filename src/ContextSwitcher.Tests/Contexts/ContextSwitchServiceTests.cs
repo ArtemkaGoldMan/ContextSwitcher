@@ -325,7 +325,7 @@ public sealed class ContextSwitchServiceTests
         FakeClock clock = new();
         FakeSwitchLock crossProcessLock = new() { HeldElsewhere = true };
         ContextSwitchService service = new(
-            store, executor, new AutomationPlanBuilder(PlatformCapabilities.MacOS), new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()), clock, logger, crossProcessLock, SettingsPath, StatePath);
+            store, executor, new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default), new AnalyticsService(clock, new InMemoryAnalyticsSessionStore()), clock, logger, crossProcessLock, SettingsPath, StatePath);
         store.Seed(SettingsPath, TwoContextConfiguration());
 
         ContextSwitchResult result = await service.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.Test), CancellationToken.None);
@@ -383,7 +383,7 @@ public sealed class ContextSwitchServiceTests
         FakeAutomationStepExecutor executor = new();
         FakeClock clock = new();
         ContextSwitchService service = new(
-            store, executor, new AutomationPlanBuilder(PlatformCapabilities.MacOS), new AnalyticsService(clock, sessions), clock, new TestLogger(), new FakeSwitchLock(), SettingsPath, StatePath);
+            store, executor, new AutomationPlanBuilder(PlatformCapabilities.MacOS, StepBudgets.Default), new AnalyticsService(clock, sessions), clock, new TestLogger(), new FakeSwitchLock(), SettingsPath, StatePath);
         return (service, store, executor);
     }
     private static (ContextSwitchService Service, InMemoryJsonStore Store, FakeAutomationStepExecutor Executor, FakeClock Clock, TestLogger Logger) CreateService()
@@ -393,7 +393,7 @@ public sealed class ContextSwitchServiceTests
         FakeClock clock = new();
         TestLogger logger = new();
         AnalyticsService analytics = new(clock, new InMemoryAnalyticsSessionStore());
-        AutomationPlanBuilder planBuilder = new(PlatformCapabilities.MacOS);
+        AutomationPlanBuilder planBuilder = new(PlatformCapabilities.MacOS, StepBudgets.Default);
 
         ContextSwitchService service = new(
             store,
