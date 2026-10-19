@@ -168,13 +168,11 @@ public sealed class SettingsViewModelTests
         this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
 
-        SettingsViewModel mac = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
-        SettingsViewModel lesser = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), Platform.PlatformCapabilitiesTests.Lesser, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
+        using SettingsViewModel mac = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
+        using SettingsViewModel lesser = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), Platform.PlatformCapabilitiesTests.Lesser, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
 
         Assert.True(mac.CanShowDockIcon);
         Assert.False(lesser.CanShowDockIcon);
-        mac.Dispose();
-        lesser.Dispose();
     }
 
     private SettingsViewModel WithLoginItem(FakeLoginItem loginItem)

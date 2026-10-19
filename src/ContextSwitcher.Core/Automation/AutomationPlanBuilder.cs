@@ -16,6 +16,7 @@ public sealed class AutomationPlanBuilder
     private readonly StepBudgets budgets;
     private readonly IDefaultBrowser defaultBrowser;
 
+    /// <summary>A builder that plans only what this computer can do, each step in the time it is given.</summary>
     /// <param name="capabilities">What this computer can do; a profile's part that it can't is left out.</param>
     /// <param name="budgets">How long each step may take.</param>
     /// <param name="defaultBrowser">

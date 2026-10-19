@@ -47,6 +47,7 @@ public sealed class RowReorder : IDisposable
     private bool dragging;
     private List<Slot> slots = [];
 
+    /// <summary>Lets the cards of <paramref name="list"/> be put in a new order.</summary>
     /// <param name="list">The list whose cards are dragged; each item's card is a <c>profileCard</c> button.</param>
     /// <param name="move">Called with an item's data and the place it now goes to.</param>
     /// <param name="idOf">An item's identity, for putting the keyboard's focus back on it after it has moved.</param>

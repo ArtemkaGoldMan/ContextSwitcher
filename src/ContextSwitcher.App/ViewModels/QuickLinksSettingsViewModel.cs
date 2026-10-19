@@ -7,6 +7,7 @@ namespace ContextSwitcher.App.ViewModels;
 /// <summary>Profile Setup's quick links: the pages the dashboard offers while the profile is on.</summary>
 public sealed class QuickLinksSettingsViewModel : ViewModelBase
 {
+    /// <summary>The section for a profile whose links are <paramref name="source"/>.</summary>
     /// <param name="openTabs">The tabs open in the profile's browser, to pick a link from.</param>
     public QuickLinksSettingsViewModel(Func<CancellationToken, Task<IReadOnlyList<PickerChoice>?>> openTabs, IReadOnlyList<QuickLinkConfig> source)
     {

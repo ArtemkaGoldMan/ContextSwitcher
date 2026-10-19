@@ -14,6 +14,7 @@ public sealed class CloseApplicationsHandler : IStepHandler
     private readonly IClock clock;
     private readonly QuitTimings timings;
 
+    /// <summary>A handler that asks apps to quit through <paramref name="quitter"/> and looks for them through <paramref name="processes"/>.</summary>
     /// <param name="timings">How an app's share of the step is spent, and how often it is looked for.</param>
     public CloseApplicationsHandler(IAppQuitter quitter, IAppProcesses processes, IClock clock, QuitTimings timings)
     {
