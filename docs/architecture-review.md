@@ -215,7 +215,10 @@ class and read in another.
 ### PR 4 - Platform capabilities and policies
 
 What a machine can do, and the waits and lists that differ between platforms, become data the
-composition root chooses. **Size:** L. **Stage 0:** items 4 and 5.
+composition root chooses. **Size:** L. **Stage 0:** items 4 and 5. **Done** in [#84](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/84), with
+the notes from PRs 1 to 3 below, except what it left to PR 5 - listed there as "From PR 4". The
+capabilities are `PlatformCapabilities`, with `PlatformCapabilities.MacOS`; Shortcuts is part of
+Focus there, the only thing the app does with them.
 
 **From PR 1:** the Profiles page's own `SwitchNoticeViewModel`, made with `DateTimeOffset.UtcNow`
 when none is given, goes with the optional services ([F13](#f13-optional-services-and-defaults),
@@ -298,6 +301,12 @@ method is what moves into each platform's `PlatformServices.Register`.
 the app now has through interfaces. Three macOS versions sit outside `MacOS/` and go to the macOS
 project too: `ProcessBrowserRuns`, `InstalledAppsService` and `SystemCatalog`. The step handlers,
 `BrowserLauncher` and `PopoverDismissal` are shared and stay.
+
+**From PR 4:** `RegisterPlatform` also chooses the Mac's data now: `PlatformCapabilities.MacOS`,
+`CommandAllowlist.MacOS`, and the `Default` timings - `StepBudgets`, `QuitTimings`, `TabTimings` and
+`FollowUpTimings`. The two `MacOS` presets are in Core today and go to the macOS project with the
+rest; the timings' `Default`s are the app's own and stay shared. `KnownBrowsers`, what each browser
+is wherever it runs, stays in Core.
 
 #### Two platform projects
 

@@ -214,7 +214,8 @@ on macOS and on Windows, and Mac users see no difference. Worth doing even if Wi
    lock, the Dock icon, the preferred languages, waiting for a display, the system's version, the
    popover's window - are behind interfaces too. The macOS versions are the code that was there, moved
    and not changed, and registered in `AppServices.RegisterPlatform`.
-4. **How a profile names an app** ([decided](#decisions-made)). Profiles keep listing apps by name,
+4. **How a profile names an app** ([decided](#decisions-made)) - done in
+   [#84](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/84). Profiles keep listing apps by name,
    so every settings file reads as before, and the settings gain one map from a name to how Windows
    finds that app, filled in when it is picked:
 
@@ -226,10 +227,13 @@ on macOS and on Windows, and Mac users see no difference. Worth doing even if Wi
 
    macOS ignores it. Settings brought over from a Mac have no such entries yet: Windows looks each
    name up among the Start menu's apps and says which it couldn't find.
-5. **What each platform can do.** One place says whether this machine has Focus, Apple Music,
-   Safari, closing tabs by id, Shortcuts and a Dock icon. Profile Setup and Settings hide what it
-   lacks, `AutomationPlanBuilder` plans no step for it, and importing settings says what this
-   machine can't use.
+5. **What each platform can do** - done in [#84](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/84). One place,
+   `PlatformCapabilities`, says whether this machine has Focus (through Shortcuts), Apple Music, a
+   Dock icon, and which browsers - so Safari, browser profiles and closing tabs by id. Profile Setup
+   and Settings hide what it lacks, `AutomationPlanBuilder` plans no step for it, and importing
+   settings says what this machine can't use. The Mac's is `PlatformCapabilities.MacOS`, chosen in
+   `AppServices.RegisterPlatform` with the allowed commands, `CommandAllowlist.MacOS`, and the
+   waits.
 6. **Projects** ([the projects](#the-projects)). `ContextSwitcher.Infrastructure.MacOS` takes
    `MacOS/`, `AppleScript/`, the updater and the rest of the macOS code;
    `ContextSwitcher.Infrastructure.Windows` starts empty, targeting `net10.0-windows10.0.19041.0`.
