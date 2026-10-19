@@ -45,3 +45,4 @@ checked, and whether the release notes, the docs or the README need a line.
 | [Usage statistics](docs/usage-statistics.md) | The downloads and visitors collected every night, and the plan for counting people |
 | [A Windows version](docs/windows-port.md) | What carries over to Windows, what has to be written again, and what Windows can't do - tried on Windows 11 |
 | [The Windows plan](docs/windows-plan.md) | The order to build it in: apps first, then the browser, then the rest |
+| [Architecture review](docs/architecture-review.md) | Where the code doesn't yet follow its own rules - interfaces, injection, one job per class - and the order to fix it |
