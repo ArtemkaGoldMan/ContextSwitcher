@@ -129,7 +129,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
             UiScenario scenario = UiScenario.WithTwoProfiles();
             scenario.Catalog.OpenTabs.Add(new OpenTab("Pull requests", "https://github.com/pulls"));
             ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
-            viewModel.BrowserMode = BrowserManagementMode.Urls;
+            viewModel.Browser.BrowserMode = BrowserManagementMode.Urls;
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
 
             Button fromTabs = FindVisibleButton(window, "+ Add URL");
@@ -138,7 +138,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
 
             ClickInPopup(window, PickerItem(fromTabs, "Pull requests"));
 
-            Assert.Equal(["https://github.com/pulls"], viewModel.BrowserUrls.Select(row => row.Url));
+            Assert.Equal(["https://github.com/pulls"], viewModel.Browser.BrowserUrls.Select(row => row.Url));
 
             // The picker stays open for picking several; a click elsewhere only dismisses it.
             fromTabs.Flyout.Hide();
@@ -163,7 +163,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
             Click(window, addContainer);
             ClickInPopup(window, PickerItem(addContainer, "redis"));
 
-            Assert.Equal(["redis"], viewModel.DockerStart.Select(row => row.Value));
+            Assert.Equal(["redis"], viewModel.Docker.DockerStart.Select(row => row.Value));
             Assert.Contains(FindAll<TextBlock>(window), t => t.Text == "redis" && IsClickable(t));
             Assert.DoesNotContain(FindAll<TextBox>(window), t => t.Text == "redis" && IsClickable(t));
         });
@@ -188,7 +188,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
 
             ClickInPopup(window, flyout.GetVisualDescendants().OfType<Button>().Single(b => b.Content as string == "Type a name…"));
 
-            Assert.True(Assert.Single(viewModel.DockerStart).IsEditable);
+            Assert.True(Assert.Single(viewModel.Docker.DockerStart).IsEditable);
             Assert.Contains(FindAll<TextBox>(window), t => t.PlaceholderText == "Container name" && IsClickable(t));
         });
     }
@@ -266,7 +266,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
             scenario.Catalog.DockerContainers = ["redis"];
             scenario.Catalog.OpenTabs.Add(new OpenTab("Inbox", "https://linear.app/inbox"));
             ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
-            viewModel.BrowserMode = BrowserManagementMode.Urls;
+            viewModel.Browser.BrowserMode = BrowserManagementMode.Urls;
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2600);
             ExpandSections(window);
 
@@ -279,7 +279,7 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
 
             Button fromTabs = FindVisibleButton(window, "+ Add URL");
             Click(window, fromTabs);
-            PumpUntil(WaitUntil(() => viewModel.UrlTabPicker.Items.Count > 0));
+            PumpUntil(WaitUntil(() => viewModel.Browser.UrlTabPicker.Items.Count > 0));
             Settle(window);
             ClickInPopup(window, PickerItem(fromTabs, "Inbox"));
             fromTabs.Flyout!.Hide();
@@ -287,12 +287,12 @@ public sealed class EnvironmentChoicesInteractionTests : UiTest
 
             Button addContainer = FindAll<Button>(window).First(b => b.Content as string == "+ Add container" && IsClickable(b));
             Click(window, addContainer);
-            PumpUntil(WaitUntil(() => viewModel.DockerStartPicker.Items.Count > 0));
+            PumpUntil(WaitUntil(() => viewModel.Docker.DockerStartPicker.Items.Count > 0));
             Settle(window);
             ClickInPopup(window, PickerItem(addContainer, "redis"));
 
-            Assert.Equal(["https://linear.app/inbox"], viewModel.BrowserUrls.Select(row => row.Url));
-            Assert.Equal(["redis"], viewModel.DockerStart.Select(row => row.Value));
+            Assert.Equal(["https://linear.app/inbox"], viewModel.Browser.BrowserUrls.Select(row => row.Url));
+            Assert.Equal(["redis"], viewModel.Docker.DockerStart.Select(row => row.Value));
             Assert.Equal(["Deep Focus"], viewModel.Media.MusicPlaylists);
         });
     }

@@ -3,6 +3,7 @@ using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Core.Automation;
+using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Logging;
@@ -152,6 +153,19 @@ public static class AppServices
         services.AddSingleton<UpdatesViewModel>();
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<MainAppViewModel>();
+
+        // Profile Setup is made when a profile is opened, for that profile - by the main window, which
+        // is given this rather than the services Profile Setup needs.
+        services.AddSingleton<Func<ContextDefinition?, ProfileSetupViewModel>>(provider => existing => new ProfileSetupViewModel(
+            provider.GetRequiredService<IAppState>(),
+            provider.GetRequiredService<ConfigurationStore>(),
+            provider.GetRequiredService<IInstalledAppsService>(),
+            provider.GetRequiredService<ISystemCatalog>(),
+            provider.GetRequiredService<IShell>(),
+            provider.GetRequiredService<IFocusShortcutInstaller>(),
+            provider.GetRequiredService<PlatformCapabilities>(),
+            provider.GetRequiredService<IDefaultBrowser>(),
+            existing));
         services.AddTransient<OnboardingViewModel>();
 
         // What runs while the app is up, started together, in this order, once Avalonia is - see

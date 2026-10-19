@@ -125,11 +125,11 @@ public sealed class ProfileSetupViewModelTests
     {
         ProfileSetupViewModel viewModel = NewProfile();
 
-        viewModel.SelectedAccent = viewModel.AccentChoices.Single(c => c.Name == "Teal");
+        viewModel.Look.SelectedAccent = viewModel.Look.AccentChoices.Single(c => c.Name == "Teal");
 
-        Assert.Equal("#0FA3B1", viewModel.AccentColor);
-        Assert.Equal("Teal", viewModel.SelectedAccent.Name);
-        Assert.False(viewModel.IsCustomAccent);
+        Assert.Equal("#0FA3B1", viewModel.Look.AccentColor);
+        Assert.Equal("Teal", viewModel.Look.SelectedAccent.Name);
+        Assert.False(viewModel.Look.IsCustomAccent);
     }
 
     /// <summary>
@@ -141,11 +141,11 @@ public sealed class ProfileSetupViewModelTests
     {
         ProfileSetupViewModel viewModel = NewProfile();
 
-        viewModel.AccentColorValue = Avalonia.Media.Color.FromArgb(0x80, 0x12, 0xAB, 0xEF);
+        viewModel.Look.AccentColorValue = Avalonia.Media.Color.FromArgb(0x80, 0x12, 0xAB, 0xEF);
 
-        Assert.Equal("#12ABEF", viewModel.AccentColor);
-        Assert.True(viewModel.IsCustomAccent);
-        Assert.True(viewModel.SelectedAccent.IsCustom);
+        Assert.Equal("#12ABEF", viewModel.Look.AccentColor);
+        Assert.True(viewModel.Look.IsCustomAccent);
+        Assert.True(viewModel.Look.SelectedAccent.IsCustom);
     }
 
     /// <summary>
@@ -156,19 +156,19 @@ public sealed class ProfileSetupViewModelTests
     public void CustomStaysChosenUntilAPresetIsPicked()
     {
         ProfileSetupViewModel viewModel = NewProfile();
-        string before = viewModel.AccentColor;
+        string before = viewModel.Look.AccentColor;
 
-        viewModel.SelectedAccent = viewModel.AccentChoices.Single(c => c.IsCustom);
-        Assert.True(viewModel.IsCustomAccent);
-        Assert.Equal(before, viewModel.AccentColor);
+        viewModel.Look.SelectedAccent = viewModel.Look.AccentChoices.Single(c => c.IsCustom);
+        Assert.True(viewModel.Look.IsCustomAccent);
+        Assert.Equal(before, viewModel.Look.AccentColor);
 
-        viewModel.AccentColor = "#20A67A";
-        Assert.True(viewModel.IsCustomAccent);
-        Assert.True(viewModel.SelectedAccent.IsCustom);
+        viewModel.Look.AccentColor = "#20A67A";
+        Assert.True(viewModel.Look.IsCustomAccent);
+        Assert.True(viewModel.Look.SelectedAccent.IsCustom);
 
-        viewModel.SelectedAccent = viewModel.AccentChoices.Single(c => c.Name == "Violet");
-        Assert.False(viewModel.IsCustomAccent);
-        Assert.Equal("#7B61FF", viewModel.AccentColor);
+        viewModel.Look.SelectedAccent = viewModel.Look.AccentChoices.Single(c => c.Name == "Violet");
+        Assert.False(viewModel.Look.IsCustomAccent);
+        Assert.Equal("#7B61FF", viewModel.Look.AccentColor);
     }
 
     /// <summary>Hand-edited configs may use lowercase hex; the matching preset is still the one shown.</summary>
@@ -180,8 +180,8 @@ public sealed class ProfileSetupViewModelTests
 
         ProfileSetupViewModel viewModel = new(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), context);
 
-        Assert.Equal("Blue", viewModel.SelectedAccent.Name);
-        Assert.False(viewModel.IsCustomAccent);
+        Assert.Equal("Blue", viewModel.Look.SelectedAccent.Name);
+        Assert.False(viewModel.Look.IsCustomAccent);
     }
 
     [Fact]
@@ -189,10 +189,10 @@ public sealed class ProfileSetupViewModelTests
     {
         ProfileSetupViewModel viewModel = NewProfile();
 
-        viewModel.SelectedIcon = viewModel.IconChoices.Single(c => c.Name == "coffee");
+        viewModel.Look.SelectedIcon = viewModel.Look.IconChoices.Single(c => c.Name == "coffee");
 
-        Assert.Equal("coffee", viewModel.Icon);
-        Assert.Equal("coffee", viewModel.SelectedIcon.Name);
+        Assert.Equal("coffee", viewModel.Look.Icon);
+        Assert.Equal("coffee", viewModel.Look.SelectedIcon.Name);
     }
 
     /// <summary>
@@ -207,8 +207,8 @@ public sealed class ProfileSetupViewModelTests
 
         ProfileSetupViewModel viewModel = new(this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), context);
 
-        Assert.Equal("rocket", viewModel.Icon);
-        Assert.Equal("circle", viewModel.SelectedIcon.Name);
+        Assert.Equal("rocket", viewModel.Look.Icon);
+        Assert.Equal("circle", viewModel.Look.SelectedIcon.Name);
     }
 
     /// <summary>
@@ -234,10 +234,10 @@ public sealed class ProfileSetupViewModelTests
 
         Assert.False(blank.ShowsFocus);
         Assert.Equal([MediaPlayerKind.None, MediaPlayerKind.Spotify], blank.Media.Players.Select(choice => choice.Value));
-        Assert.Equal([BrowserKind.Default, BrowserKind.Chrome], blank.BrowserKindChoices.Select(choice => choice.Value));
+        Assert.Equal([BrowserKind.Default, BrowserKind.Chrome], blank.Browser.BrowserKindChoices.Select(choice => choice.Value));
         Assert.Equal(MediaPlayerKind.AppleMusic, fromAMac.Media.SelectedPlayer.Value);
-        Assert.Equal("Safari (not installed)", fromAMac.SelectedBrowserKind.Label);
-        Assert.False(fromAMac.ShowsFocusFilterTip);
+        Assert.Equal("Safari (not installed)", fromAMac.Browser.SelectedBrowserKind.Label);
+        Assert.False(fromAMac.Browser.ShowsFocusFilterTip);
     }
 
     private ProfileSetupViewModel NewProfile()
@@ -342,10 +342,10 @@ public sealed class ProfileSetupViewModelTests
 
         Assert.Equal(
             [("https://github.com/", true, false), ("https://linear.app/", true, true), ("https://youtube.com/", false, true)],
-            viewModel.BrowserUrls.Select(row => (row.Url, row.OpenOnEnter, row.CloseOnLeave)));
+            viewModel.Browser.BrowserUrls.Select(row => (row.Url, row.OpenOnEnter, row.CloseOnLeave)));
 
-        viewModel.BrowserUrls[0].CloseOnLeave = true;
-        viewModel.BrowserUrls[2].CloseOnLeave = false;
+        viewModel.Browser.BrowserUrls[0].CloseOnLeave = true;
+        viewModel.Browser.BrowserUrls[2].CloseOnLeave = false;
         viewModel.SaveCommand.Execute(null);
 
         BrowserManagementConfig saved = Assert.Single(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!.Contexts).BrowserManagement;
@@ -375,13 +375,13 @@ public sealed class ProfileSetupViewModelTests
         this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
         ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), context);
-        Assert.True(viewModel.BrowserUrls[0].CanClose);
+        Assert.True(viewModel.Browser.BrowserUrls[0].CanClose);
 
-        viewModel.BrowserKind = BrowserKind.Default;
+        viewModel.Browser.BrowserKind = BrowserKind.Default;
         viewModel.SaveCommand.Execute(null);
 
-        Assert.False(viewModel.CanCloseTabs);
-        Assert.False(viewModel.BrowserUrls[0].CanClose);
+        Assert.False(viewModel.Browser.CanCloseTabs);
+        Assert.False(viewModel.Browser.BrowserUrls[0].CanClose);
         Assert.False(viewModel.HasErrorMessage);
         BrowserManagementConfig saved = Assert.Single(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!.Contexts).BrowserManagement;
         Assert.Equal(["https://github.com/"], saved.Urls);
@@ -393,9 +393,9 @@ public sealed class ProfileSetupViewModelTests
     {
         ProfileSetupViewModel viewModel = NewProfile();
 
-        viewModel.AddBrowserUrlCommand.Execute(null);
+        viewModel.Browser.AddBrowserUrlCommand.Execute(null);
 
-        BrowserPageRowViewModel row = Assert.Single(viewModel.BrowserUrls);
+        BrowserPageRowViewModel row = Assert.Single(viewModel.Browser.BrowserUrls);
         Assert.True(row.OpenOnEnter);
         Assert.False(row.CloseOnLeave);
     }
@@ -418,11 +418,11 @@ public sealed class ProfileSetupViewModelTests
             this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS,
             new FakeDefaultBrowser(BrowserKind.Chrome, "Google Chrome"), context);
 
-        Assert.Equal("Default browser (Google Chrome)", viewModel.SelectedBrowserKind.Label);
-        Assert.True(viewModel.CanAvoidDuplicateTabs);
-        Assert.True(viewModel.CanCloseTabs);
+        Assert.Equal("Default browser (Google Chrome)", viewModel.Browser.SelectedBrowserKind.Label);
+        Assert.True(viewModel.Browser.CanAvoidDuplicateTabs);
+        Assert.True(viewModel.Browser.CanCloseTabs);
 
-        viewModel.BrowserUrls[0].CloseOnLeave = true;
+        viewModel.Browser.BrowserUrls[0].CloseOnLeave = true;
         viewModel.SaveCommand.Execute(null);
 
         BrowserManagementConfig saved = Assert.Single(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!.Contexts).BrowserManagement;
@@ -437,11 +437,11 @@ public sealed class ProfileSetupViewModelTests
         ProfileSetupViewModel viewModel = new(
             this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS,
             new FakeDefaultBrowser(BrowserKind.Default, "Firefox"), existing: null);
-        viewModel.BrowserKind = BrowserKind.Default;
+        viewModel.Browser.BrowserKind = BrowserKind.Default;
 
-        Assert.False(viewModel.CanCloseTabs);
-        Assert.Equal("Closing tabs needs Chrome, Brave or Safari - Firefox can't be checked for open tabs.", viewModel.CloseTabsHint);
-        Assert.Equal("Needs Chrome, Brave or Safari - Firefox can't be checked for open tabs.", viewModel.AvoidDuplicateTabsHint);
+        Assert.False(viewModel.Browser.CanCloseTabs);
+        Assert.Equal("Closing tabs needs Chrome, Brave or Safari - Firefox can't be checked for open tabs.", viewModel.Browser.CloseTabsHint);
+        Assert.Equal("Needs Chrome, Brave or Safari - Firefox can't be checked for open tabs.", viewModel.Browser.AvoidDuplicateTabsHint);
     }
 
     /// <summary>
@@ -460,14 +460,14 @@ public sealed class ProfileSetupViewModelTests
         ProfileSetupViewModel viewModel = new(
             this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS,
             new FakeDefaultBrowser(systemDefault, systemDefault == BrowserKind.Default ? "Firefox" : systemDefault.ToString()), existing: null);
-        viewModel.BrowserKind = chosen;
+        viewModel.Browser.BrowserKind = chosen;
 
         BrowserManagementMode[] expected = offersProfiles
             ? [BrowserManagementMode.None, BrowserManagementMode.Urls, BrowserManagementMode.Profiles]
             : [BrowserManagementMode.None, BrowserManagementMode.Urls];
-        Assert.Equal(expected, viewModel.BrowserModeChoices.Select(choice => choice.Value));
-        Assert.DoesNotContain(viewModel.BrowserModeChoices, choice => choice.Value == BrowserManagementMode.Groups);
-        Assert.Equal(showsFocusTip, viewModel.ShowsFocusFilterTip);
+        Assert.Equal(expected, viewModel.Browser.BrowserModeChoices.Select(choice => choice.Value));
+        Assert.DoesNotContain(viewModel.Browser.BrowserModeChoices, choice => choice.Value == BrowserManagementMode.Groups);
+        Assert.Equal(showsFocusTip, viewModel.Browser.ShowsFocusFilterTip);
     }
 
     /// <summary>
@@ -478,17 +478,17 @@ public sealed class ProfileSetupViewModelTests
     public void ABrowserWithoutProfilesFallsBackToPages()
     {
         ProfileSetupViewModel viewModel = NewProfileViewModel();
-        viewModel.BrowserKind = BrowserKind.Chrome;
-        viewModel.BrowserMode = BrowserManagementMode.Profiles;
+        viewModel.Browser.BrowserKind = BrowserKind.Chrome;
+        viewModel.Browser.BrowserMode = BrowserManagementMode.Profiles;
 
-        viewModel.BrowserKind = BrowserKind.Safari;
+        viewModel.Browser.BrowserKind = BrowserKind.Safari;
 
-        Assert.Equal(BrowserManagementMode.Urls, viewModel.BrowserMode);
-        Assert.Equal(BrowserManagementMode.Urls, viewModel.SelectedBrowserMode.Value);
+        Assert.Equal(BrowserManagementMode.Urls, viewModel.Browser.BrowserMode);
+        Assert.Equal(BrowserManagementMode.Urls, viewModel.Browser.SelectedBrowserMode.Value);
 
         // Only code can ask for what the list doesn't offer; it gets pages too.
-        viewModel.BrowserMode = BrowserManagementMode.Groups;
-        Assert.Equal(BrowserManagementMode.Urls, viewModel.BrowserMode);
+        viewModel.Browser.BrowserMode = BrowserManagementMode.Groups;
+        Assert.Equal(BrowserManagementMode.Urls, viewModel.Browser.BrowserMode);
     }
 
     /// <summary>
@@ -516,14 +516,14 @@ public sealed class ProfileSetupViewModelTests
         ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
         ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), context);
 
-        Assert.Equal(BrowserKind.Brave, viewModel.BrowserKind);
-        Assert.Equal(BrowserManagementMode.Profiles, viewModel.BrowserMode);
+        Assert.Equal(BrowserKind.Brave, viewModel.Browser.BrowserKind);
+        Assert.Equal(BrowserManagementMode.Profiles, viewModel.Browser.BrowserMode);
 
-        viewModel.BrowserKind = BrowserKind.Chrome;
-        viewModel.AddBrowserProfileCommand.Execute(null);
+        viewModel.Browser.BrowserKind = BrowserKind.Chrome;
+        viewModel.Browser.AddBrowserProfileCommand.Execute(null);
 
-        Assert.All(viewModel.BrowserProfiles, row => Assert.Equal(BrowserKind.Chrome, row.Browser));
-        Assert.Equal(["Default", "Profile 2"], viewModel.BrowserProfiles[0].ProfileChoices.Select(choice => choice.Value));
+        Assert.All(viewModel.Browser.BrowserProfiles, row => Assert.Equal(BrowserKind.Chrome, row.Browser));
+        Assert.Equal(["Default", "Profile 2"], viewModel.Browser.BrowserProfiles[0].ProfileChoices.Select(choice => choice.Value));
 
         viewModel.SaveCommand.Execute(null);
         BrowserManagementConfig saved = Assert.Single(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!.Contexts).BrowserManagement;
@@ -545,7 +545,7 @@ public sealed class ProfileSetupViewModelTests
             this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS,
             new FakeDefaultBrowser(BrowserKind.Safari, "Safari"), existing: null);
 
-        Assert.Equal(["Default browser (Safari)", "Safari", "Google Chrome"], viewModel.BrowserKindChoices.Select(choice => choice.Label));
+        Assert.Equal(["Default browser (Safari)", "Safari", "Google Chrome"], viewModel.Browser.BrowserKindChoices.Select(choice => choice.Label));
     }
 
     /// <summary>
@@ -569,8 +569,8 @@ public sealed class ProfileSetupViewModelTests
         ProfileSetupViewModel viewModel = new(
             this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), catalog, new FakeShell(), new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), context);
 
-        Assert.Equal(["Default browser", "Safari", "Brave (not installed)"], viewModel.BrowserKindChoices.Select(choice => choice.Label));
-        Assert.Equal("Brave (not installed)", viewModel.SelectedBrowserKind.Label);
+        Assert.Equal(["Default browser", "Safari", "Brave (not installed)"], viewModel.Browser.BrowserKindChoices.Select(choice => choice.Label));
+        Assert.Equal("Brave (not installed)", viewModel.Browser.SelectedBrowserKind.Label);
     }
 
     /// <summary>For Safari, the page opens System Settings' Focus pane, where its Safari filter is set.</summary>
@@ -580,9 +580,9 @@ public sealed class ProfileSetupViewModelTests
         FakeShell shell = new();
         ProfileSetupViewModel viewModel = new(
             this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), shell, new FakeFocusShortcutInstaller(), PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), existing: null);
-        viewModel.BrowserKind = BrowserKind.Safari;
+        viewModel.Browser.BrowserKind = BrowserKind.Safari;
 
-        viewModel.OpenFocusSettingsCommand.Execute(null);
+        viewModel.Browser.OpenFocusSettingsCommand.Execute(null);
 
         Assert.Equal([SystemPage.FocusSettings], shell.Pages);
     }
@@ -643,26 +643,26 @@ public sealed class ProfileSetupViewModelTests
     {
         ProfileSetupViewModel viewModel = NewProfileViewModel();
 
-        viewModel.BrowserKind = BrowserKind.Default;
+        viewModel.Browser.BrowserKind = BrowserKind.Default;
 
-        Assert.False(viewModel.CanAvoidDuplicateTabs);
-        Assert.Contains("default browser", viewModel.AvoidDuplicateTabsHint, StringComparison.OrdinalIgnoreCase);
+        Assert.False(viewModel.Browser.CanAvoidDuplicateTabs);
+        Assert.Contains("default browser", viewModel.Browser.AvoidDuplicateTabsHint, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
     public void AvoidDuplicateTabsBecomesAvailableWhenAConcreteBrowserIsChosen()
     {
         ProfileSetupViewModel viewModel = NewProfileViewModel();
-        viewModel.BrowserKind = BrowserKind.Default;
+        viewModel.Browser.BrowserKind = BrowserKind.Default;
 
         List<string> changed = [];
-        viewModel.PropertyChanged += (_, e) => changed.Add(e.PropertyName ?? string.Empty);
+        viewModel.Browser.PropertyChanged += (_, e) => changed.Add(e.PropertyName ?? string.Empty);
 
-        viewModel.BrowserKind = BrowserKind.Chrome;
+        viewModel.Browser.BrowserKind = BrowserKind.Chrome;
 
-        Assert.True(viewModel.CanAvoidDuplicateTabs);
-        Assert.Contains(nameof(ProfileSetupViewModel.CanAvoidDuplicateTabs), changed);
-        Assert.Contains(nameof(ProfileSetupViewModel.AvoidDuplicateTabsHint), changed);
+        Assert.True(viewModel.Browser.CanAvoidDuplicateTabs);
+        Assert.Contains(nameof(BrowserSettingsViewModel.CanAvoidDuplicateTabs), changed);
+        Assert.Contains(nameof(BrowserSettingsViewModel.AvoidDuplicateTabsHint), changed);
     }
 
 

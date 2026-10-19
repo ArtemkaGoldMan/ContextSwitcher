@@ -33,7 +33,7 @@ public sealed class UiConsistencyTests : UiTest
         {
             UiScenario scenario = Scenario();
             ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
-            viewModel.BrowserMode = mode;
+            viewModel.Browser.BrowserMode = mode;
             viewModel.Media.SelectedPlayer = viewModel.Media.Players.Single(p => p.Value == player);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, width: 760, height: 2800);
             ExpandSections(window);
@@ -61,10 +61,10 @@ public sealed class UiConsistencyTests : UiTest
         {
             UiScenario scenario = Scenario();
             List<Button> adds = [];
-            foreach (BrowserManagementMode mode in scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]).BrowserModeChoices.Select(choice => choice.Value))
+            foreach (BrowserManagementMode mode in scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]).Browser.BrowserModeChoices.Select(choice => choice.Value))
             {
                 ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
-                viewModel.BrowserMode = mode;
+                viewModel.Browser.BrowserMode = mode;
                 Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2800);
                 ExpandSections(window);
                 adds.AddRange(AddButtons(window));
@@ -96,7 +96,7 @@ public sealed class UiConsistencyTests : UiTest
         {
             UiScenario scenario = Scenario();
             ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
-            viewModel.AddDockerStopCommand.Execute(null);
+            viewModel.Docker.AddDockerStopCommand.Execute(null);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2800);
             ExpandSections(window);
 

@@ -314,13 +314,13 @@ public sealed class EnvironmentChoicesTests
         FakeSystemCatalog catalog = new() { DockerContainers = ["api-db", "redis"] };
         ProfileSetupViewModel viewModel = NewProfile(catalog);
 
-        viewModel.DockerStartPicker.LoadCommand.Execute(null);
-        viewModel.DockerStartPicker.Items.Single(item => item.Title == "redis").PickCommand.Execute(null);
-        viewModel.AddDockerStartCommand.Execute(null);
+        viewModel.Docker.DockerStartPicker.LoadCommand.Execute(null);
+        viewModel.Docker.DockerStartPicker.Items.Single(item => item.Title == "redis").PickCommand.Execute(null);
+        viewModel.Docker.AddDockerStartCommand.Execute(null);
 
-        Assert.Equal(["redis", string.Empty], viewModel.DockerStart.Select(row => row.Value));
-        Assert.Equal([false, true], viewModel.DockerStart.Select(row => row.IsEditable));
-        Assert.Equal(["api-db"], viewModel.DockerStartPicker.Items.Select(item => item.Title));
+        Assert.Equal(["redis", string.Empty], viewModel.Docker.DockerStart.Select(row => row.Value));
+        Assert.Equal([false, true], viewModel.Docker.DockerStart.Select(row => row.IsEditable));
+        Assert.Equal(["api-db"], viewModel.Docker.DockerStartPicker.Items.Select(item => item.Title));
         Assert.Equal(1, catalog.DockerReads);
     }
 
@@ -330,20 +330,20 @@ public sealed class EnvironmentChoicesTests
         FakeSystemCatalog catalog = new();
         catalog.OpenTabs.Add(new OpenTab("Pull requests", "https://github.com/pulls"));
         ProfileSetupViewModel viewModel = NewProfile(catalog);
-        viewModel.BrowserKind = BrowserKind.Safari;
+        viewModel.Browser.BrowserKind = BrowserKind.Safari;
 
-        viewModel.UrlTabPicker.LoadCommand.Execute(null);
-        Assert.Equal("github.com", Assert.Single(viewModel.UrlTabPicker.Items).Detail);
-        viewModel.UrlTabPicker.Items[0].PickCommand.Execute(null);
+        viewModel.Browser.UrlTabPicker.LoadCommand.Execute(null);
+        Assert.Equal("github.com", Assert.Single(viewModel.Browser.UrlTabPicker.Items).Detail);
+        viewModel.Browser.UrlTabPicker.Items[0].PickCommand.Execute(null);
 
-        viewModel.QuickLinkTabPicker.LoadCommand.Execute(null);
-        viewModel.QuickLinkTabPicker.Items[0].PickCommand.Execute(null);
+        viewModel.Links.QuickLinkTabPicker.LoadCommand.Execute(null);
+        viewModel.Links.QuickLinkTabPicker.Items[0].PickCommand.Execute(null);
 
-        Assert.Equal(["https://github.com/pulls"], viewModel.BrowserUrls.Select(row => row.Url));
-        QuickLinkRowViewModel link = Assert.Single(viewModel.QuickLinks);
+        Assert.Equal(["https://github.com/pulls"], viewModel.Browser.BrowserUrls.Select(row => row.Url));
+        QuickLinkRowViewModel link = Assert.Single(viewModel.Links.QuickLinks);
         Assert.Equal(("Pull requests", "https://github.com/pulls"), (link.Title, link.Url));
         Assert.Equal([BrowserKind.Safari, BrowserKind.Safari], catalog.OpenTabRequests);
-        Assert.Empty(viewModel.UrlTabPicker.Items);
+        Assert.Empty(viewModel.Browser.UrlTabPicker.Items);
     }
 
     [Fact]
@@ -369,8 +369,8 @@ public sealed class EnvironmentChoicesTests
         catalog.ShortcutNames.Add($"{Prefix}Work");
         ProfileSetupViewModel viewModel = NewProfile(catalog, out InMemoryJsonStore jsonStore, out ConfigPaths paths);
         viewModel.DisplayName = "Deep Work";
-        viewModel.AddQuickLinkCommand.Execute(null);
-        viewModel.QuickLinks[0].Url = "https://linear.app/team/inbox";
+        viewModel.Links.AddQuickLinkCommand.Execute(null);
+        viewModel.Links.QuickLinks[0].Url = "https://linear.app/team/inbox";
         viewModel.Focus.Selected = viewModel.Focus.Choices.Single(c => c.ModeName == "Work");
         viewModel.Media.SelectedPlayer = viewModel.Media.Players.Single(p => p.Value == MediaPlayerKind.Spotify);
         viewModel.Media.Playlist = "https://open.spotify.com/playlist/abc?si=1";

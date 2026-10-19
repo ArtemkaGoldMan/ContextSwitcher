@@ -15,10 +15,10 @@
     <Grid ColumnDefinitions="Auto,*,Auto,Auto">
       <!-- A live preview of the profile: its icon on its accent color, as the rows and the menu bar
            popover will draw it. -->
-      <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{Binding AccentBrush}" Margin="0,0,12,0"
+      <Border Grid.Column="0" Classes="badge" Width="36" Height="36" Background="{Binding Look.AccentBrush}" Margin="0,0,12,0"
               ToolTip.Tip="{x:Static r:Strings.ProfileSetup_Preview}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_ProfilePreview}">
         <Viewbox Classes="icon" Width="17" Height="17">
-          <Path Classes="glyph" Data="{Binding Icon, Converter={x:Static conv:ProfileIconConverter.Instance}}" />
+          <Path Classes="glyph" Data="{Binding Look.Icon, Converter={x:Static conv:ProfileIconConverter.Instance}}" />
         </Viewbox>
       </Border>
       <TextBlock Grid.Column="1" Text="{Binding HeaderText}" Classes="header" VerticalAlignment="Center" />
@@ -44,7 +44,7 @@
         <Border Classes="divider" />
 
         <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_AccentColor}">
-          <ComboBox ItemsSource="{Binding AccentChoices}" SelectedItem="{Binding SelectedAccent}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_AccentColor}">
+          <ComboBox ItemsSource="{Binding Look.AccentChoices}" SelectedItem="{Binding Look.SelectedAccent}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_AccentColor}">
             <ComboBox.ItemTemplate>
               <DataTemplate x:DataType="vm:AccentChoiceViewModel">
                 <StackPanel Orientation="Horizontal">
@@ -60,17 +60,17 @@
         <!-- "Custom" reveals the full picker under its dropdown, the way choosing Apple Music reveals
              a playlist - choosing something in a dropdown never opens a different kind of control. -->
         <ColorView
-          Color="{Binding AccentColorValue}"
+          Color="{Binding Look.AccentColorValue}"
           IsAlphaEnabled="False"
           IsAlphaVisible="False"
-          IsVisible="{Binding IsCustomAccent}"
+          IsVisible="{Binding Look.IsCustomAccent}"
           Width="{StaticResource FieldWidth}"
           HorizontalAlignment="Right"
           AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_CustomColor}" />
         <Border Classes="divider" />
 
         <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_Icon}">
-          <ComboBox ItemsSource="{Binding IconChoices}" SelectedItem="{Binding SelectedIcon}" MaxDropDownHeight="340" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Icon}">
+          <ComboBox ItemsSource="{Binding Look.IconChoices}" SelectedItem="{Binding Look.SelectedIcon}" MaxDropDownHeight="340" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Icon}">
             <ComboBox.ItemTemplate>
               <DataTemplate x:DataType="vm:IconChoiceViewModel">
                 <StackPanel Orientation="Horizontal">
@@ -132,61 +132,61 @@
 
         <!-- The browser first: what can be asked of it depends on which it is. -->
         <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_Browser}">
-          <ComboBox ItemsSource="{Binding BrowserKindChoices}" SelectedItem="{Binding SelectedBrowserKind}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Browser}" />
+          <ComboBox ItemsSource="{Binding Browser.BrowserKindChoices}" SelectedItem="{Binding Browser.SelectedBrowserKind}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Browser}" />
         </ctl:FormRow>
         <Border Classes="divider" />
         <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_OnSwitch}">
-          <ComboBox ItemsSource="{Binding BrowserModeChoices}" SelectedItem="{Binding SelectedBrowserMode}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_OnSwitch}" />
+          <ComboBox ItemsSource="{Binding Browser.BrowserModeChoices}" SelectedItem="{Binding Browser.SelectedBrowserMode}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_OnSwitch}" />
         </ctl:FormRow>
 
         <!-- Safari's tab groups and profiles can't be opened by another app; a Focus filter can. -->
-        <StackPanel Spacing="4" IsVisible="{Binding ShowsFocusFilterTip}">
+        <StackPanel Spacing="4" IsVisible="{Binding Browser.ShowsFocusFilterTip}">
           <TextBlock Text="{x:Static r:Strings.ProfileSetup_SafariFocusTip}" Classes="caption" TextWrapping="Wrap" />
-          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_OpenFocusSettings}" Command="{Binding OpenFocusSettingsCommand}" />
+          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_OpenFocusSettings}" Command="{Binding Browser.OpenFocusSettingsCommand}" />
         </StackPanel>
 
-        <StackPanel Spacing="10" IsVisible="{Binding IsUrlsMode}">
+        <StackPanel Spacing="10" IsVisible="{Binding Browser.IsUrlsMode}">
           <Border Classes="divider" />
-          <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_AvoidDuplicateTabs}" Description="{Binding AvoidDuplicateTabsHint}">
-            <ToggleSwitch IsChecked="{Binding AvoidDuplicateTabs}" IsEnabled="{Binding CanAvoidDuplicateTabs}" />
+          <ctl:FormRow Title="{x:Static r:Strings.ProfileSetup_AvoidDuplicateTabs}" Description="{Binding Browser.AvoidDuplicateTabsHint}">
+            <ToggleSwitch IsChecked="{Binding Browser.AvoidDuplicateTabs}" IsEnabled="{Binding Browser.CanAvoidDuplicateTabs}" />
           </ctl:FormRow>
         </StackPanel>
 
-        <StackPanel Spacing="6" IsVisible="{Binding IsUrlsMode}" Margin="0,6,0,0">
+        <StackPanel Spacing="6" IsVisible="{Binding Browser.IsUrlsMode}" Margin="0,6,0,0">
           <TextBlock Text="{x:Static r:Strings.ProfileSetup_StartupURLs}" Classes="caption" />
           <TextBlock Text="{x:Static r:Strings.ProfileSetup_PagesOpenClose}" Classes="caption" TextWrapping="Wrap" />
-          <ItemsControl ItemsSource="{Binding BrowserUrls}" ItemTemplate="{StaticResource BrowserPageRow}">
+          <ItemsControl ItemsSource="{Binding Browser.BrowserUrls}" ItemTemplate="{StaticResource BrowserPageRow}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <StackPanel Spacing="6" />
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
           </ItemsControl>
-          <TextBlock Text="{Binding CloseTabsHint}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding !CanCloseTabs}" />
+          <TextBlock Text="{Binding Browser.CloseTabsHint}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding !Browser.CanCloseTabs}" />
           <!-- Every opening re-reads the browser, so the list is what is open right now. -->
-          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddUrl}" Command="{Binding UrlTabPicker.LoadCommand}">
+          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddUrl}" Command="{Binding Browser.UrlTabPicker.LoadCommand}">
             <Button.Flyout>
               <Flyout Placement="BottomEdgeAlignedLeft">
                 <StackPanel Width="{StaticResource PickerWidth}" Spacing="8">
-                  <ContentControl Content="{Binding UrlTabPicker}" ContentTemplate="{StaticResource ChoicePickerContent}" />
+                  <ContentControl Content="{Binding Browser.UrlTabPicker}" ContentTemplate="{StaticResource ChoicePickerContent}" />
                   <Border Classes="divider" />
-                  <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAUrl}" Command="{Binding AddBrowserUrlCommand}" ctl:PopupActions.ClosesPopup="True" />
+                  <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAUrl}" Command="{Binding Browser.AddBrowserUrlCommand}" ctl:PopupActions.ClosesPopup="True" />
                 </StackPanel>
               </Flyout>
             </Button.Flyout>
           </Button>
         </StackPanel>
 
-        <StackPanel Spacing="6" IsVisible="{Binding IsProfilesMode}" Margin="0,6,0,0">
+        <StackPanel Spacing="6" IsVisible="{Binding Browser.IsProfilesMode}" Margin="0,6,0,0">
           <TextBlock Text="{x:Static r:Strings.ProfileSetup_BrowserProfiles}" Classes="caption" />
-          <ItemsControl ItemsSource="{Binding BrowserProfiles}" ItemTemplate="{StaticResource BrowserProfileRow}">
+          <ItemsControl ItemsSource="{Binding Browser.BrowserProfiles}" ItemTemplate="{StaticResource BrowserProfileRow}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <StackPanel Spacing="6" />
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
           </ItemsControl>
-          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddBrowserProfile}" Command="{Binding AddBrowserProfileCommand}" />
+          <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddBrowserProfile}" Command="{Binding Browser.AddBrowserProfileCommand}" />
         </StackPanel>
       </StackPanel>
     </Border>
@@ -300,20 +300,20 @@
               TextWrapping="Wrap"
               Margin="0,0,0,6" />
             <TextBlock Text="{x:Static r:Strings.ProfileSetup_StartWhenEntering}" Classes="caption" />
-            <ItemsControl ItemsSource="{Binding DockerStart}" ItemTemplate="{StaticResource StringRow}">
+            <ItemsControl ItemsSource="{Binding Docker.DockerStart}" ItemTemplate="{StaticResource StringRow}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                   <StackPanel Spacing="6" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
             </ItemsControl>
-            <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddContainer}" Command="{Binding DockerStartPicker.LoadCommand}">
+            <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddContainer}" Command="{Binding Docker.DockerStartPicker.LoadCommand}">
               <Button.Flyout>
                 <Flyout Placement="BottomEdgeAlignedLeft">
                   <StackPanel Width="{StaticResource PickerWidth}" Spacing="8">
-                    <ContentControl Content="{Binding DockerStartPicker}" ContentTemplate="{StaticResource ChoicePickerContent}" />
+                    <ContentControl Content="{Binding Docker.DockerStartPicker}" ContentTemplate="{StaticResource ChoicePickerContent}" />
                     <Border Classes="divider" />
-                    <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAName}" Command="{Binding AddDockerStartCommand}" ctl:PopupActions.ClosesPopup="True" />
+                    <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAName}" Command="{Binding Docker.AddDockerStartCommand}" ctl:PopupActions.ClosesPopup="True" />
                   </StackPanel>
                 </Flyout>
               </Button.Flyout>
@@ -322,20 +322,20 @@
             <Border Classes="divider" Margin="0,8" />
 
             <TextBlock Text="{x:Static r:Strings.ProfileSetup_StopWhenLeaving}" Classes="caption" />
-            <ItemsControl ItemsSource="{Binding DockerStop}" ItemTemplate="{StaticResource StringRow}">
+            <ItemsControl ItemsSource="{Binding Docker.DockerStop}" ItemTemplate="{StaticResource StringRow}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                   <StackPanel Spacing="6" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
             </ItemsControl>
-            <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddContainer}" Command="{Binding DockerStopPicker.LoadCommand}">
+            <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddContainer}" Command="{Binding Docker.DockerStopPicker.LoadCommand}">
               <Button.Flyout>
                 <Flyout Placement="BottomEdgeAlignedLeft">
                   <StackPanel Width="{StaticResource PickerWidth}" Spacing="8">
-                    <ContentControl Content="{Binding DockerStopPicker}" ContentTemplate="{StaticResource ChoicePickerContent}" />
+                    <ContentControl Content="{Binding Docker.DockerStopPicker}" ContentTemplate="{StaticResource ChoicePickerContent}" />
                     <Border Classes="divider" />
-                    <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAName}" Command="{Binding AddDockerStopCommand}" ctl:PopupActions.ClosesPopup="True" />
+                    <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAName}" Command="{Binding Docker.AddDockerStopCommand}" ctl:PopupActions.ClosesPopup="True" />
                   </StackPanel>
                 </Flyout>
               </Button.Flyout>
@@ -351,20 +351,20 @@
               Text="{x:Static r:Strings.ProfileSetup_ShownInTheMenuBar}"
               Classes="caption"
               TextWrapping="Wrap" />
-            <ItemsControl ItemsSource="{Binding QuickLinks}" ItemTemplate="{StaticResource QuickLinkRow}">
+            <ItemsControl ItemsSource="{Binding Links.QuickLinks}" ItemTemplate="{StaticResource QuickLinkRow}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                   <StackPanel Spacing="6" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
             </ItemsControl>
-            <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddQuickLink}" Command="{Binding QuickLinkTabPicker.LoadCommand}">
+            <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_AddQuickLink}" Command="{Binding Links.QuickLinkTabPicker.LoadCommand}">
               <Button.Flyout>
                 <Flyout Placement="BottomEdgeAlignedLeft">
                   <StackPanel Width="{StaticResource PickerWidth}" Spacing="8">
-                    <ContentControl Content="{Binding QuickLinkTabPicker}" ContentTemplate="{StaticResource ChoicePickerContent}" />
+                    <ContentControl Content="{Binding Links.QuickLinkTabPicker}" ContentTemplate="{StaticResource ChoicePickerContent}" />
                     <Border Classes="divider" />
-                    <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAUrl}" Command="{Binding AddQuickLinkCommand}" ctl:PopupActions.ClosesPopup="True" />
+                    <Button Classes="linkButton" Content="{x:Static r:Strings.ProfileSetup_TypeAUrl}" Command="{Binding Links.AddQuickLinkCommand}" ctl:PopupActions.ClosesPopup="True" />
                   </StackPanel>
                 </Flyout>
               </Button.Flyout>

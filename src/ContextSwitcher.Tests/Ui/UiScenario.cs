@@ -119,8 +119,8 @@ public sealed class UiScenario
 
     public MainAppViewModel MainApp() => new(
         this.AppState, this.SwitchService, this.ConfigurationStore,
-        this.Permissions, this.Shell, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates, this.Diagnostics,
-        new FakePreferredLanguages(), PlatformCapabilities.MacOS, new FakeUnknownDefaultBrowser(), FakeLoginItem.Unavailable());
+        this.Permissions, this.Shell, this.Analytics, this.InstalledApps, this.Notice, this.Updates, this.Diagnostics,
+        new FakePreferredLanguages(), PlatformCapabilities.MacOS, FakeLoginItem.Unavailable(), this.ProfileSetup);
 
     public ProfilesViewModel Profiles() =>
         new(this.AppState, this.SwitchService, this.ConfigurationStore, new SwitchNoticeViewModel(this.AppState, DateTimeOffset.UtcNow));
