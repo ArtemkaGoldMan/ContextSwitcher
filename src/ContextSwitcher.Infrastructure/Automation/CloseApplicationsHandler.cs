@@ -52,7 +52,7 @@ public sealed class CloseApplicationsHandler : IStepHandler
         ArgumentNullException.ThrowIfNull(step);
 
         DateTimeOffset startedAt = this.clock.UtcNow;
-        string[] apps = StepArguments.List(step.Arguments, "apps");
+        IReadOnlyList<string> apps = AppsArguments.From(step.Arguments).Apps;
         List<UserMessage> problems = [];
         StringBuilder standardError = new();
 
@@ -64,7 +64,7 @@ public sealed class CloseApplicationsHandler : IStepHandler
         //
         // Half of an app's share goes to the quit itself, and most of the rest to confirming it went:
         // together they stay inside the share, so the step's own timeout never cuts the report off.
-        TimeSpan perApp = step.Timeout / Math.Max(apps.Length, 1);
+        TimeSpan perApp = step.Timeout / Math.Max(apps.Count, 1);
         TimeSpan quitTimeout = perApp * 0.5;
         TimeSpan confirmWindow = perApp * 0.4;
 

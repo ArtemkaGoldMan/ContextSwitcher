@@ -1,6 +1,5 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Automation;
-using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Infrastructure.Browser;
 
 namespace ContextSwitcher.Infrastructure.Automation;
@@ -30,12 +29,10 @@ public sealed class CloseBrowserTabsHandler : IStepHandler
 
         DateTimeOffset startedAt = this.clock.UtcNow;
 
-        BrowserKind browser = Enum.Parse<BrowserKind>(step.Arguments.GetValueOrDefault("browser", nameof(BrowserKind.Default)));
-        IReadOnlyList<string> pages = StepArguments.Strings(step.Arguments.GetValueOrDefault("closeUrlsJson", "[]"));
-        IReadOnlyList<string> keep = StepArguments.Strings(step.Arguments.GetValueOrDefault("keepUrlsJson", "[]"));
-
+        CloseTabsArguments arguments = CloseTabsArguments.From(step.Arguments);
         TabClosingOutcome outcome = await this.browserLauncher
-            .CloseTabsAsync(browser, pages, keep, step.Arguments.GetValueOrDefault("contextId"), StepResults.WithReportingHeadroom(step.Timeout), cancellationToken)
+            .CloseTabsAsync(
+                arguments.Browser, arguments.CloseUrls, arguments.KeepUrls, arguments.ContextId, StepResults.WithReportingHeadroom(step.Timeout), cancellationToken)
             .ConfigureAwait(false);
 
         DateTimeOffset completedAt = this.clock.UtcNow;

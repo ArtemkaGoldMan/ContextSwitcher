@@ -30,7 +30,7 @@ public sealed class HideApplicationsHandler : IStepHandler
         ArgumentNullException.ThrowIfNull(step);
 
         DateTimeOffset startedAt = this.clock.UtcNow;
-        int asked = this.hider.Hide(StepArguments.List(step.Arguments, "apps"));
+        int asked = this.hider.Hide(AppsArguments.From(step.Arguments).Apps);
         return Task.FromResult(StepResults.Succeeded(step, $"Asked {asked} running app(s) to hide.", startedAt, this.clock.UtcNow));
     }
 }

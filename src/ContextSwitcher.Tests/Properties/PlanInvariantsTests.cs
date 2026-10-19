@@ -1,4 +1,3 @@
-using System.Text.Json;
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 
@@ -109,8 +108,7 @@ public sealed class PlanInvariantsTests
     private static string[] AppsOf(AutomationPlan plan, AutomationStepType type) =>
         plan.Steps.Where(step => step.Type == type).SelectMany(AppsIn).ToArray();
 
-    private static IEnumerable<string> AppsIn(AutomationStep step) =>
-        step.Arguments.TryGetValue("apps", out string? json) ? JsonSerializer.Deserialize<string[]>(json) ?? [] : [];
+    private static IEnumerable<string> AppsIn(AutomationStep step) => AppsArguments.From(step.Arguments).Apps;
 
     private static string Describe(AutomationPlan plan) =>
         string.Join('\n', plan.Steps.Select(step => $"{step.Id}|{step.Type}|{string.Join(';', step.Arguments.OrderBy(a => a.Key).Select(a => $"{a.Key}={a.Value}"))}"));

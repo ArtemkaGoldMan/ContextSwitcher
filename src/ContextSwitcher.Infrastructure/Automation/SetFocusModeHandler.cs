@@ -30,9 +30,7 @@ public sealed class SetFocusModeHandler : IStepHandler
         ArgumentNullException.ThrowIfNull(step);
 
         DateTimeOffset startedAt = this.clock.UtcNow;
-        bool enabled = step.Arguments.GetValueOrDefault("enabled") == "True";
-        string modeName = step.Arguments.GetValueOrDefault("modeName", string.Empty);
-        string previousModeName = step.Arguments.GetValueOrDefault("previousModeName", string.Empty);
+        (bool enabled, string modeName, string previousModeName) = FocusArguments.From(step.Arguments);
 
         // Turning a mode on has one Shortcut. Turning one off prefers that mode's own Off Shortcut
         // and falls back to the original single "Focus Off" - which people built by hand from the

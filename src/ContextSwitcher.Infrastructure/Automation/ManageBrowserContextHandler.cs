@@ -1,6 +1,5 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Automation;
-using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Infrastructure.Browser;
 
 namespace ContextSwitcher.Infrastructure.Automation;
@@ -30,21 +29,16 @@ public sealed class ManageBrowserContextHandler : IStepHandler
 
         DateTimeOffset startedAt = this.clock.UtcNow;
 
-        BrowserManagementMode mode = Enum.Parse<BrowserManagementMode>(step.Arguments.GetValueOrDefault("mode", nameof(BrowserManagementMode.None)));
-        BrowserKind browser = Enum.Parse<BrowserKind>(step.Arguments.GetValueOrDefault("browser", nameof(BrowserKind.Default)));
-        string[] urls = StepArguments.List(step.Arguments, "urls");
-        bool avoidDuplicateTabs = step.Arguments.GetValueOrDefault("avoidDuplicateTabs") == "True";
-        IReadOnlyList<BrowserProfileConfig> profiles = StepArguments.Profiles(step.Arguments.GetValueOrDefault("profilesJson", "[]"));
-
+        BrowserContextArguments arguments = BrowserContextArguments.From(step.Arguments);
         BrowserContextRequest request = new(
-            mode,
-            browser,
-            urls,
-            avoidDuplicateTabs,
-            profiles,
+            arguments.Mode,
+            arguments.Browser,
+            arguments.Urls,
+            arguments.AvoidDuplicateTabs,
+            arguments.Profiles,
             StepResults.WithReportingHeadroom(step.Timeout),
-            step.Arguments.GetValueOrDefault("contextId"),
-            StepArguments.Strings(step.Arguments.GetValueOrDefault("rememberUrlsJson", "[]")));
+            arguments.ContextId,
+            arguments.RememberUrls);
         BrowserLaunchOutcome outcome = await this.browserLauncher.ManageBrowserContextAsync(request, cancellationToken).ConfigureAwait(false);
 
         DateTimeOffset completedAt = this.clock.UtcNow;

@@ -1,8 +1,6 @@
-using System.Text.Json;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
-using ContextSwitcher.Core.Serialization;
 
 namespace ContextSwitcher.Core.Automation;
 
@@ -111,7 +109,7 @@ public sealed class AutomationPlanBuilder
             "Stop Docker resources",
             DockerTimeout,
             criticalTypes,
-            new Dictionary<string, string> { ["containers"] = List(containers) }));
+            new ContainersArguments(containers)));
     }
 
     /// <summary>
@@ -145,13 +143,7 @@ public sealed class AutomationPlanBuilder
             "Close browser tabs",
             CloseTabsTimeout,
             criticalTypes,
-            new Dictionary<string, string>
-            {
-                ["contextId"] = previous.Id,
-                ["browser"] = browser.ToString(),
-                ["closeUrlsJson"] = JsonSerializer.Serialize(leaving.CloseUrls, ContextSwitcherJson.CompactOptions),
-                ["keepUrlsJson"] = JsonSerializer.Serialize(keep, ContextSwitcherJson.CompactOptions)
-            }));
+            new CloseTabsArguments(browser, leaving.CloseUrls, keep, previous.Id)));
     }
 
     /// <summary>
@@ -183,7 +175,7 @@ public sealed class AutomationPlanBuilder
             "Close applications",
             QuitAppTimeoutPerApp * apps.Count,
             criticalTypes,
-            new Dictionary<string, string> { ["apps"] = List(apps) }));
+            new AppsArguments(apps)));
     }
 
     /// <summary>
@@ -212,7 +204,7 @@ public sealed class AutomationPlanBuilder
             "Hide applications",
             HideAppsTimeout,
             criticalTypes,
-            new Dictionary<string, string> { ["apps"] = List(apps) }));
+            new AppsArguments(apps)));
     }
 
     private static void AddSetFocusMode(
@@ -240,15 +232,10 @@ public sealed class AutomationPlanBuilder
             "Set Focus mode",
             FocusTimeout,
             criticalTypes,
-            new Dictionary<string, string>
-            {
-                ["enabled"] = targetUsesFocus.ToString(),
-                ["modeName"] = target?.Focus.ModeName ?? string.Empty,
-
-                // What to turn off when the target wants no Focus: the mode the profile being left
-                // turned on, each having its own Off Shortcut.
-                ["previousModeName"] = previous is not null && UsesFocus(previous) ? previous.Focus.ModeName.Trim() : string.Empty
-            }));
+            new FocusArguments(
+                targetUsesFocus,
+                target?.Focus.ModeName ?? string.Empty,
+                previous is not null && UsesFocus(previous) ? previous.Focus.ModeName.Trim() : string.Empty)));
     }
 
     /// <summary>
@@ -277,7 +264,7 @@ public sealed class AutomationPlanBuilder
             "Launch applications",
             LaunchAppTimeoutPerApp * apps.Count,
             criticalTypes,
-            new Dictionary<string, string> { ["apps"] = List(apps) }));
+            new AppsArguments(apps)));
     }
 
     /// <summary>
@@ -294,12 +281,7 @@ public sealed class AutomationPlanBuilder
                 "Close other browser tabs",
                 CloseTabsTimeout,
                 criticalTypes,
-                new Dictionary<string, string>
-                {
-                    ["browser"] = browser.Key.ToString(),
-                    ["closeUrlsJson"] = JsonSerializer.Serialize(browser.Select(tab => tab.Url).Distinct(StringComparer.Ordinal).ToList(), ContextSwitcherJson.CompactOptions),
-                    ["keepUrlsJson"] = "[]"
-                }));
+                new CloseTabsArguments(browser.Key, browser.Select(tab => tab.Url).Distinct(StringComparer.Ordinal).ToList(), [], ContextId: null)));
         }
     }
 
@@ -329,19 +311,14 @@ public sealed class AutomationPlanBuilder
             "Manage browser context",
             BrowserContextTimeout,
             criticalTypes,
-            new Dictionary<string, string>
-            {
-                ["contextId"] = target.Id,
-                ["mode"] = browser.Mode.ToString(),
-                ["browser"] = resolve(browser.Browser).ToString(),
-                ["urls"] = List(browser.Urls),
-
-                // The pages that close on leaving: the tabs opened for them are remembered, in a
-                // browser that can say which tab is which, so they close wherever they have gone.
-                ["rememberUrlsJson"] = List(browser.Mode == BrowserManagementMode.Urls ? browser.CloseUrls : []),
-                ["avoidDuplicateTabs"] = browser.AvoidDuplicateTabs.ToString(),
-                ["profilesJson"] = JsonSerializer.Serialize(browser.Profiles, ContextSwitcherJson.CompactOptions)
-            }));
+            new BrowserContextArguments(
+                target.Id,
+                browser.Mode,
+                resolve(browser.Browser),
+                browser.Urls,
+                browser.Mode == BrowserManagementMode.Urls ? browser.CloseUrls : [],
+                browser.AvoidDuplicateTabs,
+                browser.Profiles)));
     }
 
     private static void AddStartDockerResources(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
@@ -357,7 +334,7 @@ public sealed class AutomationPlanBuilder
             "Start Docker resources",
             DockerTimeout,
             criticalTypes,
-            new Dictionary<string, string> { ["containers"] = List(target.Docker.Start) }));
+            new ContainersArguments(target.Docker.Start)));
     }
 
     private static void AddControlMedia(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
@@ -373,20 +350,8 @@ public sealed class AutomationPlanBuilder
             "Control media",
             MediaTimeout,
             criticalTypes,
-            new Dictionary<string, string>
-            {
-                ["player"] = target.Media.Player.ToString(),
-                ["playlist"] = target.Media.Playlist,
-                ["autoPlay"] = target.Media.AutoPlay.ToString()
-            }));
+            new MediaArguments(target.Media.Player, target.Media.Playlist, target.Media.AutoPlay)));
     }
-
-    /// <summary>
-    /// A list argument, as JSON. Lists used to be joined with commas, which split any address that
-    /// held one - a map's coordinates, a query's values - into pieces that opened nothing.
-    /// </summary>
-    private static string List(IReadOnlyList<string> values) =>
-        JsonSerializer.Serialize(values, ContextSwitcherJson.CompactOptions);
 
     private static AutomationStep CreateStep(
         AutomationStepType type,
@@ -394,7 +359,7 @@ public sealed class AutomationPlanBuilder
         string displayName,
         TimeSpan timeout,
         HashSet<string> criticalTypes,
-        IReadOnlyDictionary<string, string> arguments)
+        IStepArguments arguments)
     {
         return new AutomationStep(
             Id: $"{type}.{contextId}",
@@ -402,6 +367,6 @@ public sealed class AutomationPlanBuilder
             DisplayName: displayName,
             IsCritical: criticalTypes.Contains(type.ToString()),
             Timeout: timeout,
-            Arguments: arguments);
+            Arguments: arguments.ToDictionary());
     }
 }

@@ -30,9 +30,7 @@ public sealed class ControlMediaHandler : IStepHandler
         ArgumentNullException.ThrowIfNull(step);
 
         DateTimeOffset startedAt = this.clock.UtcNow;
-        string player = step.Arguments.GetValueOrDefault("player", nameof(MediaPlayerKind.None));
-        string playlist = step.Arguments.GetValueOrDefault("playlist", string.Empty);
-        bool autoPlay = step.Arguments.GetValueOrDefault("autoPlay") == "True";
+        (MediaPlayerKind player, string playlist, bool autoPlay) = MediaArguments.From(step.Arguments);
 
         if (!autoPlay)
         {
@@ -52,8 +50,8 @@ public sealed class ControlMediaHandler : IStepHandler
 
         return player switch
         {
-            nameof(MediaPlayerKind.AppleMusic) => await this.PlayAppleMusicAsync(step, playlist, startedAt, cancellationToken).ConfigureAwait(false),
-            nameof(MediaPlayerKind.Spotify) => await this.PlaySpotifyAsync(step, SpotifyLink.ToUri(playlist), startedAt, cancellationToken).ConfigureAwait(false),
+            MediaPlayerKind.AppleMusic => await this.PlayAppleMusicAsync(step, playlist, startedAt, cancellationToken).ConfigureAwait(false),
+            MediaPlayerKind.Spotify => await this.PlaySpotifyAsync(step, SpotifyLink.ToUri(playlist), startedAt, cancellationToken).ConfigureAwait(false),
             _ => StepResults.Succeeded(step, "No media player configured.", startedAt, this.clock.UtcNow)
         };
     }

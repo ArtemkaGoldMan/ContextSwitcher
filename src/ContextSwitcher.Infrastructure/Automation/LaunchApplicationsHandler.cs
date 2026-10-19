@@ -29,14 +29,14 @@ public sealed class LaunchApplicationsHandler : IStepHandler
         ArgumentNullException.ThrowIfNull(step);
 
         DateTimeOffset startedAt = this.clock.UtcNow;
-        string[] apps = StepArguments.List(step.Arguments, "apps");
+        IReadOnlyList<string> apps = AppsArguments.From(step.Arguments).Apps;
         List<string> failedApps = [];
         List<string> notInstalled = [];
         StringBuilder standardError = new();
 
         // The same per-app split as closing: the plan builds 15s x app count, so no single slow
         // launch may spend the budget the apps after it still need.
-        TimeSpan perApp = StepResults.WithReportingHeadroom(step.Timeout) / Math.Max(apps.Length, 1);
+        TimeSpan perApp = StepResults.WithReportingHeadroom(step.Timeout) / Math.Max(apps.Count, 1);
 
         // Launched concurrently for the same reason as the quits: each launch is independent of the
         // others, and the per-app budget means running them together costs the slowest launch rather

@@ -41,7 +41,7 @@ public sealed class DockerContainersHandler : IStepHandler
         ArgumentNullException.ThrowIfNull(step);
 
         DateTimeOffset startedAt = this.clock.UtcNow;
-        string[] containers = StepArguments.List(step.Arguments, "containers");
+        IReadOnlyList<string> containers = ContainersArguments.From(step.Arguments).Containers;
 
         List<string> arguments = [this.command, .. containers];
         ProcessResult result = await this.processRunner
