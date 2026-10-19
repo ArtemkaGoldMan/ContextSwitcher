@@ -569,7 +569,7 @@ public sealed class AutomationStepExecutorTests
         // No wait between "is it still running?" checks, so a test of an app that never quits does
         // not sit through the real interval. Never the real hider: it would hide this Mac's apps -
         // nor the real processes, whose windows are this Mac's.
-        BrowserLauncher browser = new(processRunner, scriptRunner);
+        BrowserLauncher browser = new(new MacBrowserControl(processRunner, scriptRunner), new FakeOpenedTabsStore(), new FakeBrowserRuns(), new TestLogger());
         return new AutomationStepExecutor(
             [
                 new CloseApplicationsHandler(new MacAppQuitter(scriptRunner), processes ?? new FakeAppProcesses(), clock, quitConfirmInterval: TimeSpan.Zero),

@@ -8,10 +8,10 @@ namespace ContextSwitcher.Infrastructure.Automation;
 /// <summary>Opens the pages, or the browser profiles, of the context switched to.</summary>
 public sealed class ManageBrowserContextHandler : IStepHandler
 {
-    private readonly BrowserLauncher browserLauncher;
+    private readonly IBrowserLauncher browserLauncher;
     private readonly IClock clock;
 
-    public ManageBrowserContextHandler(BrowserLauncher browserLauncher, IClock clock)
+    public ManageBrowserContextHandler(IBrowserLauncher browserLauncher, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(browserLauncher);
         ArgumentNullException.ThrowIfNull(clock);

@@ -3,7 +3,7 @@ using ContextSwitcher.Core.Configuration;
 namespace ContextSwitcher.Infrastructure.Browser;
 
 /// <summary>
-/// Everything <see cref="BrowserLauncher"/> needs to manage a context's browser state for one
+/// Everything <see cref="IBrowserLauncher"/> needs to manage a context's browser state for one
 /// switch, decoded from a <c>ManageBrowserContext</c> automation step's arguments.
 /// </summary>
 /// <param name="ContextId">The profile being entered, under which the tabs it opens are remembered.</param>

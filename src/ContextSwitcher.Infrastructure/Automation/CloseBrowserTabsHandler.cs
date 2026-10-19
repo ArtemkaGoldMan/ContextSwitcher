@@ -8,10 +8,10 @@ namespace ContextSwitcher.Infrastructure.Automation;
 /// <summary>Closes the tabs of the pages the context being left lists to close.</summary>
 public sealed class CloseBrowserTabsHandler : IStepHandler
 {
-    private readonly BrowserLauncher browserLauncher;
+    private readonly IBrowserLauncher browserLauncher;
     private readonly IClock clock;
 
-    public CloseBrowserTabsHandler(BrowserLauncher browserLauncher, IClock clock)
+    public CloseBrowserTabsHandler(IBrowserLauncher browserLauncher, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(browserLauncher);
         ArgumentNullException.ThrowIfNull(clock);

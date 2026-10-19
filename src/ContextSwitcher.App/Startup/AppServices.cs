@@ -72,11 +72,7 @@ public static class AppServices
         services.AddSingleton(provider => new AutomationPlanBuilder(provider.GetRequiredService<IDefaultBrowser>()));
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IOpenedTabsStore, OpenedTabsStore>();
-        services.AddSingleton(provider => new BrowserLauncher(
-            provider.GetRequiredService<IProcessRunner>(),
-            provider.GetRequiredService<IScriptRunner>(),
-            provider.GetRequiredService<IOpenedTabsStore>(),
-            provider.GetRequiredService<IBrowserRuns>()));
+        services.AddSingleton<IBrowserLauncher, BrowserLauncher>();
 
         // What runs each type of step; a type with none is reported as skipped. A new type of step is
         // a new handler and a line here.
@@ -190,6 +186,7 @@ public static class AppServices
         services.AddSingleton<ILoginItem, MacLoginItem>();
         services.AddSingleton<IScriptRunner, AppleScriptRunner>();
         services.AddSingleton<IBrowserRuns, ProcessBrowserRuns>();
+        services.AddSingleton<IBrowserControl, MacBrowserControl>();
         services.AddSingleton<IApplicationHider, MacApplicationHider>();
         services.AddSingleton<IAppProcesses, MacAppProcesses>();
         services.AddSingleton<IAppLauncher, MacAppLauncher>();
