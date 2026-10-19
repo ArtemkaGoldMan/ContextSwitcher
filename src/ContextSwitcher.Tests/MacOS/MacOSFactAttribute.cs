@@ -1,8 +1,8 @@
 namespace ContextSwitcher.Tests.MacOS;
 
 /// <summary>
-/// A test of macOS itself - <c>osascript</c>, AppKit, Launch Services - which has nothing to ask
-/// anywhere else, so it is skipped there and says why.
+/// A test that needs macOS - <c>osascript</c>, AppKit, Launch Services, a home folder given through
+/// <c>HOME</c> - and has nothing to ask anywhere else, so it is skipped there and says why.
 /// </summary>
 public sealed class MacOSFactAttribute : FactAttribute
 {

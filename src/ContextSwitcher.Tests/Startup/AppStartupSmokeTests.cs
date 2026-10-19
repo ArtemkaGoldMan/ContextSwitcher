@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using ContextSwitcher.Tests.MacOS;
 
 namespace ContextSwitcher.Tests.Startup;
 
@@ -49,9 +50,10 @@ public sealed class AppStartupSmokeTests : IDisposable
 
     /// <summary>
     /// Run from the code, the app keeps to its own folder and never opens the installed app's - which
-    /// is what made a fresh install show the profiles being worked on.
+    /// is what made a fresh install show the profiles being worked on. Only on macOS: Windows looks the
+    /// home folder up for the user, whatever HOME says, so there a test can't give the app one.
     /// </summary>
-    [Fact]
+    [MacOSFact]
     public async Task ADevelopmentBuildKeepsToItsOwnFolder()
     {
         await this.RunAsync("validate-config");
@@ -99,12 +101,18 @@ public sealed class AppStartupSmokeTests : IDisposable
             RedirectStandardError = true,
             UseShellExecute = false
         };
-        // The home folder: HOME on macOS, USERPROFILE on Windows.
         start.Environment["HOME"] = this.home;
-        start.Environment["USERPROFILE"] = this.home;
 
         // Only what the test asks for: one set in the shell running the tests would send the app elsewhere.
         start.Environment.Remove("CONTEXTSWITCHER_CONFIG_DIR");
+
+        // Windows looks the home folder up for the user, whatever HOME or USERPROFILE say, so there the app
+        // is told its folder outright - or it would use the real one of whoever runs the tests.
+        if (OperatingSystem.IsWindows())
+        {
+            start.Environment["CONTEXTSWITCHER_CONFIG_DIR"] = this.ConfigDirectory;
+        }
+
         foreach ((string name, string value) in environment)
         {
             start.Environment[name] = value;
