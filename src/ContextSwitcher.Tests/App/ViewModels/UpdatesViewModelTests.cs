@@ -1,3 +1,4 @@
+using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.ProcessExecution;
@@ -313,5 +314,5 @@ public sealed class UpdatesViewModelTests
     }
 
     private UpdatesViewModel Create() =>
-        new(this.releases, this.updater, this.processRunner, this.notifications, new Version(0, 1, 0), () => new DateTimeOffset(2026, 10, 10, 14, 32, 0, TimeSpan.Zero));
+        new(new AppState(), this.releases, this.updater, this.processRunner, this.notifications, new Version(0, 1, 0), () => new DateTimeOffset(2026, 10, 10, 14, 32, 0, TimeSpan.Zero));
 }

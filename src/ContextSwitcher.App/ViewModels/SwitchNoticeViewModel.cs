@@ -1,4 +1,4 @@
-using ContextSwitcher.App.Startup;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.App.Resources;
 using ContextSwitcher.Core.Messages;
@@ -20,6 +20,7 @@ namespace ContextSwitcher.App.ViewModels;
 /// </summary>
 public sealed class SwitchNoticeViewModel : ViewModelBase, IDisposable
 {
+    private readonly IAppState appState;
     private readonly DateTimeOffset since;
     private readonly Func<DateTimeOffset, string, Task>? forceQuit;
 
@@ -32,16 +33,18 @@ public sealed class SwitchNoticeViewModel : ViewModelBase, IDisposable
     private IReadOnlyList<NoticeLine> lines = [];
     private bool showsRejection;
 
+    /// <param name="appState">Where the last switch's outcome comes from, and the profiles' names.</param>
     /// <param name="since">When the app started: switches that finished earlier are not news.</param>
     /// <param name="forceQuit">Ends an app by force, as asked from a line: the switch's completion time and the app.</param>
-    public SwitchNoticeViewModel(DateTimeOffset since, Func<DateTimeOffset, string, Task>? forceQuit = null)
+    public SwitchNoticeViewModel(IAppState appState, DateTimeOffset since, Func<DateTimeOffset, string, Task>? forceQuit = null)
     {
+        this.appState = appState;
         this.since = since;
         this.forceQuit = forceQuit;
         this.DismissCommand = new RelayCommand(() => this.IsShown = false);
 
-        this.OnStateChanged(AppHost.State);
-        AppHost.StateChanged += this.OnAppStateChanged;
+        this.OnStateChanged(this.appState.State);
+        this.appState.StateChanged += this.OnAppStateChanged;
     }
 
     public bool IsShown
@@ -91,22 +94,17 @@ public sealed class SwitchNoticeViewModel : ViewModelBase, IDisposable
     /// </summary>
     public void ShowRejected(string title, string message, DateTimeOffset at)
     {
-        this.noticeFor = AppHost.State?.LastSwitchCompletedAt;
+        this.noticeFor = this.appState.State.LastSwitchCompletedAt;
         this.Show(title, [new NoticeLine(message)], at, isFailure: true);
         this.showsRejection = true;
     }
 
-    public void Dispose() => AppHost.StateChanged -= this.OnAppStateChanged;
+    public void Dispose() => this.appState.StateChanged -= this.OnAppStateChanged;
 
-    private void OnAppStateChanged(object? sender, EventArgs e) => this.OnStateChanged(AppHost.State);
+    private void OnAppStateChanged(object? sender, EventArgs e) => this.OnStateChanged(this.appState.State);
 
-    private void OnStateChanged(CurrentContextState? state)
+    private void OnStateChanged(CurrentContextState state)
     {
-        if (state is null)
-        {
-            return;
-        }
-
         // The state is published again whenever it is re-read; only a new switch makes a new card,
         // which also keeps a closed card closed. The same switch can come back with its lines
         // changed, which an open card shows - unless it is saying a switch was turned away.
@@ -134,7 +132,7 @@ public sealed class SwitchNoticeViewModel : ViewModelBase, IDisposable
         // With no profile current, the active one was turned off: the problems are from leaving it.
         bool turnedOff = string.IsNullOrEmpty(state.CurrentContextId);
         string subjectId = (turnedOff ? state.PreviousContextId : state.CurrentContextId) ?? string.Empty;
-        string name = AppHost.Configuration?.Contexts.FirstOrDefault(c => c.Id == subjectId)?.DisplayName ?? subjectId;
+        string name = this.appState.Configuration.Contexts.FirstOrDefault(c => c.Id == subjectId)?.DisplayName ?? subjectId;
         string title = (turnedOff, failed) switch
         {
             (true, true) => Localized.Format(Strings.Notice_CouldNotTurnOff, name),

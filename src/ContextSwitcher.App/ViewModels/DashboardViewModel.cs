@@ -1,5 +1,5 @@
 using Avalonia.Threading;
-using ContextSwitcher.App.Startup;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Core.Automation;
@@ -19,6 +19,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
 {
     private const int BalanceChartDays = 7;
 
+    private readonly IAppState appState;
     private readonly IContextSwitchService switchService;
     private readonly IAnalyticsService analyticsService;
     private readonly IProcessRunner processRunner;
@@ -42,11 +43,13 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     private IReadOnlyList<string> configurationWarnings = [];
 
     public DashboardViewModel(
+        IAppState appState,
         IContextSwitchService switchService,
         IAnalyticsService analyticsService,
         IProcessRunner processRunner,
         IClock clock)
     {
+        this.appState = appState;
         this.switchService = switchService;
         this.analyticsService = analyticsService;
         this.processRunner = processRunner;
@@ -61,11 +64,11 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         this.CloseCommand = new RelayCommand(() => this.DismissRequested?.Invoke(this, EventArgs.Empty));
 
         this.RefreshFromConfiguration();
-        this.ApplyState(AppHost.State);
+        this.ApplyState(this.appState.State);
 
 
-        AppHost.ConfigurationChanged += this.OnConfigurationChanged;
-        AppHost.StateChanged += this.OnStateChanged;
+        this.appState.ConfigurationChanged += this.OnConfigurationChanged;
+        this.appState.StateChanged += this.OnStateChanged;
 
         _ = this.LoadBalanceChartAsync();
     }
@@ -262,25 +265,25 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         this.elapsedTimer.Stop();
-        AppHost.ConfigurationChanged -= this.OnConfigurationChanged;
-        AppHost.StateChanged -= this.OnStateChanged;
+        this.appState.ConfigurationChanged -= this.OnConfigurationChanged;
+        this.appState.StateChanged -= this.OnStateChanged;
     }
 
     private void OnConfigurationChanged(object? sender, EventArgs e)
     {
         this.RefreshFromConfiguration();
-        this.ApplyState(AppHost.State);
+        this.ApplyState(this.appState.State);
     }
 
     private void OnStateChanged(object? sender, EventArgs e)
     {
-        this.ApplyState(AppHost.State);
+        this.ApplyState(this.appState.State);
         _ = this.LoadBalanceChartAsync();
     }
 
     private void RefreshFromConfiguration()
     {
-        this.SwitchButtons = AppHost.Configuration.Contexts
+        this.SwitchButtons = this.appState.Configuration.Contexts
             .Select(context => new SwitchButtonViewModel(
                 context.Id,
                 context.DisplayName,
@@ -289,7 +292,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
                 new AsyncRelayCommand(() => this.SwitchToAsync(context.Id), () => !this.IsSwitching)))
             .ToList();
 
-        this.ConfigurationWarnings = AppHost.ConfigurationValidation.Errors
+        this.ConfigurationWarnings = this.appState.ConfigurationValidation.Errors
             .Select(MessageText.Of)
             .ToList();
     }
@@ -306,7 +309,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
         {
             // The active profile's button turns it off.
             ContextSwitchResult result = await this.switchService
-                .SwitchAsync(ContextSwitchRequest.ForClickOn(contextId, AppHost.State.CurrentContextId, ContextSwitchSource.Dashboard), CancellationToken.None)
+                .SwitchAsync(ContextSwitchRequest.ForClickOn(contextId, this.appState.State.CurrentContextId, ContextSwitchSource.Dashboard), CancellationToken.None)
                 .ConfigureAwait(true);
 
             // Behave like a menu: a clean switch closes the popover. Anything worth reading - a
@@ -328,12 +331,12 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
             .GetDailyBalanceAsync(BalanceChartDays, CancellationToken.None)
             .ConfigureAwait(true);
 
-        this.BalanceChart = BalanceChartFactory.Build(summaries, AppHost.Configuration.Contexts, barAreaHeight: 56, labelFormat: "ddd");
+        this.BalanceChart = BalanceChartFactory.Build(summaries, this.appState.Configuration.Contexts, barAreaHeight: 56, labelFormat: "ddd");
     }
 
     private void ApplyState(CurrentContextState state)
     {
-        ContextDefinition? active = AppHost.Configuration.Contexts
+        ContextDefinition? active = this.appState.Configuration.Contexts
             .FirstOrDefault(context => context.Id == state.CurrentContextId);
 
         this.ActiveContextDisplayName = active?.DisplayName ?? Strings.Dashboard_NoProfile;

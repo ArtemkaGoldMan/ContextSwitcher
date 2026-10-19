@@ -1,6 +1,5 @@
 using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
@@ -23,6 +22,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     /// <summary>How long the detailed log stays on once it is turned on.</summary>
     public static readonly TimeSpan DetailedFor = TimeSpan.FromDays(7);
 
+    private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private readonly IProcessRunner processRunner;
     private readonly DiagnosticsSources? sources;
@@ -31,14 +31,17 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     private string? contactMessage;
 
     public SettingsDiagnosticsViewModel(
+        IAppState appState,
         ConfigurationStore configurationStore,
         IProcessRunner processRunner,
         DiagnosticsSources? sources = null,
         Func<bool?>? automation = null)
     {
+        ArgumentNullException.ThrowIfNull(appState);
         ArgumentNullException.ThrowIfNull(configurationStore);
         ArgumentNullException.ThrowIfNull(processRunner);
 
+        this.appState = appState;
         this.configurationStore = configurationStore;
         this.processRunner = processRunner;
         this.sources = sources;
@@ -84,7 +87,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     /// <summary>Whether everything is being written to the log, as it happens, for now.</summary>
     public bool DetailedLog
     {
-        get => AppHost.Configuration.DetailedLogUntil is { } until && until > this.Now;
+        get => this.appState.Configuration.DetailedLogUntil is { } until && until > this.Now;
         set
         {
             if (value != this.DetailedLog)
@@ -95,7 +98,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     }
 
     /// <summary>"On until 21.10.2026." while it is on; nothing otherwise.</summary>
-    public string DetailedLogStatus => this.DetailedLog && AppHost.Configuration.DetailedLogUntil is { } until
+    public string DetailedLogStatus => this.DetailedLog && this.appState.Configuration.DetailedLogUntil is { } until
         ? Localized.Format(Strings.Settings_DetailedLog_Until, until.ToLocalTime())
         : string.Empty;
 
@@ -128,7 +131,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
 
     private async Task SetDetailedLogAsync(bool on)
     {
-        AppConfiguration updated = AppHost.Configuration with { DetailedLogUntil = on ? this.Now + DetailedFor : null };
+        AppConfiguration updated = this.appState.Configuration with { DetailedLogUntil = on ? this.Now + DetailedFor : null };
         try
         {
             ConfigurationSaveResult result = await this.configurationStore.SaveAsync(updated, CancellationToken.None).ConfigureAwait(true);
@@ -210,9 +213,9 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
 
         return DiagnosticsReport.Build(new DiagnosticsInput(
             this.Run(),
-            AppHost.Configuration,
+            this.appState.Configuration,
             this.automation(),
-            AppHost.ConfigurationValidation?.Errors.Count ?? 0,
+            this.appState.ConfigurationValidation.Errors.Count,
             log,
             this.sources?.Pending() ?? [],
             this.Now));

@@ -1,16 +1,16 @@
-using ContextSwitcher.App.Startup;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Messages;
-using ContextSwitcher.Tests.App;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class SwitchNoticeViewModelTests
 {
+    private readonly AppState appState = new();
+
     private static readonly DateTimeOffset Started = new(2026, 10, 10, 9, 0, 0, TimeSpan.Zero);
 
     public SwitchNoticeViewModelTests()
@@ -24,16 +24,16 @@ public sealed class SwitchNoticeViewModelTests
                 new ContextDefinition { Id = "personal", DisplayName = "Personal", AccentColor = "#20A67A" }
             ]
         };
-        AppHost.UpdateConfiguration(configuration, new ConfigurationValidator().Validate(configuration));
-        AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
+        this.appState.UpdateConfiguration(configuration, new ConfigurationValidator().Validate(configuration));
+        this.appState.UpdateState(new CurrentContextState { CurrentContextId = "work" });
     }
 
     [Fact]
     public void ASwitchWithWarningsShowsThemUnderTheProfilesName()
     {
-        using SwitchNoticeViewModel notice = new(Started);
+        using SwitchNoticeViewModel notice = new(this.appState, Started);
 
-        AppHost.UpdateState(Switched("personal", ContextSwitchStatus.SucceededWithWarnings, Started.AddMinutes(5), "Could not close Slack."));
+        this.appState.UpdateState(Switched("personal", ContextSwitchStatus.SucceededWithWarnings, Started.AddMinutes(5), "Could not close Slack."));
 
         Assert.True(notice.IsShown);
         Assert.False(notice.IsFailure);
@@ -44,9 +44,9 @@ public sealed class SwitchNoticeViewModelTests
     [Fact]
     public void AFailedSwitchShowsAsAFailure()
     {
-        using SwitchNoticeViewModel notice = new(Started);
+        using SwitchNoticeViewModel notice = new(this.appState, Started);
 
-        AppHost.UpdateState(Switched("personal", ContextSwitchStatus.Failed, Started.AddMinutes(5), "Docker container 'db' did not start."));
+        this.appState.UpdateState(Switched("personal", ContextSwitchStatus.Failed, Started.AddMinutes(5), "Docker container 'db' did not start."));
 
         Assert.True(notice.IsShown);
         Assert.True(notice.IsFailure);
@@ -56,9 +56,9 @@ public sealed class SwitchNoticeViewModelTests
     [Fact]
     public void ACleanSwitchShowsNothing()
     {
-        using SwitchNoticeViewModel notice = new(Started);
+        using SwitchNoticeViewModel notice = new(this.appState, Started);
 
-        AppHost.UpdateState(Switched("personal", ContextSwitchStatus.Succeeded, Started.AddMinutes(5)));
+        this.appState.UpdateState(Switched("personal", ContextSwitchStatus.Succeeded, Started.AddMinutes(5)));
 
         Assert.False(notice.IsShown);
     }
@@ -67,10 +67,10 @@ public sealed class SwitchNoticeViewModelTests
     [Fact]
     public void TheNextCleanSwitchTakesTheNoticeAway()
     {
-        using SwitchNoticeViewModel notice = new(Started);
-        AppHost.UpdateState(Switched("personal", ContextSwitchStatus.SucceededWithWarnings, Started.AddMinutes(5), "Could not close Slack."));
+        using SwitchNoticeViewModel notice = new(this.appState, Started);
+        this.appState.UpdateState(Switched("personal", ContextSwitchStatus.SucceededWithWarnings, Started.AddMinutes(5), "Could not close Slack."));
 
-        AppHost.UpdateState(Switched("work", ContextSwitchStatus.Succeeded, Started.AddMinutes(9)));
+        this.appState.UpdateState(Switched("work", ContextSwitchStatus.Succeeded, Started.AddMinutes(9)));
 
         Assert.False(notice.IsShown);
     }
@@ -82,10 +82,10 @@ public sealed class SwitchNoticeViewModelTests
     [Fact]
     public void ProblemsFromBeforeTheAppStartedAreNotShown()
     {
-        AppHost.UpdateState(Switched("personal", ContextSwitchStatus.SucceededWithWarnings, Started.AddHours(-20), "Could not close Slack."));
+        this.appState.UpdateState(Switched("personal", ContextSwitchStatus.SucceededWithWarnings, Started.AddHours(-20), "Could not close Slack."));
 
-        using SwitchNoticeViewModel notice = new(Started);
-        AppHost.UpdateState(AppHost.State with { });
+        using SwitchNoticeViewModel notice = new(this.appState, Started);
+        this.appState.UpdateState(this.appState.State with { });
 
         Assert.False(notice.IsShown);
     }
@@ -97,15 +97,15 @@ public sealed class SwitchNoticeViewModelTests
     [Fact]
     public void AClosedNoticeStaysClosedUntilTheNextSwitch()
     {
-        using SwitchNoticeViewModel notice = new(Started);
-        AppHost.UpdateState(Switched("personal", ContextSwitchStatus.SucceededWithWarnings, Started.AddMinutes(5), "Could not close Slack."));
+        using SwitchNoticeViewModel notice = new(this.appState, Started);
+        this.appState.UpdateState(Switched("personal", ContextSwitchStatus.SucceededWithWarnings, Started.AddMinutes(5), "Could not close Slack."));
 
         notice.DismissCommand.Execute(null);
-        AppHost.UpdateState(AppHost.State with { });
+        this.appState.UpdateState(this.appState.State with { });
 
         Assert.False(notice.IsShown);
 
-        AppHost.UpdateState(Switched("work", ContextSwitchStatus.SucceededWithWarnings, Started.AddMinutes(9), "Could not quit Music."));
+        this.appState.UpdateState(Switched("work", ContextSwitchStatus.SucceededWithWarnings, Started.AddMinutes(9), "Could not quit Music."));
 
         Assert.True(notice.IsShown);
         Assert.Equal(["Could not quit Music."], notice.Messages);
@@ -115,15 +115,15 @@ public sealed class SwitchNoticeViewModelTests
     [Fact]
     public void ARejectedSwitchIsShownUntilTheNextSwitch()
     {
-        using SwitchNoticeViewModel notice = new(Started);
+        using SwitchNoticeViewModel notice = new(this.appState, Started);
 
         notice.ShowRejected("Couldn't switch to Personal", "Another switch was still running.", Started.AddMinutes(1));
-        AppHost.UpdateState(AppHost.State with { });
+        this.appState.UpdateState(this.appState.State with { });
 
         Assert.True(notice.IsShown);
         Assert.True(notice.IsFailure);
 
-        AppHost.UpdateState(Switched("personal", ContextSwitchStatus.Succeeded, Started.AddMinutes(2)));
+        this.appState.UpdateState(Switched("personal", ContextSwitchStatus.Succeeded, Started.AddMinutes(2)));
 
         Assert.False(notice.IsShown);
     }
@@ -133,12 +133,12 @@ public sealed class SwitchNoticeViewModelTests
     [Fact]
     public void ProblemsTurningAProfileOffAreToldAsThat()
     {
-        using SwitchNoticeViewModel notice = new(Started);
+        using SwitchNoticeViewModel notice = new(this.appState, Started);
 
-        AppHost.UpdateState(Switched(string.Empty, ContextSwitchStatus.SucceededWithWarnings, Started.AddMinutes(5), "Could not close Slack.") with { PreviousContextId = "work" });
+        this.appState.UpdateState(Switched(string.Empty, ContextSwitchStatus.SucceededWithWarnings, Started.AddMinutes(5), "Could not close Slack.") with { PreviousContextId = "work" });
         Assert.Equal("Turned off Work, with warnings", notice.Title);
 
-        AppHost.UpdateState(Switched(string.Empty, ContextSwitchStatus.Failed, Started.AddMinutes(6), "Could not close Slack.") with { PreviousContextId = "work" });
+        this.appState.UpdateState(Switched(string.Empty, ContextSwitchStatus.Failed, Started.AddMinutes(6), "Could not close Slack.") with { PreviousContextId = "work" });
         Assert.Equal("Couldn't turn off Work", notice.Title);
     }
     /// <summary>
@@ -149,18 +149,18 @@ public sealed class SwitchNoticeViewModelTests
     public async Task TheOpenCardFollowsItsSwitchAsAppsQuitOrStay()
     {
         List<(DateTimeOffset, string)> forceQuit = [];
-        using SwitchNoticeViewModel notice = new(Started, (completedAt, app) =>
+        using SwitchNoticeViewModel notice = new(this.appState, Started, (completedAt, app) =>
         {
             forceQuit.Add((completedAt, app));
             return Task.CompletedTask;
         });
         DateTimeOffset completedAt = Started.AddMinutes(5);
 
-        AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StillClosing.With("Autodesk Fusion"), SwitchMessages.StillClosing.With("Steam")));
+        this.appState.UpdateState(Keyed(completedAt, SwitchMessages.StillClosing.With("Autodesk Fusion"), SwitchMessages.StillClosing.With("Steam")));
         Assert.Equal(2, notice.Lines.Count);
         Assert.DoesNotContain(notice.Lines, line => line.CanForceQuit);
 
-        AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StayedInBackground.With("Steam")));
+        this.appState.UpdateState(Keyed(completedAt, SwitchMessages.StayedInBackground.With("Steam")));
         NoticeLine steam = Assert.Single(notice.Lines);
         Assert.Equal(["Steam still hasn't quit: it is running in the background, or its window is on another desktop."], notice.Messages);
         Assert.True(steam.CanForceQuit);
@@ -168,19 +168,19 @@ public sealed class SwitchNoticeViewModelTests
         await steam.ForceQuitCommand!.ExecuteAsync(null);
         Assert.Equal([(completedAt, "Steam")], forceQuit);
 
-        AppHost.UpdateState(Keyed(completedAt) with { LastSwitchStatus = nameof(ContextSwitchStatus.Succeeded) });
+        this.appState.UpdateState(Keyed(completedAt) with { LastSwitchStatus = nameof(ContextSwitchStatus.Succeeded) });
         Assert.False(notice.IsShown);
     }
 
     [Fact]
     public void AClosedCardStaysClosedWhenItsSwitchChanges()
     {
-        using SwitchNoticeViewModel notice = new(Started);
+        using SwitchNoticeViewModel notice = new(this.appState, Started);
         DateTimeOffset completedAt = Started.AddMinutes(5);
-        AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StillClosing.With("Steam")));
+        this.appState.UpdateState(Keyed(completedAt, SwitchMessages.StillClosing.With("Steam")));
 
         notice.DismissCommand.Execute(null);
-        AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StayedInBackground.With("Steam")));
+        this.appState.UpdateState(Keyed(completedAt, SwitchMessages.StayedInBackground.With("Steam")));
 
         Assert.False(notice.IsShown);
     }
@@ -189,11 +189,11 @@ public sealed class SwitchNoticeViewModelTests
     public void ACardSayingASwitchWasTurnedAwayKeepsSayingIt()
     {
         DateTimeOffset completedAt = Started.AddMinutes(5);
-        AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StillClosing.With("Steam")));
-        using SwitchNoticeViewModel notice = new(Started);
+        this.appState.UpdateState(Keyed(completedAt, SwitchMessages.StillClosing.With("Steam")));
+        using SwitchNoticeViewModel notice = new(this.appState, Started);
 
         notice.ShowRejected("Couldn't switch to Work", "Another switch is already running.", Started.AddMinutes(6));
-        AppHost.UpdateState(Keyed(completedAt, SwitchMessages.StayedInBackground.With("Steam")));
+        this.appState.UpdateState(Keyed(completedAt, SwitchMessages.StayedInBackground.With("Steam")));
 
         Assert.Equal(["Another switch is already running."], notice.Messages);
     }

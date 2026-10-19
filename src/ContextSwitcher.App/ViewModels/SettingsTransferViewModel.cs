@@ -1,7 +1,6 @@
 using System.Text.Json;
 using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Serialization;
@@ -19,16 +18,19 @@ namespace ContextSwitcher.App.ViewModels;
 /// </summary>
 public sealed class SettingsTransferViewModel : ViewModelBase
 {
+    private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private string? message;
     private string? problem;
     private AppConfiguration? pending;
     private string? pendingName;
 
-    public SettingsTransferViewModel(ConfigurationStore configurationStore)
+    public SettingsTransferViewModel(IAppState appState, ConfigurationStore configurationStore)
     {
+        ArgumentNullException.ThrowIfNull(appState);
         ArgumentNullException.ThrowIfNull(configurationStore);
 
+        this.appState = appState;
         this.configurationStore = configurationStore;
         this.ExportCommand = new AsyncRelayCommand(this.ExportAsync);
         this.ImportCommand = new AsyncRelayCommand(this.ImportAsync);
@@ -98,7 +100,7 @@ public sealed class SettingsTransferViewModel : ViewModelBase
             Stream stream = await file.OpenAsync().ConfigureAwait(true);
             await using (stream.ConfigureAwait(true))
             {
-                await JsonSerializer.SerializeAsync(stream, AppHost.Configuration, ContextSwitcherJson.Options).ConfigureAwait(true);
+                await JsonSerializer.SerializeAsync(stream, this.appState.Configuration, ContextSwitcherJson.Options).ConfigureAwait(true);
             }
 
             this.Message = Localized.Format(Strings.Settings_Exported, file.Name);

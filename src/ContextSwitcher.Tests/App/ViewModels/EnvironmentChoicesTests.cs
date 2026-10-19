@@ -1,5 +1,4 @@
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
@@ -15,9 +14,10 @@ namespace ContextSwitcher.Tests.App.ViewModels;
 /// The fields Profile Setup used to make you type - Focus mode, playlist, browser profile folder,
 /// Docker containers, URLs - and the lists that replaced them.
 /// </summary>
-[Collection(AppHostTestCollection.Name)]
 public sealed class EnvironmentChoicesTests
 {
+    private readonly AppState appState = new();
+
     private const string Prefix = FocusSettingsViewModel.ShortcutPrefix;
 
     [Fact]
@@ -387,9 +387,9 @@ public sealed class EnvironmentChoicesTests
         Assert.Equal("spotify:playlist:abc", context.Media.Playlist);
     }
 
-    private static ProfileSetupViewModel NewProfile(FakeSystemCatalog catalog) => NewProfile(catalog, out _, out _);
+    private ProfileSetupViewModel NewProfile(FakeSystemCatalog catalog) => NewProfile(catalog, out _, out _);
 
-    private static ProfileSetupViewModel NewProfile(FakeSystemCatalog catalog, out InMemoryJsonStore jsonStore, out ConfigPaths paths)
+    private ProfileSetupViewModel NewProfile(FakeSystemCatalog catalog, out InMemoryJsonStore jsonStore, out ConfigPaths paths)
     {
         AppConfiguration configuration = new()
         {
@@ -397,13 +397,13 @@ public sealed class EnvironmentChoicesTests
             Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work", AccentColor = "#2F6FED" }]
         };
         ConfigurationValidator validator = new();
-        AppHost.UpdateConfiguration(configuration, validator.Validate(configuration));
+        this.appState.UpdateConfiguration(configuration, validator.Validate(configuration));
 
         jsonStore = new InMemoryJsonStore();
         paths = new ConfigPaths("/tmp/context-switcher-tests");
         jsonStore.Seed(paths.SettingsPath, configuration);
-        ConfigurationStore store = new(jsonStore, paths, validator, AppHost.AppState, new TestLogger());
+        ConfigurationStore store = new(jsonStore, paths, validator, this.appState, new TestLogger());
 
-        return new ProfileSetupViewModel(store, new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
+        return new ProfileSetupViewModel(this.appState, store, new FakeInstalledAppsService(), catalog, new FakeProcessRunner(), new FakeFocusShortcutInstaller(), existing: null);
     }
 }

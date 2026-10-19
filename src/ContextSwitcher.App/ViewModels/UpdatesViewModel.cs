@@ -1,7 +1,7 @@
+using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Logging;
 using System.Reflection;
 using Avalonia.Threading;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Core.Updates;
@@ -29,6 +29,7 @@ public sealed class UpdatesViewModel : ViewModelBase
     private static readonly TimeSpan FirstCheckDelay = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan CheckInterval = TimeSpan.FromDays(1);
 
+    private readonly IAppState appState;
     private readonly IReleaseSource releaseSource;
     private readonly IAppUpdater updater;
     private readonly IProcessRunner processRunner;
@@ -43,6 +44,7 @@ public sealed class UpdatesViewModel : ViewModelBase
     private DispatcherTimer? timer;
 
     public UpdatesViewModel(
+        IAppState appState,
         IReleaseSource releaseSource,
         IAppUpdater updater,
         IProcessRunner processRunner,
@@ -50,6 +52,7 @@ public sealed class UpdatesViewModel : ViewModelBase
         Version currentVersion,
         Func<DateTimeOffset>? now = null)
     {
+        this.appState = appState;
         this.releaseSource = releaseSource;
         this.updater = updater;
         this.processRunner = processRunner;
@@ -160,7 +163,7 @@ public sealed class UpdatesViewModel : ViewModelBase
         this.timer.Tick += (_, _) =>
         {
             this.timer.Interval = CheckInterval;
-            if (AppHost.Configuration.CheckForUpdates)
+            if (this.appState.Configuration.CheckForUpdates)
             {
                 _ = this.CheckAsync(userAsked: false);
             }

@@ -1,5 +1,4 @@
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
@@ -31,6 +30,7 @@ public sealed class OnboardingViewModel : ViewModelBase
         "Spotify", "Discord", "Steam", "Telegram", "WhatsApp", "Obsidian", "Photos", "Music"
     ];
 
+    private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private readonly IContextSwitchService switchService;
     private readonly ILoginItem? loginItem;
@@ -40,11 +40,13 @@ public sealed class OnboardingViewModel : ViewModelBase
     private bool isFinishing;
 
     public OnboardingViewModel(
+        IAppState appState,
         ConfigurationStore configurationStore,
         IInstalledAppsService installedAppsService,
         IContextSwitchService switchService,
         ILoginItem? loginItem = null)
     {
+        this.appState = appState;
         this.configurationStore = configurationStore;
         this.switchService = switchService;
         this.loginItem = loginItem;
@@ -181,7 +183,7 @@ public sealed class OnboardingViewModel : ViewModelBase
 
         try
         {
-            AppConfiguration updated = AppHost.Configuration with
+            AppConfiguration updated = this.appState.Configuration with
             {
                 OnboardingCompleted = true,
                 ActiveContextId = this.Work.Id,
@@ -224,7 +226,7 @@ public sealed class OnboardingViewModel : ViewModelBase
     private async Task SkipAsync()
     {
         this.ErrorMessage = null;
-        AppConfiguration updated = AppHost.Configuration with { OnboardingCompleted = true };
+        AppConfiguration updated = this.appState.Configuration with { OnboardingCompleted = true };
         await this.configurationStore.SaveAsync(updated, CancellationToken.None).ConfigureAwait(true);
         this.Completed?.Invoke(this, EventArgs.Empty);
     }

@@ -44,35 +44,6 @@ public static class AppHost
     private static ClosingAppsFollowUp? closingFollowUp;
 
     /// <summary>
-    /// The app's settings and state, which the container gives to whatever reads them. The view models
-    /// still read them through the properties below, which forward to it until they are given it too.
-    /// </summary>
-    public static IAppState AppState { get; } = new AppState();
-
-    /// <summary>Forwards to <see cref="IAppState.Configuration"/>.</summary>
-    public static AppConfiguration Configuration => AppState.Configuration;
-
-    /// <summary>Forwards to <see cref="IAppState.ConfigurationValidation"/>.</summary>
-    public static ConfigurationValidationResult ConfigurationValidation => AppState.ConfigurationValidation;
-
-    /// <summary>Forwards to <see cref="IAppState.State"/>.</summary>
-    public static CurrentContextState State => AppState.State;
-
-    /// <summary>Forwards to <see cref="IAppState.ConfigurationChanged"/>.</summary>
-    public static event EventHandler? ConfigurationChanged
-    {
-        add => AppState.ConfigurationChanged += value;
-        remove => AppState.ConfigurationChanged -= value;
-    }
-
-    /// <summary>Forwards to <see cref="IAppState.StateChanged"/>.</summary>
-    public static event EventHandler? StateChanged
-    {
-        add => AppState.StateChanged += value;
-        remove => AppState.StateChanged -= value;
-    }
-
-    /// <summary>
     /// Builds the service container and runs the synchronous startup sequence.
     /// Must be called once, before the Avalonia application starts.
     /// </summary>
@@ -82,7 +53,8 @@ public static class AppHost
 
         ServiceCollection services = new();
 
-        services.AddSingleton(AppState);
+        AppState appState = new();
+        services.AddSingleton<IAppState>(appState);
         services.AddSingleton<IClock, SystemClock>();
         AddPlatformFileServices(services);
         services.AddSingleton<IJsonStore, JsonFileStore>();
@@ -92,17 +64,13 @@ public static class AppHost
         // What happens is remembered and only a problem is written, with the trail that led to it - see
         // TrailLogger. CONTEXTSWITCHER_LOG_LEVEL=information (or debug, trace) writes from that level on
         // as it happens, for looking into something that is not a failure.
-        services.AddSingleton(provider =>
-        {
-            IAppState appState = provider.GetRequiredService<IAppState>();
-            return new TrailLogger(
-                provider.GetRequiredService<LocalJsonLogger>(),
-                () => RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), AppBuild.IsDevelopment),
+        services.AddSingleton(provider => new TrailLogger(
+            provider.GetRequiredService<LocalJsonLogger>(),
+            () => RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), AppBuild.IsDevelopment),
 
-                // Settings → Detailed log: everything is written, as it happens, until the week is up.
-                detailed: () => appState.Configuration.DetailedLogUntil is { } until && until > DateTimeOffset.UtcNow,
-                writeFrom: Enum.TryParse(Environment.GetEnvironmentVariable("CONTEXTSWITCHER_LOG_LEVEL"), ignoreCase: true, out LogLevel from) ? from : null);
-        });
+            // Settings → Detailed log: everything is written, as it happens, until the week is up.
+            detailed: () => appState.Configuration.DetailedLogUntil is { } until && until > DateTimeOffset.UtcNow,
+            writeFrom: Enum.TryParse(Environment.GetEnvironmentVariable("CONTEXTSWITCHER_LOG_LEVEL"), ignoreCase: true, out LogLevel from) ? from : null));
         services.AddSingleton<ILogger>(provider => provider.GetRequiredService<TrailLogger>());
         services.AddSingleton(provider => new DiagnosticsSources(
             provider.GetRequiredService<ConfigPaths>(),
@@ -172,6 +140,7 @@ public static class AppHost
         // switches from the moment the app started rather than from when a window first asked.
         // Its "Force quit" asks the follow-up, which is only built later - so it is found when clicked.
         services.AddSingleton(new SwitchNoticeViewModel(
+            appState,
             DateTimeOffset.UtcNow,
             (completedAt, app) => Services.GetRequiredService<ClosingAppsFollowUp>().ForceQuitAsync(completedAt, app, CancellationToken.None)));
 
@@ -186,6 +155,7 @@ public static class AppHost
             provider.GetRequiredService<HttpClient>(), provider.GetRequiredService<IProcessRunner>()));
         services.AddSingleton<ISystemNotifications, MacNotifications>();
         services.AddSingleton(provider => new UpdatesViewModel(
+            provider.GetRequiredService<IAppState>(),
             provider.GetRequiredService<IReleaseSource>(),
             provider.GetRequiredService<IAppUpdater>(),
             provider.GetRequiredService<IProcessRunner>(),
@@ -227,13 +197,6 @@ public static class AppHost
             settingsRoot: windows ? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) : null));
         services.AddSingleton<IFileReplacer>(windows ? FileReplacer.RetryingWhileHeldOpen : FileReplacer.Once);
     }
-
-    /// <summary>Forwards to <see cref="IAppState.UpdateConfiguration"/>.</summary>
-    public static void UpdateConfiguration(AppConfiguration configuration, ConfigurationValidationResult validation) =>
-        AppState.UpdateConfiguration(configuration, validation);
-
-    /// <summary>Forwards to <see cref="IAppState.UpdateState"/>.</summary>
-    public static void UpdateState(CurrentContextState state) => AppState.UpdateState(state);
 
     /// <summary>
     /// Ends the current analytics session on app shutdown. Safe to call even if none was ever

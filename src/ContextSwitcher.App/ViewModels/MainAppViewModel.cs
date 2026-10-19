@@ -13,6 +13,7 @@ namespace ContextSwitcher.App.ViewModels;
 /// </summary>
 public sealed class MainAppViewModel : ViewModelBase, IDisposable
 {
+    private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private readonly IInstalledAppsService installedAppsService;
     private readonly ISystemCatalog catalog;
@@ -23,6 +24,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
     private object currentPage;
 
     public MainAppViewModel(
+        IAppState appState,
         IContextSwitchService switchService,
         ConfigurationStore configurationStore,
         IPermissionsChecker permissionsChecker,
@@ -37,6 +39,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         ILoginItem? loginItem = null,
         DiagnosticsSources? diagnostics = null)
     {
+        this.appState = appState;
         this.focusShortcuts = focusShortcuts;
         this.defaultBrowser = defaultBrowser;
         this.configurationStore = configurationStore;
@@ -44,9 +47,9 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
         this.catalog = catalog;
         this.processRunner = processRunner;
 
-        this.Profiles = new ProfilesViewModel(switchService, configurationStore, switchNotice);
-        this.Settings = new SettingsViewModel(configurationStore, permissionsChecker, processRunner, updates, loginItem: loginItem, installedApps: installedAppsService, diagnostics: diagnostics);
-        this.Stats = new StatsViewModel(analyticsService);
+        this.Profiles = new ProfilesViewModel(appState, switchService, configurationStore, switchNotice);
+        this.Settings = new SettingsViewModel(appState, configurationStore, permissionsChecker, processRunner, updates, loginItem: loginItem, installedApps: installedAppsService, diagnostics: diagnostics);
+        this.Stats = new StatsViewModel(appState, analyticsService);
 
         this.Profiles.EditRequested += this.OnEditRequested;
 
@@ -102,7 +105,7 @@ public sealed class MainAppViewModel : ViewModelBase, IDisposable
 
     private void OnEditRequested(object? sender, ContextDefinition? context)
     {
-        ProfileSetupViewModel setup = new(this.configurationStore, this.installedAppsService, this.catalog, this.processRunner, this.focusShortcuts, context, this.defaultBrowser);
+        ProfileSetupViewModel setup = new(this.appState, this.configurationStore, this.installedAppsService, this.catalog, this.processRunner, this.focusShortcuts, context, this.defaultBrowser);
         setup.Saved += this.OnProfileSetupFinished;
         setup.CancelRequested += this.OnProfileSetupFinished;
         this.CurrentPage = setup;

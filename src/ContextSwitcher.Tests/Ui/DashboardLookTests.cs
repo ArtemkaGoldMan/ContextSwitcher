@@ -7,12 +7,10 @@ using Avalonia.VisualTree;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views;
 using ContextSwitcher.Core.Analytics;
-using ContextSwitcher.Tests.App;
 
 namespace ContextSwitcher.Tests.Ui;
 
 /// <summary>How the menu bar popover is drawn: its outline, and its chart.</summary>
-[Collection(AppHostTestCollection.Name)]
 public sealed class DashboardLookTests : UiTest
 {
     /// <summary>

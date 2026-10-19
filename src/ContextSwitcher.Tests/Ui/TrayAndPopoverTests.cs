@@ -6,7 +6,6 @@ using ContextSwitcher.App.Views;
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
-using ContextSwitcher.Tests.App;
 
 namespace ContextSwitcher.Tests.Ui;
 
@@ -15,7 +14,6 @@ namespace ContextSwitcher.Tests.Ui;
 /// activating a second window leaves the first IsActive and never raises its Deactivated - so that
 /// behaviour can only be checked against the real app.
 /// </summary>
-[Collection(AppHostTestCollection.Name)]
 public sealed class TrayAndPopoverTests : UiTest
 {
     private static readonly IReadOnlyList<ContextDefinition> TwoProfiles =
@@ -168,8 +166,8 @@ public sealed class TrayAndPopoverTests : UiTest
             DashboardViewModel dashboard = scenario.Dashboard();
             Assert.Equal(["Work", "Personal"], dashboard.SwitchButtons.Select(b => b.DisplayName));
 
-            AppConfiguration swapped = AppHost.Configuration with { Contexts = [.. AppHost.Configuration.Contexts.Reverse()] };
-            AppHost.UpdateConfiguration(swapped, new ContextSwitcher.Core.Configuration.Validation.ConfigurationValidationResult([]));
+            AppConfiguration swapped = scenario.AppState.Configuration with { Contexts = [.. scenario.AppState.Configuration.Contexts.Reverse()] };
+            scenario.AppState.UpdateConfiguration(swapped, new ContextSwitcher.Core.Configuration.Validation.ConfigurationValidationResult([]));
 
             Assert.Equal(["Personal", "Work"], dashboard.SwitchButtons.Select(b => b.DisplayName));
         });
@@ -243,7 +241,7 @@ public sealed class TrayAndPopoverTests : UiTest
         await OnUiThreadAsync(() =>
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
-            AppHost.UpdateState(new CurrentContextState
+            scenario.AppState.UpdateState(new CurrentContextState
             {
                 CurrentContextId = "work",
                 LastSwitchCompletedAt = scenario.Clock.UtcNow.AddMinutes(-5)
@@ -274,7 +272,7 @@ public sealed class TrayAndPopoverTests : UiTest
         await OnUiThreadAsync(() =>
         {
             UiScenario scenario = UiScenario.WithTwoProfiles();
-            AppHost.UpdateState(new CurrentContextState());
+            scenario.AppState.UpdateState(new CurrentContextState());
             DashboardViewModel viewModel = scenario.Dashboard();
             DashboardWindow popover = new(viewModel, () => { });
 
@@ -317,7 +315,7 @@ public sealed class TrayAndPopoverTests : UiTest
             UiScenario scenario = UiScenario.WithTwoProfiles();
             DashboardViewModel viewModel = scenario.Dashboard();
 
-            AppHost.UpdateState(new CurrentContextState
+            scenario.AppState.UpdateState(new CurrentContextState
             {
                 CurrentContextId = "personal",
                 LastSwitchStatus = nameof(ContextSwitchStatus.SucceededWithWarnings),

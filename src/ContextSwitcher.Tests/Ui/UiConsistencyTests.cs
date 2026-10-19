@@ -9,7 +9,6 @@ using ContextSwitcher.App.Views.Pages;
 using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Catalog;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Tests.App;
 
 namespace ContextSwitcher.Tests.Ui;
 
@@ -19,7 +18,6 @@ namespace ContextSwitcher.Tests.Ui;
 /// different widths with differently weighted entries, list rows with the remove button inside on
 /// one list and outside on the next - so they are measured here rather than left to review.
 /// </summary>
-[Collection(AppHostTestCollection.Name)]
 public sealed class UiConsistencyTests : UiTest
 {
     /// <summary>
@@ -34,7 +32,7 @@ public sealed class UiConsistencyTests : UiTest
         await OnUiThreadAsync(() =>
         {
             UiScenario scenario = Scenario();
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             viewModel.BrowserMode = mode;
             viewModel.Media.SelectedPlayer = viewModel.Media.Players.Single(p => p.Value == player);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, width: 760, height: 2800);
@@ -63,9 +61,9 @@ public sealed class UiConsistencyTests : UiTest
         {
             UiScenario scenario = Scenario();
             List<Button> adds = [];
-            foreach (BrowserManagementMode mode in scenario.ProfileSetup(AppHost.Configuration.Contexts[0]).BrowserModeChoices.Select(choice => choice.Value))
+            foreach (BrowserManagementMode mode in scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]).BrowserModeChoices.Select(choice => choice.Value))
             {
-                ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+                ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
                 viewModel.BrowserMode = mode;
                 Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2800);
                 ExpandSections(window);
@@ -97,7 +95,7 @@ public sealed class UiConsistencyTests : UiTest
         await OnUiThreadAsync(() =>
         {
             UiScenario scenario = Scenario();
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             viewModel.AddDockerStopCommand.Execute(null);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2800);
             ExpandSections(window);
@@ -130,7 +128,7 @@ public sealed class UiConsistencyTests : UiTest
         await OnUiThreadAsync(() =>
         {
             UiScenario scenario = Scenario();
-            ProfileSetupViewModel viewModel = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]);
+            ProfileSetupViewModel viewModel = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]);
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel }, height: 2800);
             ExpandSections(window);
 
@@ -201,7 +199,7 @@ public sealed class UiConsistencyTests : UiTest
                 new ProfilesPage { DataContext = scenario.Profiles() },
                 new SettingsPage { DataContext = scenario.Settings() },
                 new StatsPage { DataContext = scenario.Stats() },
-                new ProfileSetupPage { DataContext = scenario.ProfileSetup(AppHost.Configuration.Contexts[0]) }
+                new ProfileSetupPage { DataContext = scenario.ProfileSetup(scenario.AppState.Configuration.Contexts[0]) }
             ];
 
             foreach (Control page in pages)

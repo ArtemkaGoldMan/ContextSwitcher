@@ -1,5 +1,4 @@
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Core.Configuration;
@@ -19,8 +18,9 @@ public sealed class UiScenario
     private UiScenario(AppConfiguration configuration)
     {
         ConfigurationValidator validator = new();
-        AppHost.UpdateConfiguration(configuration, validator.Validate(configuration));
-        AppHost.UpdateState(new CurrentContextState { CurrentContextId = configuration.ActiveContextId });
+        this.AppState = new AppState();
+        this.AppState.UpdateConfiguration(configuration, validator.Validate(configuration));
+        this.AppState.UpdateState(new CurrentContextState { CurrentContextId = configuration.ActiveContextId });
 
         this.Paths = new ConfigPaths("/tmp/context-switcher-ui-tests");
         InMemoryJsonStore inner = new();
@@ -29,7 +29,7 @@ public sealed class UiScenario
         // Completes off-context the way real file IO does; the in-memory store on its own never
         // suspends, which hides anything that resumes on the wrong thread.
         this.JsonStore = new YieldingJsonStore(inner);
-        this.ConfigurationStore = new ConfigurationStore(this.JsonStore, this.Paths, validator, AppHost.AppState, new TestLogger());
+        this.ConfigurationStore = new ConfigurationStore(this.JsonStore, this.Paths, validator, this.AppState, new TestLogger());
         this.SwitchService = new StubContextSwitchService();
         this.ProcessRunner = new FakeProcessRunner();
         this.Permissions = new FakePermissionsChecker();
@@ -39,15 +39,18 @@ public sealed class UiScenario
         this.Clock = new FakeClock();
         this.Sessions = new InMemoryAnalyticsSessionStore();
         this.Analytics = new AnalyticsService(this.Clock, this.Sessions);
-        this.Notice = new SwitchNoticeViewModel(DateTimeOffset.UtcNow, (_, app) =>
+        this.Notice = new SwitchNoticeViewModel(this.AppState, DateTimeOffset.UtcNow, (_, app) =>
         {
             this.ForceQuit.Add(app);
             return Task.CompletedTask;
         });
         this.Releases = new FakeReleaseSource();
         this.Updater = new FakeAppUpdater();
-        this.Updates = new UpdatesViewModel(this.Releases, this.Updater, this.ProcessRunner, new FakeSystemNotifications(), new Version(0, 1, 0), () => new DateTimeOffset(2026, 10, 10, 14, 32, 0, TimeSpan.Zero));
+        this.Updates = new UpdatesViewModel(this.AppState, this.Releases, this.Updater, this.ProcessRunner, new FakeSystemNotifications(), new Version(0, 1, 0), () => new DateTimeOffset(2026, 10, 10, 14, 32, 0, TimeSpan.Zero));
     }
+
+    /// <summary>The scenario's settings and state, which every view model it builds reads and saves to.</summary>
+    public IAppState AppState { get; }
 
     public ConfigPaths Paths { get; }
 
@@ -102,23 +105,23 @@ public sealed class UiScenario
     public static UiScenario With(AppConfiguration configuration) => new(configuration);
 
     public MainAppViewModel MainApp() => new(
-        this.SwitchService, this.ConfigurationStore,
+        this.AppState, this.SwitchService, this.ConfigurationStore,
         this.Permissions, this.ProcessRunner, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates);
 
     public ProfilesViewModel Profiles() =>
-        new(this.SwitchService, this.ConfigurationStore);
+        new(this.AppState, this.SwitchService, this.ConfigurationStore);
 
     public SettingsViewModel Settings() =>
-        new(this.ConfigurationStore, this.Permissions, this.ProcessRunner, this.Updates);
+        new(this.AppState, this.ConfigurationStore, this.Permissions, this.ProcessRunner, this.Updates);
 
-    public StatsViewModel Stats() => new(this.Analytics);
+    public StatsViewModel Stats() => new(this.AppState, this.Analytics);
 
     public DashboardViewModel Dashboard() => new(
-        this.SwitchService, this.Analytics, this.ProcessRunner, this.Clock);
+        this.AppState, this.SwitchService, this.Analytics, this.ProcessRunner, this.Clock);
 
     public OnboardingViewModel Onboarding() =>
-        new(this.ConfigurationStore, this.InstalledApps, this.SwitchService);
+        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.SwitchService);
 
     public ProfileSetupViewModel ProfileSetup(ContextDefinition? existing = null) =>
-        new(this.ConfigurationStore, this.InstalledApps, this.Catalog, this.ProcessRunner, this.FocusShortcuts, existing);
+        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.Catalog, this.ProcessRunner, this.FocusShortcuts, existing);
 }

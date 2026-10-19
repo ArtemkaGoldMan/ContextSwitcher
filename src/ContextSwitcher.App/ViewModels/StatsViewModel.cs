@@ -1,4 +1,4 @@
-using ContextSwitcher.App.Startup;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Analytics;
 
@@ -14,19 +14,21 @@ public sealed class StatsViewModel : ViewModelBase, IDisposable
     private const int WeekDays = 7;
     private const int MonthDays = 30;
 
+    private readonly IAppState appState;
     private readonly IAnalyticsService analyticsService;
 
     private int selectedRangeDays = WeekDays;
     private BalanceChartViewModel balanceChart = BalanceChartViewModel.Empty;
 
-    public StatsViewModel(IAnalyticsService analyticsService)
+    public StatsViewModel(IAppState appState, IAnalyticsService analyticsService)
     {
+        this.appState = appState;
         this.analyticsService = analyticsService;
 
         this.SelectWeekCommand = new RelayCommand(() => this.SelectedRangeDays = WeekDays);
         this.SelectMonthCommand = new RelayCommand(() => this.SelectedRangeDays = MonthDays);
 
-        AppHost.ConfigurationChanged += this.OnConfigurationChanged;
+        this.appState.ConfigurationChanged += this.OnConfigurationChanged;
 
         _ = this.LoadAsync();
     }
@@ -70,7 +72,7 @@ public sealed class StatsViewModel : ViewModelBase, IDisposable
 
     public void Dispose()
     {
-        AppHost.ConfigurationChanged -= this.OnConfigurationChanged;
+        this.appState.ConfigurationChanged -= this.OnConfigurationChanged;
     }
 
     private void OnConfigurationChanged(object? sender, EventArgs e) => _ = this.LoadAsync();
@@ -83,6 +85,6 @@ public sealed class StatsViewModel : ViewModelBase, IDisposable
 
         // A month's thirty columns are labelled by day of month; a week's seven by weekday.
         string labelFormat = this.SelectedRangeDays > WeekDays ? "%d" : "ddd";
-        this.BalanceChart = BalanceChartFactory.Build(summaries, AppHost.Configuration.Contexts, barAreaHeight: 200, labelFormat);
+        this.BalanceChart = BalanceChartFactory.Build(summaries, this.appState.Configuration.Contexts, barAreaHeight: 200, labelFormat);
     }
 }

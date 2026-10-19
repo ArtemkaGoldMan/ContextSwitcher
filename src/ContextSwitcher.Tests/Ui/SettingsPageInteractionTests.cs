@@ -7,11 +7,9 @@ using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views.Pages;
 using ContextSwitcher.Core.Configuration;
-using ContextSwitcher.Tests.App;
 
 namespace ContextSwitcher.Tests.Ui;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class SettingsPageInteractionTests : UiTest
 {
     /// <summary>
@@ -29,11 +27,11 @@ public sealed class SettingsPageInteractionTests : UiTest
 
             Assert.DoesNotContain(FindAll<Button>(window), b => b.Content as string == "Save");
 
-            bool before = AppHost.Configuration.Analytics.Enabled;
+            bool before = scenario.AppState.Configuration.Analytics.Enabled;
             Click(window, FindControl<ToggleSwitch>(window, t => AutomationProperties.GetName(t) == "Record time per profile"));
-            PumpUntil(WaitUntil(() => AppHost.Configuration.Analytics.Enabled != before));
+            PumpUntil(WaitUntil(() => scenario.AppState.Configuration.Analytics.Enabled != before));
 
-            Assert.Equal(!before, AppHost.Configuration.Analytics.Enabled);
+            Assert.Equal(!before, scenario.AppState.Configuration.Analytics.Enabled);
             Assert.False(viewModel.HasErrorMessage, viewModel.ErrorMessage ?? string.Empty);
         });
     }
@@ -48,11 +46,11 @@ public sealed class SettingsPageInteractionTests : UiTest
             SettingsViewModel viewModel = scenario.Settings();
             Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 2400);
 
-            Assert.Null(AppHost.Configuration.DetailedLogUntil);
+            Assert.Null(scenario.AppState.Configuration.DetailedLogUntil);
             Click(window, FindControl<ToggleSwitch>(window, t => AutomationProperties.GetName(t) == "Detailed log"));
-            PumpUntil(WaitUntil(() => AppHost.Configuration.DetailedLogUntil is not null));
+            PumpUntil(WaitUntil(() => scenario.AppState.Configuration.DetailedLogUntil is not null));
 
-            Assert.True(AppHost.Configuration.DetailedLogUntil > DateTimeOffset.UtcNow.AddDays(6));
+            Assert.True(scenario.AppState.Configuration.DetailedLogUntil > DateTimeOffset.UtcNow.AddDays(6));
             Settle(window);
             Assert.StartsWith("On until", FindControl<TextBlock>(window, t => t.Text?.StartsWith("On until", StringComparison.Ordinal) == true && IsClickable(t)).Text, StringComparison.Ordinal);
         });
@@ -95,9 +93,9 @@ public sealed class SettingsPageInteractionTests : UiTest
             Assert.DoesNotContain(FindAll<TextBox>(window), IsClickable);
 
             ChooseFromDropdown(window, Dropdown(window, "Keep history for"), "90 days");
-            PumpUntil(WaitUntil(() => AppHost.Configuration.Analytics.RetentionDays == 90));
+            PumpUntil(WaitUntil(() => scenario.AppState.Configuration.Analytics.RetentionDays == 90));
 
-            Assert.Equal(90, AppHost.Configuration.Analytics.RetentionDays);
+            Assert.Equal(90, scenario.AppState.Configuration.Analytics.RetentionDays);
         });
     }
 
@@ -157,7 +155,7 @@ public sealed class SettingsPageInteractionTests : UiTest
             SettingsViewModel viewModel = scenario.Settings();
             Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 2400);
             Application app = Application.Current!;
-            using ThemeFollower theme = new(AppHost.AppState, app);
+            using ThemeFollower theme = new(scenario.AppState, app);
 
             Assert.Equal(ThemeVariant.Default, app.RequestedThemeVariant);
 
@@ -165,13 +163,13 @@ public sealed class SettingsPageInteractionTests : UiTest
             PumpUntil(WaitUntil(() => app.RequestedThemeVariant == ThemeVariant.Dark));
             Settle(window);
 
-            Assert.Equal(AppearanceMode.Dark, AppHost.Configuration.Appearance);
+            Assert.Equal(AppearanceMode.Dark, scenario.AppState.Configuration.Appearance);
             Assert.Equal(ThemeVariant.Dark, window.ActualThemeVariant);
 
             ChooseFromDropdown(window, Dropdown(window, "Theme"), "Match macOS");
             PumpUntil(WaitUntil(() => app.RequestedThemeVariant == ThemeVariant.Default));
 
-            Assert.Equal(AppearanceMode.System, AppHost.Configuration.Appearance);
+            Assert.Equal(AppearanceMode.System, scenario.AppState.Configuration.Appearance);
         });
     }
 
@@ -191,13 +189,13 @@ public sealed class SettingsPageInteractionTests : UiTest
             Assert.Equal(["Match macOS", "English", "Українська"], viewModel.LanguageChoices.Select(c => c.Label));
 
             ChooseFromDropdown(window, Dropdown(window, "Language"), "Українська");
-            PumpUntil(WaitUntil(() => AppHost.Configuration.Language == "uk"));
+            PumpUntil(WaitUntil(() => scenario.AppState.Configuration.Language == "uk"));
             Settle(window);
 
             Assert.True(IsClickable(FindControl<TextBlock>(window, t => t.Text == "Quit Context Switcher from its menu bar icon and open it again to see it in Українська.")));
 
             ChooseFromDropdown(window, Dropdown(window, "Language"), "English");
-            PumpUntil(WaitUntil(() => AppHost.Configuration.Language == "en"));
+            PumpUntil(WaitUntil(() => scenario.AppState.Configuration.Language == "en"));
             Settle(window);
 
             Assert.False(viewModel.IsLanguagePending);
@@ -264,11 +262,11 @@ public sealed class SettingsPageInteractionTests : UiTest
             SettingsViewModel viewModel = scenario.Settings();
             Window window = ShowWindow(new SettingsPage { DataContext = viewModel }, height: 2400);
 
-            Assert.True(AppHost.Configuration.CheckForUpdates);
+            Assert.True(scenario.AppState.Configuration.CheckForUpdates);
             Click(window, FindControl<ToggleSwitch>(window, t => AutomationProperties.GetName(t) == "Check for updates automatically"));
-            PumpUntil(WaitUntil(() => !AppHost.Configuration.CheckForUpdates));
+            PumpUntil(WaitUntil(() => !scenario.AppState.Configuration.CheckForUpdates));
 
-            Assert.False(AppHost.Configuration.CheckForUpdates);
+            Assert.False(scenario.AppState.Configuration.CheckForUpdates);
         });
     }
 }

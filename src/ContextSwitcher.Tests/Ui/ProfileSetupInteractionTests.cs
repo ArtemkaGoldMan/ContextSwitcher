@@ -3,20 +3,19 @@ using Avalonia.Controls;
 using Avalonia.VisualTree;
 using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views.Pages;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Infrastructure.Files;
-using ContextSwitcher.Tests.App;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Ui;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class ProfileSetupInteractionTests : UiTest
 {
+    private readonly AppState appState = new();
+
     /// <summary>
     /// "+ Add app" opens the installed-apps picker rather than adding anything itself - the row
     /// comes from the picker or from "Add manually…" inside that flyout. A test that clicks the
@@ -93,8 +92,8 @@ public sealed class ProfileSetupInteractionTests : UiTest
             // Profiles and Dashboard pages do - that rebuild is what produced the stray brushes.
             List<ProfileRowViewModel> rebuilt = [];
             void Rebuild(object? sender, EventArgs e) =>
-                rebuilt = AppHost.Configuration.Contexts.Select(c => new ProfileRowViewModel(c, false, _ => Task.CompletedTask, _ => { }, _ => Task.CompletedTask, _ => Task.CompletedTask)).ToList();
-            AppHost.ConfigurationChanged += Rebuild;
+                rebuilt = this.appState.Configuration.Contexts.Select(c => new ProfileRowViewModel(c, false, _ => Task.CompletedTask, _ => { }, _ => Task.CompletedTask, _ => Task.CompletedTask)).ToList();
+            this.appState.ConfigurationChanged += Rebuild;
 
             try
             {
@@ -116,7 +115,7 @@ public sealed class ProfileSetupInteractionTests : UiTest
             }
             finally
             {
-                AppHost.ConfigurationChanged -= Rebuild;
+                this.appState.ConfigurationChanged -= Rebuild;
             }
         });
     }
@@ -347,7 +346,7 @@ public sealed class ProfileSetupInteractionTests : UiTest
             (ProfileSetupViewModel viewModel, _) = CreateViewModel();
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel });
 
-            string originalName = AppHost.Configuration.Contexts[0].DisplayName;
+            string originalName = this.appState.Configuration.Contexts[0].DisplayName;
             viewModel.DisplayName = "Renamed But Not Saved";
             Settle(window);
 
@@ -358,7 +357,7 @@ public sealed class ProfileSetupInteractionTests : UiTest
             Settle(window);
 
             Assert.True(cancelled);
-            Assert.Equal(originalName, AppHost.Configuration.Contexts[0].DisplayName);
+            Assert.Equal(originalName, this.appState.Configuration.Contexts[0].DisplayName);
         });
     }
 
@@ -393,7 +392,7 @@ public sealed class ProfileSetupInteractionTests : UiTest
         }
     }
 
-    private static (ProfileSetupViewModel ViewModel, ConfigurationStore Store) CreateViewModel()
+    private (ProfileSetupViewModel ViewModel, ConfigurationStore Store) CreateViewModel()
     {
         AppConfiguration configuration = new()
         {
@@ -401,15 +400,15 @@ public sealed class ProfileSetupInteractionTests : UiTest
             Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work", AccentColor = "#2F6FED" }]
         };
         ConfigurationValidator validator = new();
-        AppHost.UpdateConfiguration(configuration, validator.Validate(configuration));
+        this.appState.UpdateConfiguration(configuration, validator.Validate(configuration));
 
         InMemoryJsonStore jsonStore = new();
         ConfigPaths paths = new("/tmp/context-switcher-ui-tests");
         jsonStore.Seed(paths.SettingsPath, configuration);
         // Deliberately the yielding wrapper: the plain in-memory store never suspends, so a save
         // that resumes on the wrong thread would look identical to one that does not.
-        ConfigurationStore store = new(new YieldingJsonStore(jsonStore), paths, validator, AppHost.AppState, new TestLogger());
+        ConfigurationStore store = new(new YieldingJsonStore(jsonStore), paths, validator, this.appState, new TestLogger());
 
-        return (new ProfileSetupViewModel(store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), configuration.Contexts[0]), store);
+        return (new ProfileSetupViewModel(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeProcessRunner(), new FakeFocusShortcutInstaller(), configuration.Contexts[0]), store);
     }
 }

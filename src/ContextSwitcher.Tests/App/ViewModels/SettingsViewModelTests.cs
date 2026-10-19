@@ -1,7 +1,6 @@
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.App;
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.ProcessExecution;
@@ -11,9 +10,10 @@ using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
 
-[Collection(AppHostTestCollection.Name)]
 public sealed class SettingsViewModelTests
 {
+    private readonly AppState appState = new();
+
     /// <summary>
     /// Each change is written as it is made - no Save - and the switch timeout, which the page no
     /// longer offers because nothing reads it, is carried over untouched rather than reset.
@@ -27,12 +27,12 @@ public sealed class SettingsViewModelTests
             Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }],
             DefaultSwitchTimeoutSeconds = 37
         };
-        AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
 
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
-        ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator(), AppHost.AppState, new TestLogger());
-        SettingsViewModel viewModel = new(configurationStore, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
+        ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator(), this.appState, new TestLogger());
+        SettingsViewModel viewModel = new(this.appState, configurationStore, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(this.appState));
 
         // On by default now; turning it off is the change.
         viewModel.ShowDockIcon = false;
@@ -68,10 +68,10 @@ public sealed class SettingsViewModelTests
             Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }],
             Analytics = new AnalyticsConfiguration { Enabled = true, RetentionDays = 1095 }
         };
-        AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
 
-        ConfigurationStore configurationStore = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), AppHost.AppState, new TestLogger());
-        SettingsViewModel viewModel = new(configurationStore, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
+        ConfigurationStore configurationStore = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
+        SettingsViewModel viewModel = new(this.appState, configurationStore, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(this.appState));
 
         Assert.Equal(
             ["1 week", "30 days", "90 days", "6 months", "1 year", "2 years", "3 years"],
@@ -86,7 +86,7 @@ public sealed class SettingsViewModelTests
     [Fact]
     public void SupportDeveloperCommandOpensTheSupportLink()
     {
-        AppHost.UpdateConfiguration(
+        this.appState.UpdateConfiguration(
             new AppConfiguration
             {
                 ActiveContextId = "work",
@@ -95,8 +95,8 @@ public sealed class SettingsViewModelTests
             new ConfigurationValidationResult([]));
 
         FakeProcessRunner processRunner = new();
-        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), AppHost.AppState, new TestLogger());
-        SettingsViewModel viewModel = new(store, new FakePermissionsChecker(), processRunner, Updates());
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
+        SettingsViewModel viewModel = new(this.appState, store, new FakePermissionsChecker(), processRunner, Updates(this.appState));
 
         viewModel.SupportDeveloperCommand.Execute(null);
 
@@ -160,12 +160,12 @@ public sealed class SettingsViewModelTests
         Assert.Equal("Only the installed app can open at login.", viewModel.OpenAtLoginHint);
     }
 
-    private static SettingsViewModel WithLoginItem(FakeLoginItem loginItem)
+    private SettingsViewModel WithLoginItem(FakeLoginItem loginItem)
     {
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
-        AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
-        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), AppHost.AppState, new TestLogger());
-        return new SettingsViewModel(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(), loginItem: loginItem);
+        this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
+        return new SettingsViewModel(this.appState, store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(this.appState), loginItem: loginItem);
     }
 
     /// <summary>After an import the page shows the imported settings, without saving them over again.</summary>
@@ -173,9 +173,9 @@ public sealed class SettingsViewModelTests
     public async Task AnImportedFilesSettingsShowOnThePage()
     {
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
-        AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
-        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), AppHost.AppState, new TestLogger());
-        SettingsViewModel viewModel = new(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
+        this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
+        SettingsViewModel viewModel = new(this.appState, store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(this.appState));
         FakeSettingsFilePicker picker = new()
         {
             FileToOpen = """{ "activeContextId": "work", "showDockIcon": false, "checkForUpdates": false, "contexts": [ { "id": "work", "displayName": "Work" } ], "analytics": { "enabled": true, "retentionDays": 45 } }"""
@@ -199,13 +199,13 @@ public sealed class SettingsViewModelTests
     public void AClosedSettingsPageNoLongerAnswersSavedChanges()
     {
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }], AskOnSwitch = false };
-        AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
-        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), AppHost.AppState, new TestLogger());
-        SettingsViewModel open = new(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
-        SettingsViewModel closed = new(store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates());
+        this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
+        SettingsViewModel open = new(this.appState, store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(this.appState));
+        SettingsViewModel closed = new(this.appState, store, new FakePermissionsChecker(), new FakeProcessRunner(), Updates(this.appState));
         closed.Dispose();
 
-        AppHost.UpdateConfiguration(configuration with { AskOnSwitch = true, IgnoredApps = ["Telegram"] }, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(configuration with { AskOnSwitch = true, IgnoredApps = ["Telegram"] }, new ConfigurationValidationResult([]));
 
         Assert.True(open.AskOnSwitch);
         Assert.Equal(["Telegram"], open.IgnoredApps.Apps.Select(app => app.Name));
@@ -214,6 +214,6 @@ public sealed class SettingsViewModelTests
         open.Dispose();
     }
 
-    internal static UpdatesViewModel Updates() =>
-        new(new FakeReleaseSource(), new FakeAppUpdater(), new FakeProcessRunner(), new FakeSystemNotifications(), new Version(0, 1, 0));
+    internal static UpdatesViewModel Updates(IAppState appState) =>
+        new(appState, new FakeReleaseSource(), new FakeAppUpdater(), new FakeProcessRunner(), new FakeSystemNotifications(), new Version(0, 1, 0));
 }

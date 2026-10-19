@@ -1,5 +1,4 @@
 using ContextSwitcher.App.Services;
-using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
@@ -15,9 +14,10 @@ namespace ContextSwitcher.Tests.App.ViewModels;
 /// context - so <c>ICommand.Execute</c> runs each command's async chain synchronously to
 /// completion before returning, and these tests assert immediately without awaiting anything.
 /// </summary>
-[Collection(AppHostTestCollection.Name)]
 public sealed class ProfilesViewModelTests
 {
+    private readonly AppState appState = new();
+
     [Fact]
     public void AddCommandRaisesEditRequestedWithNullContext()
     {
@@ -77,7 +77,7 @@ public sealed class ProfilesViewModelTests
     {
         AppConfiguration configuration = TwoContexts();
         (ProfilesViewModel viewModel, StubContextSwitchService switchService, InMemoryJsonStore jsonStore) = CreateViewModel(configuration);
-        AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
+        this.appState.UpdateState(new CurrentContextState { CurrentContextId = "work" });
         switchService.Result = new ContextSwitchResult(string.Empty, "work", ContextSwitchStatus.Cancelled, [], DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, "corr");
         ProfileRowViewModel work = viewModel.Rows.Single(row => row.Context.Id == "work");
 
@@ -92,7 +92,7 @@ public sealed class ProfilesViewModelTests
     public void TheProfileThatsOnIsHighlightedInItsOwnColour()
     {
         AppConfiguration configuration = TwoContexts();
-        AppHost.UpdateState(new CurrentContextState { CurrentContextId = "work" });
+        this.appState.UpdateState(new CurrentContextState { CurrentContextId = "work" });
         (ProfilesViewModel viewModel, _, _) = CreateViewModel(configuration);
         ProfileRowViewModel on = viewModel.Rows.Single(row => row.IsActive);
         ProfileRowViewModel off = viewModel.Rows.Single(row => !row.IsActive);
@@ -199,7 +199,7 @@ public sealed class ProfilesViewModelTests
 
         AppConfiguration saved = jsonStore.Get<AppConfiguration>(new ConfigPaths("/tmp/context-switcher-tests").SettingsPath)!;
         Assert.Equal(["personal", "study", "work"], saved.Contexts.Select(context => context.Id));
-        Assert.Equal(["personal", "study", "work"], AppHost.Configuration.Contexts.Select(context => context.Id));
+        Assert.Equal(["personal", "study", "work"], this.appState.Configuration.Contexts.Select(context => context.Id));
         Assert.Equal(["Personal", "Study", "Work"], viewModel.Rows.Select(row => row.DisplayName));
     }
 
@@ -211,7 +211,7 @@ public sealed class ProfilesViewModelTests
 
         await viewModel.MoveAsync("personal", 0);
 
-        Assert.Equal("personal", AppHost.State.CurrentContextId);
+        Assert.Equal("personal", this.appState.State.CurrentContextId);
         Assert.True(viewModel.Rows[0].IsActive);
     }
 
@@ -225,7 +225,7 @@ public sealed class ProfilesViewModelTests
         await viewModel.MoveAsync(id, to);
 
         Assert.Null(jsonStore.Get<AppConfiguration>(new ConfigPaths("/tmp/context-switcher-tests").SettingsPath));
-        Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(context => context.Id));
+        Assert.Equal(["work", "personal", "study"], this.appState.Configuration.Contexts.Select(context => context.Id));
     }
 
     [Theory]
@@ -237,7 +237,7 @@ public sealed class ProfilesViewModelTests
 
         await viewModel.MoveAsync("work", to);
 
-        Assert.Equal([first, second, third], AppHost.Configuration.Contexts.Select(context => context.Id));
+        Assert.Equal([first, second, third], this.appState.Configuration.Contexts.Select(context => context.Id));
     }
 
     [Fact]
@@ -246,10 +246,10 @@ public sealed class ProfilesViewModelTests
         (ProfilesViewModel viewModel, _, _) = CreateViewModel(ThreeContexts());
 
         await viewModel.MoveByAsync("personal", +1);
-        Assert.Equal(["work", "study", "personal"], AppHost.Configuration.Contexts.Select(context => context.Id));
+        Assert.Equal(["work", "study", "personal"], this.appState.Configuration.Contexts.Select(context => context.Id));
 
         await viewModel.MoveByAsync("personal", -2);
-        Assert.Equal(["personal", "work", "study"], AppHost.Configuration.Contexts.Select(context => context.Id));
+        Assert.Equal(["personal", "work", "study"], this.appState.Configuration.Contexts.Select(context => context.Id));
     }
 
     /// <summary>A move that was not saved leaves the cards in the order the profiles really are in.</summary>
@@ -261,7 +261,7 @@ public sealed class ProfilesViewModelTests
 
         await Assert.ThrowsAsync<IOException>(() => viewModel.MoveAsync("work", 2));
 
-        Assert.Equal(["work", "personal", "study"], AppHost.Configuration.Contexts.Select(context => context.Id));
+        Assert.Equal(["work", "personal", "study"], this.appState.Configuration.Contexts.Select(context => context.Id));
     }
 
     /// <summary>The save publishes the order the cards are already in; making them all again for that would take the focus with the old ones.</summary>
@@ -272,7 +272,7 @@ public sealed class ProfilesViewModelTests
 
         await viewModel.MoveAsync("work", 2);
         IReadOnlyList<ProfileRowViewModel> afterTheMove = viewModel.Rows;
-        AppHost.UpdateConfiguration(AppHost.Configuration, new ConfigurationValidationResult([]));
+        this.appState.UpdateConfiguration(this.appState.Configuration, new ConfigurationValidationResult([]));
 
         Assert.Same(afterTheMove, viewModel.Rows);
     }
@@ -295,18 +295,18 @@ public sealed class ProfilesViewModelTests
         };
     }
 
-    private static (ProfilesViewModel ViewModel, StubContextSwitchService SwitchService, InMemoryJsonStore JsonStore) CreateViewModel(
+    private (ProfilesViewModel ViewModel, StubContextSwitchService SwitchService, InMemoryJsonStore JsonStore) CreateViewModel(
         AppConfiguration configuration, string activeContextId = "work")
     {
-        AppHost.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
-        AppHost.UpdateState(new CurrentContextState { CurrentContextId = activeContextId });
+        this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
+        this.appState.UpdateState(new CurrentContextState { CurrentContextId = activeContextId });
 
         InMemoryJsonStore jsonStore = new();
         ConfigPaths configPaths = new("/tmp/context-switcher-tests");
         StubContextSwitchService switchService = new();
-        ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator(), AppHost.AppState, new TestLogger());
+        ConfigurationStore configurationStore = new(jsonStore, configPaths, new ConfigurationValidator(), this.appState, new TestLogger());
 
-        ProfilesViewModel viewModel = new(switchService, configurationStore);
+        ProfilesViewModel viewModel = new(this.appState, switchService, configurationStore);
         return (viewModel, switchService, jsonStore);
     }
 }
