@@ -224,7 +224,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     /// against the other profiles, so <c>switch --context deep-work</c> reads the way the profile
     /// is named instead of <c>profile-3</c>.
     /// </summary>
-    public string Id => this.IsNew ? UniqueSlug(this.DisplayName, AppHost.Configuration.Contexts) : this.originalContextId;
+    public string Id => this.IsNew ? ProfileIds.FromName(this.DisplayName, AppHost.Configuration.Contexts) : this.originalContextId;
 
     public string DisplayName
     {
@@ -825,43 +825,11 @@ public sealed class ProfileSetupViewModel : ViewModelBase
     private AccentChoiceViewModel? MatchingPreset() =>
         this.AccentChoices.FirstOrDefault(choice => string.Equals(choice.Hex, this.AccentColor?.Trim(), StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>
-    /// Lowercases the name and joins its letters and digits with hyphens, which is exactly what the
-    /// id pattern accepts, then suffixes -2, -3... past any id already taken. A name with nothing
-    /// usable in it (all punctuation, or a non-Latin script) falls back to "profile".
-    /// </summary>
-    private static string UniqueSlug(string displayName, IReadOnlyList<ContextDefinition> existing)
-    {
-        string slug = Regex.Replace(displayName.Trim().ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
-        if (slug.Length == 0)
-        {
-            slug = "profile";
-        }
-
-        HashSet<string> taken = existing.Select(c => c.Id).ToHashSet(StringComparer.Ordinal);
-        string candidate = slug;
-        for (int suffix = 2; taken.Contains(candidate); suffix++)
-        {
-            candidate = $"{slug}-{suffix}";
-        }
-
-        return candidate;
-    }
-
     private static ContextDefinition CreateDefaultContext(IReadOnlyList<ContextDefinition> existing)
     {
-        HashSet<string> existingIds = existing.Select(c => c.Id).ToHashSet(StringComparer.Ordinal);
-        string id = "profile";
-        int suffix = 2;
-        while (existingIds.Contains(id))
-        {
-            id = $"profile-{suffix}";
-            suffix++;
-        }
-
         return new ContextDefinition
         {
-            Id = id,
+            Id = ProfileIds.ForNewProfile(existing),
             DisplayName = Strings.ProfileSetup_NewProfileName,
             MenuBarLabel = Strings.ProfileSetup_NewProfileName.ToUpper(CultureInfo.CurrentCulture),
             AccentColor = "#2F6FED",

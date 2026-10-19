@@ -58,7 +58,7 @@ public sealed class ConfigurationStore
                 "Configuration",
                 "SaveRejected",
                 $"A save was refused with {validation.Errors.Count} problem(s): "
-                    + string.Join("; ", validation.Errors.Select(error => $"{System.Text.RegularExpressions.Regex.Replace(error.Path, @"\[\d+\]", "[]")} ({error.Detail?.Key ?? "no key"})")));
+                    + validation.DescribeForLog());
             return ConfigurationSaveResult.Invalid(validation.Errors.Select(MessageText.Of).ToList());
         }
 

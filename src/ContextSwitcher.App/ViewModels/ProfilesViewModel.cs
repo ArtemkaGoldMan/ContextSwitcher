@@ -181,7 +181,7 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
     {
         this.ErrorMessage = null;
 
-        string newId = GenerateUniqueId(context.Id, AppHost.Configuration.Contexts);
+        string newId = ProfileIds.ForCopyOf(context.Id, AppHost.Configuration.Contexts);
         ContextDefinition duplicate = context with { Id = newId, DisplayName = Localized.Format(Strings.Profiles_CopyName, context.DisplayName) };
 
         AppConfiguration updated = AppHost.Configuration with
@@ -223,19 +223,5 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
         {
             this.ErrorMessage = string.Join(" ", result.Errors);
         }
-    }
-
-    private static string GenerateUniqueId(string baseId, IReadOnlyList<ContextDefinition> existing)
-    {
-        HashSet<string> existingIds = existing.Select(c => c.Id).ToHashSet(StringComparer.Ordinal);
-        string candidate = $"{baseId}-copy";
-        int suffix = 2;
-        while (existingIds.Contains(candidate))
-        {
-            candidate = $"{baseId}-copy-{suffix}";
-            suffix++;
-        }
-
-        return candidate;
     }
 }

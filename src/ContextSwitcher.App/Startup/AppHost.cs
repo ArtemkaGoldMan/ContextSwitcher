@@ -199,14 +199,14 @@ public static class AppHost
 
         // A log is a week long. Looked at on every start, so one nothing was written to for a month
         // does not still hold what it did in the month before.
-        if (args.Length == 0 || !CliCommandRouter.IsHeadlessCommand(args[0]))
+        if (!CliCommandRouter.IsHeadless(args))
         {
             Services.GetRequiredService<LocalJsonLogger>().TidyAsync().GetAwaiter().GetResult();
         }
 
         // A headless CLI invocation is a one-shot process that exits immediately; starting an
         // analytics session or a persistent global hook for it would be pointless and wasteful.
-        bool isInteractive = args.Length == 0 || !CliCommandRouter.IsHeadlessCommand(args[0]);
+        bool isInteractive = !CliCommandRouter.IsHeadless(args);
         BootstrapAsync(isInteractive).GetAwaiter().GetResult();
     }
 
@@ -318,7 +318,7 @@ public static class AppHost
                 "Configuration",
                 "ConfigurationInvalid",
                 $"The settings have {ConfigurationValidation.Errors.Count} problem(s): "
-                    + string.Join("; ", ConfigurationValidation.Errors.Select(error => $"{System.Text.RegularExpressions.Regex.Replace(error.Path, @"\[\d+\]", "[]")} ({error.Detail?.Key ?? "no key"})")));
+                    + ConfigurationValidation.DescribeForLog());
         }
 
         analyticsService.Enabled = Configuration.Analytics.Enabled;
