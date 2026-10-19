@@ -127,7 +127,7 @@ Two limits of Windows to know before promising anything:
 ## Browser tabs
 
 On macOS every tab feature comes from AppleScript
-([`AppleScriptBuilder`](../src/ContextSwitcher.Infrastructure/AppleScript/AppleScriptBuilder.cs)):
+([`AppleScriptBuilder`](../src/ContextSwitcher.Infrastructure.MacOS/AppleScript/AppleScriptBuilder.cs)):
 listing tabs with their ids and addresses, closing by id, bringing one forward. On Windows no browser
 can be scripted like that - no AppleScript, no COM. Below is every way found to get at tabs without
 an extension, what was tried, and what to build.
@@ -236,7 +236,7 @@ These come before any Windows code, and none of them changes what the Mac app do
    Finder, open Shortcuts - and need one for opening a link or showing a file.
 
    The rest is already behind interfaces in `Core/Abstractions` and only needs a Windows
-   registration in [`AppServices`](../src/ContextSwitcher.App/Startup/AppServices.cs): `IApplicationHider`,
+   registration, in the Windows project's [`PlatformServices`](../src/ContextSwitcher.Infrastructure.Windows/PlatformServices.cs): `IApplicationHider`,
    `IAppProcesses`, `IRunningApplications`, `ILoginItem`, `ISystemNotifications`, `IDefaultBrowser`,
    `IAppUpdater`, `ISystemCatalog`, `IInstalledAppsService`, `IPermissionsChecker`.
 
@@ -251,7 +251,7 @@ These come before any Windows code, and none of them changes what the Mac app do
    from a Mac says which of its apps and settings this machine cannot use, rather than failing at
    switch time.
 
-4. **Project layout.** `ContextSwitcher.Infrastructure` keeps what is shared;
+4. **Project layout** - done in [#85](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/85). `ContextSwitcher.Infrastructure` keeps what is shared;
    `ContextSwitcher.Infrastructure.MacOS` and `ContextSwitcher.Infrastructure.Windows` hold the rest.
    The Windows project targets `net10.0-windows10.0.19041.0`, which toast notifications and the media
    session controls need. A `net10.0` project can't reference it, so the app targets both `net10.0`
@@ -299,7 +299,7 @@ These come before any Windows code, and none of them changes what the Mac app do
 - **GitHub releases** can use [Velopack](https://docs.velopack.io/packaging/operating-systems/windows),
   which builds the installer and does updates. It installs into `%LocalAppData%` and replaces the whole
   app folder on update, which is fine: settings live elsewhere. It supports macOS too, so it could
-  later replace [`AppBundleUpdater`](../src/ContextSwitcher.Infrastructure/Updates/AppBundleUpdater.cs).
+  later replace [`AppBundleUpdater`](../src/ContextSwitcher.Infrastructure.MacOS/Updates/AppBundleUpdater.cs).
 
 ## Left out on Windows
 

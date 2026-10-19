@@ -91,7 +91,7 @@ src/
   ```
 
 - **No `#if` in shared code.** Each platform project has a `PlatformServices.Register` of the same
-  name in the same namespace, and `AppHost` calls it; which one runs is settled by the build. What
+  name in the same namespace, and `AppServices` calls it; which one runs is settled by the build. What
   the interface needs to know about the platform it asks the capabilities from stage 0 - "is there
   Focus?", never "is this a Mac?".
 - **The compiler guards the line between them.** The platform projects are marked
@@ -113,7 +113,7 @@ src/
   and holds no macOS code. Its target brings in the Windows SDK projection
   (`Microsoft.Windows.SDK.NET.dll`), which is large until trimmed - a question for the Windows
   download only.
-- [`build-app.sh`](../scripts/build-app.sh) gains `--framework net10.0`: publishing a project with two
+- [`build-app.sh`](../scripts/build-app.sh) names `--framework net10.0`: publishing a project with two
   targets needs one named (NETSDK1129).
 
 ### CI
@@ -213,7 +213,7 @@ on macOS and on Windows, and Mac users see no difference. Worth doing even if Wi
    six view models that ran `open` use `IShell`. The macOS helpers the app called straight - sleep and
    lock, the Dock icon, the preferred languages, waiting for a display, the system's version, the
    popover's window - are behind interfaces too. The macOS versions are the code that was there, moved
-   and not changed, and registered in `AppServices.RegisterPlatform`.
+   and not changed, and registered with the Mac's services - in the macOS project since item 6.
 4. **How a profile names an app** ([decided](#decisions-made)) - done in
    [#84](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/84). Profiles keep listing apps by name,
    so every settings file reads as before, and the settings gain one map from a name to how Windows
@@ -231,24 +231,25 @@ on macOS and on Windows, and Mac users see no difference. Worth doing even if Wi
    `PlatformCapabilities`, says whether this machine has Focus (through Shortcuts), Apple Music, a
    Dock icon, and which browsers - so Safari, browser profiles and closing tabs by id. Profile Setup
    and Settings hide what it lacks, `AutomationPlanBuilder` plans no step for it, and importing
-   settings says what this machine can't use. The Mac's is `PlatformCapabilities.MacOS`, chosen in
-   `AppServices.RegisterPlatform` with the allowed commands, `CommandAllowlist.MacOS`, and the
-   waits.
-6. **Projects** ([the projects](#the-projects)). `ContextSwitcher.Infrastructure.MacOS` takes
-   `MacOS/`, `AppleScript/`, the updater and the rest of the macOS code;
-   `ContextSwitcher.Infrastructure.Windows` starts empty, targeting `net10.0-windows10.0.19041.0`.
-   The app targets `net10.0` and `net10.0-windows10.0.19041.0`, and registers the services of the
-   platform it is built for. The platform projects are marked for their system, so the compiler
-   flags shared code that reaches into them, and `EnableWindowsTargeting` lets a Mac compile it all.
+   settings says what this machine can't use. The Mac's is `MacPlatform.Capabilities`, which the
+   macOS project's registrations choose with its allowed commands, `MacPlatform.AllowedCommands`.
+6. **Projects** ([the projects](#the-projects)) - done in
+   [#85](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/85). `ContextSwitcher.Infrastructure.MacOS`
+   has `MacOS/`, `AppleScript/`, the updater and the rest of the macOS code, each in its folder, and
+   the Mac's data, `MacPlatform`; `ContextSwitcher.Infrastructure.Windows` has only Windows' two
+   choices so far, targeting `net10.0-windows10.0.19041.0`. The app targets `net10.0` and
+   `net10.0-windows10.0.19041.0`, and registers the services of the platform it is built for through
+   that project's `PlatformServices.Register`. The platform projects are marked for their system, so
+   the compiler flags shared code that reaches into them, and `EnableWindowsTargeting`, in
+   `Directory.Build.props`, lets a Mac compile it all. The macOS classes no longer check for macOS.
 7. **Files** - done in [#78](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/78). Moving a
    new file over the old one - the settings, time, the log - goes through an `IFileReplacer` each
    class is given. `AppHost` gives Windows `FileReplacer.RetryingWhileHeldOpen`, which tries again
    for under a second while another process has either file open, and macOS `FileReplacer.Once`, as
    before. It also gives `ConfigPaths` Windows' settings root, so everything lives in
    `%APPDATA%\ContextSwitcher`, or `ContextSwitcher-dev` for a development build - not
-   `%LOCALAPPDATA%`, where Velopack puts the app and which it replaces on each update. Both choices
-   sit with the rest of what differs by platform in one method, `AppServices.RegisterPlatform`, for
-   item 6 to move into each platform's registrations.
+   `%LOCALAPPDATA%`, where Velopack puts the app and which it replaces on each update. Since item 6
+   both choices are each platform's registrations', the folder as a `SettingsRoot`.
 8. **Releases** - done in [#79](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/79) ([why](#keeping-the-macs-latest-release)). The Mac
    updater no longer trusts "latest": `GitHubReleaseSource` takes the highest version among the
    newest releases that carry this platform's files, which it is given as data -
@@ -258,7 +259,9 @@ on macOS and on Windows, and Mac users see no difference. Worth doing even if Wi
    platform and a publishing job, wait for the Windows job in stage 1: with one platform there is
    nothing to choose.
 
-**Done when** a Mac release built from it behaves exactly as before, and CI is green on both.
+**Done when** a Mac release built from it behaves exactly as before, and CI is green on both. All
+eight items are merged, with CI green on both; the first Mac release built from them is the check
+still to come.
 
 ## Stage 1 - Apps
 

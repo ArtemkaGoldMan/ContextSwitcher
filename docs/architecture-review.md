@@ -288,7 +288,14 @@ and `MainAppViewModel` holds nothing only to hand it to Profile Setup.
 ### PR 5 - The projects
 
 Stage 0 item 6, as [the plan](windows-plan.md#the-projects) lays it out. With PRs 2-4 merged it is
-mostly files moving. **Size:** M. **Stage 0:** item 6.
+mostly files moving. **Size:** M. **Stage 0:** item 6. **Done** in
+[#85](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/85), with the notes from PRs 2 to 4
+below, and with it all five. Each moved file keeps its folder under the macOS project's namespace.
+The Mac's capabilities and allowed commands are `MacPlatform`'s there, since a preset in another
+project can't be a member of its type in Core. Where settings go is a `SettingsRoot` each platform
+registers, since whether this is a development build, with a folder of its own, is the app's to say.
+The tests reach into the macOS project on purpose, so the platform analyzer is off for them; ten
+tests of macOS classes that returned early elsewhere, counted as passed, are `[MacOSFact]` too.
 
 **From PR 2:** the registrations are in `AppServices` now, not `AppHost`, and everything that differs
 by platform is in its one method `RegisterPlatform` - the files' choices that were
@@ -527,9 +534,9 @@ Rules 1 and 2.
 Rule 2.
 
 - **Where:** 15 `OperatingSystem.IsMacOS()` checks in 13 classes in
-  [`Infrastructure/MacOS`](../src/ContextSwitcher.Infrastructure/MacOS), for example
-  [`MacApplicationHider.cs:25`](../src/ContextSwitcher.Infrastructure/MacOS/MacApplicationHider.cs#L25)
-  and [`MenuBarPanel.cs:37`](../src/ContextSwitcher.Infrastructure/MacOS/MenuBarPanel.cs#L37). The
+  [`Infrastructure/MacOS`](../src/ContextSwitcher.Infrastructure.MacOS), for example
+  [`MacApplicationHider.cs:25`](../src/ContextSwitcher.Infrastructure.MacOS/MacApplicationHider.cs#L25)
+  and [`MenuBarPanel.cs:37`](../src/ContextSwitcher.Infrastructure.MacOS/MenuBarPanel.cs#L37). The
   only check outside them is in the composition root,
   [`AppHost.cs:216`](../src/ContextSwitcher.App/Startup/AppHost.cs#L216), where it belongs.
 - **Why it matters:** today they keep the tests passing on Windows, where these classes are built
@@ -537,7 +544,7 @@ Rule 2.
   checks are dead code that hides a wrong registration.
 - **Fix:** remove them in [PR 5](#pr-5---the-projects) (item 6), with the tests of these classes
   marked `[MacOSFact]`. Keep
-  [`MacLoginItem.cs:107`](../src/ContextSwitcher.Infrastructure/MacOS/MacLoginItem.cs#L107): it asks
+  [`MacLoginItem.cs:107`](../src/ContextSwitcher.Infrastructure.MacOS/MacLoginItem.cs#L107): it asks
   for a macOS version, which is a question within the platform. **Size:** S. **Stage 0:** item 6.
 
 ### F11. The allowed commands are a static macOS list
@@ -563,7 +570,7 @@ Rule 5.
   `:108`-110 and `:468`, with `quitConfirmInterval` for tests at `:55`; tab probing in
   [`BrowserLauncher.cs:25`](../src/ContextSwitcher.Infrastructure/Browser/BrowserLauncher.cs#L25),
   `:28` and `:47`; the follow-up in [`ClosingAppsFollowUp.cs:20`](../src/ContextSwitcher.Core/Contexts/ClosingAppsFollowUp.cs#L20)-28
-  and `:45`-47; the catalog in [`SystemCatalog.cs:23`](../src/ContextSwitcher.Infrastructure/Catalog/SystemCatalog.cs#L23)
+  and `:45`-47; the catalog in [`SystemCatalog.cs:23`](../src/ContextSwitcher.Infrastructure.MacOS/Catalog/SystemCatalog.cs#L23)
   and `:29`.
 - **Why it matters:** closing an app on Windows (`WM_CLOSE`, then watching its windows) will want other
   waits than AppleScript. Today a new value means a new constant and a new optional parameter, and
@@ -677,8 +684,8 @@ Rule 8.
 Rule 8.
 
 - **Browser application names**, three times: [`BrowserLauncher.cs:533`](../src/ContextSwitcher.Infrastructure/Browser/BrowserLauncher.cs#L533),
-  [`ProcessBrowserRuns.cs:17`](../src/ContextSwitcher.Infrastructure/Browser/ProcessBrowserRuns.cs#L17)
-  and [`SystemCatalog.cs:274`](../src/ContextSwitcher.Infrastructure/Catalog/SystemCatalog.cs#L274);
+  [`ProcessBrowserRuns.cs:17`](../src/ContextSwitcher.Infrastructure.MacOS/Browser/ProcessBrowserRuns.cs#L17)
+  and [`SystemCatalog.cs:274`](../src/ContextSwitcher.Infrastructure.MacOS/Catalog/SystemCatalog.cs#L274);
   shown names twice more, in [`ProfileSetupViewModel.cs:658`](../src/ContextSwitcher.App/ViewModels/ProfileSetupViewModel.cs#L658)
   and [`BrowserProfileRowViewModel.cs:104`](../src/ContextSwitcher.App/ViewModels/BrowserProfileRowViewModel.cs#L104).
 - **"Chrome or Brave"** four times: [`BrowserLauncher.cs:531`](../src/ContextSwitcher.Infrastructure/Browser/BrowserLauncher.cs#L531),
@@ -687,7 +694,7 @@ Rule 8.
   and [`ConfigurationValidator.cs:221`](../src/ContextSwitcher.Core/Configuration/Validation/ConfigurationValidator.cs#L221).
   Adding Edge means finding all four - a capability for item 5, in [PR 4](#what-each-platform-can-do).
 - **`sips`** twice: [`SiteIcons.cs:186`](../src/ContextSwitcher.Infrastructure/Browser/SiteIcons.cs#L186)
-  and [`InstalledAppsService.cs:145`](../src/ContextSwitcher.Infrastructure/Applications/InstalledAppsService.cs#L145)
+  and [`InstalledAppsService.cs:145`](../src/ContextSwitcher.Infrastructure.MacOS/Applications/InstalledAppsService.cs#L145)
   ([one image converter](#one-image-converter), in PR 1).
 - **Loading an icon** three times, catching different exceptions: `AppPickerViewModel` catches
   `NotSupportedException` and not `InvalidOperationException`; `AskOnSwitchViewModel` and
