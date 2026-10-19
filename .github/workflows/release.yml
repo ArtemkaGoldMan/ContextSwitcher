@@ -56,6 +56,11 @@ jobs:
           cd dist
           shasum -a 256 "ContextSwitcher-$VERSION.dmg" ContextSwitcher.zip > SHA256SUMS.txt
 
+      # Marked the latest outright: install.sh and the Homebrew cask download
+      # releases/latest/download/ContextSwitcher.zip, so the latest release must always be one with the
+      # Mac's files. This one always has them. A release without them - Windows files only, once there is
+      # a Windows build - is published with --latest=false (docs/windows-plan.md, keeping the Mac's
+      # latest release).
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -66,4 +71,5 @@ jobs:
             dist/SHA256SUMS.txt \
             --title "ContextSwitcher $VERSION" \
             --notes-file .github/release-notes.md \
-            --generate-notes
+            --generate-notes \
+            --latest

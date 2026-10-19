@@ -178,9 +178,9 @@ Homebrew would download a 404. So:
 1. **"Latest" is always the newest release with Mac files.** The publishing job marks a release latest
    only when it carries them (`gh release create --latest=false` otherwise). Without that, GitHub
    picks the newest release by itself.
-2. **The Mac updater stops relying on it**, as a second line: it lists the releases and takes the
-   newest one with `ContextSwitcher.zip` in it. `install.sh` and the cask keep using "latest", which
-   the first rule protects.
+2. **The Mac updater stops relying on it**, as a second line: it lists the newest releases and takes
+   the highest version with the Mac's files in it - `ContextSwitcher.zip`, or a disk image.
+   `install.sh` and the cask keep using "latest", which the first rule protects.
 3. **The Windows updater never uses "latest"**: it takes the newest release with its own files.
    Velopack keeps a feed of its own for each platform; stage 1 checks that it passes over a release
    without Windows files.
@@ -242,11 +242,14 @@ on macOS and on Windows, and Mac users see no difference. Worth doing even if Wi
    `%LOCALAPPDATA%`, where Velopack puts the app and which it replaces on each update. Both choices
    sit in one method, `AddPlatformFileServices`, for item 6 to move into each platform's
    registrations.
-8. **Releases** ([versions and releases](#versions-and-releases)). The release workflow is started
-   by hand with the version and the platforms, and becomes a macOS job and a publishing job; the
-   Windows job joins in stage 1. "Latest" is only ever given to a release with Mac files, and the
-   Mac updater looks for the newest release with `ContextSwitcher.zip` rather than trusting
-   "latest" ([why](#keeping-the-macs-latest-release)).
+8. **Releases** - done in [#79](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/79) ([why](#keeping-the-macs-latest-release)). The Mac
+   updater no longer trusts "latest": `GitHubReleaseSource` takes the highest version among the
+   newest releases that carry this platform's files, which it is given as data -
+   `AppBundleUpdater.Assets`, the zip and the disk image, handed over in `AppHost`. The release
+   workflow marks what it publishes the latest outright, since it always has the Mac's files.
+   Starting the workflow by hand with a tick for each platform, and splitting it into a job per
+   platform and a publishing job, wait for the Windows job in stage 1: with one platform there is
+   nothing to choose.
 
 **Done when** a Mac release built from it behaves exactly as before, and CI is green on both.
 
@@ -295,8 +298,10 @@ The rest of this stage:
 - **Releases**: an installer that updates itself (Velopack - [decided](#decisions-made)), for
   `win-x64` and `win-arm64`, unsigned and marked preview. It goes into the same GitHub releases as
   the Mac app whenever something changed for Windows
-  ([versions and releases](#versions-and-releases)). Windows warns once before the first run, and the
-  README says so. Download counts start telling Mac and Windows files apart.
+  ([versions and releases](#versions-and-releases)). The release workflow is now started by hand,
+  with the version and a tick for each platform, and becomes a job per platform and a publishing job
+  that gives "latest" only to a release with Mac files. Windows warns once before the first run, and
+  the README says so. Download counts start telling Mac and Windows files apart.
 
 What the app says, because Windows works that way: an app that goes to the tray when its window
 closes - Slack, Teams, Discord, Telegram, Spotify - keeps running, and the card offers Force quit;
