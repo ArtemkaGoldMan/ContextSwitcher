@@ -55,6 +55,7 @@ public static class AppHost
 
         AppState appState = new();
         services.AddSingleton<IAppState>(appState);
+        services.AddSingleton<IAppInfo, AppInfo>();
         services.AddSingleton<IClock, SystemClock>();
         AddPlatformFileServices(services);
         services.AddSingleton<IJsonStore, JsonFileStore>();
@@ -66,7 +67,7 @@ public static class AppHost
         // as it happens, for looking into something that is not a failure.
         services.AddSingleton(provider => new TrailLogger(
             provider.GetRequiredService<LocalJsonLogger>(),
-            () => RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), AppBuild.IsDevelopment),
+            RunOf(provider.GetRequiredService<IAppInfo>()),
 
             // Settings → Detailed log: everything is written, as it happens, until the week is up.
             detailed: () => appState.Configuration.DetailedLogUntil is { } until && until > DateTimeOffset.UtcNow,
@@ -74,7 +75,7 @@ public static class AppHost
         services.AddSingleton<ILogger>(provider => provider.GetRequiredService<TrailLogger>());
         services.AddSingleton(provider => new DiagnosticsSources(
             provider.GetRequiredService<ConfigPaths>(),
-            () => RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), AppBuild.IsDevelopment),
+            RunOf(provider.GetRequiredService<IAppInfo>()),
             () => provider.GetRequiredService<TrailLogger>().Remembered(),
             provider.GetRequiredService<IClock>()));
         services.AddSingleton<ConfigurationValidator>();
@@ -150,17 +151,12 @@ public static class AppHost
         // The release source is shared; which releases are this app's is the updater's to say - the Mac's
         // zip and disk image - so a release with only Windows files is never offered here.
         services.AddSingleton<IReleaseSource>(provider => new GitHubReleaseSource(
-            provider.GetRequiredService<HttpClient>(), ReleaseVersion.Format(UpdatesViewModel.RunningVersion), AppBundleUpdater.Assets));
+            provider.GetRequiredService<HttpClient>(), ReleaseVersion.Format(provider.GetRequiredService<IAppInfo>().Version), AppBundleUpdater.Assets));
         services.AddSingleton<IAppUpdater>(provider => new AppBundleUpdater(
             provider.GetRequiredService<HttpClient>(), provider.GetRequiredService<IProcessRunner>()));
         services.AddSingleton<ISystemNotifications, MacNotifications>();
-        services.AddSingleton(provider => new UpdatesViewModel(
-            provider.GetRequiredService<IAppState>(),
-            provider.GetRequiredService<IReleaseSource>(),
-            provider.GetRequiredService<IAppUpdater>(),
-            provider.GetRequiredService<IProcessRunner>(),
-            provider.GetRequiredService<ISystemNotifications>(),
-            UpdatesViewModel.RunningVersion));
+        services.AddSingleton<UpdateChecker>();
+        services.AddSingleton<UpdatesViewModel>();
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<MainAppViewModel>();
         services.AddTransient<OnboardingViewModel>();
@@ -193,10 +189,14 @@ public static class AppHost
     private static void AddPlatformFileServices(IServiceCollection services)
     {
         bool windows = OperatingSystem.IsWindows();
-        services.AddSingleton(_ => new ConfigPaths(
-            settingsRoot: windows ? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) : null));
+        services.AddSingleton(provider => new ConfigPaths(
+            settingsRoot: windows ? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) : null,
+            development: provider.GetRequiredService<IAppInfo>().IsDevelopment));
         services.AddSingleton<IFileReplacer>(windows ? FileReplacer.RetryingWhileHeldOpen : FileReplacer.Once);
     }
+
+    /// <summary>Which app, which build, on which Mac: the first line of a log and of a diagnostic report.</summary>
+    private static Func<RunInfo> RunOf(IAppInfo app) => () => RunInfo.Current(app.Version.ToString(3), app.IsDevelopment);
 
     /// <summary>
     /// Ends the current analytics session on app shutdown. Safe to call even if none was ever
@@ -342,7 +342,7 @@ public static class AppHost
         // of minutes, and its line in the warnings follows what it does.
         closingFollowUp ??= StartClosingFollowUp(Services.GetRequiredService<ClosingAppsFollowUp>(), Services.GetRequiredService<IAppState>());
 
-        Services.GetRequiredService<UpdatesViewModel>().StartAutomaticChecks();
+        Services.GetRequiredService<UpdateChecker>().StartAutomaticChecks();
     }
 
     /// <summary>

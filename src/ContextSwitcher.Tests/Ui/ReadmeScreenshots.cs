@@ -10,6 +10,7 @@ using Avalonia.Platform;
 using Avalonia.Styling;
 using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Startup;
+using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views;
 using ContextSwitcher.Core.Abstractions;
@@ -109,11 +110,13 @@ public sealed class ReadmeScreenshots : UiTest
     {
         UiScenario scenario = UiScenario.With(Demo());
         scenario.AppState.UpdateState(new CurrentContextState { CurrentContextId = "personal" });
-        UpdatesViewModel updates = new(scenario.AppState, scenario.Releases, scenario.Updater, scenario.ProcessRunner, new FakeSystemNotifications(), UpdatesViewModel.RunningVersion);
+        UpdateChecker checker = new(
+            scenario.Releases, scenario.Updater, new FakeSystemNotifications(), scenario.AppState, new AppInfo(), scenario.Clock, new TestLogger());
         MainAppViewModel viewModel = new(
             scenario.AppState, scenario.SwitchService, scenario.ConfigurationStore, scenario.Permissions,
             scenario.ProcessRunner, scenario.Analytics, scenario.InstalledApps, scenario.Catalog, scenario.FocusShortcuts,
-            scenario.Notice, updates, loginItem: new FakeLoginItem { Status = LoginItemStatus.On });
+            scenario.Notice, new UpdatesViewModel(checker, scenario.ProcessRunner), scenario.Diagnostics,
+            loginItem: new FakeLoginItem { Status = LoginItemStatus.On });
 
         // See-through from the start: a window takes its transparency when it is first shown.
         MainAppWindow window = new(viewModel)

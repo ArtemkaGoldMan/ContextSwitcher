@@ -5,6 +5,7 @@ using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Infrastructure.Logging;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.Ui;
@@ -46,7 +47,11 @@ public sealed class UiScenario
         });
         this.Releases = new FakeReleaseSource();
         this.Updater = new FakeAppUpdater();
-        this.Updates = new UpdatesViewModel(this.AppState, this.Releases, this.Updater, this.ProcessRunner, new FakeSystemNotifications(), new Version(0, 1, 0), () => new DateTimeOffset(2026, 10, 10, 14, 32, 0, TimeSpan.Zero));
+        this.UpdateChecker = new UpdateChecker(
+            this.Releases, this.Updater, new FakeSystemNotifications(), this.AppState, new FakeAppInfo(new Version(0, 1, 0)), this.Clock, new TestLogger());
+        this.Updates = new UpdatesViewModel(this.UpdateChecker, this.ProcessRunner);
+        this.Diagnostics = new DiagnosticsSources(
+            this.Paths, () => new RunInfo("ContextSwitcher", "0.1.0", "26.6", "arm64", "release", 1), () => [], this.Clock);
     }
 
     /// <summary>The scenario's settings and state, which every view model it builds reads and saves to.</summary>
@@ -88,8 +93,14 @@ public sealed class UiScenario
 
     public FakeAppUpdater Updater { get; }
 
-    /// <summary>The update state, for a build that is version 0.1.0.</summary>
+    /// <summary>Checks and installs updates, for a build that is version 0.1.0.</summary>
+    public UpdateChecker UpdateChecker { get; }
+
+    /// <summary>The update state, as Settings shows it.</summary>
     public UpdatesViewModel Updates { get; }
+
+    /// <summary>What a diagnostic report is made of; dated by <see cref="Clock"/>.</summary>
+    public DiagnosticsSources Diagnostics { get; }
 
     /// <summary>Two profiles, the first active - the shape the app ships after onboarding.</summary>
     public static UiScenario WithTwoProfiles() => new(new AppConfiguration
@@ -106,13 +117,13 @@ public sealed class UiScenario
 
     public MainAppViewModel MainApp() => new(
         this.AppState, this.SwitchService, this.ConfigurationStore,
-        this.Permissions, this.ProcessRunner, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates);
+        this.Permissions, this.ProcessRunner, this.Analytics, this.InstalledApps, this.Catalog, this.FocusShortcuts, this.Notice, this.Updates, this.Diagnostics);
 
     public ProfilesViewModel Profiles() =>
         new(this.AppState, this.SwitchService, this.ConfigurationStore);
 
     public SettingsViewModel Settings() =>
-        new(this.AppState, this.ConfigurationStore, this.Permissions, this.ProcessRunner, this.Updates);
+        new(this.AppState, this.ConfigurationStore, this.Permissions, this.ProcessRunner, this.Updates, this.Diagnostics);
 
     public StatsViewModel Stats() => new(this.AppState, this.Analytics);
 

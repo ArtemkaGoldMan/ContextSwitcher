@@ -301,7 +301,7 @@ Base directory:
 ~/.config/ContextSwitcher/
 ```
 
-A Debug build (`AppBuild.IsDevelopment`) uses `~/.config/ContextSwitcher-dev/` instead, so working on
+A Debug build (`IAppInfo.IsDevelopment`) uses `~/.config/ContextSwitcher-dev/` instead, so working on
 the app never touches the installed copy's data, and shows "Context Switcher DEV" as its name. The
 `CONTEXTSWITCHER_CONFIG_DIR` environment variable overrides both (`ConfigPaths.ResolveBaseDirectory`).
 

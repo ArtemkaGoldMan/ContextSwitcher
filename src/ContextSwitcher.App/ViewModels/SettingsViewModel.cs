@@ -48,10 +48,10 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         IPermissionsChecker permissionsChecker,
         IProcessRunner processRunner,
         UpdatesViewModel updates,
+        DiagnosticsSources diagnostics,
         Func<IReadOnlyList<string>>? preferredLanguages = null,
         ILoginItem? loginItem = null,
-        IInstalledAppsService? installedApps = null,
-        DiagnosticsSources? diagnostics = null)
+        IInstalledAppsService? installedApps = null)
     {
         this.appState = appState;
         this.loginItem = loginItem;

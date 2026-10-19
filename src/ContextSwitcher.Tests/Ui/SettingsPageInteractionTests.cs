@@ -50,7 +50,7 @@ public sealed class SettingsPageInteractionTests : UiTest
             Click(window, FindControl<ToggleSwitch>(window, t => AutomationProperties.GetName(t) == "Detailed log"));
             PumpUntil(WaitUntil(() => scenario.AppState.Configuration.DetailedLogUntil is not null));
 
-            Assert.True(scenario.AppState.Configuration.DetailedLogUntil > DateTimeOffset.UtcNow.AddDays(6));
+            Assert.True(scenario.AppState.Configuration.DetailedLogUntil > scenario.Clock.UtcNow.AddDays(6));
             Settle(window);
             Assert.StartsWith("On until", FindControl<TextBlock>(window, t => t.Text?.StartsWith("On until", StringComparison.Ordinal) == true && IsClickable(t)).Text, StringComparison.Ordinal);
         });

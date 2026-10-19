@@ -14,9 +14,7 @@ public sealed class ConfigPathsTests
     /// <summary>Windows' settings root, %APPDATA%, as the app's composition root gives it there.</summary>
     private const string AppData = @"C:\Users\someone\AppData\Roaming";
 
-    private static string ThisBuildsFolder => AppBuild.IsDevelopment ? "ContextSwitcher-dev" : "ContextSwitcher";
-
-    /// <summary>The default is under ~/.config - this build's folder: its own for a development build.</summary>
+    /// <summary>The default is under ~/.config - the release's folder, or its own for a development build.</summary>
     [Fact]
     public void DefaultBaseDirectoryUsesUserConfigContextSwitcherPath()
     {
@@ -25,11 +23,10 @@ public sealed class ConfigPathsTests
             return;
         }
 
-        ConfigPaths paths = new();
+        string config = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config");
 
-        Assert.Equal(
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", ThisBuildsFolder),
-            paths.BaseDirectory);
+        Assert.Equal(Path.Combine(config, "ContextSwitcher"), new ConfigPaths().BaseDirectory);
+        Assert.Equal(Path.Combine(config, "ContextSwitcher-dev"), new ConfigPaths(development: true).BaseDirectory);
     }
 
     /// <summary>Given another settings root - %APPDATA% on Windows - this build's folder is in there.</summary>
@@ -43,7 +40,7 @@ public sealed class ConfigPathsTests
 
         ConfigPaths paths = new(settingsRoot: AppData);
 
-        Assert.Equal(Path.Combine(AppData, ThisBuildsFolder), paths.BaseDirectory);
+        Assert.Equal(Path.Combine(AppData, "ContextSwitcher"), paths.BaseDirectory);
     }
 
     /// <summary>What the variable can name; a folder under the home one is put together with this system's separator.</summary>
@@ -98,12 +95,6 @@ public sealed class ConfigPathsTests
     public void AFolderGivenInCodeComesFirst()
     {
         Assert.Equal("/tmp/tests", ConfigPaths.ResolveBaseDirectory("/tmp/tests", "/tmp/cs-demo", Home, isDevelopment: true));
-    }
-
-    [Fact]
-    public void ADevelopmentBuildSaysSoInItsName()
-    {
-        Assert.Equal(AppBuild.IsDevelopment ? "Context Switcher DEV" : "Context Switcher", AppBuild.DisplayName);
     }
 
     [Fact]

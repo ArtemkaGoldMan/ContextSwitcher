@@ -25,7 +25,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     private readonly IAppState appState;
     private readonly ConfigurationStore configurationStore;
     private readonly IProcessRunner processRunner;
-    private readonly DiagnosticsSources? sources;
+    private readonly DiagnosticsSources sources;
     private readonly Func<bool?> automation;
     private string? message;
     private string? contactMessage;
@@ -34,12 +34,13 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
         IAppState appState,
         ConfigurationStore configurationStore,
         IProcessRunner processRunner,
-        DiagnosticsSources? sources = null,
+        DiagnosticsSources sources,
         Func<bool?>? automation = null)
     {
         ArgumentNullException.ThrowIfNull(appState);
         ArgumentNullException.ThrowIfNull(configurationStore);
         ArgumentNullException.ThrowIfNull(processRunner);
+        ArgumentNullException.ThrowIfNull(sources);
 
         this.appState = appState;
         this.configurationStore = configurationStore;
@@ -127,7 +128,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
         this.OnPropertyChanged(nameof(this.HasDetailedLogStatus));
     }
 
-    private DateTimeOffset Now => this.sources?.Clock.UtcNow ?? DateTimeOffset.UtcNow;
+    private DateTimeOffset Now => this.sources.Clock.UtcNow;
 
     private async Task SetDetailedLogAsync(bool on)
     {
@@ -162,7 +163,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     private async Task WriteEmailAsync()
     {
         bool copied = await this.CopyReportAsync().ConfigureAwait(true);
-        RunInfo run = this.Run();
+        RunInfo run = this.sources.Run();
         string link = MailTo(
             AppLinks.ContactEmail,
             Localized.Format(Strings.Contact_EmailSubject, run.Version),
@@ -191,17 +192,14 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     private void Open(string url) =>
         _ = this.processRunner.RunAsync(new ProcessStartOptions("open", [url], TimeSpan.FromSeconds(5)), CancellationToken.None);
 
-    private RunInfo Run() =>
-        this.sources?.Run() ?? RunInfo.Current(UpdatesViewModel.RunningVersion.ToString(3), Infrastructure.Files.AppBuild.IsDevelopment);
-
     /// <summary>The report as it would be copied now.</summary>
     public string BuildReport()
     {
-        string logPath = this.sources?.Paths.AppLogPath ?? string.Empty;
+        string logPath = this.sources.Paths.AppLogPath;
         List<string> log = [];
         try
         {
-            if (logPath.Length > 0 && File.Exists(logPath))
+            if (File.Exists(logPath))
             {
                 log.AddRange(File.ReadLines(logPath).TakeLast(DiagnosticsReport.LogLines));
             }
@@ -212,24 +210,20 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
         }
 
         return DiagnosticsReport.Build(new DiagnosticsInput(
-            this.Run(),
+            this.sources.Run(),
             this.appState.Configuration,
             this.automation(),
             this.appState.ConfigurationValidation.Errors.Count,
             log,
-            this.sources?.Pending() ?? [],
+            this.sources.Pending(),
             this.Now));
     }
 
     /// <summary>The log in Finder; when there is none - a quiet week - the folder it would be in.</summary>
     private void ShowLog()
     {
-        if (this.sources is not { } known)
-        {
-            return;
-        }
-
-        IReadOnlyList<string> arguments = File.Exists(known.Paths.AppLogPath) ? ["-R", known.Paths.AppLogPath] : [known.Paths.BaseDirectory];
+        string log = this.sources.Paths.AppLogPath;
+        IReadOnlyList<string> arguments = File.Exists(log) ? ["-R", log] : [this.sources.Paths.BaseDirectory];
         _ = this.processRunner.RunAsync(new ProcessStartOptions("open", arguments, TimeSpan.FromSeconds(5)), CancellationToken.None);
     }
 }

@@ -9,10 +9,10 @@ using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.App.Views;
-using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Abstractions;
+using ContextSwitcher.Core.Updates;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App;
@@ -141,26 +141,20 @@ public sealed partial class App : Application
 
         // A waiting update shows in the menu; installing one quits this copy so the new one can take
         // its place - the updater has already arranged for it to open.
-        UpdatesViewModel updates = AppHost.Services.GetRequiredService<UpdatesViewModel>();
-        updates.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(UpdatesViewModel.IsUpdateAvailable))
-            {
-                trayMenu.SetAvailableUpdate(updates.IsUpdateAvailable ? updates.AvailableVersionText : null);
-            }
-        };
+        UpdateChecker updates = AppHost.Services.GetRequiredService<UpdateChecker>();
+        updates.Changed += (_, _) => trayMenu.SetAvailableUpdate(updates.Available is { } release ? ReleaseVersion.Format(release.Version) : null);
         updates.RestartRequested += (_, _) => desktop.Shutdown();
 
         // Clicking the update notification leads to the same place. It can be one shown before a
         // restart, while this run hasn't found the update yet, so it asks again.
         AppHost.Services.GetRequiredService<ISystemNotifications>().Clicked += (_, id) =>
         {
-            if (id == UpdatesViewModel.NotificationId)
+            if (id == UpdateChecker.NotificationId)
             {
                 this.Dispatcher.Post(() =>
                 {
                     this.ShowUpdates();
-                    if (!updates.IsUpdateAvailable)
+                    if (updates.Available is null)
                     {
                         _ = updates.CheckAsync(userAsked: true);
                     }
@@ -171,7 +165,7 @@ public sealed partial class App : Application
         TrayIcon trayIcon = new()
         {
             Icon = new WindowIcon(AssetLoader.Open(TrayIconUri)),
-            ToolTipText = AppBuild.DisplayName,
+            ToolTipText = AppHost.Services.GetRequiredService<IAppInfo>().DisplayName,
             Menu = trayMenu.Menu,
             IsVisible = true
         };
@@ -255,7 +249,7 @@ public sealed partial class App : Application
         if (this.dashboardWindow is null)
         {
             DashboardViewModel viewModel = AppHost.Services.GetRequiredService<DashboardViewModel>();
-            this.dashboardWindow = new DashboardWindow(viewModel, this.ShowMainApp);
+            this.dashboardWindow = new DashboardWindow(viewModel, this.ShowMainApp) { Title = AppHost.Services.GetRequiredService<IAppInfo>().DisplayName };
             this.dashboardWindow.Closed += (_, _) => this.dashboardWindow = null;
         }
 
@@ -272,7 +266,7 @@ public sealed partial class App : Application
         if (this.mainAppWindow is null)
         {
             MainAppViewModel viewModel = AppHost.Services.GetRequiredService<MainAppViewModel>();
-            this.mainAppWindow = new MainAppWindow(viewModel);
+            this.mainAppWindow = new MainAppWindow(viewModel) { Title = AppHost.Services.GetRequiredService<IAppInfo>().DisplayName };
             this.mainAppWindow.Closed += (_, _) => this.mainAppWindow = null;
         }
 
