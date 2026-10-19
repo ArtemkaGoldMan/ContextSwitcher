@@ -365,10 +365,6 @@ public static class AppHost
     }
 
     /// <summary>
-    /// Re-prunes analytics on a slow timer for the life of the process. Fire-and-forget on purpose:
-    /// housekeeping must never take the app down, and the next tick retries anyway.
-    /// </summary>
-    /// <summary>
     /// Starts the things that need Avalonia's dispatcher, and so cannot run during
     /// <see cref="Initialize"/> - that happens before the platform is set up, and merely
     /// constructing a DispatcherTimer there claims the UI dispatcher for the calling thread, which

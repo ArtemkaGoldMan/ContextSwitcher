@@ -47,7 +47,7 @@ public sealed class ProfilesViewModelTests
         viewModel.Rows[1].ToggleCommand.Execute(null);
 
         Assert.Equal("personal", switchService.LastRequest?.TargetContextId);
-        Assert.Equal(ContextSwitchSource.Dashboard, switchService.LastRequest?.Source);
+        Assert.Equal(ContextSwitchSource.ProfilesPage, switchService.LastRequest?.Source);
     }
 
     /// <summary>

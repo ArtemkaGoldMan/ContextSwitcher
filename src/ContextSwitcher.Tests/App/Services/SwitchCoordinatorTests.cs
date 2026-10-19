@@ -38,7 +38,7 @@ public sealed class SwitchCoordinatorTests
         SwitchCoordinator coordinator = this.Create(askOnSwitch);
         await this.jsonStore.WriteAsync(this.paths.StatePath, new CurrentContextState { CurrentContextId = "personal" });
 
-        await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.MenuBar), CancellationToken.None);
+        await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.TrayMenu), CancellationToken.None);
 
         Assert.Equal("personal", AppHost.State.CurrentContextId);
     }
@@ -49,7 +49,7 @@ public sealed class SwitchCoordinatorTests
         SwitchCoordinator coordinator = this.Create(askOnSwitch: false);
         this.running.Apps.Add(new RunningApp("Figma"));
 
-        await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.MenuBar), CancellationToken.None);
+        await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.TrayMenu), CancellationToken.None);
 
         Assert.Empty(this.presenter.Asked);
         Assert.Null(this.inner.LastRequest!.Extras);
@@ -61,7 +61,7 @@ public sealed class SwitchCoordinatorTests
         SwitchCoordinator coordinator = this.Create(askOnSwitch: true);
         this.running.Apps.Add(new RunningApp("Slack"));
 
-        await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.MenuBar), CancellationToken.None);
+        await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.TrayMenu), CancellationToken.None);
 
         Assert.Empty(this.presenter.Asked);
         Assert.Equal("personal", this.inner.LastRequest!.TargetContextId);
@@ -118,7 +118,7 @@ public sealed class SwitchCoordinatorTests
         SwitchCoordinator coordinator = this.Create(askOnSwitch: true);
         this.running.Apps.Add(new RunningApp("Figma"));
 
-        await coordinator.SwitchAsync(ContextSwitchRequest.TurnOff(ContextSwitchSource.MenuBar), CancellationToken.None);
+        await coordinator.SwitchAsync(ContextSwitchRequest.TurnOff(ContextSwitchSource.TrayMenu), CancellationToken.None);
 
         Assert.Equal("Turning Work off", Assert.Single(this.presenter.Asked).Title);
         Assert.True(this.inner.LastRequest!.IsTurnOff);
@@ -133,7 +133,7 @@ public sealed class SwitchCoordinatorTests
         SwitchCoordinator coordinator = this.Create(askOnSwitch: true);
         this.running.Apps.Add(new RunningApp("Figma"));
 
-        await coordinator.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.MenuBar), CancellationToken.None);
+        await coordinator.SwitchAsync(new ContextSwitchRequest("work", ContextSwitchSource.TrayMenu), CancellationToken.None);
 
         Assert.Empty(this.presenter.Asked);
     }
@@ -147,7 +147,7 @@ public sealed class SwitchCoordinatorTests
         AskOnSwitchViewModel? open = null;
         this.presenter.Answer = viewModel => open = viewModel;
 
-        Task<ContextSwitchResult> first = coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.MenuBar), CancellationToken.None);
+        Task<ContextSwitchResult> first = coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.TrayMenu), CancellationToken.None);
         ContextSwitchResult second = await coordinator.SwitchAsync(new ContextSwitchRequest("personal", ContextSwitchSource.Dashboard), CancellationToken.None);
 
         Assert.Equal(ContextSwitchStatus.Cancelled, second.Status);

@@ -111,7 +111,7 @@ public sealed class ProfilesViewModel : ViewModelBase, IDisposable
     {
         this.ErrorMessage = null;
         DateTimeOffset? lastSwitchBefore = AppHost.State.LastSwitchCompletedAt;
-        ContextSwitchRequest request = ContextSwitchRequest.ForClickOn(context.Id, AppHost.State.CurrentContextId, ContextSwitchSource.Dashboard);
+        ContextSwitchRequest request = ContextSwitchRequest.ForClickOn(context.Id, AppHost.State.CurrentContextId, ContextSwitchSource.ProfilesPage);
         string couldNot = request.IsTurnOff
             ? Localized.Format(Strings.Notice_CouldNotTurnOff, context.DisplayName)
             : Localized.Format(Strings.Notice_CouldNotSwitchTo, context.DisplayName);

@@ -227,7 +227,7 @@ public sealed partial class App : Application
         {
             IContextSwitchService switchService = AppHost.Services.GetRequiredService<IContextSwitchService>();
             await switchService
-                .SwitchAsync(ContextSwitchRequest.ForClickOn(contextId, AppHost.State.CurrentContextId, ContextSwitchSource.MenuBar), CancellationToken.None)
+                .SwitchAsync(ContextSwitchRequest.ForClickOn(contextId, AppHost.State.CurrentContextId, ContextSwitchSource.TrayMenu), CancellationToken.None)
                 .ConfigureAwait(true);
         }
         catch (Exception ex)

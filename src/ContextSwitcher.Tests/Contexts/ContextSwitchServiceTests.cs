@@ -306,8 +306,8 @@ public sealed class ContextSwitchServiceTests
     [Fact]
     public void ClickingTheActiveProfileTurnsItOff()
     {
-        Assert.True(ContextSwitchRequest.ForClickOn("work", "work", ContextSwitchSource.MenuBar).IsTurnOff);
-        Assert.Equal("personal", ContextSwitchRequest.ForClickOn("personal", "work", ContextSwitchSource.MenuBar).TargetContextId);
+        Assert.True(ContextSwitchRequest.ForClickOn("work", "work", ContextSwitchSource.TrayMenu).IsTurnOff);
+        Assert.Equal("personal", ContextSwitchRequest.ForClickOn("personal", "work", ContextSwitchSource.TrayMenu).TargetContextId);
         Assert.Equal("work", ContextSwitchRequest.ForClickOn("work", string.Empty, ContextSwitchSource.Dashboard).TargetContextId);
     }
 
