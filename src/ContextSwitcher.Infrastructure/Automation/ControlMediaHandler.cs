@@ -9,7 +9,7 @@ namespace ContextSwitcher.Infrastructure.Automation;
 /// <summary>Starts the music the context switched to plays, when it plays any.</summary>
 public sealed class ControlMediaHandler : IStepHandler
 {
-    private readonly IMediaPlayer player;
+    private readonly IMediaPlayer mediaPlayer;
     private readonly IClock clock;
 
     public ControlMediaHandler(IMediaPlayer player, IClock clock)
@@ -17,7 +17,7 @@ public sealed class ControlMediaHandler : IStepHandler
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(clock);
 
-        this.player = player;
+        this.mediaPlayer = player;
         this.clock = clock;
     }
 
@@ -58,7 +58,7 @@ public sealed class ControlMediaHandler : IStepHandler
 
     private async Task<AutomationResult> PlayAppleMusicAsync(AutomationStep step, string playlist, DateTimeOffset startedAt, CancellationToken cancellationToken)
     {
-        ProcessResult result = await this.player
+        ProcessResult result = await this.mediaPlayer
             .PlayAsync(MediaPlayerKind.AppleMusic, playlist, StepResults.WithReportingHeadroom(step.Timeout), cancellationToken)
             .ConfigureAwait(false);
         DateTimeOffset completedAt = this.clock.UtcNow;
@@ -73,7 +73,7 @@ public sealed class ControlMediaHandler : IStepHandler
 
     private async Task<AutomationResult> PlaySpotifyAsync(AutomationStep step, string playlist, DateTimeOffset startedAt, CancellationToken cancellationToken)
     {
-        ProcessResult result = await this.player
+        ProcessResult result = await this.mediaPlayer
             .PlayAsync(MediaPlayerKind.Spotify, playlist, StepResults.WithReportingHeadroom(step.Timeout), cancellationToken)
             .ConfigureAwait(false);
         DateTimeOffset completedAt = this.clock.UtcNow;

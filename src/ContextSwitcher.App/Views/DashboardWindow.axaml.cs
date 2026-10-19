@@ -24,8 +24,8 @@ public sealed partial class DashboardWindow : Window
     public static readonly Thickness ShadowRoom = new(16, 10, 16, 22);
 
     private readonly Action openMainApp = () => { };
-    private readonly IPopoverWindow? popover;
-    private readonly ILogger? logger;
+    private readonly IPopoverWindow? popoverWindow;
+    private readonly ILogger? log;
     private DashboardViewModel? viewModel;
     private DispatcherTimer? frontmostWatch;
     private int? frontmostBaseline;
@@ -36,6 +36,7 @@ public sealed partial class DashboardWindow : Window
         AvaloniaXamlLoader.Load(this);
     }
 
+    /// <summary>The popover for <paramref name="viewModel"/>, as the app shows it.</summary>
     /// <param name="openMainApp">
     /// Opens the main window. The app owns that window, since the menu bar's own "Open App" opens it
     /// too, and two owners meant two windows.
@@ -45,8 +46,8 @@ public sealed partial class DashboardWindow : Window
         : this()
     {
         this.openMainApp = openMainApp;
-        this.popover = popover;
-        this.logger = logger;
+        this.popoverWindow = popover;
+        this.log = logger;
         this.viewModel = viewModel;
         DataContext = viewModel;
         viewModel.OpenAppRequested += this.OnOpenAppRequested;
@@ -90,7 +91,7 @@ public sealed partial class DashboardWindow : Window
     public void ShowAsPopover()
     {
         // Only the designer makes one without these, and never shows it as a popover.
-        if (this.popover is not { } popover || this.logger is not { } logger)
+        if (this.popoverWindow is not { } popover || this.log is not { } logger)
         {
             this.Show();
             return;

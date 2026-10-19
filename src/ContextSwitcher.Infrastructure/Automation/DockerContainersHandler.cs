@@ -15,6 +15,7 @@ public sealed class DockerContainersHandler : IStepHandler
     private readonly IClock clock;
     private readonly string command;
 
+    /// <summary>The handler for one of the two Docker steps.</summary>
     /// <param name="type"><see cref="AutomationStepType.StartDockerResources"/> or <see cref="AutomationStepType.StopDockerResources"/>.</param>
     public DockerContainersHandler(AutomationStepType type, IProcessRunner processRunner, IClock clock)
     {
