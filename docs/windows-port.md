@@ -1,21 +1,20 @@
 # A Windows version
 
-What carries over to Windows, what has to be written again, and what Windows can't do - and why.
-The order to build it in, one release at a time, is in [the Windows plan](windows-plan.md).
+What each feature becomes on Windows, what Windows can't do, and why. The order to build it in, one
+release at a time, and how far it has got, are in [the Windows plan](windows-plan.md).
 
 Checked in October 2026 against 0.6.7. The solution was built and its tests run on Windows 11, the
 app was started there, and the browser parts were tried on Chrome 155 and Edge 155 with throwaway
-profiles. The first version of this page, written against 0.6.3, came from reading the code alone.
+profiles.
 
 ## In short
 
-It can be done without starting over, and less is missing than it looked. The solution builds on
-Windows as it is, its tests pass there - all but 17 did from the start, and those were fixed or
-marked macOS-only in [#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76) - and the app
-opens its setup window. About four
-fifths of the code carries over: all of the profile, switching, time and logging logic, and nearly
-all of the interface. What has to be written again is the layer that talks to macOS - AppleScript,
-the Objective-C calls, `open`, `sips`, `shortcuts`, `codesign` and the updater.
+It can be done without starting over. All of the profile, switching, time and logging logic carries
+over unchanged, and nearly all of the interface. What has to be written again is the layer that talks
+to macOS - AppleScript, the Objective-C calls, `open`, `sips`, `shortcuts`, `codesign` and the
+updater - and that layer now sits behind interfaces, in a project of its own
+([stage 0](windows-plan.md#stage-0---groundwork-done)). The solution builds and its tests pass on
+Windows in CI.
 
 Browser tabs are the hard part, but they are not lost. Windows browsers have nothing like
 AppleScript, so a tab can't be listed with its address and closed by its id. What does work, tried
@@ -23,44 +22,19 @@ on Chrome and Edge: a profile opens its pages in a browser window of its own, na
 closes that window when it is left. UI Automation reads the titles of the other tabs. Focus and Apple
 Music can't be driven on Windows and are left out; Spotify works in part.
 
-## Tried on Windows
-
-On Windows 11 in October 2026, with no change to the code:
-
-- **Build.** The whole solution builds with no errors and no warnings.
-- **Tests.** 1,991 of 2,008 pass. The 17 that fail all expect macOS: five start `osascript` or
-  `/bin/ps`, five look for the app's executable without `.exe`, five compare paths written with `/`,
-  and two ask macOS itself (sleep and wake, the default browser). Much of the macOS code already
-  checks `OperatingSystem.IsMacOS()` and does nothing elsewhere, which is why so little fails.
-  [#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76) fixed them or marked them
-  macOS-only.
-- **The command line.** `ContextSwitcher.exe status` runs and answers.
-- **The app.** It starts, and the setup wizard opens and draws correctly, in Segoe UI with Windows'
-  own title bar. A console window opens with it: the app is built as a console program
-  (`OutputType` `Exe`), and on Windows it has to be `WinExe`. The wizard says "your Mac".
-- **Not looked at yet:** the tray icon, the dashboard, and switching.
-
-## What carries over
-
-| Part | Size | On Windows |
-| --- | --- | --- |
-| `ContextSwitcher.Core` - profiles, the switch plan, validation, time tracking, logging, messages | 4,400 lines | unchanged |
-| `ContextSwitcher.App` - every page, view model, style, the en/uk text, stats, reordering | 11,000 lines of C# and XAML | about 90% unchanged |
-| `ContextSwitcher.Infrastructure`, the shared part - JSON files, the log, GitHub releases, the command line, Docker, running processes | about 1,600 lines | unchanged, apart from file moves (below) |
-| `ContextSwitcher.Infrastructure`, the macOS part - `MacOS/`, `AppleScript/`, most of `Browser/`, the automation executor, the updater, app discovery | about 4,800 lines | written again |
-
-About 4,800 of the 21,900 lines outside the tests - a little over a fifth - are tied to macOS.
-
 ## The interface on Windows
 
 Windows is Avalonia's first platform: windows, the Semi theme, the colour picker, the tray icon
-with its menu and the headless test host all work there. What changes:
+with its menu and the headless test host all work there. Started on Windows 11, the setup wizard
+opens and draws correctly, in Segoe UI with Windows' own title bar. What changes:
 
 - **Font.** [`App.axaml`](../src/ContextSwitcher.App/App.axaml) asks for `.AppleSystemUIFont` and
   Helvetica; Windows falls back to Segoe UI, which looks right. `Segoe UI Variable` goes first on
   Windows.
-- **A window program.** `OutputType` becomes `WinExe` on Windows, or a console window opens with the
-  app. The command line then needs a program of its own (below).
+- **A window program.** The app is built with `OutputType` `Exe`, so on Windows a console window
+  opens with it. There it becomes `WinExe`, and the command line a program of its own: a Windows
+  program with a window has no console to print to. It can't be called `contextswitcher.exe` next
+  to `ContextSwitcher.exe`, since Windows file names ignore case.
 - **Tray icon.** The menu bar icon is a template image macOS recolours for light and dark. Windows
   does not recolour tray icons, so it needs two `.ico` files and a switch when the taskbar's theme
   changes.
@@ -69,12 +43,12 @@ with its menu and the headless test host all work there. What changes:
   dashboard and the right click the menu.
 - **Hidden icons.** Windows 11 puts a new app's tray icon in the overflow, out of sight. Setup has
   to tell people to pin it; there is no supported way for an app to do it.
-- **The dashboard.** [`DashboardWindow.axaml.cs`](../src/ContextSwitcher.App/Views/DashboardWindow.axaml.cs)
-  turns the popover into a non-activating panel, makes it follow the active Space, and watches the
-  frontmost app and the mouse to know when to close (`MenuBarPanel`, `WindowSpaces`,
-  `FrontmostApplication`, `OutsideClick`). None of that is needed on Windows: a borderless,
-  topmost window with no taskbar button that hides when it is deactivated behaves as a tray flyout
-  should.
+- **The dashboard.** On macOS
+  [`MacPopoverWindow`](../src/ContextSwitcher.Infrastructure.MacOS/MacPopoverWindow.cs), behind
+  `IPopoverWindow`, turns the popover into a non-activating panel, makes it follow the active Space,
+  and tells the dashboard about the frontmost app and the mouse so it knows when to close. Windows
+  needs a simpler one: a borderless, topmost window with no taskbar button that hides when it is
+  deactivated behaves as a tray flyout should.
 - **Where the dashboard opens.** `PositionNearMenuBar` in
   [`App.axaml.cs`](../src/ContextSwitcher.App/App.axaml.cs) always places it under the top right
   corner. On Windows it belongs next to the tray, on whichever edge the taskbar is - the side where
@@ -84,9 +58,12 @@ with its menu and the headless test host all work there. What changes:
   own tray icon. The app needs a named mutex, and a pipe to tell the running copy to show its window.
 - **Text.** About 68 of the 443 strings name something only macOS has: the Mac, the Dock, the menu
   bar, Shortcuts, System Settings, Automation, Safari, Focus, ⌘ and Option. Each needs a Windows
-  wording, in English and Ukrainian.
-- **Build.** `RuntimeIdentifiers` adds `win-x64` and `win-arm64`. `MacOSPlatformOptions` is ignored
-  on Windows; the software-rendering switch goes through `Win32PlatformOptions` there.
+  wording, in English and Ukrainian. The setup wizard, for one, says "your Mac".
+- **Build.** `RuntimeIdentifiers` adds `win-x64` and `win-arm64` to `osx-arm64`.
+  `MacOSPlatformOptions` is ignored on Windows; the software-rendering switch goes through
+  `Win32PlatformOptions` there.
+- **Testing by hand.** CI can't tell whether closing Slack actually works. That needs a Windows PC,
+  or Windows 11 on Arm in Parallels or UTM on a Mac, running the `win-arm64` build.
 
 ## Feature by feature
 
@@ -219,72 +196,6 @@ What that means for each feature, without an extension:
 | Closing a whole browser profile | ✅ its windows, by AppUserModelID |
 | Exact control, as with AppleScript | ✅ only in a browser profile of the app's own |
 
-## What the code needs first
-
-These come before any Windows code, and none of them changes what the Mac app does. The
-[plan](windows-plan.md) has them as stage 0.
-
-1. **Seams where AppleScript is wired in** - done in [#83](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/83): each step
-   type has a handler, and what they and `BrowserLauncher` ask of macOS is behind an interface of its
-   own. As it was before:
-   [`AutomationStepExecutor`](../src/ContextSwitcher.Infrastructure/Automation/AutomationStepExecutor.cs)
-   quits apps through AppleScript, launches them with `open -a`, plays Music and Spotify through
-   AppleScript and runs Focus Shortcuts with `shortcuts run`, and defaults to `MacApplicationHider`.
-   [`BrowserLauncher`](../src/ContextSwitcher.Infrastructure/Browser/BrowserLauncher.cs) builds its
-   AppleScript directly. They need interfaces of their own: launching and closing apps, browser
-   tabs, media, Focus. Six view models also run `open` themselves - to open a link, show the log in
-   Finder, open Shortcuts - and need one for opening a link or showing a file.
-
-   The rest is already behind interfaces in `Core/Abstractions` and only needs a Windows
-   registration, in the Windows project's [`PlatformServices`](../src/ContextSwitcher.Infrastructure.Windows/PlatformServices.cs): `IApplicationHider`,
-   `IAppProcesses`, `IRunningApplications`, `ILoginItem`, `ISystemNotifications`, `IDefaultBrowser`,
-   `IAppUpdater`, `ISystemCatalog`, `IInstalledAppsService`, `IPermissionsChecker`.
-
-2. **How a profile names an app** - done in [#84](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/84), as the settings' `apps` map. A profile stores the app's bundle name - "Visual Studio Code" -
-   which both `open -a` and AppleScript understand. On Windows the Start menu name is not the
-   process (`Code.exe`), and Store apps are known by an AppUserModelID. Next to the name, a profile
-   needs what the app was picked as: its AppUserModelID, and its executable to recognise it running.
-   The map is optional, so old files read unchanged.
-
-3. **What each platform can do** - done in [#84](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/84), as `PlatformCapabilities`. Profile Setup hides what the platform lacks - Focus, Apple Music,
-   Safari, closing tabs by id - and `AutomationPlanBuilder` plans no step for it. A profile imported
-   from a Mac says which of its apps and settings this machine cannot use, rather than failing at
-   switch time.
-
-4. **Project layout** - done in [#85](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/85). `ContextSwitcher.Infrastructure` keeps what is shared;
-   `ContextSwitcher.Infrastructure.MacOS` and `ContextSwitcher.Infrastructure.Windows` hold the rest.
-   The Windows project targets `net10.0-windows10.0.19041.0`, which toast notifications and the media
-   session controls need. A `net10.0` project can't reference it, so the app targets both `net10.0`
-   (macOS) and `net10.0-windows10.0.19041.0`, and references the Windows project only in the
-   second. One repository, one branch.
-
-5. **The command line.** A Windows program with a window has no console, so `ContextSwitcher.exe
-   switch work` would print nothing. The command line becomes a small console program of its own -
-   [`CliCommandRouter`](../src/ContextSwitcher.Infrastructure/Cli/CliCommandRouter.cs) already lives in
-   Infrastructure, so it is a thin `Main`. It cannot be called `contextswitcher.exe` next to
-   `ContextSwitcher.exe`: Windows file names ignore case.
-
-6. **Files.** Settings move to `%APPDATA%\ContextSwitcher` instead of `~/.config/ContextSwitcher`.
-   More important: on Windows `File.Move(…, overwrite: true)` fails while another process has the
-   file open - the app and the command line at once, an antivirus, the search indexer. That is how
-   [`JsonFileStore`](../src/ContextSwitcher.Infrastructure/Files/JsonFileStore.cs) and
-   `AnalyticsSessionStore` save, and how
-   [`LocalJsonLogger`](../src/ContextSwitcher.Infrastructure/Logging/LocalJsonLogger.cs) rolls its log;
-   each needs a short retry. Both are done, in
-   [#78](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/78): the folder, and an
-   `IFileReplacer` all three are given - on Windows a
-   [`FileReplacer`](../src/ContextSwitcher.Infrastructure/Files/FileReplacer.cs) that tries again.
-
-## Tests and CI
-
-- Every test runs on both systems, apart from the few that test macOS itself or Windows itself,
-  which the other system skips.
-- CI builds with warnings as errors and runs the tests on Windows too, in **Build and test
-  (Windows)** ([#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76)). The release
-  workflow gains a Windows build in stage 1 of [the plan](windows-plan.md).
-- CI cannot tell whether closing Slack actually works. That needs a Windows PC, or Windows 11 on Arm
-  in Parallels or UTM on a Mac, running the `win-arm64` build.
-
 ## Shipping it
 
 - **Unsigned**, Windows shows "Windows protected your PC" before the first run, and antivirus is
@@ -298,8 +209,10 @@ These come before any Windows code, and none of them changes what the Mac app do
   ([code signing options](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options)).
 - **GitHub releases** can use [Velopack](https://docs.velopack.io/packaging/operating-systems/windows),
   which builds the installer and does updates. It installs into `%LocalAppData%` and replaces the whole
-  app folder on update, which is fine: settings live elsewhere. It supports macOS too, so it could
+  app folder on update, which is fine: settings live in `%APPDATA%`. It supports macOS too, so it could
   later replace [`AppBundleUpdater`](../src/ContextSwitcher.Infrastructure.MacOS/Updates/AppBundleUpdater.cs).
+  This is how the preview ships ([decided](windows-plan.md#decisions-made)); the Store can come at
+  Windows 1.0.
 
 ## Left out on Windows
 
