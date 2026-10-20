@@ -14,7 +14,7 @@
 
     <!-- Single source of truth for the version. scripts/build-app.sh reads it from here so the
          bundle, the Info.plist and the .dmg filename cannot drift apart. -->
-    <Version>0.6.7</Version>
+    <Version>0.6.8</Version>
   </PropertyGroup>
 
   <ItemGroup>
