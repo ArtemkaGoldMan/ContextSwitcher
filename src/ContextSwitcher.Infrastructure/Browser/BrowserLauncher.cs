@@ -7,11 +7,11 @@ using ContextSwitcher.Core.Messages;
 namespace ContextSwitcher.Infrastructure.Browser;
 
 /// <summary>
-/// Implements the browser management modes from agent.md section 9.3 and 9.5: opening URLs (with
-/// best-effort duplicate-tab avoidance) and launching Chromium browser profiles - and closing the
-/// tabs a profile being left lists to close. Tab groups are not among them: no browser lets
-/// another app open one (docs/browser-control.md). It decides which tabs and pages; the browser is
-/// asked through <see cref="IBrowserControl"/>.
+/// Implements the browser management modes in docs/architecture.md ("Browser pages",
+/// "Browser profiles"): opening URLs (with best-effort duplicate-tab avoidance) and launching Chromium
+/// browser profiles - and closing the tabs a profile being left lists to close. Tab groups are not
+/// among them: no browser lets another app open one (docs/browser-control.md). It decides which tabs
+/// and pages; the browser is asked through <see cref="IBrowserControl"/>.
 /// </summary>
 public sealed class BrowserLauncher : IBrowserLauncher
 {
@@ -85,8 +85,8 @@ public sealed class BrowserLauncher : IBrowserLauncher
         if (probeTabs || remember)
         {
             // A browser that couldn't be asked - it timed out, Automation was refused, or it has no
-            // tab scripting - is different from "no matching tab". Section 9.3 says to fall back to
-            // a plain `open` for everything.
+            // tab scripting - is different from "no matching tab". docs/architecture.md says to fall
+            // back to a plain `open` for everything.
             TabListing listing = await this.browsers.ListTabsAsync(browser, startIfNeeded: true, probeTimeout, cancellationToken).ConfigureAwait(false);
             if (listing.Tabs is { } tabs)
             {

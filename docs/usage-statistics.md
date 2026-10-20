@@ -72,8 +72,9 @@ The token can read the repository's settings, not change them, and only this rep
 Not built yet. Downloads cannot say how many people use the app: an update is a download, one
 person can download five times, and someone who deleted the app a month ago still counts. The only
 way to know is for the app to say, once a day, that it is in use. That is a change to what the app
-promises - the README says "No account, no tracking, no analytics sent anywhere", and `agent.md`
-§13 "No telemetry" - so it is done in the open or not at all.
+promises - the README says "No account, no tracking, no analytics sent anywhere", and the
+[architecture](architecture.md#security-and-privacy) "No telemetry" - so it is done in the open or
+not at all.
 
 ### What it sends, all of it
 
@@ -177,8 +178,8 @@ rate limiting keep that small; the numbers are close, not exact.
   Settings → Diagnostics' report. Text in English and Ukrainian.
 - Tests: nothing is sent while off; what is sent has exactly the three fields; off deletes the id
   and on makes a new one; a failure is silent; the id never appears in an export.
-- In the same pull request: the README's Privacy section, `agent.md` §13, `docs/configuration.md`
-  and the release notes, saying what is sent and how to turn it off.
+- In the same pull request: the README's Privacy section, `docs/architecture.md`, `CLAUDE.md`,
+  `docs/configuration.md` and the release notes, saying what is sent and how to turn it off.
 
 **The workflow:** one more step in `stats.yml` reads `GET /stats` with `STATS_SERVER_TOKEN`, keeps
 `people.csv` (day, active, new) and adds a "People using it" section with a chart to the branch's

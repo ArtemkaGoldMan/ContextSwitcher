@@ -10,8 +10,8 @@ namespace ContextSwitcher.App.Services;
 /// <summary>
 /// The single place the Main App window's view models go through to persist edits to
 /// <c>settings.json</c>: re-validates, backs up the previous file, writes atomically, and publishes it
-/// in <see cref="IAppState"/> so the Dashboard reflects the change without a restart (agent.md section
-/// 11.1.2's "Profile Setup" and "Settings" pages, and section 6's backup-before-write rule).
+/// in <see cref="IAppState"/> so the Dashboard reflects the change without a restart (docs/architecture.md,
+/// "The composition root", and the backup before each save in "Files").
 /// </summary>
 public sealed class ConfigurationStore
 {

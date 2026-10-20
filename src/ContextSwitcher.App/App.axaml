@@ -25,7 +25,7 @@
     <!-- Semi.Avalonia supplies every standard control's chrome (buttons, inputs, toggles,
          scrollbars, focus/disabled states) so this app does not hand-roll a design system.
          Colors/Typography/Controls below only add app-specific tokens and layout classes
-         on top - see agent.md section 11.2. -->
+         on top - see "Look and feel" in docs/architecture.md. -->
     <semi:SemiTheme Locale="en-US" />
     <semi:ColorPickerSemiTheme />
     <StyleInclude Source="avares://ContextSwitcher/Styles/Typography.axaml" />

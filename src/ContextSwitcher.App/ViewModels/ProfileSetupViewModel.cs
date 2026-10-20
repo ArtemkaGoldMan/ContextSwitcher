@@ -10,11 +10,12 @@ using System.Globalization;
 namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
-/// Backs the Profile Setup editor (agent.md section 11.1.2), reachable only from the Profiles
-/// page. Edits every <see cref="ContextDefinition"/> field for one profile: the name, the apps, the
-/// notes and what may fail here, and the rest through a view model per section - the look, the
-/// browser, Focus, media, Docker and the quick links, each with its own rules. Nothing is written to
-/// disk until <see cref="SaveCommand"/> succeeds, so a cancelled "Add new profile" never touches config.
+/// Backs the Profile Setup editor (docs/architecture.md, "The main window"), reachable only from the
+/// Profiles page. Edits every <see cref="ContextDefinition"/> field for one profile: the name, the
+/// apps, the notes and what may fail here, and the rest through a view model per section - the look,
+/// the browser, Focus, media, Docker and the quick links, each with its own rules. Nothing is written
+/// to disk until <see cref="SaveCommand"/> succeeds, so a cancelled "Add new profile" never touches
+/// config.
 /// </summary>
 public sealed class ProfileSetupViewModel : ViewModelBase
 {

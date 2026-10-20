@@ -7,8 +7,8 @@ using ContextSwitcher.App.Resources;
 namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
-/// Backs the Profiles page (agent.md section 11.1.2): lists every configured context, activates
-/// one on click through the same switch pipeline the Dashboard uses, and raises
+/// Backs the Profiles page (docs/architecture.md, "The main window"): lists every configured context,
+/// activates one on click through the same switch pipeline the Dashboard uses, and raises
 /// <see cref="EditRequested"/> for Add/Edit so <see cref="MainAppViewModel"/> can open Profile Setup.
 /// </summary>
 public sealed class ProfilesViewModel : ViewModelBase, IDisposable

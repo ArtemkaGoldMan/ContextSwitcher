@@ -22,8 +22,10 @@ or time. `CONTEXTSWITCHER_CONFIG_DIR` points either at another folder.
 
 ## Before a pull request
 
-[agent.md](agent.md) is the engineering spec — read it before changing how the app behaves. Then
-check what CI will:
+[How it is built](docs/architecture.md) has the design rules and the contracts the code keeps —
+read it before changing how the app behaves, and go through the questions at the end of its
+[design rules](docs/architecture.md#design-rules). [CLAUDE.md](CLAUDE.md) is the short version
+that coding agents load. Then check what CI will:
 
 ```bash
 dotnet build ContextSwitcher.sln -c Release --no-incremental -warnaserror
@@ -40,11 +42,12 @@ checked, and whether the release notes, the docs or the README need a line.
 
 | | |
 | --- | --- |
+| [How it is built](docs/architecture.md) | The projects, the design rules, the files, how a switch runs and what each step does |
+| [Roadmap](docs/roadmap.md) | What comes next, what later, and what is not planned |
 | [Release process](docs/release-process.md) | Building the `.app`, signing, publishing, how updates work, and redrawing the screenshots |
 | [Translating](docs/translating.md) | How the app's text is organised, and adding a language |
 | [Performance](docs/performance.md) | What the app costs in memory and CPU, measured, and what did not help |
 | [Browser control](docs/browser-control.md) | What another app can do to Chrome and Safari: tabs, tab groups and profiles |
 | [Usage statistics](docs/usage-statistics.md) | The downloads and visitors collected every night, and the plan for counting people |
-| [A Windows version](docs/windows-port.md) | What carries over to Windows, what has to be written again, and what Windows can't do - tried on Windows 11 |
-| [The Windows plan](docs/windows-plan.md) | The order to build it in: apps first, then the browser, then the rest |
-| [Architecture review](docs/architecture-review.md) | Where the code doesn't yet follow its own rules - interfaces, injection, one job per class - and the order to fix it |
+| [A Windows version](docs/windows-port.md) | What each feature becomes on Windows, what Windows can't do and why - tried on Windows 11 |
+| [The Windows plan](docs/windows-plan.md) | The order to build it in - apps first, then the browser, then the rest - and where it stands |

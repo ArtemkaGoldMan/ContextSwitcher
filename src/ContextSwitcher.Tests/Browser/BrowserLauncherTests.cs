@@ -96,7 +96,7 @@ public sealed class BrowserLauncherTests
 
     /// <summary>
     /// The regression behind the "no URL opened at all" bug: a browser that does not answer fails
-    /// the duplicate-tab check, and section 9.3 requires falling back to a plain open rather than
+    /// the duplicate-tab check, and docs/architecture.md requires falling back to a plain open rather than
     /// giving up on the URL.
     /// </summary>
     [Fact]

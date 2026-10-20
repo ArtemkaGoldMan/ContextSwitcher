@@ -193,7 +193,7 @@
 
     <!-- Everything below Browser is collapsed by default: a new profile only needs identity,
          apps and browser to be useful, and showing all 12 sections at once was the single
-         biggest reason Profile Setup read as a config file (agent.md section 11.1.2). -->
+         biggest reason Profile Setup read as a config file (docs/architecture.md, "The main window"). -->
     <Expander Classes="section" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_FocusAndMusic}">
       <Expander.Header>
         <StackPanel Spacing="2">

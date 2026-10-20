@@ -11,7 +11,7 @@ namespace ContextSwitcher.App.Startup;
 /// Reloads <c>state.json</c> when another process rewrites it, so the running app notices switches
 /// it did not perform itself.
 ///
-/// Section 10 has Shortcuts, Siri and the CLI each switching in their own process, and
+/// Shortcuts, Siri and the command line each switch in a process of their own, and
 /// the app's state was only ever updated in-process. A switch from any of those left the
 /// menu bar popover showing the previous profile and a stale elapsed timer until the app was
 /// restarted - the switch itself worked, the UI just never heard about it.

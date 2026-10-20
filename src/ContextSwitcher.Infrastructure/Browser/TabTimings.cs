@@ -17,7 +17,7 @@ public sealed record TabTimings
     /// budget rather than all of it. A browser that answers AppleEvents at all answers in
     /// milliseconds; one that does not (no Automation permission, or a wedged process) blocks until
     /// the script is killed. Handing it the whole step timeout used to starve the plain
-    /// <c>open</c> fallback that agent.md section 9.3 requires, so no URL opened at all.
+    /// <c>open</c> fallback that docs/architecture.md requires, so no URL opened at all.
     /// </summary>
     public TimeSpan Probe { get; init; } = TimeSpan.FromSeconds(3);
 

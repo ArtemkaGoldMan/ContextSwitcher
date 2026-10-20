@@ -4,7 +4,7 @@ namespace ContextSwitcher.Core.Abstractions;
 
 /// <summary>
 /// Persists context sessions to <c>analytics.jsonl</c> and tracks the in-progress session marker
-/// used for crash recovery (section 6.3).
+/// used for crash recovery (docs/architecture.md, "Time history").
 /// </summary>
 public interface IAnalyticsSessionStore
 {

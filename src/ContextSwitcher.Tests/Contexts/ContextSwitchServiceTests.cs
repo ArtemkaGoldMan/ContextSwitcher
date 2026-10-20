@@ -178,9 +178,9 @@ public sealed class ContextSwitchServiceTests
     }
 
     /// <summary>
-    /// Section 12 asks the developer log to carry the step id, exit code and trimmed output for
-    /// every step. Previously a switch logged only SwitchStarted/SwitchCompleted, so there was no
-    /// way to tell afterwards which steps had run or how they ended.
+    /// docs/architecture.md ("Errors") asks the developer log to carry the step id, exit code and
+    /// trimmed output for every step. Previously a switch logged only SwitchStarted/SwitchCompleted, so
+    /// there was no way to tell afterwards which steps had run or how they ended.
     /// </summary>
     [Fact]
     public async Task SwitchAsyncLogsEveryStepWithItsIdExitCodeAndOutput()

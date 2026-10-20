@@ -1,7 +1,7 @@
 namespace ContextSwitcher.Infrastructure.Cli;
 
 /// <summary>
-/// Process exit codes for the CLI, per agent.md section 10.
+/// Process exit codes for the CLI, per docs/architecture.md, "The command line".
 /// </summary>
 public enum CliExitCode
 {

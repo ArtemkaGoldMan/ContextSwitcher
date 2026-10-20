@@ -6,7 +6,7 @@ namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
 /// One row in a Profile Setup's browser-profiles list (<c>browser_management.profiles[]</c>,
-/// agent.md section 6.1). The profile is chosen from the ones the browser actually has, by the
+/// docs/configuration.md). The profile is chosen from the ones the browser actually has, by the
 /// name the browser shows for it, rather than typed as a folder name like "Profile 2". Chromium
 /// profile URLs are edited as one URL per line rather than a nested add/remove list, since a
 /// profile row already nests inside the browser-management section. The browser is the section's:

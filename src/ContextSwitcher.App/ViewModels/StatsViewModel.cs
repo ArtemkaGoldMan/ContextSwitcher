@@ -5,8 +5,8 @@ using ContextSwitcher.Core.Analytics;
 namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
-/// Backs the Stats page (agent.md section 11.1.2): the full-size balance chart with week/month
-/// ranges and a per-context total breakdown, built on the same
+/// Backs the Stats page (docs/architecture.md, "The main window"): the full-size balance chart with
+/// week/month ranges and a per-context total breakdown, built on the same
 /// <see cref="IAnalyticsService.GetDailyBalanceAsync"/> the Dashboard's mini chart uses.
 /// </summary>
 public sealed class StatsViewModel : ViewModelBase, IDisposable

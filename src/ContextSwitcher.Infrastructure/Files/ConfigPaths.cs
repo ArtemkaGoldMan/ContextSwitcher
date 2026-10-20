@@ -92,8 +92,9 @@ public sealed class ConfigPaths
 
     /// <summary>
     /// Gets the path to the marker for the currently in-progress analytics session, used to detect
-    /// and recover a session left open by a crash (section 6.3). Absent during normal operation
-    /// except while a session is actively open; deleted as soon as that session ends cleanly.
+    /// and recover a session left open by a crash (docs/architecture.md, "Time history"). Absent during
+    /// normal operation except while a session is actively open; deleted as soon as that session ends
+    /// cleanly.
     /// </summary>
     public string AnalyticsMarkerPath => Path.Combine(BaseDirectory, "analytics.current.json");
 

@@ -6,10 +6,10 @@ using ContextSwitcher.Core.Platform;
 namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
-/// Root view model for the Main App window (agent.md section 11.1.2): owns the left-hand
-/// Profiles/Settings/Stats navigation and swaps in a <see cref="ProfileSetupViewModel"/> when a
-/// profile is added or edited. Profile Setup is reachable only from the Profiles page, not from
-/// the nav rail itself.
+/// Root view model for the Main App window (docs/architecture.md, "The main window"): owns the
+/// left-hand Profiles/Settings/Stats navigation and swaps in a <see cref="ProfileSetupViewModel"/> when
+/// a profile is added or edited. Profile Setup is reachable only from the Profiles page, not from the
+/// nav rail itself.
 /// </summary>
 public sealed class MainAppViewModel : ViewModelBase, IDisposable
 {

@@ -1,9 +1,9 @@
 namespace ContextSwitcher.Infrastructure.MacOS.AppleScript;
 
 /// <summary>
-/// Builds AppleScript source for the automation templates in agent.md section 9. All string
+/// Builds AppleScript source for the steps in docs/architecture.md, "Steps on macOS". All string
 /// literals are escaped through <see cref="EscapeStringLiteral"/>, the single tested escaping
-/// function required by section 13.
+/// function that "Security and privacy" asks for.
 /// </summary>
 public static class AppleScriptBuilder
 {
@@ -17,7 +17,7 @@ public static class AppleScriptBuilder
     }
 
     /// <summary>
-    /// Builds a script that gracefully quits the named application if it is running (section 9.1).
+    /// Builds a script that gracefully quits the named application if it is running ("Quitting apps").
     /// </summary>
     public static string QuitApplicationIfRunning(string appName)
     {
@@ -26,7 +26,7 @@ public static class AppleScriptBuilder
     }
 
     /// <summary>
-    /// Builds a script that reports whether the named application is currently running (section 9.1).
+    /// Builds a script that reports whether the named application is currently running ("Quitting apps").
     /// </summary>
     public static string IsApplicationRunning(string appName)
     {
@@ -37,7 +37,7 @@ public static class AppleScriptBuilder
     /// <summary>
     /// Builds a script listing the URL of every open tab, one per line, so a whole context's worth
     /// of URLs can be checked for duplicates with a single Apple Event instead of one tab sweep per
-    /// URL (section 9.3). Measured on Chrome, three per-URL probes cost roughly 490ms against about
+    /// URL ("Browser pages"). Measured on Chrome, three per-URL probes cost roughly 490ms against about
     /// 130ms for this, and this does not grow with the number of URLs.
     /// </summary>
     public static string ListTabUrls(string appName)
@@ -236,7 +236,7 @@ public static class AppleScriptBuilder
 
     /// <summary>
     /// Builds a script that finds a Safari tab whose URL matches exactly and brings it to the
-    /// front, for best-effort duplicate-tab avoidance (section 9.3). Returns <c>true</c>/<c>false</c>.
+    /// front, for best-effort duplicate-tab avoidance ("Browser pages"). Returns <c>true</c>/<c>false</c>.
     /// Deliberately does not <c>activate</c> the browser: pulling the app to the foreground measured
     /// at about 2.0s of a switch that otherwise costs well under one, and selecting the tab and
     /// raising its window already leaves the right page waiting when the user goes to look.
@@ -262,7 +262,7 @@ public static class AppleScriptBuilder
 
     /// <summary>
     /// Builds a script that finds a tab whose URL matches exactly in a Chromium-based browser
-    /// (Chrome or Brave) and brings it to the front (section 9.3). Returns <c>true</c>/<c>false</c>.
+    /// (Chrome or Brave) and brings it to the front ("Browser pages"). Returns <c>true</c>/<c>false</c>.
     /// Does not <c>activate</c> the browser, for the reason given on <see cref="FocusSafariTabWithUrl"/>.
     /// </summary>
     public static string FocusChromiumTabWithUrl(string appName, string url)
@@ -288,7 +288,7 @@ public static class AppleScriptBuilder
     }
 
     /// <summary>
-    /// Builds a script that plays a named Apple Music playlist (section 9.9).
+    /// Builds a script that plays a named Apple Music playlist ("Apple Music").
     /// </summary>
     public static string PlayAppleMusicPlaylist(string playlist)
     {
@@ -298,7 +298,7 @@ public static class AppleScriptBuilder
 
     /// <summary>
     /// Builds a script that plays a Spotify URI, or best-effort attempts a plain playlist/track
-    /// name (section 9.10). Spotify's scripting dictionary expects a URI for reliable playback;
+    /// name ("Spotify"). Spotify's scripting dictionary expects a URI for reliable playback;
     /// plain names are unsupported per the spec and may simply fail, which callers treat as a
     /// non-critical warning.
     /// </summary>

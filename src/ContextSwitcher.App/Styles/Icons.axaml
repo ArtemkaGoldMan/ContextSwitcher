@@ -28,7 +28,7 @@
   <StreamGeometry x:Key="IconCircleCheck">M2 12A10 10 0 1 1 22 12A10 10 0 1 1 2 12Z M9 12l2 2 4-4</StreamGeometry>
 
   <!-- briefcase / house: the wizard's two profiles, matching the icon names the config schema
-       already uses for them in agent.md section 6.1 -->
+       already uses for them in docs/configuration.md -->
   <StreamGeometry x:Key="IconBriefcase">M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16 M4 6H20A2 2 0 0 1 22 8V18A2 2 0 0 1 20 20H4A2 2 0 0 1 2 18V8A2 2 0 0 1 4 6Z</StreamGeometry>
   <StreamGeometry x:Key="IconHouse">M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8 M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z</StreamGeometry>
 

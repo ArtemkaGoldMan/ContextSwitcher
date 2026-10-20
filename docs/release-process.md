@@ -54,7 +54,9 @@ gh secret set CS_SIGNING_PASSWORD < ~/.contextswitcher-signing/signing-password.
 ## What is checked before a change reaches main
 
 Every pull request, and every push to `main`, runs [`ci.yml`](../.github/workflows/ci.yml), and `main`
-does not accept a change until its first three checks pass (Settings → Branches):
+does not accept a change until **Build and test**, **App bundle** and **Workflows and scripts** pass
+(Settings → Branches). **Build and test (Windows)** runs on every change too, but is not required
+until [stage 1](windows-plan.md#stage-1---apps) of the Windows plan:
 
 | Check | What it does |
 | --- | --- |

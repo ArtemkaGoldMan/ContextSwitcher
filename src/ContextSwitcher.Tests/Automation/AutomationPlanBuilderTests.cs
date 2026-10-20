@@ -74,8 +74,8 @@ public sealed class AutomationPlanBuilderTests
 
     /// <summary>
     /// Pins the direction of <c>closeApps</c>: a profile's list names the apps quit on the way
-    /// *out* of it, matching the close-on-leave toggle in section 11.1.2. The example config in
-    /// section 6.1 was once written the other way round, which read as "these are closed when you
+    /// *out* of it, matching the close-on-leave toggle in Profile Setup. The example config in
+    /// the old specification was once written the other way round, which read as "these are closed when you
     /// arrive" and silently did nothing on that transition.
     /// </summary>
     [Fact]
