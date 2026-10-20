@@ -15,6 +15,7 @@ src/ContextSwitcher.Infrastructure.MacOS    AppleScript, the Objective-C calls, 
 src/ContextSwitcher.Infrastructure.Windows  Windows' implementations, as they are written
 src/ContextSwitcher.App                     the interface; the composition root is in Startup/
 src/ContextSwitcher.Tests                   every test; fakes in TestDoubles/
+src/ContextSwitcher.Tests.Windows           the Windows code's tests, which need its target; run only on Windows
 scripts/                                    building the .app, the .dmg and the zip; screenshots; stats
 ```
 

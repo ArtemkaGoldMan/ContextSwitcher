@@ -6,7 +6,8 @@ it sits among everything else, in the [roadmap](roadmap.md).
 
 **Where it stands** (October 2026, at 0.6.7): stage 0, the groundwork on the Mac, is done - every
 piece of macOS is behind an interface, and the Mac and Windows each have a project of their own
-([stage 0](#stage-0---groundwork-done)). Stage 1 is next. Nothing for Windows users is built yet.
+([stage 0](#stage-0---groundwork-done)). Stage 1 has begun: the app starts on Windows as a shell, with
+its tray icon and dashboard, but switches nothing there yet ([stage 1](#stage-1---apps)).
 
 ## How it goes
 
@@ -21,7 +22,7 @@ piece of macOS is behind an interface, and the Mac and Windows each have a proje
 | Stage | Windows gets | Status |
 | --- | --- | --- |
 | [0. Groundwork](#stage-0---groundwork-done) | nothing yet: the seams, the projects, CI on Windows | done |
-| [1. Apps](#stage-1---apps) | the tray, profiles, launching, closing and hiding apps, time | next |
+| [1. Apps](#stage-1---apps) | the tray, profiles, launching, closing and hiding apps, time | in progress: the shell done |
 | [2. Browser](#stage-2---browser) | pages, a window per profile, browser profiles, reading tabs | |
 | [3. The rest](#stage-3---the-rest) | Docker, Spotify, notifications, the command line, a hotkey | |
 | [4. Windows 1.0](#stage-4---windows-10) | signed, in the Store or with an installer, documented, translated | |
@@ -65,13 +66,13 @@ src/
   ContextSwitcher.Core                     shared: profiles, switching, time, the interfaces   net10.0
   ContextSwitcher.Infrastructure           shared: files, the log, GitHub, the step handlers   net10.0
   ContextSwitcher.Infrastructure.MacOS     the Mac's: AppleScript, Objective-C calls           net10.0
-  ContextSwitcher.Infrastructure.Windows   Windows': so far its settings folder and file moves net10.0-windows10.0.19041.0
+  ContextSwitcher.Infrastructure.Windows   Windows': the shell so far, stand-ins for the rest     net10.0-windows10.0.19041.0
   ContextSwitcher.App                      the interface, built once for each                  both of them
   ContextSwitcher.Tests                    every test; [MacOSFact] and [WindowsFact] for one   net10.0
+  ContextSwitcher.Tests.Windows            the Windows code's tests, run only on Windows       net10.0-windows10.0.19041.0
 ```
 
-To come: a test project for the Windows code (stage 1), which needs Windows' target, and
-`ContextSwitcher.Cli`, Windows' command line (stage 3).
+To come: `ContextSwitcher.Cli`, Windows' command line (stage 3).
 
 - **The app is built twice from one project.** It lists both targets, and each brings in only its
   own platform project.
@@ -183,6 +184,15 @@ Still to check: the first Mac release built from all of it ([roadmap](roadmap.md
 
 **The aim.** Someone on Windows installs it, sets up Work and Personal, and switches: apps open,
 close or minimise, and time is counted. Released as a preview.
+
+It comes in four pull requests, each leaving the Mac app as it was:
+
+| | Brings | Status |
+| --- | --- | --- |
+| 1a | The shell: `WinExe`, the tray icon in its two drawings, the popover by the taskbar, one copy, the font, everything else hidden. What the later ones bring is a stand-in, in `Infrastructure.Windows/NotYet/`, and `ContextSwitcher.Tests.Windows` tests the Windows code | done |
+| 1b | Apps: the picker, launching, closing, "still closing", Force quit, minimising, the ask-on-switch list | |
+| 1c | The rest: time with sleep and lock, open at sign-in, the Windows wording, and the wizard saying how to pin the icon | |
+| 1d | CI and releases: the Windows job required, the installer, the release workflow | |
 
 The shell of the app:
 
