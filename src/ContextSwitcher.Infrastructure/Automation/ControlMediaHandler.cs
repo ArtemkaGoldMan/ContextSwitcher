@@ -83,7 +83,8 @@ public sealed class ControlMediaHandler : IStepHandler
             return StepResults.Succeeded(step, "Spotify playback started.", startedAt, completedAt);
         }
 
-        // Spotify automation failures are always non-critical (section 9.10), regardless of step.IsCritical.
+        // Spotify automation failures are always non-critical (docs/architecture.md, "Spotify"),
+        // regardless of step.IsCritical.
         UserMessage spotify = SwitchMessages.CouldNotPlaySpotify.With(playlist);
         return new AutomationResult(
             step.Id, step.Type, AutomationResultStatus.Warning, spotify.English,

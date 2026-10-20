@@ -1,9 +1,8 @@
 namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
-/// One editable row in an add/remove list of plain strings (browser URLs, tab groups, Docker
-/// container names) - section 11.2's "list rows with add/remove buttons for app/browser/docker
-/// arrays".
+/// One editable row in an add/remove list of plain strings (browser URLs, Docker container
+/// names) - the "rows with add and remove for lists" of "Look and feel" in docs/architecture.md.
 /// </summary>
 public sealed class EditableStringRowViewModel : ViewModelBase
 {

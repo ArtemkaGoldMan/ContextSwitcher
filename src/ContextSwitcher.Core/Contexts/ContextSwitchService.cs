@@ -9,7 +9,7 @@ using ContextSwitcher.Core.Logging;
 namespace ContextSwitcher.Core.Contexts;
 
 /// <summary>
-/// Orchestrates the context switch pipeline described in agent.md section 8: validate, lock,
+/// Orchestrates the context switch pipeline in docs/architecture.md, "Switching": validate, lock,
 /// close the previous analytics session, run the automation plan, persist state, start the next
 /// analytics session, and report a structured result.
 /// </summary>
@@ -81,8 +81,8 @@ public sealed class ContextSwitchService : IContextSwitchService
             return new ContextSwitchResult(request.TargetContextId, null, ContextSwitchStatus.Cancelled, [], startedAt, this.clock.UtcNow, correlationId);
         }
 
-        // The semaphore above only guards this process. Section 10 has macOS Shortcuts and Siri
-        // triggering switches through the CLI, and every one of those is a separate process - two
+        // The semaphore above only guards this process. macOS Shortcuts and Siri
+        // trigger switches through the CLI, and every one of those is a separate process - two
         // fired together used to run their AppleScript concurrently and interleave their state
         // writes, with neither one rejected. The cross-process lock makes "one switch at a time" true
         // across processes; how it is held, and let go if a holder dies, is the platform's.
@@ -438,7 +438,7 @@ public sealed class ContextSwitchService : IContextSwitchService
 
     /// <summary>
     /// Writes one log entry per executed step, carrying the step id, exit code and trimmed
-    /// stdout/stderr that agent.md section 12 requires of the developer log. Without this a
+    /// stdout/stderr that docs/architecture.md ("Errors") asks of the developer log. Without this a
     /// completed switch left no record of which steps ran or how they ended - only failures
     /// reached <c>state.json</c>, and the next switch overwrote those.
     /// </summary>

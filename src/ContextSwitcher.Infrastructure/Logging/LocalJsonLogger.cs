@@ -82,8 +82,8 @@ public sealed class LocalJsonLogger : ILogger
                 Directory.CreateDirectory(directory);
             }
 
-            // The semaphore above only guards this process. Section 10 has macOS Shortcuts, Siri and
-            // the CLI each triggering a switch in its own process, and two of those appending at the
+            // The semaphore above only guards this process. macOS Shortcuts, Siri and
+            // the CLI each trigger a switch in its own process, and two of those appending at the
             // same moment landed their writes at the same offset - one silently overwrote the other,
             // leaving no exception and no malformed line to show for it. The lock file makes "one
             // writer at a time" true across processes; the OS releases it if a holder dies.

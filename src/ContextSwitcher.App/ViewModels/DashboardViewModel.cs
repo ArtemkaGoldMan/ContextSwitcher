@@ -74,7 +74,7 @@ public sealed class DashboardViewModel : ViewModelBase, IDisposable
 
     /// <summary>
     /// Raised when the footer's "Open App" button is pressed, so the view can open the Main App
-    /// window (agent.md section 11.1.2) to the Profiles page.
+    /// window (docs/architecture.md, "The main window") to the Profiles page.
     /// </summary>
     public event EventHandler? OpenAppRequested;
 

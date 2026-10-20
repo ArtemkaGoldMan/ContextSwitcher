@@ -7,8 +7,8 @@ using ContextSwitcher.Core.Platform;
 namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
-/// Backs the Settings page (agent.md section 11.1.2): app-level settings that apply across every
-/// profile, plus the permission that switching depends on.
+/// Backs the Settings page (docs/architecture.md, "The main window"): app-level settings that apply
+/// across every profile, plus the permission that switching depends on.
 ///
 /// Every change is saved the moment it is made, the way macOS's own settings behave. A Save button
 /// at the top of a page of toggles left it unclear whether a flipped switch had taken effect - and a

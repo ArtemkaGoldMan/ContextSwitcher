@@ -6,7 +6,8 @@ namespace ContextSwitcher.Core.Applications;
 /// <param name="Name">
 /// The bundle name without the <c>.app</c> suffix. This is deliberately the exact string
 /// <c>open -a &lt;name&gt;</c> and <c>tell application "&lt;name&gt;"</c> expect, so a picked app is
-/// guaranteed to work with the existing launch/quit automation (agent.md sections 9.1 and 9.2).
+/// guaranteed to work with the existing launch/quit automation (docs/architecture.md, "Quitting apps"
+/// and "Launching apps").
 /// </param>
 /// <param name="IconPath">
 /// Absolute path to a cached PNG of the app's icon, or <see langword="null"/> when the bundle has

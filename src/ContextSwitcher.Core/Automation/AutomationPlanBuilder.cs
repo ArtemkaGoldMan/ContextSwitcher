@@ -7,7 +7,7 @@ namespace ContextSwitcher.Core.Automation;
 
 /// <summary>
 /// Builds the ordered <see cref="AutomationPlan"/> for a switch from one context to another,
-/// following the resource-freeing / environment / activation ordering in agent.md section 8. What
+/// following "The order of a switch" in docs/architecture.md. What
 /// this computer can't do - <see cref="PlatformCapabilities"/> - gets no step.
 /// </summary>
 public sealed class AutomationPlanBuilder
@@ -222,7 +222,7 @@ public sealed class AutomationPlanBuilder
     {
         // Turning Focus off is only worth doing when something turned it on. This step used to be
         // built unconditionally, so a user who had never set up the Shortcuts - which is everyone,
-        // until they read section 9.8 - got "Could not run Shortcut 'ContextSwitcher - Focus Off'"
+        // until they read up on Focus - got "Could not run Shortcut 'ContextSwitcher - Focus Off'"
         // on every single switch, and every switch exited 5 instead of 0.
         //
         // The previous context is what decides it: leaving a profile that enabled Focus still needs

@@ -8,8 +8,8 @@ namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
 /// Turns <see cref="BalanceSummary"/> days into the balance chart shared by the Dashboard's 7-day
-/// mini chart and the Stats page's longer one (agent.md section 11.1.2), so the two never drift in
-/// how they draw the same data.
+/// mini chart and the Stats page's longer one (docs/architecture.md, "The main window"), so the two
+/// never drift in how they draw the same data.
 ///
 /// The chart is drawn with the app's own controls - one rounded column per day, stacked in each
 /// profile's accent - rather than a charting library. The library's columns, axes and default font

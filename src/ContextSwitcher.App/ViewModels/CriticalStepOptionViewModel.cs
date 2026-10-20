@@ -6,8 +6,8 @@ namespace ContextSwitcher.App.ViewModels;
 /// <summary>
 /// One checkbox in a Profile Setup's switch-policy section. <see cref="StepType"/>'s
 /// <see cref="Enum.ToString()"/> is written verbatim into <c>switchPolicy.criticalSteps[]</c>,
-/// which must match an <see cref="AutomationStepType"/> member name exactly (agent.md section
-/// 6.1) - offering a fixed checkbox list instead of free text makes a typo impossible.
+/// which must match an <see cref="AutomationStepType"/> member name exactly (docs/architecture.md,
+/// "settings.json") - offering a fixed checkbox list instead of free text makes a typo impossible.
 /// </summary>
 public sealed class CriticalStepOptionViewModel(AutomationStepType stepType, string displayName, bool isSelected) : ViewModelBase
 {

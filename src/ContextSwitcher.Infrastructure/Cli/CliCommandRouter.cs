@@ -10,8 +10,8 @@ namespace ContextSwitcher.Infrastructure.Cli;
 
 /// <summary>
 /// Routes CLI commands (<c>switch</c>, <c>status</c>, <c>list-contexts</c>, <c>validate-config</c>)
-/// to the same services the app uses internally, per agent.md section 10. Human-readable output by
-/// default; <c>--json</c> produces pure JSON with no extra text.
+/// to the same services the app uses internally, per docs/architecture.md, "The command line".
+/// Human-readable output by default; <c>--json</c> produces pure JSON with no extra text.
 /// </summary>
 public sealed class CliCommandRouter
 {
@@ -35,10 +35,10 @@ public sealed class CliCommandRouter
     }
 
     /// <summary>
-    /// Returns whether <paramref name="command"/> should run headlessly and exit, per the startup
-    /// sequence in section 5 ("route the command and exit without starting full UI"). Any command
-    /// other than <see cref="OpenDashboardCommand"/> is headless, including unrecognized ones -
-    /// those are rejected by <see cref="RunAsync"/> rather than silently launching the GUI.
+    /// Returns whether <paramref name="command"/> should run headlessly and exit, without starting the
+    /// interface. Any command other than <see cref="OpenDashboardCommand"/> is headless, including
+    /// unrecognized ones - those are rejected by <see cref="RunAsync"/> rather than silently launching
+    /// the GUI.
     /// </summary>
     public static bool IsHeadlessCommand(string command) => command != OpenDashboardCommand;
 

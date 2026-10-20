@@ -370,7 +370,7 @@
     <Setter Property="Background" Value="{DynamicResource SelectedNavBrush}" />
   </Style>
 
-  <!-- Main App window's left-hand page navigation (agent.md section 11.1.2). -->
+  <!-- Main App window's left-hand page navigation (docs/architecture.md, "The main window"). -->
   <Style Selector="Button.navItem">
     <Setter Property="HorizontalContentAlignment" Value="Left" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />

@@ -4,9 +4,9 @@ namespace ContextSwitcher.App.ViewModels;
 
 /// <summary>
 /// One row in a Profile Setup's app list. Presents the on-disk <c>launchApps</c>/<c>closeApps</c>/
-/// <c>hideApps</c> flat lists (agent.md section 6.1) as a single row per app: Launch on entering, and
-/// on leaving either Close or Hide - ticking one unticks the other, as an app is quit or hidden, not
-/// both.
+/// <c>hideApps</c> flat lists (docs/architecture.md, "settings.json") as a single row per app: Launch
+/// on entering, and on leaving either Close or Hide - ticking one unticks the other, as an app is quit
+/// or hidden, not both.
 /// </summary>
 public sealed class AppRowViewModel : ViewModelBase
 {

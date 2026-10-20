@@ -9,8 +9,8 @@ namespace ContextSwitcher.App.ViewModels;
 /// off, as its button in the menu bar popover does; there is no separate Activate button. The profile
 /// on is plain to see: its card glows and is washed in its own colour, and its name is bold. Edit,
 /// Duplicate, and Delete are kept as separate actions so "switch to this" and "edit this" can never
-/// be triggered by the same click (agent.md section 11.1.2). Delete requires a second click to
-/// confirm rather than a modal dialog.
+/// be triggered by the same click (docs/architecture.md, "The main window"). Delete requires a second
+/// click to confirm rather than a modal dialog.
 /// </summary>
 public sealed class ProfileRowViewModel : ViewModelBase
 {

@@ -8,7 +8,7 @@ public sealed record StepBudgets
 {
     public static StepBudgets Default { get; } = new();
 
-    /// <summary>For each app asked to quit: section 9.1's ten seconds, most of it spent seeing it go.</summary>
+    /// <summary>For each app asked to quit: ten seconds, most of it spent seeing it go.</summary>
     public TimeSpan QuitPerApp { get; init; } = TimeSpan.FromSeconds(10);
 
     /// <summary>For each app opened.</summary>

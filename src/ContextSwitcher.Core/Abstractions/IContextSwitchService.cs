@@ -3,7 +3,7 @@ using ContextSwitcher.Core.Contexts;
 namespace ContextSwitcher.Core.Abstractions;
 
 /// <summary>
-/// Orchestrates switching the active context, per the pipeline in agent.md section 8.
+/// Orchestrates switching the active context, in the order of docs/architecture.md, "Switching".
 /// </summary>
 public interface IContextSwitchService
 {

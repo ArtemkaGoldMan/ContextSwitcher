@@ -42,7 +42,7 @@ public sealed class CloseApplicationsHandler : IStepHandler
         List<UserMessage> problems = [];
         StringBuilder standardError = new();
 
-        // Section 9.1 budgets ten seconds per app, which the plan builder encodes as
+        // Quitting is given ten seconds an app (StepBudgets), which the plan builder encodes as
         // Timeout = 10s x app count. Split it back out: a graceful quit can block indefinitely on a
         // modal "save this document?" sheet, and handing every script the whole step budget meant
         // one such app consumed all of it. The step-level timeout then fired mid-quit, so the

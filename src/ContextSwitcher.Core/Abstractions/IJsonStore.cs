@@ -28,7 +28,7 @@ public interface IJsonStore
     /// <summary>
     /// Copies the file at <paramref name="path"/> into <paramref name="backupDirectory"/> with a
     /// timestamped name, if it exists. Used to keep a backup before overwriting <c>settings.json</c>
-    /// from the UI (agent.md section 6).
+    /// from the UI (docs/architecture.md, "Files").
     /// </summary>
     /// <param name="path">The file to back up.</param>
     /// <param name="backupDirectory">The directory to copy the backup into.</param>
