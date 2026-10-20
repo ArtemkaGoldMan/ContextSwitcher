@@ -11,8 +11,10 @@
            know, so Latin came from PingFang and Cyrillic from Hiragino Sans GB - a Chinese font whose
            Cyrillic letters are as wide as its ideographs, which spread every Ukrainian word out
            ("Т е с т"). The system font has every Latin and Cyrillic letter; the CJK fonts stay last,
-           for Chinese and Japanese text only. -->
-      <FontFamily x:Key="DefaultFontFamily">.AppleSystemUIFont, Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB</FontFamily>
+           for Chinese and Japanese text only. Windows has no .AppleSystemUIFont, so there its own
+           font comes next - Windows 11's Segoe UI Variable, then Windows 10's Segoe UI - ahead of a
+           Helvetica some Windows PCs have. -->
+      <FontFamily x:Key="DefaultFontFamily">.AppleSystemUIFont, Segoe UI Variable Text, Segoe UI, Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB</FontFamily>
 
       <ResourceDictionary.MergedDictionaries>
         <ResourceInclude Source="avares://ContextSwitcher/Styles/Colors.axaml" />

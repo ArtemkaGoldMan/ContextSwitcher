@@ -1,5 +1,9 @@
 using ContextSwitcher.Core.Abstractions;
+using ContextSwitcher.Core.Logging;
+using ContextSwitcher.Infrastructure.Browser;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Infrastructure.Windows;
+using ContextSwitcher.Infrastructure.Windows.NotYet;
 using Microsoft.Extensions.DependencyInjection;
 
 // The same namespace as the macOS project's PlatformServices, so the app calls whichever its build
@@ -7,9 +11,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace ContextSwitcher.Infrastructure.Platform;
 
 /// <summary>
-/// What the app has on Windows: so far, where everything is kept and how a file is replaced. The
-/// Windows versions of what the shared code asks of the system come with stage 1 of
-/// <c>docs/windows-plan.md</c>; until then the app's Windows build is compiled, not run.
+/// What the app has on Windows: where everything is kept, how a file is replaced, what Windows can do
+/// and may run, and the Windows versions of what the shared code asks of the system. What later stages
+/// of <c>docs/windows-plan.md</c> bring is a stand-in until then, from <c>NotYet/</c>, and the
+/// capabilities hide it.
 /// </summary>
 public static class PlatformServices
 {
@@ -20,5 +25,51 @@ public static class PlatformServices
 
         services.AddSingleton(SettingsRoot.AppData);
         services.AddSingleton<IFileReplacer>(FileReplacer.RetryingWhileHeldOpen);
+
+        // What Windows can do so far, and what it may run.
+        services.AddSingleton(WindowsPlatform.Capabilities);
+        services.AddSingleton(WindowsPlatform.AllowedCommands);
+
+        // The shell of the app: the tray, its popover, one copy, links and files, the language.
+        services.AddSingleton<IShell, WindowsShell>();
+        services.AddSingleton<IPopoverWindow, WindowsPopoverWindow>();
+        services.AddSingleton<ITrayIconLook, WindowsTrayIconLook>();
+        services.AddSingleton<ISingleInstance>(provider => new WindowsSingleInstance(
+            provider.GetRequiredService<ConfigPaths>().BaseDirectory, provider.GetRequiredService<ILogger>()));
+        services.AddSingleton<IPreferredLanguages, WindowsPreferredLanguages>();
+        services.AddSingleton<ISystemVersion, WindowsSystemVersion>();
+        services.AddSingleton<IDisplayAvailability, WindowsDisplayAvailability>();
+
+        // What Windows doesn't have at all.
+        services.AddSingleton<IDockIcon, NoDockIcon>();
+        services.AddSingleton<IPermissionsChecker, WindowsPermissionsChecker>();
+        services.AddSingleton<NoShortcuts>();
+        services.AddSingleton<IShortcutRunner>(provider => provider.GetRequiredService<NoShortcuts>());
+        services.AddSingleton<IFocusShortcutInstaller>(provider => provider.GetRequiredService<NoShortcuts>());
+
+        // Apps, opening at sign-in, sleep and lock: later in stage 1.
+        services.AddSingleton<IAppLauncher, NotYetAppLauncher>();
+        services.AddSingleton<IAppQuitter, NotYetAppQuitter>();
+        services.AddSingleton<IAppProcesses, NotYetAppProcesses>();
+        services.AddSingleton<IApplicationHider, NotYetApplicationHider>();
+        services.AddSingleton<IRunningApplications, NotYetRunningApplications>();
+        services.AddSingleton<IInstalledAppsService, NotYetInstalledApps>();
+        services.AddSingleton<ILoginItem, NotYetLoginItem>();
+        services.AddSingleton<IAwayEvents, NotYetAwayEvents>();
+
+        // The browser and site icons: stage 2. Music, Docker's list and notifications: stage 3.
+        services.AddSingleton<NotYetBrowserControl>();
+        services.AddSingleton<IBrowserControl>(provider => provider.GetRequiredService<NotYetBrowserControl>());
+        services.AddSingleton<IBrowserRuns>(provider => provider.GetRequiredService<NotYetBrowserControl>());
+        services.AddSingleton<IDefaultBrowser, NotYetDefaultBrowser>();
+        services.AddSingleton<IImageConverter, NotYetImageConverter>();
+        services.AddSingleton<ISystemCatalog, NotYetSystemCatalog>();
+        services.AddSingleton<IMediaPlayer, NotYetMediaPlayer>();
+        services.AddSingleton<ISystemNotifications, NotYetNotifications>();
+
+        // The updater comes with the installer, at the end of stage 1; the release files are Windows'
+        // already, so a release with only the Mac's is never offered here.
+        services.AddSingleton<IAppUpdater, NotYetUpdater>();
+        services.AddSingleton(WindowsPlatform.Assets);
     }
 }
