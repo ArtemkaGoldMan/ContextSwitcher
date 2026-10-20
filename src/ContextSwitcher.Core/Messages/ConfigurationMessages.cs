@@ -45,6 +45,15 @@ public static class ConfigurationMessages
     /// <summary>{0} is the profile.</summary>
     public static readonly MessageTemplate AppleMusicNotHere = new("Config_AppleMusicNotHere", "{0} plays Apple Music, which this computer doesn't have.");
 
+    /// <summary>{0} is the profile.</summary>
+    public static readonly MessageTemplate SpotifyNotHere = new("Config_SpotifyNotHere", "{0} plays Spotify, which this computer can't.");
+
+    /// <summary>{0} is the profile.</summary>
+    public static readonly MessageTemplate DockerNotHere = new("Config_DockerNotHere", "{0} starts or stops Docker containers, which this computer can't.");
+
+    /// <summary>{0} is the profile.</summary>
+    public static readonly MessageTemplate PagesNotHere = new("Config_PagesNotHere", "{0} opens web pages, which this computer can't.");
+
     /// <summary>{0} is the profile, {1} the browser.</summary>
     public static readonly MessageTemplate BrowserNotHere = new("Config_BrowserNotHere", "{0} opens pages in {1}, which this computer doesn't have.");
 

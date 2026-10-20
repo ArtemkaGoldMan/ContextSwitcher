@@ -40,8 +40,17 @@ internal static class Program
         // which starts counting time: nothing has begun until there is somewhere to show it. The
         // command line never draws, so it never waits.
         AppHost.Build();
-        IDisplayAvailability displays = AppHost.Services.GetRequiredService<IDisplayAvailability>();
         bool interactive = !CliCommandRouter.IsHeadless(args);
+
+        // Opened again while a copy runs, where the system doesn't bring that copy forward itself, this
+        // one asks it to show its window and ends - before anything has started, time least of all.
+        // The command line runs beside the app, as ever.
+        if (interactive && !AppHost.Services.GetRequiredService<ISingleInstance>().TryClaim(args))
+        {
+            return;
+        }
+
+        IDisplayAvailability displays = AppHost.Services.GetRequiredService<IDisplayAvailability>();
         TimeSpan waitedForDisplay = interactive ? displays.WaitUntilAvailable() : TimeSpan.Zero;
 
         StartupOutcome startup = AppHost.Initialize(args);
@@ -158,9 +167,12 @@ internal static class Program
             })
             .With(new SkiaOptions { MaxGpuResourceSizeBytes = GpuCacheBytes });
 
+        // Each system's options are read only on that system, so both are given.
         if (string.Equals(Environment.GetEnvironmentVariable(RenderingVariable), "software", StringComparison.OrdinalIgnoreCase))
         {
-            builder = builder.With(new AvaloniaNativePlatformOptions { RenderingMode = [AvaloniaNativeRenderingMode.Software] });
+            builder = builder
+                .With(new AvaloniaNativePlatformOptions { RenderingMode = [AvaloniaNativeRenderingMode.Software] })
+                .With(new Win32PlatformOptions { RenderingMode = [Win32RenderingMode.Software] });
         }
 
         return builder.LogToTrace();

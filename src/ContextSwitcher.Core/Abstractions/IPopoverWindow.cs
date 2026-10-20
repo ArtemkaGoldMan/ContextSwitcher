@@ -1,9 +1,11 @@
+using ContextSwitcher.Core.Platform;
+
 namespace ContextSwitcher.Core.Abstractions;
 
 /// <summary>
-/// How the menu bar popover behaves as a window: where it shows, whether it brings the app forward,
-/// and what the system says about clicks elsewhere. Which of them closes it is the window's to decide.
-/// Each takes the window's native handle.
+/// How the menu bar or tray popover behaves as a window: where it shows, whether it brings the app
+/// forward, and what the system says about clicks elsewhere. Which of them closes it is the window's to
+/// decide. Each takes the window's native handle.
 /// </summary>
 public interface IPopoverWindow
 {
@@ -29,4 +31,7 @@ public interface IPopoverWindow
     /// around the card its shadow is drawn into; null when that can't be told.
     /// </summary>
     bool? IsPointerOutside(IntPtr window, double left, double top, double right, double bottom);
+
+    /// <summary>Where the popover's window goes on <paramref name="screen"/>: its top left corner.</summary>
+    WindowPosition Place(PopoverScreen screen, PopoverSize size);
 }
