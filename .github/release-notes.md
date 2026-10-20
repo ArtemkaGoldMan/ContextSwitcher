@@ -1,11 +1,8 @@
-## What's new in 0.6.7
+## What's new in 0.6.8
 
-- **The menu bar icon is back.** Since 0.6.4 ContextSwitcher ran with no icon in the menu bar: an update of the library its windows are built with changed how a menu bar icon starts, and the app didn't follow. Everything else kept working - the main window, switching from it, counting time - but the icon is the main way in, and now it's there again.
+- **Nothing changes on screen.** This release is the app's insides being tidied so it can later run on Windows too: the macOS code now lives in a project of its own, and the app's settings, switching and update checks were reorganised. Your profiles, settings and the way the app looks and works stay as they were.
 
-  No icon yet? Click ContextSwitcher in the Dock, or open it from Applications, then **Settings → Updates → Install and restart**.
-- Every change is now checked by starting the app and looking for its icon in the menu bar, so this can't slip out again unnoticed.
-
-Coming from an older version? Everything new in [0.6.6](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.6), [0.6.5](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.5), [0.6.4](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.4), [0.6.3](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.3), [0.6.2](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.2), [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
+Coming from an older version? Everything new in [0.6.7](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.7), [0.6.6](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.6), [0.6.5](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.5), [0.6.4](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.4), [0.6.3](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.3), [0.6.2](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.2), [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
 
 ## Install
 
