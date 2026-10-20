@@ -294,6 +294,16 @@ No — releases are built for Apple silicon (M1 and later) only.
 </details>
 
 <details>
+<summary><b>Is there a Windows version?</b></summary>
+
+<br>
+
+Not yet. One is being built a step at a time — apps first, then the browser, then the rest. The
+[Windows plan](docs/windows-plan.md) says where it stands, and the [roadmap](docs/roadmap.md) what
+else is coming.
+</details>
+
+<details>
 <summary><b>Can I switch with Siri, a keyboard shortcut or a script?</b></summary>
 
 <br>
