@@ -58,7 +58,7 @@ public sealed class ProfilesViewModelTests
     public void ARejectedSwitchIsReportedInTheNotice()
     {
         AppConfiguration configuration = TwoContexts();
-        (ProfilesViewModel viewModel, StubContextSwitchService switchService, InMemoryJsonStore jsonStore) = CreateViewModel(configuration);
+        (ProfilesViewModel viewModel, StubContextSwitchService switchService, _) = CreateViewModel(configuration);
         switchService.Result = new ContextSwitchResult("personal", null, ContextSwitchStatus.Cancelled, [], DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, "corr");
 
         viewModel.Rows[1].ToggleCommand.Execute(null);
@@ -76,7 +76,7 @@ public sealed class ProfilesViewModelTests
     public void ClickingTheProfileThatsOnTurnsItOff()
     {
         AppConfiguration configuration = TwoContexts();
-        (ProfilesViewModel viewModel, StubContextSwitchService switchService, InMemoryJsonStore jsonStore) = CreateViewModel(configuration);
+        (ProfilesViewModel viewModel, StubContextSwitchService switchService, _) = CreateViewModel(configuration);
         this.appState.UpdateState(new CurrentContextState { CurrentContextId = "work" });
         switchService.Result = new ContextSwitchResult(string.Empty, "work", ContextSwitchStatus.Cancelled, [], DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, "corr");
         ProfileRowViewModel work = viewModel.Rows.Single(row => row.Context.Id == "work");

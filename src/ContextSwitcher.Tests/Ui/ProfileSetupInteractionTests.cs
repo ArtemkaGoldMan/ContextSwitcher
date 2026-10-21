@@ -86,7 +86,7 @@ public sealed class ProfileSetupInteractionTests : UiTest
     {
         await OnUiThreadAsync(() =>
         {
-            (ProfileSetupViewModel viewModel, ConfigurationStore store) = CreateViewModel();
+            (ProfileSetupViewModel viewModel, _) = CreateViewModel();
             Window window = ShowWindow(new ProfileSetupPage { DataContext = viewModel });
 
             // A subscriber that rebuilds view models on ConfigurationChanged, the way the real
