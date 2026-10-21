@@ -8,6 +8,7 @@ Every download counts, not every person: one person downloading twice is two. Th
 
 | Release | Published | .dmg | .zip |
 | --- | --- | ---: | ---: |
+| v0.6.8 | 2026-10-21 | 0 | 0 |
 | v0.6.7 | 2026-10-16 | 0 | 2 |
 | v0.6.6 | 2026-10-15 | 0 | 1 |
 | v0.6.5 | 2026-10-15 | 0 | 2 |
@@ -29,9 +30,15 @@ Downloads a day (`.dmg` and `.zip`), from one run's totals to the next:
 ```mermaid
 xychart-beta
     title "Downloads a day"
-    x-axis ["10-16", "10-17", "10-18", "10-19", "10-20", "10-21"]
+    x-axis ["10-16*", "10-17", "10-18", "10-19", "10-20", "10-21*"]
     bar [3, 1, 0, 0, 0, 2]
 ```
+
+\* A release came out that day: 10-16 v0.6.7; 10-21 v0.6.8.
+
+## Interest
+
+Stars, forks and people watching the repository - the slowest-moving and the most honest sign that someone cares. Now: **0** stars, **0** forks, **0** watching.
 
 ## Visitors
 
@@ -40,10 +47,12 @@ Views of the repository's pages on GitHub and the people behind them, a day. Bar
 ```mermaid
 xychart-beta
     title "Visitors a day"
-    x-axis ["10-01", "10-02", "10-03", "10-04", "10-05", "10-06", "10-07", "10-08", "10-09", "10-10", "10-11", "10-12", "10-13", "10-14", "10-15", "10-16", "10-17", "10-18", "10-19", "10-20", "10-21"]
+    x-axis ["10-01", "10-02", "10-03", "10-04", "10-05", "10-06", "10-07", "10-08", "10-09", "10-10*", "10-11*", "10-12*", "10-13*", "10-14*", "10-15*", "10-16*", "10-17", "10-18", "10-19", "10-20", "10-21*"]
     bar [0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 21, 2, 21, 9, 4, 1, 6, 0, 3, 6, 0]
     line [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 1, 4, 1, 2, 1, 1, 0, 2, 1, 0]
 ```
+
+\* A release came out that day: 10-10 v0.1.0, v0.2.0; 10-11 v0.3.0; 10-12 v0.4.0; 10-13 v0.4.1, v0.5.0; 10-14 v0.6.0, v0.6.1, v0.6.2, v0.6.3; 10-15 v0.6.4, v0.6.5, v0.6.6; 10-16 v0.6.7; 10-21 v0.6.8.
 
 | Day | Views | Visitors | Clones |
 | --- | ---: | ---: | ---: |
