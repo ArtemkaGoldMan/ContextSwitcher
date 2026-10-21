@@ -21,6 +21,12 @@ data is CSV, one file per kind, added to day by day. The app takes no part in an
 - **Downloads a day** is the difference between two nights' totals, so it starts on the second run.
 - **Visitors** are GitHub's own count of views of the repository's pages and of the different
   people behind them. Your own visits count: with few visitors, most of the views are you.
+- **Stars, forks and watchers** are GitHub's current numbers for the repository, written down each
+  night, so the history GitHub does not keep is kept here. They grow slowly, and are the clearest
+  sign that someone cares. The chart of stars starts on the second night.
+- **A `*` on a chart's day** means a release came out that day; the line under the chart names it. A
+  jump in downloads or visitors on such a day may come from the release itself, such as an update
+  being downloaded, not from more people using the app.
 - **Clones** are nearly all automated - CI, bots, mirrors - and say little about people.
 - **Where they came from** and **what they looked at** are GitHub's top ten for the 14 days up to
   the run.
