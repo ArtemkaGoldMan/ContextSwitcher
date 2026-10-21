@@ -7,7 +7,7 @@ checked out - and writes a README.md there that sums them up.
 
     scripts/collect-stats.py OWNER/REPO FOLDER
 
-Release downloads are public. Visitors need a token that can read the repository's Administration
+Release downloads and the repository's stars, forks and watchers are public. Visitors need a token that can read the repository's Administration
 settings, in TRAFFIC_TOKEN; without one the gh CLI's own login is used, and where that cannot read
 them either - the workflow's token cannot - they are left as they were, with a warning.
 docs/usage-statistics.md says what the numbers mean and how to set the token up.
@@ -27,6 +27,7 @@ VIEW_FIELDS = ["date", "views", "visitors"]
 CLONE_FIELDS = ["date", "clones", "cloners"]
 REFERRER_FIELDS = ["date", "referrer", "views", "visitors"]
 PATH_FIELDS = ["date", "path", "title", "views", "visitors"]
+REPOSITORY_FIELDS = ["date", "stars", "forks", "watchers"]
 
 # How many days the charts and the daily tables in the README go back.
 RECENT_DAYS = 30
@@ -102,6 +103,17 @@ def collect_downloads(repo, folder, today):
     replace_day(folder / "downloads.csv", DOWNLOAD_FIELDS, today, rows)
 
 
+def collect_repository(repo, folder, today):
+    """The repository's stars, forks and watchers today: GitHub keeps only the current number."""
+    info = gh("repos/%s" % repo)
+    replace_day(folder / "repository.csv", REPOSITORY_FIELDS, today, [{
+        "date": today,
+        "stars": str(info["stargazers_count"]),
+        "forks": str(info["forks_count"]),
+        "watchers": str(info["subscribers_count"]),
+    }])
+
+
 def collect_traffic(repo, folder, today, token):
     views = gh("repos/%s/traffic/views" % repo, token)
     clones = gh("repos/%s/traffic/clones" % repo, token)
@@ -145,6 +157,26 @@ def chart(title, labels, bars=None, line=None):
     return lines
 
 
+def release_days(per_release):
+    """The days a release came out, with the tags of the ones that did."""
+    days = defaultdict(list)
+    for release, counts in per_release.items():
+        if counts["published"]:
+            days[counts["published"]].append(release)
+    return days
+
+
+def day_labels(days, released):
+    """A chart's day labels, with a * on the days a release came out."""
+    return [day[5:] + ("*" if day in released else "") for day in days]
+
+
+def release_note(days, released):
+    """The line under a chart that says which releases the * stand for, or None when there are none."""
+    marked = ["%s %s" % (day[5:], ", ".join(sorted(released[day]))) for day in days if day in released]
+    return "\\* A release came out that day: %s." % "; ".join(marked) if marked else None
+
+
 def days_back(today, count):
     end = datetime.date.fromisoformat(today)
     return [(end - datetime.timedelta(days=offset)).isoformat() for offset in range(count - 1, -1, -1)]
@@ -168,6 +200,8 @@ def summarize(repo, folder, today, traffic_note):
         if kind(row["asset"]):
             per_release[row["release"]][kind(row["asset"])] += int(row["downloads"])
             per_release[row["release"]]["published"] = row["published"]
+
+    released = release_days(per_release)
 
     out += ["## Downloads", ""]
     out.append(
@@ -193,10 +227,29 @@ def summarize(repo, folder, today, traffic_note):
     if daily:
         out.append("Downloads a day (`.dmg` and `.zip`), from one run's totals to the next:")
         out.append("")
-        out += chart("Downloads a day", [day[5:] for day, _ in daily], bars=[count for _, count in daily])
+        shown = [day for day, _ in daily]
+        out += chart("Downloads a day", day_labels(shown, released), bars=[count for _, count in daily])
+        note = release_note(shown, released)
+        if note:
+            out += ["", note]
     else:
         out.append("Downloads a day appear from the second run on: each day is the difference between two runs.")
     out.append("")
+
+    # Interest: the stars, forks and watchers, which GitHub shows as today's number only.
+    repository = read(folder / "repository.csv")
+    if repository:
+        now = repository[-1]
+        out += ["## Interest", ""]
+        out.append(
+            "Stars, forks and people watching the repository - the slowest-moving and the most honest sign "
+            "that someone cares. Now: **%s** stars, **%s** forks, **%s** watching." % (now["stars"], now["forks"], now["watchers"])
+        )
+        recent = repository[-RECENT_DAYS:]
+        if len(recent) > 1:
+            out.append("")
+            out += chart("Stars", [row["date"][5:] for row in recent], line=[row["stars"] for row in recent])
+        out.append("")
 
     # Visitors: GitHub's own counts, kept here for longer than its 14 days.
     views = {row["date"]: row for row in read(folder / "views.csv")}
@@ -214,10 +267,13 @@ def summarize(repo, folder, today, traffic_note):
         out.append("")
         out += chart(
             "Visitors a day",
-            [day[5:] for day in recent],
+            day_labels(recent, released),
             bars=[int(views.get(day, {}).get("views", 0)) for day in recent],
             line=[int(views.get(day, {}).get("visitors", 0)) for day in recent],
         )
+        note = release_note(recent, released)
+        if note:
+            out += ["", note]
         out.append("")
         out += ["| Day | Views | Visitors | Clones |", "| --- | ---: | ---: | ---: |"]
         for day in reversed(recent):
@@ -264,6 +320,7 @@ def main():
     today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
 
     collect_downloads(repo, folder, today)
+    collect_repository(repo, folder, today)
 
     traffic_note = None
     try:
