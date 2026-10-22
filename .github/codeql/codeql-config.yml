@@ -1,0 +1,26 @@
+name: ContextSwitcher CodeQL
+
+# Generated code is not ours to fix.
+paths-ignore:
+  - "**/obj/**"
+  - "**/bin/**"
+
+query-filters:
+  # The macOS project calls the Objective-C runtime directly; every such call is by design and is
+  # kept in Infrastructure.MacOS.
+  - exclude:
+      id: cs/call-to-unmanaged-code
+  - exclude:
+      id: cs/unmanaged-code
+  # Paths are built from a folder the app owns and fixed file names, never from user input.
+  - exclude:
+      id: cs/path-combine
+  # Style notes in tests and generated-looking patterns; the build's warnings-as-errors covers the rest.
+  - exclude:
+      id: cs/dispose-not-called-on-throw
+  - exclude:
+      id: cs/equality-on-floats
+  - exclude:
+      id: cs/constant-condition
+  - exclude:
+      id: cs/local-not-disposed
