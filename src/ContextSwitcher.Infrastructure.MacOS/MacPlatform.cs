@@ -12,7 +12,11 @@ public static class MacPlatform
     {
         Focus = true,
         AppleMusic = true,
+        Spotify = true,
+        Docker = true,
         DockIcon = true,
+        AutomationPermission = true,
+        BrowserPages = true,
         Browsers = [BrowserKind.Safari, BrowserKind.Chrome, BrowserKind.Brave],
         FocusFilterBrowsers = [BrowserKind.Safari]
     };

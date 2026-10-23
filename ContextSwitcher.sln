@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContextSwitcher.Infrastruct
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContextSwitcher.Infrastructure.Windows", "src\ContextSwitcher.Infrastructure.Windows\ContextSwitcher.Infrastructure.Windows.csproj", "{9FA90E80-51FC-48DC-9A43-AC894499AD12}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContextSwitcher.Tests.Windows", "src\ContextSwitcher.Tests.Windows\ContextSwitcher.Tests.Windows.csproj", "{96588AB0-62D7-44A6-849D-1A424F0DEE1E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,18 @@ Global
 		{9FA90E80-51FC-48DC-9A43-AC894499AD12}.Release|x64.Build.0 = Release|Any CPU
 		{9FA90E80-51FC-48DC-9A43-AC894499AD12}.Release|x86.ActiveCfg = Release|Any CPU
 		{9FA90E80-51FC-48DC-9A43-AC894499AD12}.Release|x86.Build.0 = Release|Any CPU
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E}.Debug|x64.Build.0 = Debug|Any CPU
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E}.Debug|x86.Build.0 = Debug|Any CPU
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E}.Release|x64.ActiveCfg = Release|Any CPU
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E}.Release|x64.Build.0 = Release|Any CPU
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E}.Release|x86.ActiveCfg = Release|Any CPU
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -110,5 +124,6 @@ Global
 		{18346CE1-CA97-4C52-9E5B-A071AED9F05F} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{F2DB350C-D372-4E33-9338-8C37C45BE9A7} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{9FA90E80-51FC-48DC-9A43-AC894499AD12} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{96588AB0-62D7-44A6-849D-1A424F0DEE1E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

@@ -102,6 +102,11 @@ public sealed class AutomationPlanBuilder
         ContextDefinition? target,
         HashSet<string> criticalTypes)
     {
+        if (!this.capabilities.Docker)
+        {
+            return;
+        }
+
         List<string> containers = previous.Docker.Stop
             .Except(target?.Docker.Start ?? [], StringComparer.Ordinal)
             .ToList();
@@ -133,7 +138,7 @@ public sealed class AutomationPlanBuilder
         HashSet<string> criticalTypes)
     {
         BrowserManagementConfig leaving = previous.BrowserManagement;
-        if (leaving.Mode != BrowserManagementMode.Urls || leaving.CloseUrls.Count == 0 || !this.capabilities.HasBrowser(leaving.Browser))
+        if (!this.capabilities.BrowserPages || leaving.Mode != BrowserManagementMode.Urls || leaving.CloseUrls.Count == 0 || !this.capabilities.HasBrowser(leaving.Browser))
         {
             return;
         }
@@ -280,6 +285,11 @@ public sealed class AutomationPlanBuilder
     /// </summary>
     private void AddCloseOtherTabs(List<AutomationStep> steps, SwitchExtras extras, string subjectId, HashSet<string> criticalTypes)
     {
+        if (!this.capabilities.BrowserPages)
+        {
+            return;
+        }
+
         foreach (IGrouping<BrowserKind, TabToClose> browser in extras.CloseTabs.GroupBy(tab => tab.Browser))
         {
             steps.Add(CreateStep(
@@ -298,6 +308,11 @@ public sealed class AutomationPlanBuilder
         Func<BrowserKind, BrowserKind> resolve,
         HashSet<string> criticalTypes)
     {
+        if (!this.capabilities.BrowserPages)
+        {
+            return;
+        }
+
         BrowserManagementConfig browser = target.BrowserManagement;
         BrowserKind resolved = resolve(browser.Browser);
 
@@ -344,7 +359,7 @@ public sealed class AutomationPlanBuilder
 
     private void AddStartDockerResources(List<AutomationStep> steps, ContextDefinition target, HashSet<string> criticalTypes)
     {
-        if (target.Docker.Start.Count == 0)
+        if (!this.capabilities.Docker || target.Docker.Start.Count == 0)
         {
             return;
         }

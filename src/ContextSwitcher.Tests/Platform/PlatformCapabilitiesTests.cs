@@ -1,5 +1,6 @@
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
+using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Messages;
 using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Infrastructure.MacOS;
@@ -23,6 +24,16 @@ public sealed class PlatformCapabilitiesTests
         FocusFilterBrowsers = []
     };
 
+    /// <summary>Apps and nothing else - no pages, music or Docker - as Windows has in its first stage.</summary>
+    internal static readonly PlatformCapabilities AppsOnly = Lesser with
+    {
+        Spotify = false,
+        Docker = false,
+        AutomationPermission = false,
+        BrowserPages = false,
+        Browsers = []
+    };
+
     private static readonly ContextDefinition Everything = new()
     {
         Id = "work",
@@ -37,7 +48,7 @@ public sealed class PlatformCapabilitiesTests
     {
         PlatformCapabilities mac = MacPlatform.Capabilities;
 
-        Assert.True(mac.Focus && mac.AppleMusic && mac.DockIcon);
+        Assert.True(mac.Focus && mac.AppleMusic && mac.Spotify && mac.Docker && mac.DockIcon && mac.AutomationPermission && mac.BrowserPages);
         Assert.Equal([BrowserKind.Safari, BrowserKind.Chrome, BrowserKind.Brave], mac.Browsers);
         Assert.Equal([BrowserKind.Chrome, BrowserKind.Brave], mac.BrowsersWithProfiles);
         Assert.True(mac.ClosesTabsById(BrowserKind.Brave));
@@ -82,6 +93,100 @@ public sealed class PlatformCapabilitiesTests
         AutomationPlan plan = new AutomationPlanBuilder(Lesser, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(previous: null, target);
 
         Assert.Equal([AutomationStepType.LaunchApplications], plan.Steps.Select(step => step.Type));
+    }
+
+    /// <summary>
+    /// Without pages no page is opened or closed - neither a profile's own nor the tabs chosen when
+    /// asked - whichever browsers the computer has.
+    /// </summary>
+    [Fact]
+    public void WithoutPagesNoPageIsOpenedOrClosed()
+    {
+        PlatformCapabilities noPages = MacPlatform.Capabilities with { BrowserPages = false };
+        ContextDefinition chrome = Everything with { BrowserManagement = Everything.BrowserManagement with { Browser = BrowserKind.Chrome } };
+        ContextDefinition home = new()
+        {
+            Id = "home",
+            DisplayName = "Home",
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Profiles,
+                Profiles = [new BrowserProfileConfig { Browser = BrowserKind.Chrome, ProfileDirectory = "Default" }]
+            }
+        };
+        SwitchExtras chosen = new([], [new TabToClose(BrowserKind.Chrome, "https://news.ycombinator.com/")]);
+        AutomationPlanBuilder builder = new(noPages, StepBudgets.Default, new FakeUnknownDefaultBrowser());
+
+        AutomationPlan leaving = builder.Build(chrome, home, chosen);
+        AutomationPlan entering = builder.Build(home, chrome);
+
+        AutomationStepType[] pageSteps = [AutomationStepType.CloseBrowserTabs, AutomationStepType.ManageBrowserContext];
+        Assert.DoesNotContain(leaving.Steps, step => pageSteps.Contains(step.Type));
+        Assert.DoesNotContain(entering.Steps, step => pageSteps.Contains(step.Type));
+    }
+
+    [Fact]
+    public void WithoutAnyPlayerThereIsNoMusic()
+    {
+        Assert.False(AppsOnly.PlaysMusic);
+        Assert.True(AppsOnly.Plays(MediaPlayerKind.None));
+        Assert.False(AppsOnly.Plays(MediaPlayerKind.Spotify));
+        Assert.True(Lesser.PlaysMusic);
+    }
+
+    /// <summary>A Mac's settings on a computer with apps alone: every other part of each profile is named, once.</summary>
+    [Fact]
+    public void AComputerWithAppsAloneSaysWhatElseAProfileDoes()
+    {
+        ContextDefinition home = new()
+        {
+            Id = "home",
+            DisplayName = "Home",
+            Media = new MediaConfig { Player = MediaPlayerKind.Spotify, Playlist = "spotify:playlist:1" },
+            Docker = new DockerResourceConfig { Stop = ["postgres-work"] },
+            BrowserManagement = new BrowserManagementConfig
+            {
+                Mode = BrowserManagementMode.Profiles,
+                Profiles = [new BrowserProfileConfig { Browser = BrowserKind.Chrome, ProfileDirectory = "Default" }]
+            }
+        };
+
+        IReadOnlyList<UserMessage> unsupported = AppsOnly.Unsupported(Configuration(Everything, home));
+
+        Assert.Equal(
+            [
+                "Work turns on a Focus, which this computer doesn't have.",
+                "Work plays Apple Music, which this computer doesn't have.",
+                "Work opens web pages, which this computer can't.",
+                "Home plays Spotify, which this computer can't.",
+                "Home starts or stops Docker containers, which this computer can't.",
+                "Home opens web pages, which this computer can't."
+            ],
+            unsupported.Select(message => message.English));
+    }
+
+    /// <summary>Leaving and entering, a computer with apps alone quits and opens apps, and plans nothing else.</summary>
+    [Fact]
+    public void AComputerWithAppsAloneGetsOnlyTheirSteps()
+    {
+        ContextDefinition leaving = Everything with
+        {
+            CloseApps = ["Slack"],
+            Docker = new DockerResourceConfig { Stop = ["postgres-work"] }
+        };
+        ContextDefinition entering = new()
+        {
+            Id = "home",
+            DisplayName = "Home",
+            LaunchApps = ["Spotify"],
+            Media = new MediaConfig { Player = MediaPlayerKind.Spotify, Playlist = "spotify:playlist:1" },
+            Docker = new DockerResourceConfig { Start = ["postgres-home"] },
+            BrowserManagement = new BrowserManagementConfig { Mode = BrowserManagementMode.Urls, Urls = ["https://youtube.com/"] }
+        };
+
+        AutomationPlan plan = new AutomationPlanBuilder(AppsOnly, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(leaving, entering);
+
+        Assert.Equal([AutomationStepType.CloseApplications, AutomationStepType.LaunchApplications], plan.Steps.Select(step => step.Type));
     }
 
     /// <summary>Tabs are remembered by id only in a browser whose tabs keep one.</summary>

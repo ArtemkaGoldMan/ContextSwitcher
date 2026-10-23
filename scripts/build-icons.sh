@@ -36,8 +36,14 @@ iconutil -c icns "$iconset" -o "$out/AppIcon.icns"
 # and dark itself, so any colour here would be wrong rather than merely ignored.
 rsvg-convert -w 36 -h 36 "$src/menu-template.svg" -o "$out/Icons/menu-neutral.png"
 
+# Windows doesn't colour tray icons, so the same drawing comes in black for a light taskbar and in
+# white for a dark one, at 32px - the tray's 16 at 200%.
+rsvg-convert -w 32 -h 32 "$src/menu-template.svg" -o "$out/Icons/tray-dark.png"
+sed 's/#000000/#FFFFFF/' "$src/menu-template.svg" > "$work/tray-light.svg"
+rsvg-convert -w 32 -h 32 "$work/tray-light.svg" -o "$out/Icons/tray-light.png"
+
 # The app's own mark inside its windows (the sidebar, onboarding's first step): the app icon itself,
 # so the app looks like one thing wherever it shows its name. 128px covers 56pt at 2x.
 rsvg-convert -w 128 -h 128 "$src/app-full.svg" -o "$out/Icons/app-mark.png"
 
-echo "wrote $out/AppIcon.icns, $out/Icons/menu-neutral.png and $out/Icons/app-mark.png"
+echo "wrote $out/AppIcon.icns, $out/Icons/menu-neutral.png, the tray icons and $out/Icons/app-mark.png"

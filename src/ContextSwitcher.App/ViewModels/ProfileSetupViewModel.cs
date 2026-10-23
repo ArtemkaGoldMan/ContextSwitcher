@@ -135,8 +135,20 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     public BrowserSettingsViewModel Browser { get; }
 
+    /// <summary>Whether this computer opens a profile's pages, so the profile has a browser to set.</summary>
+    public bool ShowsBrowser => this.capabilities.BrowserPages;
+
     /// <summary>Whether this computer has Focus modes for the profile to turn on.</summary>
     public bool ShowsFocus => this.capabilities.Focus;
+
+    /// <summary>Whether this computer plays music for the profile to start.</summary>
+    public bool ShowsMusic => this.capabilities.PlaysMusic;
+
+    /// <summary>Whether the profile has Focus or music to set here at all, so the section that holds them shows.</summary>
+    public bool ShowsFocusOrMusic => this.ShowsFocus || this.ShowsMusic;
+
+    /// <summary>Whether this computer starts and stops Docker containers for the profile.</summary>
+    public bool ShowsDocker => this.capabilities.Docker;
 
     public FocusSettingsViewModel Focus { get; }
 

@@ -48,5 +48,9 @@ public sealed class AppServicesTests
         Assert.Same(FileReplacer.Once, provider.GetRequiredService<IFileReplacer>());
         Assert.Same(MacPlatform.Capabilities, provider.GetRequiredService<PlatformCapabilities>());
         Assert.Same(MacPlatform.AllowedCommands, provider.GetRequiredService<CommandAllowlist>());
+
+        // macOS keeps to one copy itself and colours the menu bar icon: nothing new on a Mac.
+        Assert.IsType<MacSingleInstance>(provider.GetRequiredService<ISingleInstance>());
+        Assert.Equal(TrayIconLook.Template, provider.GetRequiredService<ITrayIconLook>().Current);
     }
 }

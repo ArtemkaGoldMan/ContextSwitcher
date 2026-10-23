@@ -60,7 +60,7 @@
     </Border>
 
     <!-- Permission -->
-    <Border Classes="panel">
+    <Border Classes="panel" IsVisible="{Binding ShowsAutomationPermission}">
       <StackPanel Spacing="10">
         <TextBlock Text="{x:Static r:Strings.Settings_Permission_Section}" Classes="sectionTitle" />
         <TextBlock
