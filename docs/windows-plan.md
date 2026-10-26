@@ -190,7 +190,7 @@ It comes in four pull requests, each leaving the Mac app as it was:
 | | Brings | Status |
 | --- | --- | --- |
 | 1a | The shell: `WinExe`, the tray icon in its two drawings, the popover by the taskbar, one copy, the font, everything else hidden. What the later ones bring is a stand-in, in `Infrastructure.Windows/NotYet/`, and `ContextSwitcher.Tests.Windows` tests the Windows code | done |
-| 1b | Apps: the picker, launching, closing, "still closing", Force quit, minimising, the ask-on-switch list | |
+| 1b | Apps: the picker, launching, closing, "still closing", Force quit, minimising, the ask-on-switch list | in progress: the list of apps and opening them done |
 | 1c | The rest: time with sleep and lock, open at sign-in, the Windows wording, and the wizard saying how to pin the icon | |
 | 1d | CI and releases: the Windows job required, the installer, the release workflow | |
 
@@ -209,11 +209,16 @@ The shell of the app:
 
 Apps:
 
-- **The picker**: apps from `shell:AppsFolder`, desktop and Store alike, with their icons
-  (`IShellItemImageFactory`). The wizard suggests the usual Windows ones: Slack, Teams, Outlook,
+- **The picker**: the Start menu's apps, desktop and Store alike, listed by PowerShell's
+  `Get-StartApps` (with a fixed script, its output in Base64 so no code page garbles a name) and kept
+  for five minutes. Their icons (`IShellItemImageFactory`) are still to come, and so is writing what
+  was picked into the `apps` map: until then the name in the Start menu is the key, matched without
+  regard to case. The wizard suggests the usual Windows ones: Slack, Teams, Outlook,
   Visual Studio Code, Discord, Telegram, Steam, Spotify. What was picked goes into the `apps` map
   ([configuration](configuration.md#top-level)).
-- **Launching** by AppUserModelID, or by the executable for an app that has none.
+- **Launching** through `explorer shell:AppsFolder\<id>`, which starts a desktop and a Store app
+  alike and brings a running one forward. The id is the AppUserModelID, or the path of the executable
+  for an app that has none.
 - **Closing**: `WM_CLOSE` to each of the app's top-level windows, then the same checking as on
   macOS.
 - **"Still closing", a window on screen, Force quit**: `EnumWindows` over the app and its child

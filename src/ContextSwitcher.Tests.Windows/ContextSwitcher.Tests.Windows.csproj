@@ -32,6 +32,7 @@
 
   <!-- The fakes both test projects need, kept once, in ContextSwitcher.Tests. -->
   <ItemGroup>
+    <Compile Include="..\ContextSwitcher.Tests\TestDoubles\FakeClock.cs" Link="TestDoubles\FakeClock.cs" />
     <Compile Include="..\ContextSwitcher.Tests\TestDoubles\FakeProcessRunner.cs" Link="TestDoubles\FakeProcessRunner.cs" />
     <Compile Include="..\ContextSwitcher.Tests\TestDoubles\TestLogger.cs" Link="TestDoubles\TestLogger.cs" />
   </ItemGroup>
