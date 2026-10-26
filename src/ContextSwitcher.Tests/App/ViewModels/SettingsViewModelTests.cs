@@ -175,6 +175,21 @@ public sealed class SettingsViewModelTests
         Assert.False(lesser.CanShowDockIcon);
     }
 
+    /// <summary>The Automation permission shows only where the system asks for one, as macOS does.</summary>
+    [Fact]
+    public void ThePermissionShowsOnlyWhereTheSystemAsksForOne()
+    {
+        AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };
+        this.appState.UpdateConfiguration(configuration, new ConfigurationValidationResult([]));
+        ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
+
+        using SettingsViewModel mac = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), MacPlatform.Capabilities, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
+        using SettingsViewModel appsOnly = new(this.appState, store, new FakePermissionsChecker(), new FakeShell(), Updates(this.appState), Diagnostics(), new FakePreferredLanguages(), Platform.PlatformCapabilitiesTests.AppsOnly, FakeLoginItem.Unavailable(), new FakeInstalledAppsService());
+
+        Assert.True(mac.ShowsAutomationPermission);
+        Assert.False(appsOnly.ShowsAutomationPermission);
+    }
+
     private SettingsViewModel WithLoginItem(FakeLoginItem loginItem)
     {
         AppConfiguration configuration = new() { ActiveContextId = "work", Contexts = [new ContextDefinition { Id = "work", DisplayName = "Work" }] };

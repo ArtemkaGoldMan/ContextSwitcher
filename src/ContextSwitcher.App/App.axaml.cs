@@ -12,15 +12,15 @@ using ContextSwitcher.App.Views;
 using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Contexts;
 using ContextSwitcher.Core.Abstractions;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Core.Updates;
+using ContextSwitcher.Infrastructure.Cli;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.App;
 
 public sealed partial class App : Application
 {
-    private static readonly Uri TrayIconUri = new("avares://ContextSwitcher/Assets/Icons/menu-neutral.png");
-
     private TrayIcon? trayIcon;
     private ThemeFollower? themeFollower;
     private DashboardWindow? dashboardWindow;
@@ -91,13 +91,29 @@ public sealed partial class App : Application
                 };
             }
 
+            // Opening the app again where the system doesn't bring the running copy forward itself -
+            // Windows - reaches it here instead: the same as a Reopen, or the dashboard if asked for.
+            ISingleInstance singleInstance = AppHost.Services.GetRequiredService<ISingleInstance>();
+            singleInstance.Reopened += (_, arguments) => this.Dispatcher.Post(() =>
+            {
+                if (arguments.Contains(CliCommandRouter.OpenDashboardCommand) && appState.Configuration.OnboardingCompleted)
+                {
+                    this.ShowDashboard();
+                }
+                else
+                {
+                    this.ShowOnReopen(desktop);
+                }
+            });
+            singleInstance.Listen();
+
             // A fresh install otherwise lands on one empty "Default" profile - a context switcher
             // with nothing to switch between. Run the wizard before anything else in that case.
             if (!appState.Configuration.OnboardingCompleted)
             {
                 this.ShowOnboarding();
             }
-            else if (desktop.Args?.Contains("open-dashboard") == true)
+            else if (desktop.Args?.Contains(CliCommandRouter.OpenDashboardCommand) == true)
             {
                 this.ShowDashboard();
             }
@@ -163,13 +179,19 @@ public sealed partial class App : Application
             }
         };
 
+        ITrayIconLook look = AppHost.Services.GetRequiredService<ITrayIconLook>();
         TrayIcon trayIcon = new()
         {
-            Icon = new WindowIcon(AssetLoader.Open(TrayIconUri)),
+            Icon = TrayIconImage(look.Current),
             ToolTipText = AppHost.Services.GetRequiredService<IAppInfo>().DisplayName,
             Menu = trayMenu.Menu,
             IsVisible = true
         };
+
+        // A template image is coloured by macOS; any other drawing is chosen for the taskbar, and
+        // changed when the taskbar turns light or dark.
+        MacOSProperties.SetIsTemplateIcon(trayIcon, look.Current == TrayIconLook.Template);
+        look.Changed += (_, _) => this.Dispatcher.Post(() => trayIcon.Icon = TrayIconImage(look.Current));
 
         // The profile list and its tick follow the configuration and the active profile. Both events
         // are raised on the UI thread, which a NativeMenu - an Avalonia object - requires. The menu is
@@ -185,10 +207,16 @@ public sealed partial class App : Application
         // guaranteed-reliable fallback either way.
         trayIcon.Clicked += (_, _) => this.ShowDashboard();
 
-        MacOSProperties.SetIsTemplateIcon(trayIcon, true);
-
         return trayIcon;
     }
+
+    /// <summary>The drawing of the menu bar or tray icon for <paramref name="look"/>.</summary>
+    private static WindowIcon TrayIconImage(TrayIconLook look) => new(AssetLoader.Open(new Uri(look switch
+    {
+        TrayIconLook.Dark => "avares://ContextSwitcher/Assets/Icons/tray-dark.png",
+        TrayIconLook.Light => "avares://ContextSwitcher/Assets/Icons/tray-light.png",
+        _ => "avares://ContextSwitcher/Assets/Icons/menu-neutral.png"
+    })));
 
     /// <summary>
     /// A switch picked straight from the menu bar. Fire-and-forget from the menu's point of view, so
@@ -247,18 +275,23 @@ public sealed partial class App : Application
 
     private void ShowDashboard()
     {
+        IPopoverWindow popover = AppHost.Services.GetRequiredService<IPopoverWindow>();
         if (this.dashboardWindow is null)
         {
             DashboardViewModel viewModel = AppHost.Services.GetRequiredService<DashboardViewModel>();
-            this.dashboardWindow = new DashboardWindow(
-                viewModel, this.ShowMainApp, AppHost.Services.GetRequiredService<IPopoverWindow>(), AppHost.Services.GetRequiredService<ILogger>())
+            DashboardWindow window = new(viewModel, this.ShowMainApp, popover, AppHost.Services.GetRequiredService<ILogger>())
             {
                 Title = AppHost.Services.GetRequiredService<IAppInfo>().DisplayName
             };
-            this.dashboardWindow.Closed += (_, _) => this.dashboardWindow = null;
+            window.Closed += (_, _) => this.dashboardWindow = null;
+
+            // The popover is as tall as what it shows. Beside a taskbar along the bottom it grows
+            // upwards, so it is placed again whenever its height changes.
+            window.SizeChanged += (_, _) => PlacePopover(window, popover);
+            this.dashboardWindow = window;
         }
 
-        PositionNearMenuBar(this.dashboardWindow);
+        PlacePopover(this.dashboardWindow, popover);
         this.dashboardWindow.ShowAsPopover();
     }
 
@@ -286,23 +319,38 @@ public sealed partial class App : Application
         (this.mainAppWindow?.DataContext as MainAppViewModel)?.ShowSettings();
     }
 
-    private static void PositionNearMenuBar(Window window)
+    /// <summary>
+    /// Puts the popover where its platform has it - under the menu bar, or beside the taskbar - on the
+    /// main screen. The card, not the window, lines up with the screen's edges: the window is wider
+    /// and taller by the transparent room its shadow is drawn into.
+    /// </summary>
+    private static void PlacePopover(Window window, IPopoverWindow popover)
     {
-        Screen? screen = window.Screens?.Primary;
-        if (screen is null)
+        if (window.Screens?.Primary is not { } screen)
         {
             return;
         }
 
-        // The card, not the window, goes 12 from the right edge and 4 under the menu bar: the window
-        // is wider and taller by the transparent room its shadow is drawn into. Same units as this
-        // has always used, which on macOS place the popover correctly.
-        PixelRect area = screen.WorkingArea;
+        // Before it first shows, the window has no height yet: it is measured for what it will show.
+        double height = window.Bounds.Height;
+        if (height <= 0)
+        {
+            window.Measure(new Size(window.Width, double.PositiveInfinity));
+            height = window.DesiredSize.Height;
+        }
+
         Thickness room = DashboardWindow.ShadowRoom;
-        int x = area.Right - (int)(window.Width - room.Right) - 12;
-        int y = area.Y + 4 - (int)room.Top;
-        window.Position = new PixelPoint(x, y);
+        WindowPosition place = popover.Place(
+            new PopoverScreen(ScreenAreaOf(screen.Bounds), ScreenAreaOf(screen.WorkingArea), screen.Scaling),
+            new PopoverSize(window.Width, height, room.Left, room.Top, room.Right, room.Bottom));
+        PixelPoint position = new(place.X, place.Y);
+        if (window.Position != position)
+        {
+            window.Position = position;
+        }
     }
+
+    private static ScreenArea ScreenAreaOf(PixelRect rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
 
     private void DisposeTrayIcon()
     {

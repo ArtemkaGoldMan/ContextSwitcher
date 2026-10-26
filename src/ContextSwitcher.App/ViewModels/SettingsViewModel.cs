@@ -167,6 +167,9 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
     /// <summary>Whether this computer has a Dock for the app to show in.</summary>
     public bool CanShowDockIcon => this.capabilities.DockIcon;
 
+    /// <summary>Whether this computer asks before the app drives another, so there is a permission to show.</summary>
+    public bool ShowsAutomationPermission => this.capabilities.AutomationPermission;
+
     public bool ShowDockIcon
     {
         get => this.showDockIcon;

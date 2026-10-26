@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The tests of the Windows code, which needs Windows' target. Built on any machine, so a mistake
+       shows on a Mac too, but run only on Windows: elsewhere it is no test project, and `dotnet test`
+       passes it by. Everything else is tested in ContextSwitcher.Tests. -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject Condition="!$([MSBuild]::IsOSPlatform('Windows'))">false</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ContextSwitcher.Core\ContextSwitcher.Core.csproj" />
+    <ProjectReference Include="..\ContextSwitcher.Infrastructure\ContextSwitcher.Infrastructure.csproj" />
+    <ProjectReference Include="..\ContextSwitcher.Infrastructure.Windows\ContextSwitcher.Infrastructure.Windows.csproj" />
+    <ProjectReference Include="..\ContextSwitcher.App\ContextSwitcher.App.csproj" />
+  </ItemGroup>
+
+  <!-- The fakes both test projects need, kept once, in ContextSwitcher.Tests. -->
+  <ItemGroup>
+    <Compile Include="..\ContextSwitcher.Tests\TestDoubles\FakeProcessRunner.cs" Link="TestDoubles\FakeProcessRunner.cs" />
+    <Compile Include="..\ContextSwitcher.Tests\TestDoubles\TestLogger.cs" Link="TestDoubles\TestLogger.cs" />
+  </ItemGroup>
+
+</Project>

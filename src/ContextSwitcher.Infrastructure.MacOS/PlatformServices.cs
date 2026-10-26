@@ -56,6 +56,8 @@ public static class PlatformServices
         services.AddSingleton<IDisplayAvailability, DisplayAvailability>();
         services.AddSingleton<ISystemVersion, MacSystemVersion>();
         services.AddSingleton<IPopoverWindow, MacPopoverWindow>();
+        services.AddSingleton<ISingleInstance, MacSingleInstance>();
+        services.AddSingleton<ITrayIconLook, MacTrayIconLook>();
 
         // The updater, and which releases are the Mac's: the zip and the disk image.
         services.AddSingleton<IAppUpdater>(provider => new AppBundleUpdater(

@@ -1012,6 +1012,15 @@
   <data name="Msg_Config_AppleMusicNotHere" xml:space="preserve">
     <value>«{0}» вмикає Apple Music, якої на цьому комп’ютері немає.</value>
   </data>
+  <data name="Msg_Config_SpotifyNotHere" xml:space="preserve">
+    <value>«{0}» вмикає Spotify, чого цей комп’ютер не вміє.</value>
+  </data>
+  <data name="Msg_Config_DockerNotHere" xml:space="preserve">
+    <value>«{0}» запускає чи зупиняє контейнери Docker, чого цей комп’ютер не вміє.</value>
+  </data>
+  <data name="Msg_Config_PagesNotHere" xml:space="preserve">
+    <value>«{0}» відкриває вебсторінки, чого цей комп’ютер не вміє.</value>
+  </data>
   <data name="Msg_Config_BrowserNotHere" xml:space="preserve">
     <value>«{0}» відкриває сторінки в {1}, якого на цьому комп’ютері немає.</value>
   </data>

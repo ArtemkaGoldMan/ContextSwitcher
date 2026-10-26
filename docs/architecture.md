@@ -14,9 +14,10 @@ src/
   ContextSwitcher.Core                    profiles, switching, time, logging, messages, the interfaces
   ContextSwitcher.Infrastructure          shared: files, the log, GitHub, the command line, the step handlers
   ContextSwitcher.Infrastructure.MacOS    the Mac's: AppleScript, the Objective-C calls, open, sips, shortcuts
-  ContextSwitcher.Infrastructure.Windows  Windows': so far its settings folder and file moves
+  ContextSwitcher.Infrastructure.Windows  Windows': the shell so far; stand-ins in NotYet/ for the rest
   ContextSwitcher.App                     the Avalonia interface, the composition root, view models
   ContextSwitcher.Tests                   every test
+  ContextSwitcher.Tests.Windows           the Windows code's tests, which need its target
 ```
 
 - **Core** references nothing of the app's: no Avalonia, no platform API, no files, processes or wall
@@ -30,7 +31,8 @@ src/
 - **App** targets `net10.0` (macOS) and `net10.0-windows10.0.19041.0`, and references one platform
   project in each. `Directory.Build.props` sets `EnableWindowsTargeting`, so any machine builds both.
 - **Tests** run on both systems; a test of macOS itself is a `[MacOSFact]`, of Windows a
-  `[WindowsFact]`.
+  `[WindowsFact]`. The Windows project's own code is tested in `ContextSwitcher.Tests.Windows`, which
+  needs its target: built everywhere, run only on Windows.
 
 ## Design rules
 
@@ -84,9 +86,11 @@ Before a pull request:
 - **`AppServices.Register`** lists every service and its implementation. What differs between the
   systems is each platform project's `PlatformServices.Register` - the same name in the same namespace
   in both - which `AppServices` calls; the build decides which one exists. No `#if` in shared code.
-- **What the platform can do** is `PlatformCapabilities` (Focus, Apple Music, Safari, closing tabs by
-  id…), registered by the platform. Profile Setup hides what it lacks and `AutomationPlanBuilder`
-  plans no step for it. The commands each platform may run are its `CommandAllowlist`.
+- **What the platform can do** is `PlatformCapabilities` (pages, music, Docker, Focus, the Dock, the
+  Automation permission, which browsers…), registered by the platform. Profile Setup and Settings
+  hide what it lacks and `AutomationPlanBuilder` plans no step for it. The commands each platform may
+  run are its `CommandAllowlist`. What a platform will have but doesn't yet is a stand-in that says
+  so: Windows' are in `Infrastructure.Windows/NotYet/`, each gone with the stage that brings its part.
 - **`AppStartup`** runs before the first window, or before a command: tidies the log, loads the
   settings - or writes a default, moving a file that can't be read aside - validates them, loads the
   state and publishes both in `IAppState`. The app, not the command line, then recovers time history a
@@ -101,6 +105,10 @@ Before a pull request:
   file, write atomically, publish in `IAppState`.
 - **`CliCommandRouter.IsHeadless(args)`** decides at start whether a command runs without the
   interface.
+- **One copy** is `ISingleInstance`, which `Program` asks before anything starts. macOS keeps to one
+  copy itself and sends a Reopen; on Windows a second copy hands its arguments to the first through a
+  pipe and ends - one copy for each settings folder, so a development build runs beside an installed
+  one.
 
 Lifetimes: singletons for services, stores and app-wide state; view models transient unless they own
 state that must outlive their window. `DashboardViewModel` and `MainAppViewModel` are the only view
@@ -370,8 +378,11 @@ On macOS the command line is the app's own executable, which Shortcuts and Siri 
 Opens from the menu bar icon, under it: the profile on, with its colour and time; a button to switch
 to each of the others; a switch's progress and the last one's problems; the profile's quick links and
 notes; the last seven days; **Open App** and Support the developer. Esc or a click elsewhere closes
-it. On macOS `IPopoverWindow` makes it a non-activating panel on the Space in front, and tells it
-when to close. It never jumps in size during a switch: progress and warnings have their room.
+it. `IPopoverWindow` places it - under the menu bar on a Mac, beside the taskbar on Windows, growing
+upwards from one along the bottom (`PopoverPlacement`). On macOS it also makes it a non-activating
+panel on the Space in front, and tells it when to close; on Windows it is an ordinary topmost window
+that closes when it loses the focus. It never jumps in size during a switch: progress and warnings
+have their room.
 
 ### The main window
 
@@ -413,9 +424,10 @@ wizard runs on first launch, and the ask-on-switch window during a switch.
 
 ### The menu bar icon
 
-One template image, which macOS recolours for light and dark. Its menu has Open
-Dashboard, Open App, the profiles with a tick by the one on, an update when there is one, and Quit.
-The Dock icon is optional (`showDockIcon`).
+On a Mac, one template image, which macOS recolours for light and dark. Windows doesn't recolour
+tray icons, so there `ITrayIconLook` picks a dark or a light drawing for the taskbar, and changes it
+when the taskbar does. Its menu has Open Dashboard, Open App, the profiles with a tick by the one on,
+an update when there is one, and Quit. The Dock icon is optional (`showDockIcon`).
 
 ## Errors
 

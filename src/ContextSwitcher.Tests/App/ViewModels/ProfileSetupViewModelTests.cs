@@ -241,6 +241,23 @@ public sealed class ProfileSetupViewModelTests
         Assert.False(fromAMac.Browser.ShowsFocusFilterTip);
     }
 
+    /// <summary>A computer with apps alone shows no browser, Focus, music or Docker section; a Mac shows them all.</summary>
+    [Fact]
+    public void OnlyTheSectionsTheComputerCanDoShow()
+    {
+        ConfigurationStore store = CreateStore(out _, out _);
+
+        ProfileSetupViewModel appsOnly = new(
+            this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(),
+            Platform.PlatformCapabilitiesTests.AppsOnly, new FakeUnknownDefaultBrowser(), existing: null);
+        ProfileSetupViewModel mac = new(
+            this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(),
+            MacPlatform.Capabilities, new FakeUnknownDefaultBrowser(), existing: null);
+
+        Assert.False(appsOnly.ShowsBrowser || appsOnly.ShowsFocus || appsOnly.ShowsMusic || appsOnly.ShowsFocusOrMusic || appsOnly.ShowsDocker);
+        Assert.True(mac.ShowsBrowser && mac.ShowsFocus && mac.ShowsMusic && mac.ShowsFocusOrMusic && mac.ShowsDocker);
+    }
+
     private ProfileSetupViewModel NewProfile()
     {
         this.appState.UpdateConfiguration(

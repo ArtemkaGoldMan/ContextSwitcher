@@ -126,7 +126,7 @@
     </Border>
 
     <!-- Browser management -->
-    <Border Classes="panel">
+    <Border Classes="panel" IsVisible="{Binding ShowsBrowser}">
       <StackPanel Spacing="10">
         <TextBlock Text="{x:Static r:Strings.ProfileSetup_BrowserManagement_Section}" Classes="sectionTitle" />
 
@@ -194,7 +194,7 @@
     <!-- Everything below Browser is collapsed by default: a new profile only needs identity,
          apps and browser to be useful, and showing all 12 sections at once was the single
          biggest reason Profile Setup read as a config file (docs/architecture.md, "The main window"). -->
-    <Expander Classes="section" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_FocusAndMusic}">
+    <Expander Classes="section" IsVisible="{Binding ShowsFocusOrMusic}" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_FocusAndMusic}">
       <Expander.Header>
         <StackPanel Spacing="2">
           <TextBlock Text="{x:Static r:Strings.ProfileSetup_FocusMusic}" Classes="body" FontWeight="SemiBold" />
@@ -244,7 +244,7 @@
         </Border>
 
         <!-- Media -->
-        <Border Classes="panel">
+        <Border Classes="panel" IsVisible="{Binding ShowsMusic}">
           <StackPanel Spacing="10">
             <TextBlock Text="{x:Static r:Strings.ProfileSetup_Media_Section}" Classes="sectionTitle" />
             <TextBlock Text="{x:Static r:Strings.ProfileSetup_StartsAPlaylistWhenYou}" Classes="caption" TextWrapping="Wrap" />
@@ -291,7 +291,7 @@
       </Expander.Header>
       <StackPanel Spacing="20">
         <!-- Docker -->
-        <Border Classes="panel">
+        <Border Classes="panel" IsVisible="{Binding ShowsDocker}">
           <StackPanel Spacing="6">
             <TextBlock Text="{x:Static r:Strings.ProfileSetup_Docker_Section}" Classes="sectionTitle" />
             <TextBlock

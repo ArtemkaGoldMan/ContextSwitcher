@@ -1332,6 +1332,18 @@
     <value>{0} plays Apple Music, which this computer doesn't have.</value>
     <comment>Settings imported from another computer: what this one can't use. {0} = profile name.</comment>
   </data>
+  <data name="Msg_Config_SpotifyNotHere" xml:space="preserve">
+    <value>{0} plays Spotify, which this computer can't.</value>
+    <comment>Settings imported from another computer: what this one can't use. {0} = profile name.</comment>
+  </data>
+  <data name="Msg_Config_DockerNotHere" xml:space="preserve">
+    <value>{0} starts or stops Docker containers, which this computer can't.</value>
+    <comment>Settings imported from another computer: what this one can't use. {0} = profile name.</comment>
+  </data>
+  <data name="Msg_Config_PagesNotHere" xml:space="preserve">
+    <value>{0} opens web pages, which this computer can't.</value>
+    <comment>Settings imported from another computer: what this one can't use. {0} = profile name.</comment>
+  </data>
   <data name="Msg_Config_BrowserNotHere" xml:space="preserve">
     <value>{0} opens pages in {1}, which this computer doesn't have.</value>
     <comment>Settings imported from another computer: what this one can't use. {0} = profile name, {1} = browser.</comment>

@@ -1,4 +1,5 @@
 using ContextSwitcher.Core.Abstractions;
+using ContextSwitcher.Core.Platform;
 
 namespace ContextSwitcher.Infrastructure.MacOS;
 
@@ -40,4 +41,7 @@ public sealed class MacPopoverWindow : IPopoverWindow
 
         return !frame.Inset(left, top, right, bottom).Contains(pointer);
     }
+
+    /// <inheritdoc />
+    public WindowPosition Place(PopoverScreen screen, PopoverSize size) => PopoverPlacement.UnderMenuBar(screen, size);
 }
