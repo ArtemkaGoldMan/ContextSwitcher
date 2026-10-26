@@ -17,7 +17,7 @@ its tray icon and dashboard, but switches nothing there yet ([stage 1](#stage-1-
   Mac users first, through the usual releases.
 - **One repository, one branch.** Core and nearly all of the interface are shared; each platform has
   its own Infrastructure project ([how](#one-repository-two-apps)).
-- **Windows 11 on x64 and Arm** to begin with ([decisions](#decisions-to-make)).
+- **Windows 10 (version 2004 and later) and Windows 11, on x64 and Arm** ([decision](#decisions-made)).
 
 | Stage | Windows gets | Status |
 | --- | --- | --- |
@@ -203,7 +203,7 @@ The shell of the app:
 - The dashboard as a borderless, topmost window by the tray, on whichever edge the taskbar is, that
   hides when it loses focus - Windows' `IPopoverWindow`.
 - One copy only: a named mutex, and a pipe that tells the running copy to show its window.
-- `Segoe UI Variable` first among the fonts.
+- `Segoe UI Variable` first among the fonts; Windows 10 has no such font and falls back to `Segoe UI`.
 - Everything not in this stage - the browser, Focus, music, Docker - hidden through
   `PlatformCapabilities`.
 
@@ -242,7 +242,8 @@ What the app says, because Windows works that way: an app that goes to the tray 
 closes - Slack, Teams, Discord, Telegram, Spotify - keeps running, and the card offers Force quit;
 an app running as administrator can't be closed.
 
-**Done when**, on a real Windows 11 PC (and on Windows 11 on Arm in a virtual machine): switching
+**Done when**, on a real Windows 11 PC, on Windows 10 in a virtual machine, and on Windows 11 on Arm
+in a virtual machine: switching
 closes and opens Visual Studio Code, Slack, Teams and Outlook; the card names an app that stayed and
 Force quit ends it; time is counted and stops for sleep and a locked screen; opening the app twice
 leaves one tray icon; it installs, and updates to the next preview.
@@ -324,6 +325,13 @@ no warning, and finds their way with the README.
 
 ## Decisions made
 
+On 26 October 2026:
+
+- **Which Windows**: Windows 10 from version 2004 (build 19041, what the project already targets)
+  and Windows 11. Microsoft's support for Windows 10 has ended for most people, but many still run
+  it, and nothing in the plan needs 11 alone. What differs: no `Segoe UI Variable`, and the words
+  for pinning the tray icon, which the wizard gives for each.
+
 On 19 October 2026:
 
 - **How a profile names an app on Windows**: the `apps` map from a name to its AppUserModelID and
@@ -340,11 +348,6 @@ On 19 October 2026:
   on the first run. The Microsoft Store can come at [Windows 1.0](#stage-4---windows-10).
 
 ## Decisions to make
-
-Before stage 1:
-
-- **Windows 10**: Windows 11 only, or Windows 10 too. Windows 10's support has ended for most
-  people.
 
 Before stage 2:
 
