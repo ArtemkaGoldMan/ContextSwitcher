@@ -246,8 +246,6 @@ Ideas that come up, and why they're left out:
 ## Decisions to make
 
 - **The order**: which of the four groups come before which Windows stage.
-- **Windows 10** too, or Windows 11 only - before Windows stage 1
-  ([the plan](windows-plan.md#decisions-to-make)).
 - **The name of a profile's browser window on Windows** - before stage 2.
 - **Whether to build the extension**, and before Windows 1.0 or after.
 - **Counting users**: whether to, asked or on by default, and where the counts go
