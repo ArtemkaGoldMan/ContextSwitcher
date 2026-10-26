@@ -4,7 +4,7 @@ The order to build the Windows version in, one release at a time: first apps, th
 the rest. What Windows can and can't do, and why, is in [A Windows version](windows-port.md); where
 it sits among everything else, in the [roadmap](roadmap.md).
 
-**Where it stands** (October 2026, at 0.6.7): stage 0, the groundwork on the Mac, is done - every
+**Where it stands** (October 2026, at 0.6.8): stage 0, the groundwork on the Mac, is done - every
 piece of macOS is behind an interface, and the Mac and Windows each have a project of their own
 ([stage 0](#stage-0---groundwork-done)). Stage 1 has begun: the app starts on Windows as a shell, with
 its tray icon and dashboard, but switches nothing there yet ([stage 1](#stage-1---apps)).
