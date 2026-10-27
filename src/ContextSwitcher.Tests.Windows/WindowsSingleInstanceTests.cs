@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.IO.Pipes;
 using ContextSwitcher.Infrastructure.Windows;
 using ContextSwitcher.Tests.TestDoubles;
 
@@ -10,6 +12,7 @@ namespace ContextSwitcher.Tests.Windows;
 public sealed class WindowsSingleInstanceTests
 {
     private static readonly TimeSpan HeardWithin = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan HandedOverWithin = TimeSpan.FromSeconds(3);
 
     [Fact]
     public async Task ASecondCopyHandsItsArgumentsToTheFirstAndEnds()
@@ -42,6 +45,58 @@ public sealed class WindowsSingleInstanceTests
 
         Assert.False(second.TryClaim([]));
         Assert.Empty(await heard.Task.WaitAsync(HeardWithin));
+    }
+
+    /// <summary>
+    /// A copy opened the moment after Listen returns must find the pipe: it is made before Listen
+    /// returns, not later on a thread pool that may be busy.
+    /// </summary>
+    [Fact]
+    public void TheFirstCopyIsListeningAsSoonAsListenReturns()
+    {
+        string folder = Folder();
+        using WindowsSingleInstance first = new(folder, new TestLogger());
+        Assert.True(first.TryClaim([]));
+
+        first.Listen();
+
+        using Process current = Process.GetCurrentProcess();
+        string name = WindowsSingleInstance.NameFor(folder, Environment.UserName, current.SessionId);
+        using NamedPipeClientStream probe = new(".", name, PipeDirection.Out, PipeOptions.CurrentUserOnly);
+        probe.Connect(timeout: 1);
+    }
+
+    /// <summary>
+    /// A copy that connects and ends without a word can end before the first one is waiting for it,
+    /// when Windows reports the pipe as closing. Each is still a copy opened, and each is heard.
+    /// </summary>
+    [Fact]
+    public async Task EveryCopyThatComesAndGoesWithoutAWordIsHeard()
+    {
+        const int copies = 30;
+        string folder = Folder();
+        using WindowsSingleInstance first = new(folder, new TestLogger());
+        int heard = 0;
+        TaskCompletionSource allHeard = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        first.Reopened += (_, _) =>
+        {
+            if (Interlocked.Increment(ref heard) == copies)
+            {
+                allHeard.TrySetResult();
+            }
+        };
+        Assert.True(first.TryClaim([]));
+        first.Listen();
+
+        using Process current = Process.GetCurrentProcess();
+        string name = WindowsSingleInstance.NameFor(folder, Environment.UserName, current.SessionId);
+        for (int copy = 0; copy < copies; copy++)
+        {
+            using NamedPipeClientStream client = new(".", name, PipeDirection.Out, PipeOptions.CurrentUserOnly);
+            client.Connect(HandedOverWithin);
+        }
+
+        await allHeard.Task.WaitAsync(HeardWithin);
     }
 
     [Fact]

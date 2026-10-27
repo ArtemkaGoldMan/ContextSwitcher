@@ -74,7 +74,13 @@ public sealed class WindowsSingleInstance : ISingleInstance, IDisposable
     }
 
     /// <inheritdoc />
-    public void Listen() => _ = Task.Run(() => this.ListenAsync(this.stopListening.Token));
+    public void Listen()
+    {
+        // The first pipe is made here, not on the thread pool: a copy opened the moment after this
+        // returns finds it, however busy the pool is, instead of waiting for it to start.
+        NamedPipeServerStream first = this.CreatePipe();
+        _ = Task.Run(() => this.ListenAsync(first, this.stopListening.Token));
+    }
 
     /// <inheritdoc />
     public void Dispose()
@@ -101,6 +107,14 @@ public sealed class WindowsSingleInstance : ISingleInstance, IDisposable
             {
                 writer.WriteLine(argument);
             }
+
+            // Ending now would close the pipe under the running copy before it had read a word: wait
+            // until it has, but not for ever - it may be busy.
+            writer.Flush();
+            if (!Task.Run(pipe.WaitForPipeDrain).Wait(HandOverTimeout))
+            {
+                this.logger.Warn("App", "HandOverNotRead", "The app is already running, and didn't read what was said to it in time.");
+            }
         }
         catch (Exception ex) when (ex is TimeoutException or IOException or UnauthorizedAccessException)
         {
@@ -110,35 +124,58 @@ public sealed class WindowsSingleInstance : ISingleInstance, IDisposable
         }
     }
 
-    private async Task ListenAsync(CancellationToken cancellationToken)
+    private NamedPipeServerStream CreatePipe() => new(
+        this.name, PipeDirection.In, maxNumberOfServerInstances: 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+
+    /// <param name="first">The pipe already made for the first copy to find; each one after is made here.</param>
+    private async Task ListenAsync(NamedPipeServerStream first, CancellationToken cancellationToken)
     {
-        while (!cancellationToken.IsCancellationRequested)
+        NamedPipeServerStream? waiting = first;
+        try
         {
-            try
+            while (!cancellationToken.IsCancellationRequested)
             {
-                using NamedPipeServerStream pipe = new(
-                    this.name, PipeDirection.In, maxNumberOfServerInstances: 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
-                await pipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
-
-                using StreamReader reader = new(pipe, Encoding.UTF8);
-                List<string> arguments = [];
-                while (await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false) is { } line)
+                try
                 {
-                    arguments.Add(line);
-                }
+                    using NamedPipeServerStream pipe = waiting ?? this.CreatePipe();
+                    waiting = null;
+                    try
+                    {
+                        await pipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (IOException) when (!cancellationToken.IsCancellationRequested)
+                    {
+                        // A copy with nothing to say connected and ended before this one was waiting,
+                        // and Windows reports the pipe as closing. It was opened, which is the message.
+                        this.Reopened?.Invoke(this, []);
+                        continue;
+                    }
 
-                this.Reopened?.Invoke(this, arguments);
+                    using StreamReader reader = new(pipe, Encoding.UTF8);
+                    List<string> arguments = [];
+                    while (await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false) is { } line)
+                    {
+                        arguments.Add(line);
+                    }
+
+                    this.Reopened?.Invoke(this, arguments);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Not logged: the app is ending, and stopped listening on purpose.
+                    return;
+                }
+                catch (IOException ex)
+                {
+                    // A copy that went before it finished writing: the next one is heard as usual.
+                    this.logger.Warn("App", "ReopenNotHeard", "Another copy of the app was opened, and what it said couldn't be read.", ex);
+                }
             }
-            catch (OperationCanceledException)
-            {
-                // Not logged: the app is ending, and stopped listening on purpose.
-                return;
-            }
-            catch (IOException ex)
-            {
-                // A copy that went before it finished writing: the next one is heard as usual.
-                this.logger.Warn("App", "ReopenNotHeard", "Another copy of the app was opened, and what it said couldn't be read.", ex);
-            }
+        }
+        finally
+        {
+            // Only when the app ended before the first pipe was taken up.
+            waiting?.Dispose();
         }
     }
 

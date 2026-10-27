@@ -10,7 +10,7 @@ namespace ContextSwitcher.Tests.Windows.Applications;
 /// <summary>The Start menu's apps, listed once through PowerShell, and opened by their name.</summary>
 public sealed class StartAppsTests
 {
-    private static readonly StartAppsOptions Options = new(TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(5));
+    private static readonly StartAppsOptions Options = new(TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(5), StartAppsFilter.Default);
 
     private readonly FakeProcessRunner runner = new();
     private readonly FakeClock clock = new();
@@ -19,7 +19,7 @@ public sealed class StartAppsTests
     [Fact]
     public void ANameAndAnIdAreReadAsBase64OfUtf8()
     {
-        IReadOnlyList<StartApp> apps = StartAppsParser.Parse(Listing(("Telegram Десктоп", "TelegramMessengerLLP.TelegramDesktop")));
+        IReadOnlyList<StartApp> apps = Parse(Listing(("Telegram Десктоп", "TelegramMessengerLLP.TelegramDesktop")));
 
         Assert.Equal(new StartApp("Telegram Десктоп", "TelegramMessengerLLP.TelegramDesktop"), Assert.Single(apps));
     }
@@ -30,16 +30,57 @@ public sealed class StartAppsTests
     {
         string entry = $$"""{"n":"{{Encode("Slack")}}","i":"{{Encode("com.squirrel.slack.slack")}}"}""";
 
-        Assert.Equal("Slack", Assert.Single(StartAppsParser.Parse(entry)).Name);
+        Assert.Equal("Slack", Assert.Single(Parse(entry)).Name);
     }
 
     [Fact]
     public void AppsAreSortedByNameAndEachNameIsOnce()
     {
-        IReadOnlyList<StartApp> apps = StartAppsParser.Parse(Listing(("Slack", "a"), ("Code", "b"), ("slack", "c")));
+        IReadOnlyList<StartApp> apps = Parse(Listing(("Slack", "a"), ("Code", "b"), ("slack", "c")));
 
         Assert.Equal(["Code", "Slack"], apps.Select(app => app.Name));
         Assert.Equal("a", apps[1].AppId);
+    }
+
+    /// <summary>What Windows lists next to the apps: the Start menu of a real PC.</summary>
+    [Fact]
+    public void UninstallersHelpFilesConsolesAndWebLinksAreLeftOut()
+    {
+        IReadOnlyList<StartApp> apps = Parse(Listing(
+            ("Uninstall Telegram", @"C:\Users\someone\AppData\Roaming\Telegram Desktop\unins000.exe"),
+            ("Uninstall", @"{7C5A40EF}\Ubisoft\Ubisoft Game Launcher\Uninstall.exe"),
+            ("VLC Documentation", @"{6D809377}\VideoLAN\VLC\Documentation.url"),
+            ("HWiNFO Manual", @"{6D809377}\HWiNFO64\HWiNFO Manual.pdf"),
+            ("Services", @"{1AC14E77}\services.msc"),
+            ("VideoLAN website", "https://www.videolan.org/"),
+            ("Git FAQs", "HTTP://gitforwindows.org/faq"),
+            ("Telegram", "Telegram.TelegramDesktop")));
+
+        Assert.Equal(["Telegram"], apps.Select(app => app.Name));
+    }
+
+    [Fact]
+    public void AppsThatOpenInAnyOtherWayAreKept()
+    {
+        IReadOnlyList<StartApp> apps = Parse(Listing(
+            ("Visual Studio Code", "Microsoft.VisualStudioCode"),
+            ("Microsoft Teams", "MSTeams_8wekyb3d8bbwe!MSTeams"),
+            ("Steam", @"{7C5A40EF}\Steam\Steam.EXE"),
+            ("Apex Legends", "steam://rungameid/1172470"),
+            ("Skype для бізнесу", "Microsoft.Office.lync.exe.15")));
+
+        Assert.Equal(["Apex Legends", "Microsoft Teams", "Skype для бізнесу", "Steam", "Visual Studio Code"], apps.Select(app => app.Name));
+    }
+
+    /// <summary>A name twice is one app; the one an AppUserModelID opens wins, whichever comes first.</summary>
+    [Fact]
+    public void OfTwoAppsWithOneNameTheOneWithAnAppUserModelIdWins()
+    {
+        IReadOnlyList<StartApp> apps = Parse(Listing(
+            ("Outlook", @"{6D809377}\Microsoft Office\Outlook.exe"),
+            ("Outlook", "Microsoft.OutlookForWindows_8wekyb3d8bbwe!App")));
+
+        Assert.Equal("Microsoft.OutlookForWindows_8wekyb3d8bbwe!App", Assert.Single(apps).AppId);
     }
 
     [Fact]
@@ -47,13 +88,13 @@ public sealed class StartAppsTests
     {
         string json = $$"""[{"n":"not base64!","i":"{{Encode("x")}}"},{"n":"{{Encode("Code")}}"},{"n":"{{Encode("Slack")}}","i":"{{Encode("s")}}"}]""";
 
-        Assert.Equal(["Slack"], StartAppsParser.Parse(json).Select(app => app.Name));
+        Assert.Equal(["Slack"], Parse(json).Select(app => app.Name));
     }
 
     [Fact]
     public void NothingPrintedIsNoApps()
     {
-        Assert.Empty(StartAppsParser.Parse("  \r\n"));
+        Assert.Empty(Parse("  \r\n"));
     }
 
     [Fact]
@@ -153,6 +194,8 @@ public sealed class StartAppsTests
 
         Assert.Equal(AppLaunchOutcome.Failed, launch.Outcome);
     }
+
+    private static IReadOnlyList<StartApp> Parse(string output) => StartAppsParser.Parse(output, StartAppsFilter.Default);
 
     private static ProcessResult Success(string output) => new(0, output, string.Empty, TimedOut: false);
 

@@ -9,11 +9,16 @@ namespace ContextSwitcher.Infrastructure.Windows.Applications;
 /// </summary>
 public static class StartAppsParser
 {
-    /// <summary>The apps in <paramref name="output"/>, by name; an entry that doesn't read is skipped.</summary>
+    /// <summary>
+    /// The apps in <paramref name="output"/>, by name; an entry that doesn't read, or that
+    /// <paramref name="filter"/> leaves out, is skipped. Of two apps with one name, the one with an
+    /// AppUserModelID wins over one found by its path.
+    /// </summary>
     /// <exception cref="JsonException">The output isn't JSON.</exception>
-    public static IReadOnlyList<StartApp> Parse(string output)
+    public static IReadOnlyList<StartApp> Parse(string output, StartAppsFilter filter)
     {
         ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(filter);
 
         if (string.IsNullOrWhiteSpace(output))
         {
@@ -39,6 +44,8 @@ public static class StartAppsParser
         }
 
         return apps
+            .Where(filter.Keeps)
+            .OrderBy(app => StartAppsFilter.IsPath(app.AppId))
             .GroupBy(app => app.Name, StringComparer.OrdinalIgnoreCase)
             .Select(group => group.First())
             .OrderBy(app => app.Name, StringComparer.CurrentCultureIgnoreCase)

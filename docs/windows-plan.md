@@ -211,7 +211,8 @@ Apps:
 
 - **The picker**: the Start menu's apps, desktop and Store alike, listed by PowerShell's
   `Get-StartApps` (with a fixed script, its output in Base64 so no code page garbles a name) and kept
-  for five minutes. Their icons (`IShellItemImageFactory`) are still to come, and so is writing what
+  for five minutes. What isn't an app is left out - uninstallers, help files and web links, `.msc`
+  consoles - and of two apps with one name, the one with an AppUserModelID is kept. Their icons (`IShellItemImageFactory`) are still to come, and so is writing what
   was picked into the `apps` map: until then the name in the Start menu is the key, matched without
   regard to case. The wizard suggests the usual Windows ones: Slack, Teams, Outlook,
   Visual Studio Code, Discord, Telegram, Steam, Spotify. What was picked goes into the `apps` map

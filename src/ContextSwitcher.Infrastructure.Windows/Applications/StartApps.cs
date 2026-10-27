@@ -64,7 +64,7 @@ public sealed class StartApps
 
             try
             {
-                this.apps = StartAppsParser.Parse(result.StandardOutput);
+                this.apps = StartAppsParser.Parse(result.StandardOutput, this.options.Filter);
             }
             catch (JsonException ex)
             {
