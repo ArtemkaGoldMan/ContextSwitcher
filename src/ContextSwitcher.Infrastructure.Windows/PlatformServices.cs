@@ -54,9 +54,17 @@ public static class PlatformServices
         services.AddSingleton<IInstalledAppsService, WindowsInstalledApps>();
         services.AddSingleton<IAppLauncher, WindowsAppLauncher>();
 
-        // Closing apps, opening at sign-in, sleep and lock: later in stage 1.
-        services.AddSingleton<IAppQuitter, NotYetAppQuitter>();
-        services.AddSingleton<IAppProcesses, NotYetAppProcesses>();
+        // Telling an app's processes from the others, asking its windows to close, and ending it.
+        services.AddSingleton(AppProcessesOptions.Default);
+        services.AddSingleton<IKnownFolders, WindowsKnownFolders>();
+        services.AddSingleton<ISystemProcesses, SystemProcesses>();
+        services.AddSingleton<ISystemWindows, SystemWindows>();
+        services.AddSingleton<AppIdentities>();
+        services.AddSingleton<WindowsAppProcesses>();
+        services.AddSingleton<IAppProcesses>(provider => provider.GetRequiredService<WindowsAppProcesses>());
+        services.AddSingleton<IAppQuitter, WindowsAppQuitter>();
+
+        // Minimising apps, opening at sign-in, sleep and lock: later in stage 1.
         services.AddSingleton<IApplicationHider, NotYetApplicationHider>();
         services.AddSingleton<IRunningApplications, NotYetRunningApplications>();
         services.AddSingleton<ILoginItem, NotYetLoginItem>();

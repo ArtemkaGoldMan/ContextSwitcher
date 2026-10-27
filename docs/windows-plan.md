@@ -190,7 +190,7 @@ It comes in four pull requests, each leaving the Mac app as it was:
 | | Brings | Status |
 | --- | --- | --- |
 | 1a | The shell: `WinExe`, the tray icon in its two drawings, the popover by the taskbar, one copy, the font, everything else hidden. What the later ones bring is a stand-in, in `Infrastructure.Windows/NotYet/`, and `ContextSwitcher.Tests.Windows` tests the Windows code | done |
-| 1b | Apps: the picker, launching, closing, "still closing", Force quit, minimising, the ask-on-switch list | in progress: the list of apps and opening them done |
+| 1b | Apps: the picker, launching, closing, "still closing", Force quit, minimising, the ask-on-switch list | in progress: the list, opening, closing and Force quit done |
 | 1c | The rest: time with sleep and lock, open at sign-in, the Windows wording, and the wizard saying how to pin the icon | |
 | 1d | CI and releases: the Windows job required, the installer, the release workflow | |
 
@@ -220,11 +220,24 @@ Apps:
 - **Launching** through `explorer shell:AppsFolder\<id>`, which starts a desktop and a Store app
   alike and brings a running one forward. The id is the AppUserModelID, or the path of the executable
   for an app that has none.
-- **Closing**: `WM_CLOSE` to each of the app's top-level windows, then the same checking as on
-  macOS.
+- **Telling an app's processes**: a profile names an app as the Start menu does, and Windows names a
+  process by its executable, so `AppIdentities` goes from one to the other. A Store app's id has a
+  `!`, and what is before it is the package family, which every process of the package carries
+  (`GetPackageFamilyName`). A path is the executable, its first part a known folder's GUID written out
+  (`SHGetKnownFolderPath`). Any other id takes the target of the Start menu's shortcut of that name,
+  read in the same PowerShell call. A process is the app's if its executable is that one, or has the
+  same file name below its folder - an app that updates itself keeps each version in a folder of its
+  own. An app that none of this tells, such as File Explorer, can't be told and isn't touched.
+- **Closing**: `WM_CLOSE` to each of the app's main windows - shown, unowned, not a palette - and of
+  the processes it started. A dialog stays for the app to answer. The window is checked to be one
+  first: a null handle or `HWND_BROADCAST` would otherwise post to this app, or to every window.
 - **"Still closing", a window on screen, Force quit**: `EnumWindows` over the app and its child
-  processes, leaving out cloaked windows; `IVirtualDesktopManager` to tell a window on another
-  desktop from a hidden one; `TerminateProcess` when the person clicks Force quit.
+  processes, leaving out cloaked windows, palettes and anything under 100 pixels; a minimised window
+  counts, as it is on the taskbar. `TerminateProcess` ends the app and what it started when the person
+  clicks Force quit, other than this app's own process and the ones Windows can't run without
+  (`explorer.exe` and the like). A process is taken for a child only if it started after its parent,
+  as Windows reuses the ids of ended processes. Still to come: `IVirtualDesktopManager`, to tell a
+  window on another desktop from a hidden one.
 - **Hiding** minimises the app's windows; entering the profile again restores them.
 - **The ask-on-switch list** with the apps no profile has, from the visible top-level windows.
 
