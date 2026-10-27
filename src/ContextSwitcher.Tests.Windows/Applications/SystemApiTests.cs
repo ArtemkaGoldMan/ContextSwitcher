@@ -104,6 +104,25 @@ public sealed class SystemApiTests
         Assert.False(windows.Restore(handle));
     }
 
+    /// <summary>File Explorer is in the Start menu of every Windows with a desktop; the shell draws its icon.</summary>
+    [Fact]
+    public void TheShellDrawsAnIconAsAPngOfTheSizeAsked()
+    {
+        byte[] png = new ShellAppIcons(new TestLogger()).RenderPng("Microsoft.Windows.Explorer", 64)!;
+
+        Assert.Equal<byte>([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], png[..8]);
+        int width = (png[16] << 24) | (png[17] << 16) | (png[18] << 8) | png[19];
+        int height = (png[20] << 24) | (png[21] << 16) | (png[22] << 8) | png[23];
+        Assert.Equal(width, height);
+        Assert.InRange(width, 16, 256);
+    }
+
+    [Fact]
+    public void AnAppTheShellDoesNotKnowHasNoIcon()
+    {
+        Assert.Null(new ShellAppIcons(new TestLogger()).RenderPng("Not.An.App.Anywhere", 64));
+    }
+
     [Fact]
     public void KnownFoldersAreWrittenOutAsWindowsDoes()
     {

@@ -69,6 +69,11 @@ public sealed class WindowsAppServicesTests
         Assert.IsType<WindowsAppLauncher>(provider.GetRequiredService<IAppLauncher>());
         Assert.IsType<WindowsAppQuitter>(provider.GetRequiredService<IAppQuitter>());
         Assert.Same(provider.GetRequiredService<WindowsAppProcesses>(), provider.GetRequiredService<IAppProcesses>());
+
+        // What the picker lists, and what is read as the app starts, are the one service, so the icons
+        // drawn while warming up are the ones the picker finds.
+        Assert.Same(provider.GetRequiredService<WindowsInstalledApps>(), provider.GetRequiredService<IInstalledAppsService>());
+        Assert.Same(provider.GetRequiredService<WindowsInstalledApps>(), Assert.Single(provider.GetServices<IWarmUp>()));
         Assert.Same(provider.GetRequiredService<AppIdentities>(), provider.GetRequiredService<AppIdentities>());
     }
 
