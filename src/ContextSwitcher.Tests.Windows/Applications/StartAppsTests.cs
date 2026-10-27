@@ -181,17 +181,6 @@ public sealed class StartAppsTests
     }
 
     [Fact]
-    public async Task ThePickerListsNamesWithoutIcons()
-    {
-        this.runner.Enqueue(Success(Listing(("Slack", "a"), ("Code", "b"))));
-
-        IReadOnlyList<InstalledApp> apps = await new WindowsInstalledApps(this.NewStartApps()).GetInstalledAppsAsync(CancellationToken.None);
-
-        Assert.Equal(["Code", "Slack"], apps.Select(app => app.Name));
-        Assert.All(apps, app => Assert.Null(app.IconPath));
-    }
-
-    [Fact]
     public async Task AnAppOpensThroughItsAppsFolderEntry()
     {
         this.runner.Enqueue(Success(Listing(("Visual Studio Code", @"C:\Program Files\Microsoft VS Code\Code.exe"))));

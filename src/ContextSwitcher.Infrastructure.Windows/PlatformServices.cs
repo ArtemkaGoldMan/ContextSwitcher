@@ -51,7 +51,10 @@ public static class PlatformServices
         // The Start menu's apps, and opening one.
         services.AddSingleton(StartAppsOptions.Default);
         services.AddSingleton<StartApps>();
-        services.AddSingleton<IInstalledAppsService, WindowsInstalledApps>();
+        services.AddSingleton(InstalledAppsOptions.Default);
+        services.AddSingleton<IAppIcons, ShellAppIcons>();
+        services.AddSingleton<WindowsInstalledApps>();
+        services.AddSingleton<IInstalledAppsService>(provider => provider.GetRequiredService<WindowsInstalledApps>());
         services.AddSingleton<IAppLauncher, WindowsAppLauncher>();
 
         // Telling an app's processes from the others, asking its windows to close, and ending it.
@@ -69,8 +72,9 @@ public static class PlatformServices
         services.AddSingleton<IApplicationHider, WindowsApplicationHider>();
         services.AddSingleton<IRunningApplications, WindowsRunningApplications>();
 
-        // Both answer without waiting, from the Start menu as it was last listed: list it as the app starts.
-        services.AddSingleton<IWarmUp>(provider => provider.GetRequiredService<StartApps>());
+        // Both answer without waiting, from the Start menu as it was last listed: list it, and draw the icons the picker
+        // shows, as the app starts.
+        services.AddSingleton<IWarmUp>(provider => provider.GetRequiredService<WindowsInstalledApps>());
 
         // Opening at sign-in, sleep and lock: later in stage 1.
         services.AddSingleton<ILoginItem, NotYetLoginItem>();

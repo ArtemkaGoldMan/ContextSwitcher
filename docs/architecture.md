@@ -99,8 +99,9 @@ Before a pull request:
   once Avalonia is set up, since making a `DispatcherTimer` earlier claims the UI dispatcher for the
   wrong thread. The command line starts none.
 - **`IWarmUp`** is something a platform reads once as the app starts, so that a question asked later
-  that can't wait for a slow answer already has it: Windows lists the Start menu, which takes a
-  second, for the synchronous questions of which apps are open and how to hide one. `WarmUpRunner`
+  that can't wait for a slow answer already has it: Windows lists the Start menu and draws the apps' icons,
+  which takes a few seconds, for the synchronous questions of which apps are open and how to hide one,
+  and for a picker that opens at once. `WarmUpRunner`
   (a housekeeping service) runs them in the background, each apart, and logs one that fails. The Mac
   registers none.
 - **`IAppState`** holds the settings, their validation and the state, and raises
