@@ -6,8 +6,9 @@ it sits among everything else, in the [roadmap](roadmap.md).
 
 **Where it stands** (October 2026, at 0.6.8): stage 0, the groundwork on the Mac, is done - every
 piece of macOS is behind an interface, and the Mac and Windows each have a project of their own
-([stage 0](#stage-0---groundwork-done)). Stage 1 has begun: the app starts on Windows as a shell, with
-its tray icon and dashboard, but switches nothing there yet ([stage 1](#stage-1---apps)).
+([stage 0](#stage-0---groundwork-done)). Stage 1 is under way: the app starts on Windows with its tray
+icon and dashboard, and can list, open, hide, close and end apps; it doesn't yet count time with sleep and lock, open at
+sign-in or install itself ([stage 1](#stage-1---apps)).
 
 ## How it goes
 
@@ -22,7 +23,7 @@ its tray icon and dashboard, but switches nothing there yet ([stage 1](#stage-1-
 | Stage | Windows gets | Status |
 | --- | --- | --- |
 | [0. Groundwork](#stage-0---groundwork-done) | nothing yet: the seams, the projects, CI on Windows | done |
-| [1. Apps](#stage-1---apps) | the tray, profiles, launching, closing and hiding apps, time | in progress: the shell done |
+| [1. Apps](#stage-1---apps) | the tray, profiles, launching, closing and hiding apps, time | in progress: the shell and the apps done |
 | [2. Browser](#stage-2---browser) | pages, a window per profile, browser profiles, reading tabs | |
 | [3. The rest](#stage-3---the-rest) | Docker, Spotify, notifications, the command line, a hotkey | |
 | [4. Windows 1.0](#stage-4---windows-10) | signed, in the Store or with an installer, documented, translated | |
@@ -190,7 +191,7 @@ It comes in four pull requests, each leaving the Mac app as it was:
 | | Brings | Status |
 | --- | --- | --- |
 | 1a | The shell: `WinExe`, the tray icon in its two drawings, the popover by the taskbar, one copy, the font, everything else hidden. What the later ones bring is a stand-in, in `Infrastructure.Windows/NotYet/`, and `ContextSwitcher.Tests.Windows` tests the Windows code | done |
-| 1b | Apps: the picker, launching, closing, "still closing", Force quit, minimising, the ask-on-switch list | in progress: all but writing the `apps` map done |
+| 1b | Apps: the picker, launching, closing, "still closing", Force quit, minimising, the ask-on-switch list | done |
 | 1c | The rest: time with sleep and lock, open at sign-in, the Windows wording, and the wizard saying how to pin the icon | |
 | 1d | CI and releases: the Windows job required, the installer, the release workflow | |
 
@@ -215,11 +216,15 @@ Apps:
   consoles - and of two apps with one name, the one with an AppUserModelID is kept. Each has the icon the Start menu shows, drawn by the shell
   (`IShellItemImageFactory`, on `shell:AppsFolder\<id>`, so desktop and Store apps alike) as a 64-pixel
   PNG and kept in `icon-cache` as on the Mac. The first listing takes a few seconds, so the app does
-  it as it starts (`IWarmUp`), and the picker opens at once. Writing what was picked into the `apps`
-  map is still to come: until then the name in the Start menu is the key, matched without regard to
-  case. The wizard suggests the usual Windows ones: Slack, Teams, Outlook,
-  Visual Studio Code, Discord, Telegram, Steam, Spotify. What was picked goes into the `apps` map
-  ([configuration](configuration.md#top-level)).
+  it as it starts (`IWarmUp`), and the picker opens at once. A profile names an app by its name in the
+  Start menu, matched without regard to case. How Windows finds the app - its AppUserModelID and, if it
+  isn't a Store app, the full path of its executable - is written into the `apps` map of the settings
+  as the app starts and whenever they change (`AppsMapRecorder`), for each app a profile names that the
+  map has no entry for; an entry already there is never replaced, so one a person edited stays. The map
+  is read first when an app is found or opened, so an app the Start menu has since renamed is still the
+  one meant, and a person can say which of two of one name it is ([configuration](configuration.md#top-level)).
+  The wizard suggests the usual Windows ones: Slack, Teams, Outlook, Visual Studio Code, Discord,
+  Telegram, Steam, Spotify.
 - **Launching** through `explorer shell:AppsFolder\<id>`, which starts a desktop and a Store app
   alike and brings a running one forward. The id is the AppUserModelID, or the path of the executable
   for an app that has none.

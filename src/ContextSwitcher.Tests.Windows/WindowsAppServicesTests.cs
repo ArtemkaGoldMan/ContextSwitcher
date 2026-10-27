@@ -68,6 +68,9 @@ public sealed class WindowsAppServicesTests
 
         Assert.IsType<WindowsAppLauncher>(provider.GetRequiredService<IAppLauncher>());
         Assert.IsType<WindowsAppQuitter>(provider.GetRequiredService<IAppQuitter>());
+        Assert.IsType<WindowsAppIdentityCatalog>(provider.GetRequiredService<IAppIdentityCatalog>());
+        Assert.IsType<ContextSwitcher.App.Services.ConfigurationAppsMap>(provider.GetRequiredService<IAppsMap>());
+        Assert.Contains(provider.GetServices<ContextSwitcher.App.Startup.IHousekeeping>(), housekeeping => housekeeping is ContextSwitcher.App.Startup.AppsMapRecorder);
         Assert.Same(provider.GetRequiredService<WindowsAppProcesses>(), provider.GetRequiredService<IAppProcesses>());
 
         // What the picker lists, and what is read as the app starts, are the one service, so the icons

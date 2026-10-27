@@ -5,7 +5,7 @@ namespace ContextSwitcher.Infrastructure.Windows.Applications;
 /// executable, for any other. An app the Start menu doesn't say either of has no identity, and so
 /// nothing about it can be told or done.
 /// </summary>
-/// <param name="ExecutablePath">The full path of the app's executable; null for a Store app.</param>
+/// <param name="ExecutablePath">The full path of the app's executable, or its file name alone when that is all the settings say; null for a Store app.</param>
 /// <param name="PackageFamilyName">The family of the app's package, such as <c>MSTeams_8wekyb3d8bbwe</c>; null for any other.</param>
 public sealed record AppIdentity(string? ExecutablePath, string? PackageFamilyName)
 {
@@ -34,6 +34,12 @@ public sealed record AppIdentity(string? ExecutablePath, string? PackageFamilyNa
         if (string.Equals(image, executable, StringComparison.OrdinalIgnoreCase))
         {
             return true;
+        }
+
+        // A file name alone - what the settings may say, as "slack.exe" - is any program of that name.
+        if (!Path.IsPathRooted(executable))
+        {
+            return string.Equals(Path.GetFileName(image), executable, StringComparison.OrdinalIgnoreCase);
         }
 
         string? folder = Path.GetDirectoryName(executable);
