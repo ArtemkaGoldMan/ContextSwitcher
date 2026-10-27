@@ -26,13 +26,15 @@ public static class AppProcessTree
         while (parents.Count > 0)
         {
             int parent = parents.Dequeue();
-            foreach (ProcessInfo child in all)
+            // Each process is added once, so one whose id comes round again can't make this loop.
+            IEnumerable<int> children = all
+                .Where(child => child.ParentPid == parent && child.Pid != self && child.Pid != parent
+                    && StartedAfter(child, byPid.GetValueOrDefault(parent)))
+                .Select(child => child.Pid)
+                .Where(pid => found.Add(pid));
+            foreach (int child in children)
             {
-                if (child.ParentPid == parent && child.Pid != self && child.Pid != parent
-                    && StartedAfter(child, byPid.GetValueOrDefault(parent)) && found.Add(child.Pid))
-                {
-                    parents.Enqueue(child.Pid);
-                }
+                parents.Enqueue(child);
             }
         }
 
