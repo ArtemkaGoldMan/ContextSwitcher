@@ -11,4 +11,13 @@ public interface ISystemWindows
     /// first, or refuse. Returns whether the request was sent.
     /// </summary>
     bool RequestClose(nint handle);
+
+    /// <summary>
+    /// Minimises the window to the taskbar, as its minimise button does, without taking the focus
+    /// from the app in front. Returns whether the request was sent.
+    /// </summary>
+    bool Minimize(nint handle);
+
+    /// <summary>Brings a minimised window back, as clicking it on the taskbar does. Returns whether the request was sent.</summary>
+    bool Restore(nint handle);
 }

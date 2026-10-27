@@ -37,6 +37,10 @@ internal sealed class FakeSystemWindows : ISystemWindows
 {
     public List<nint> AskedToClose { get; } = [];
 
+    public List<nint> Minimized { get; } = [];
+
+    public List<nint> Restored { get; } = [];
+
     public HashSet<nint> Unreachable { get; } = [];
 
     public List<WindowInfo>? Open { get; set; } = [];
@@ -52,6 +56,18 @@ internal sealed class FakeSystemWindows : ISystemWindows
 
         this.AskedToClose.Add(handle);
         return true;
+    }
+
+    public bool Minimize(nint handle)
+    {
+        this.Minimized.Add(handle);
+        return !this.Unreachable.Contains(handle);
+    }
+
+    public bool Restore(nint handle)
+    {
+        this.Restored.Add(handle);
+        return !this.Unreachable.Contains(handle);
     }
 }
 
@@ -76,6 +92,10 @@ internal sealed class StartMenuRig
         this.Identities = new AppIdentities(this.StartApps, this.Folders);
         this.Processes = new WindowsAppProcesses(this.Identities, this.Pc, this.Windows, AppProcessesOptions.Default, this.Logger);
         this.Quitter = new WindowsAppQuitter(this.Identities, this.Processes, this.Windows, this.Pc);
+        this.AppWindows = new AppWindows(this.Processes, this.Windows, this.Pc);
+        this.Hider = new WindowsApplicationHider(this.AppWindows);
+        this.Running = new WindowsRunningApplications(this.StartApps, this.Identities, this.Pc, this.Windows);
+        this.Launcher = new WindowsAppLauncher(this.Runner, this.StartApps, this.AppWindows);
     }
 
     public FakeProcessRunner Runner { get; } = new();
@@ -97,6 +117,14 @@ internal sealed class StartMenuRig
     public WindowsAppProcesses Processes { get; }
 
     public WindowsAppQuitter Quitter { get; }
+
+    public AppWindows AppWindows { get; }
+
+    public WindowsApplicationHider Hider { get; }
+
+    public WindowsRunningApplications Running { get; }
+
+    public WindowsAppLauncher Launcher { get; }
 
     /// <summary>Lists the Start menu, as opening or quitting an app does before anything else.</summary>
     public Task ListAsync() => this.StartApps.GetAsync(CancellationToken.None);

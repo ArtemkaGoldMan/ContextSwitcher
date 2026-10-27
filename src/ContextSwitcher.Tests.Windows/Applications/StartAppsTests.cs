@@ -238,5 +238,12 @@ public sealed class StartAppsTests
 
     private StartApps NewStartApps() => new(this.runner, this.clock, this.logger, Options);
 
-    private WindowsAppLauncher Launcher() => new(this.runner, this.NewStartApps());
+    private WindowsAppLauncher Launcher()
+    {
+        StartApps startApps = this.NewStartApps();
+        FakeSystemProcesses pc = new();
+        FakeSystemWindows windows = new();
+        WindowsAppProcesses processes = new(new AppIdentities(startApps, new FakeKnownFolders()), pc, windows, AppProcessesOptions.Default, this.logger);
+        return new(this.runner, startApps, new AppWindows(processes, windows, pc));
+    }
 }

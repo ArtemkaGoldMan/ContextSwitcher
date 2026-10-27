@@ -9,7 +9,7 @@ namespace ContextSwitcher.Infrastructure.Windows.Applications;
 /// The apps in the Start menu, desktop and Store alike, which is where a person looks for an app.
 /// Listed by PowerShell's <c>Get-StartApps</c> and kept for a few minutes.
 /// </summary>
-public sealed class StartApps
+public sealed class StartApps : IWarmUp
 {
     /// <summary>
     /// What PowerShell runs, fixed: nothing from the settings goes into it, and it holds no double
@@ -54,6 +54,9 @@ public sealed class StartApps
     /// by its name without waiting for PowerShell, once something has listed them.
     /// </summary>
     public IReadOnlyList<StartApp> Known => this.apps;
+
+    /// <inheritdoc />
+    public Task WarmUpAsync(CancellationToken cancellationToken) => this.GetAsync(cancellationToken);
 
     /// <summary>The apps in the Start menu by name; empty when Windows couldn't list them, and then tried again next time.</summary>
     public async Task<IReadOnlyList<StartApp>> GetAsync(CancellationToken cancellationToken)
