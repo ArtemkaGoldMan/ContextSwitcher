@@ -64,7 +64,8 @@ public sealed class AppsMapRecorder(IAppState appState, ConfigurationStore store
         Dictionary<string, AppIdentity> found = [];
         foreach (string name in AppsMap.Unrecorded(appState.Configuration))
         {
-            if (await catalog.IdentifyAsync(name, CancellationToken.None).ConfigureAwait(true) is { } identity)
+            AppIdentity? identity = await catalog.IdentifyAsync(name, CancellationToken.None).ConfigureAwait(true);
+            if (identity is not null)
             {
                 found[name] = identity;
             }

@@ -14,21 +14,13 @@ public static class AppsMap
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        List<string> names = [];
-        foreach (ContextDefinition context in configuration.Contexts)
-        {
-            foreach (string name in context.LaunchApps.Concat(context.CloseApps).Concat(context.HideApps))
-            {
-                if (!string.IsNullOrWhiteSpace(name)
-                    && !names.Contains(name.Trim(), StringComparer.OrdinalIgnoreCase)
-                    && !configuration.IgnoredApps.Contains(name.Trim(), StringComparer.OrdinalIgnoreCase))
-                {
-                    names.Add(name.Trim());
-                }
-            }
-        }
-
-        return names;
+        return configuration.Contexts
+            .SelectMany(context => context.LaunchApps.Concat(context.CloseApps).Concat(context.HideApps))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(name => name.Trim())
+            .Where(name => !configuration.IgnoredApps.Contains(name, StringComparer.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     /// <summary>The entry for <paramref name="appName"/>, whatever the case; null when there is none.</summary>
@@ -55,17 +47,22 @@ public static class AppsMap
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(found);
 
-        Dictionary<string, AppIdentity> apps = new(configuration.Apps ?? new Dictionary<string, AppIdentity>(), StringComparer.Ordinal);
-        bool added = false;
-        foreach (string name in Unrecorded(configuration))
+        List<(string Name, AppIdentity Identity)> additions = Unrecorded(configuration)
+            .Select(name => (Name: name, Match: found.FirstOrDefault(entry => string.Equals(entry.Key, name, StringComparison.OrdinalIgnoreCase))))
+            .Where(pair => pair.Match.Key is not null)
+            .Select(pair => (pair.Name, pair.Match.Value))
+            .ToList();
+        if (additions.Count == 0)
         {
-            if (found.FirstOrDefault(entry => string.Equals(entry.Key, name, StringComparison.OrdinalIgnoreCase)) is { Key: not null } match)
-            {
-                apps[name] = match.Value;
-                added = true;
-            }
+            return null;
         }
 
-        return added ? configuration with { Apps = apps } : null;
+        Dictionary<string, AppIdentity> apps = new(configuration.Apps ?? new Dictionary<string, AppIdentity>(), StringComparer.Ordinal);
+        foreach ((string name, AppIdentity identity) in additions)
+        {
+            apps[name] = identity;
+        }
+
+        return configuration with { Apps = apps };
     }
 }
