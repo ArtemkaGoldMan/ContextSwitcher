@@ -17,9 +17,10 @@ public sealed class WindowsPlatformTests
     }
 
     [Fact]
-    public void FileExplorerIsAllItRuns()
+    public void FileExplorerAndPowerShellAreAllItRuns()
     {
         Assert.True(WindowsPlatform.AllowedCommands.IsAllowed("explorer"));
+        Assert.True(WindowsPlatform.AllowedCommands.IsAllowed("powershell"));
         Assert.False(WindowsPlatform.AllowedCommands.IsAllowed("osascript"));
         Assert.False(WindowsPlatform.AllowedCommands.IsAllowed("cmd"));
     }

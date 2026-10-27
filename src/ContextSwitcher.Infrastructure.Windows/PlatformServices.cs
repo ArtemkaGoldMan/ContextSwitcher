@@ -3,6 +3,7 @@ using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Infrastructure.Browser;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Infrastructure.Windows;
+using ContextSwitcher.Infrastructure.Windows.Applications;
 using ContextSwitcher.Infrastructure.Windows.NotYet;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -47,13 +48,17 @@ public static class PlatformServices
         services.AddSingleton<IShortcutRunner>(provider => provider.GetRequiredService<NoShortcuts>());
         services.AddSingleton<IFocusShortcutInstaller>(provider => provider.GetRequiredService<NoShortcuts>());
 
-        // Apps, opening at sign-in, sleep and lock: later in stage 1.
-        services.AddSingleton<IAppLauncher, NotYetAppLauncher>();
+        // The Start menu's apps, and opening one.
+        services.AddSingleton(StartAppsOptions.Default);
+        services.AddSingleton<StartApps>();
+        services.AddSingleton<IInstalledAppsService, WindowsInstalledApps>();
+        services.AddSingleton<IAppLauncher, WindowsAppLauncher>();
+
+        // Closing apps, opening at sign-in, sleep and lock: later in stage 1.
         services.AddSingleton<IAppQuitter, NotYetAppQuitter>();
         services.AddSingleton<IAppProcesses, NotYetAppProcesses>();
         services.AddSingleton<IApplicationHider, NotYetApplicationHider>();
         services.AddSingleton<IRunningApplications, NotYetRunningApplications>();
-        services.AddSingleton<IInstalledAppsService, NotYetInstalledApps>();
         services.AddSingleton<ILoginItem, NotYetLoginItem>();
         services.AddSingleton<IAwayEvents, NotYetAwayEvents>();
 

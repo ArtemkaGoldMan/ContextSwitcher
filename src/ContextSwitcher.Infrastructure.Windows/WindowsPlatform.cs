@@ -30,8 +30,12 @@ public static class WindowsPlatform
     /// <summary>The commands the app runs on Windows.</summary>
     public static CommandAllowlist AllowedCommands { get; } = new(
     [
-        // Opens a link in its app and shows a file in File Explorer (WindowsShell).
-        "explorer"
+        // Opens a link in its app and shows a file in File Explorer (WindowsShell), and opens an app
+        // from the Start menu (WindowsAppLauncher).
+        "explorer",
+
+        // Lists the Start menu's apps (StartApps), with a script of the app's own.
+        "powershell"
     ]);
 
     /// <summary>
