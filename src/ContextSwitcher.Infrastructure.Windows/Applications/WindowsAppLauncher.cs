@@ -14,16 +14,19 @@ public sealed class WindowsAppLauncher : IAppLauncher
     private readonly StartApps startApps;
 
     private readonly AppWindows appWindows;
+    private readonly IAppsMap appsMap;
 
-    public WindowsAppLauncher(IProcessRunner processRunner, StartApps startApps, AppWindows appWindows)
+    public WindowsAppLauncher(IProcessRunner processRunner, StartApps startApps, AppWindows appWindows, IAppsMap appsMap)
     {
         ArgumentNullException.ThrowIfNull(processRunner);
         ArgumentNullException.ThrowIfNull(startApps);
         ArgumentNullException.ThrowIfNull(appWindows);
+        ArgumentNullException.ThrowIfNull(appsMap);
 
         this.processRunner = processRunner;
         this.startApps = startApps;
         this.appWindows = appWindows;
+        this.appsMap = appsMap;
     }
 
     /// <inheritdoc />
@@ -32,7 +35,7 @@ public sealed class WindowsAppLauncher : IAppLauncher
         ArgumentNullException.ThrowIfNull(app);
 
         IReadOnlyList<StartApp> apps = await this.startApps.GetAsync(cancellationToken).ConfigureAwait(false);
-        StartApp? found = apps.FirstOrDefault(candidate => string.Equals(candidate.Name, app.Trim(), StringComparison.OrdinalIgnoreCase));
+        StartApp? found = this.Find(app, apps);
         if (found is null)
         {
             return new AppLaunch(AppLaunchOutcome.NotInstalled, $"No app in the Start menu is called {app}.");
@@ -55,5 +58,22 @@ public sealed class WindowsAppLauncher : IAppLauncher
         return result.TimedOut
             ? new AppLaunch(AppLaunchOutcome.Failed, $"{app} didn't open in time.")
             : new AppLaunch(AppLaunchOutcome.Launched, string.Empty);
+    }
+
+    /// <summary>
+    /// The Start menu's app for <paramref name="app"/>: the one the <c>apps</c> map says by its AppUserModelID, if
+    /// the Start menu still lists it - so an app the Start menu has since renamed is still found, and a person
+    /// can say which of two of one name is meant - else the one of that name. An id the Start menu doesn't
+    /// list is no app to open, and falls back to the name.
+    /// </summary>
+    private StartApp? Find(string app, IReadOnlyList<StartApp> apps)
+    {
+        if (this.appsMap.Of(app.Trim())?.WindowsAppId?.Trim() is { Length: > 0 } id
+            && apps.FirstOrDefault(candidate => string.Equals(candidate.AppId, id, StringComparison.OrdinalIgnoreCase)) is { } mapped)
+        {
+            return mapped;
+        }
+
+        return apps.FirstOrDefault(candidate => string.Equals(candidate.Name, app.Trim(), StringComparison.OrdinalIgnoreCase));
     }
 }

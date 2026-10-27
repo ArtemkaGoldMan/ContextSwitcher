@@ -63,6 +63,7 @@ public static class PlatformServices
         services.AddSingleton<ISystemProcesses, SystemProcesses>();
         services.AddSingleton<ISystemWindows, SystemWindows>();
         services.AddSingleton<AppIdentities>();
+        services.AddSingleton<IAppIdentityCatalog, WindowsAppIdentityCatalog>();
         services.AddSingleton<WindowsAppProcesses>();
         services.AddSingleton<IAppProcesses>(provider => provider.GetRequiredService<WindowsAppProcesses>());
         services.AddSingleton<IAppQuitter, WindowsAppQuitter>();
