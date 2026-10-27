@@ -12,13 +12,20 @@ namespace ContextSwitcher.Infrastructure.Windows.Applications;
 public sealed class StartApps
 {
     /// <summary>
-    /// What PowerShell runs, fixed: nothing from the settings goes into it. Each name and id is
-    /// printed as Base64 of UTF-8 ([Convert]::ToBase64String), which survives any console code page.
+    /// What PowerShell runs, fixed: nothing from the settings goes into it, and it holds no double
+    /// quote, which a command line would take apart. Each name, id and target is printed as Base64 of
+    /// UTF-8 ([Convert]::ToBase64String), which survives any console code page. The target is where
+    /// the Start menu's shortcut of that name points, read with the shell's own WScript.Shell.
     /// </summary>
     public const string Script =
-        "Get-StartApps | ForEach-Object { [pscustomobject]@{ " +
-        "n = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes([string]$_.Name)); " +
-        "i = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes([string]$_.AppID)) } } | ConvertTo-Json -Compress";
+        "$shell = New-Object -ComObject WScript.Shell; $targets = @{}; " +
+        "foreach ($root in [Environment]::GetFolderPath('CommonPrograms'), [Environment]::GetFolderPath('Programs')) { " +
+        "Get-ChildItem -LiteralPath $root -Recurse -Filter *.lnk -ErrorAction SilentlyContinue | ForEach-Object { " +
+        "$target = $shell.CreateShortcut($_.FullName).TargetPath; " +
+        "if ($target -and -not $targets.ContainsKey($_.BaseName)) { $targets[$_.BaseName] = $target } } }; " +
+        "$encode = { param($text) [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes([string]$text)) }; " +
+        "Get-StartApps | ForEach-Object { [pscustomobject]@{ n = (& $encode $_.Name); i = (& $encode $_.AppID); " +
+        "t = (& $encode $targets[$_.Name]) } } | ConvertTo-Json -Compress";
 
     private readonly IProcessRunner processRunner;
     private readonly IClock clock;
@@ -41,6 +48,12 @@ public sealed class StartApps
         this.logger = logger;
         this.options = options;
     }
+
+    /// <summary>
+    /// The apps the last listing found, however long ago; empty before the first. What looks an app up
+    /// by its name without waiting for PowerShell, once something has listed them.
+    /// </summary>
+    public IReadOnlyList<StartApp> Known => this.apps;
 
     /// <summary>The apps in the Start menu by name; empty when Windows couldn't list them, and then tried again next time.</summary>
     public async Task<IReadOnlyList<StartApp>> GetAsync(CancellationToken cancellationToken)

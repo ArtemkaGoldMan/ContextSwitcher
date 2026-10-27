@@ -83,6 +83,38 @@ public sealed class StartAppsTests
         Assert.Equal("Microsoft.OutlookForWindows_8wekyb3d8bbwe!App", Assert.Single(apps).AppId);
     }
 
+    /// <summary>A command line takes a double quote apart, and the script goes on one.</summary>
+    [Fact]
+    public void TheScriptHoldsNoDoubleQuote()
+    {
+        Assert.DoesNotContain('"', StartApps.Script);
+    }
+
+    [Fact]
+    public void AShortcutsTargetIsReadWithTheApp()
+    {
+        string json = $$"""[{"n":"{{Encode("Code")}}","i":"{{Encode("Microsoft.VisualStudioCode")}}","t":"{{Encode(@"C:\Code\Code.exe")}}"},{"n":"{{Encode("Edge")}}","i":"{{Encode("MSEdge")}}","t":"{{Encode(string.Empty)}}"},{"n":"{{Encode("Slack")}}","i":"{{Encode("a!b")}}"}]""";
+
+        IReadOnlyList<StartApp> apps = Parse(json);
+
+        Assert.Equal(@"C:\Code\Code.exe", apps.Single(app => app.Name == "Code").Target);
+        Assert.Null(apps.Single(app => app.Name == "Edge").Target);
+        Assert.Null(apps.Single(app => app.Name == "Slack").Target);
+    }
+
+    [Fact]
+    public async Task WhatWasListedIsKnownAfterItsKeepingHasRunOut()
+    {
+        this.runner.Enqueue(Success(Listing(("Slack", "a"))));
+        StartApps startApps = this.NewStartApps();
+        Assert.Empty(startApps.Known);
+
+        await startApps.GetAsync(CancellationToken.None);
+        this.clock.UtcNow += TimeSpan.FromHours(3);
+
+        Assert.Equal("Slack", Assert.Single(startApps.Known).Name);
+    }
+
     [Fact]
     public void AnEntryThatDoesNotReadIsSkipped()
     {

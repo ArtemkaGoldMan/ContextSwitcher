@@ -8,6 +8,7 @@ using ContextSwitcher.Core.Updates;
 using ContextSwitcher.Infrastructure.Automation;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Infrastructure.Windows;
+using ContextSwitcher.Infrastructure.Windows.Applications;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ContextSwitcher.Tests.Windows;
@@ -57,6 +58,18 @@ public sealed class WindowsAppServicesTests
         Assert.IsType<WindowsSingleInstance>(provider.GetRequiredService<ISingleInstance>());
         Assert.IsType<WindowsTrayIconLook>(provider.GetRequiredService<ITrayIconLook>());
         Assert.IsType<WindowsShell>(provider.GetRequiredService<IShell>());
+    }
+
+    /// <summary>The quitter and the processes look at the same listing, and the app is given the same one the quitter uses.</summary>
+    [Fact]
+    public void AppsAreFoundOpenedAndClosedByWindowsOwnParts()
+    {
+        using ServiceProvider provider = Build(validate: true);
+
+        Assert.IsType<WindowsAppLauncher>(provider.GetRequiredService<IAppLauncher>());
+        Assert.IsType<WindowsAppQuitter>(provider.GetRequiredService<IAppQuitter>());
+        Assert.Same(provider.GetRequiredService<WindowsAppProcesses>(), provider.GetRequiredService<IAppProcesses>());
+        Assert.Same(provider.GetRequiredService<AppIdentities>(), provider.GetRequiredService<AppIdentities>());
     }
 
     private static ServiceProvider Build(bool validate)

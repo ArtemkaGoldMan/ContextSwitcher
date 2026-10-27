@@ -37,9 +37,10 @@ public static class StartAppsParser
         {
             string? name = Decode(entry, "n");
             string? id = Decode(entry, "i");
+            string? target = Decode(entry, "t");
             if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(id))
             {
-                apps.Add(new StartApp(name.Trim(), id));
+                apps.Add(new StartApp(name.Trim(), id) { Target = string.IsNullOrWhiteSpace(target) ? null : target });
             }
         }
 
