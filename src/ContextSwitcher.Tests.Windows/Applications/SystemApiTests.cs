@@ -90,6 +90,20 @@ public sealed class SystemApiTests
         Assert.False(new SystemWindows(new TestLogger()).RequestClose(handle));
     }
 
+    /// <summary>Minimising or restoring "window 0" or HWND_BROADCAST would act on this app, or on every window.</summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(0xFFFF)]
+    [InlineData(-1)]
+    [InlineData(0x7FFFFFF0)]
+    public void MinimisingOrRestoringWhatIsNotAWindowIsRefused(int handle)
+    {
+        SystemWindows windows = new(new TestLogger());
+
+        Assert.False(windows.Minimize(handle));
+        Assert.False(windows.Restore(handle));
+    }
+
     [Fact]
     public void KnownFoldersAreWrittenOutAsWindowsDoes()
     {

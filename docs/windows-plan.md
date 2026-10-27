@@ -190,7 +190,7 @@ It comes in four pull requests, each leaving the Mac app as it was:
 | | Brings | Status |
 | --- | --- | --- |
 | 1a | The shell: `WinExe`, the tray icon in its two drawings, the popover by the taskbar, one copy, the font, everything else hidden. What the later ones bring is a stand-in, in `Infrastructure.Windows/NotYet/`, and `ContextSwitcher.Tests.Windows` tests the Windows code | done |
-| 1b | Apps: the picker, launching, closing, "still closing", Force quit, minimising, the ask-on-switch list | in progress: the list, opening, closing and Force quit done |
+| 1b | Apps: the picker, launching, closing, "still closing", Force quit, minimising, the ask-on-switch list | in progress: the list, opening, closing, Force quit, minimising and the open apps done |
 | 1c | The rest: time with sleep and lock, open at sign-in, the Windows wording, and the wizard saying how to pin the icon | |
 | 1d | CI and releases: the Windows job required, the installer, the release workflow | |
 
@@ -238,8 +238,15 @@ Apps:
   (`explorer.exe` and the like). A process is taken for a child only if it started after its parent,
   as Windows reuses the ids of ended processes. Still to come: `IVirtualDesktopManager`, to tell a
   window on another desktop from a hidden one.
-- **Hiding** minimises the app's windows; entering the profile again restores them.
-- **The ask-on-switch list** with the apps no profile has, from the visible top-level windows.
+- **Hiding** minimises the app's main windows that are on screen (shown, unowned, not a palette, not
+  cloaked), with `SW_SHOWMINNOACTIVE` so that the app in front stays in front. Entering the profile
+  again restores them, and does not start the app a second time: Windows would give a Notepad, a
+  Chrome or a VS Code another window of its own, so an app with a window open only has its minimised
+  windows brought back. One only in the tray, or with a cloaked window, is opened as usual.
+- **The ask-on-switch list** with the apps no profile has: the Start menu's apps running with a main
+  window that isn't cloaked, other than this app. An app in the tray has no window on the taskbar and
+  isn't listed, nor is one on another virtual desktop until `IVirtualDesktopManager` comes. The Start
+  menu is listed as the app starts (`IWarmUp`), as these questions can't wait for PowerShell.
 
 The rest of this stage:
 

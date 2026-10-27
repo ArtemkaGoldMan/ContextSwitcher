@@ -64,9 +64,15 @@ public static class PlatformServices
         services.AddSingleton<IAppProcesses>(provider => provider.GetRequiredService<WindowsAppProcesses>());
         services.AddSingleton<IAppQuitter, WindowsAppQuitter>();
 
-        // Minimising apps, opening at sign-in, sleep and lock: later in stage 1.
-        services.AddSingleton<IApplicationHider, NotYetApplicationHider>();
-        services.AddSingleton<IRunningApplications, NotYetRunningApplications>();
+        // Minimising apps, and the apps open now, which a switch asks about.
+        services.AddSingleton<AppWindows>();
+        services.AddSingleton<IApplicationHider, WindowsApplicationHider>();
+        services.AddSingleton<IRunningApplications, WindowsRunningApplications>();
+
+        // Both answer without waiting, from the Start menu as it was last listed: list it as the app starts.
+        services.AddSingleton<IWarmUp>(provider => provider.GetRequiredService<StartApps>());
+
+        // Opening at sign-in, sleep and lock: later in stage 1.
         services.AddSingleton<ILoginItem, NotYetLoginItem>();
         services.AddSingleton<IAwayEvents, NotYetAwayEvents>();
 

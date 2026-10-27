@@ -98,6 +98,11 @@ Before a pull request:
 - **`IHousekeeping`** services are what keeps running - timers and watchers. `AppHost` starts them
   once Avalonia is set up, since making a `DispatcherTimer` earlier claims the UI dispatcher for the
   wrong thread. The command line starts none.
+- **`IWarmUp`** is something a platform reads once as the app starts, so that a question asked later
+  that can't wait for a slow answer already has it: Windows lists the Start menu, which takes a
+  second, for the synchronous questions of which apps are open and how to hide one. `WarmUpRunner`
+  (a housekeeping service) runs them in the background, each apart, and logs one that fails. The Mac
+  registers none.
 - **`IAppState`** holds the settings, their validation and the state, and raises
   `ConfigurationChanged` and `StateChanged`. Long-lived view models listen, so a change made in one
   window, or a switch from anywhere, shows in every window without a restart.

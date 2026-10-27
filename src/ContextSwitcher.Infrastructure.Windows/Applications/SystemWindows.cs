@@ -18,6 +18,12 @@ public sealed class SystemWindows : ISystemWindows
     private const uint GetOwner = 4;
     private const uint Close = 0x0010;
 
+    /// <summary><c>SW_SHOWMINNOACTIVE</c>: minimised, and the app in front stays in front.</summary>
+    private const int MinimizeNoActivate = 7;
+
+    /// <summary><c>SW_RESTORE</c>: a minimised window back to the size it had.</summary>
+    private const int RestoreWindow = 9;
+
     private readonly ILogger logger;
 
     public SystemWindows(ILogger logger)
@@ -52,6 +58,12 @@ public sealed class SystemWindows : ISystemWindows
         // Not a window, no message: a null handle would post to this app's own thread, and
         // HWND_BROADCAST (0xFFFF) would post the close to every window on the desktop.
         IsWindow(handle) && PostMessageW(handle, Close, 0, 0);
+
+    /// <inheritdoc />
+    public bool Minimize(nint handle) => IsWindow(handle) && ShowWindowAsync(handle, MinimizeNoActivate);
+
+    /// <inheritdoc />
+    public bool Restore(nint handle) => IsWindow(handle) && ShowWindowAsync(handle, RestoreWindow);
 
     private static WindowInfo Describe(nint handle)
     {
@@ -109,6 +121,11 @@ public sealed class SystemWindows : ISystemWindows
 
     [DllImport("user32.dll")]
     private static extern int GetWindowLongW(nint window, int index);
+
+    /// <summary>Asks the window's own thread to show it, so that a window that doesn't answer can't stop this app.</summary>
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ShowWindowAsync(nint window, int command);
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
