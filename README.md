@@ -1,6 +1,6 @@
 # Usage statistics
 
-Written every day by [the stats workflow](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/.github/workflows/stats.yml); [what the numbers mean](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/docs/usage-statistics.md). Last run 2026-10-27 (UTC).
+Written every day by [the stats workflow](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/.github/workflows/stats.yml); [what the numbers mean](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/docs/usage-statistics.md). Last run 2026-10-28 (UTC).
 
 ## Downloads
 
@@ -8,7 +8,7 @@ Every download counts, not every person: one person downloading twice is two. Th
 
 | Release | Published | .dmg | .zip |
 | --- | --- | ---: | ---: |
-| v0.6.8 | 2026-10-21 | 1 | 3 |
+| v0.6.8 | 2026-10-21 | 1 | 4 |
 | v0.6.7 | 2026-10-16 | 0 | 2 |
 | v0.6.6 | 2026-10-15 | 0 | 1 |
 | v0.6.5 | 2026-10-15 | 0 | 2 |
@@ -23,15 +23,15 @@ Every download counts, not every person: one person downloading twice is two. Th
 | v0.3.0 | 2026-10-11 | 0 | 2 |
 | v0.2.0 | 2026-10-10 | 0 | 1 |
 | v0.1.0 | 2026-10-10 | 0 | 1 |
-| **All** | | **2** | **28** |
+| **All** | | **2** | **29** |
 
 Downloads a day (`.dmg` and `.zip`), from one run's totals to the next:
 
 ```mermaid
 xychart-beta
     title "Downloads a day"
-    x-axis ["10-16*", "10-17", "10-18", "10-19", "10-20", "10-21*", "10-22", "10-23", "10-24", "10-25", "10-26", "10-27"]
-    bar [3, 1, 0, 0, 0, 2, 3, 0, 0, 1, 0, 0]
+    x-axis ["10-16*", "10-17", "10-18", "10-19", "10-20", "10-21*", "10-22", "10-23", "10-24", "10-25", "10-26", "10-27", "10-28"]
+    bar [3, 1, 0, 0, 0, 2, 3, 0, 0, 1, 0, 0, 1]
 ```
 
 \* A release came out that day: 10-16 v0.6.7; 10-21 v0.6.8.
@@ -43,8 +43,8 @@ Stars, forks and people watching the repository - the slowest-moving and the mos
 ```mermaid
 xychart-beta
     title "Stars"
-    x-axis ["10-21", "10-22", "10-23", "10-24", "10-25", "10-26", "10-27"]
-    line [0, 3, 4, 4, 4, 4, 4]
+    x-axis ["10-21", "10-22", "10-23", "10-24", "10-25", "10-26", "10-27", "10-28"]
+    line [0, 3, 4, 4, 4, 4, 4, 4]
 ```
 
 ## Visitors
@@ -54,16 +54,17 @@ Views of the repository's pages on GitHub and the people behind them, a day. Bar
 ```mermaid
 xychart-beta
     title "Visitors a day"
-    x-axis ["10-01", "10-02", "10-03", "10-04", "10-05", "10-06", "10-07", "10-08", "10-09", "10-10*", "10-11*", "10-12*", "10-13*", "10-14*", "10-15*", "10-16*", "10-17", "10-18", "10-19", "10-20", "10-21*", "10-22", "10-23", "10-24", "10-25", "10-26", "10-27"]
-    bar [0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 21, 2, 21, 9, 4, 1, 6, 0, 3, 6, 3, 1, 7, 5, 10, 14, 0]
-    line [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 1, 4, 1, 2, 1, 1, 0, 2, 1, 3, 1, 1, 2, 8, 3, 0]
+    x-axis ["10-01", "10-02", "10-03", "10-04", "10-05", "10-06", "10-07", "10-08", "10-09", "10-10*", "10-11*", "10-12*", "10-13*", "10-14*", "10-15*", "10-16*", "10-17", "10-18", "10-19", "10-20", "10-21*", "10-22", "10-23", "10-24", "10-25", "10-26", "10-27", "10-28"]
+    bar [0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 21, 2, 21, 9, 4, 1, 6, 0, 3, 6, 3, 1, 7, 5, 10, 14, 14, 0]
+    line [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 1, 4, 1, 2, 1, 1, 0, 2, 1, 3, 1, 1, 2, 8, 3, 2, 0]
 ```
 
 \* A release came out that day: 10-10 v0.1.0, v0.2.0; 10-11 v0.3.0; 10-12 v0.4.0; 10-13 v0.4.1, v0.5.0; 10-14 v0.6.0, v0.6.1, v0.6.2, v0.6.3; 10-15 v0.6.4, v0.6.5, v0.6.6; 10-16 v0.6.7; 10-21 v0.6.8.
 
 | Day | Views | Visitors | Clones |
 | --- | ---: | ---: | ---: |
-| 2026-10-27 | 0 | 0 | 0 |
+| 2026-10-28 | 0 | 0 | 0 |
+| 2026-10-27 | 14 | 2 | 144 |
 | 2026-10-26 | 14 | 3 | 86 |
 | 2026-10-25 | 10 | 8 | 2 |
 | 2026-10-24 | 5 | 2 | 5 |
@@ -95,13 +96,13 @@ Clones are almost all automated - CI and bots - and say little about people.
 
 ### Where they came from
 
-GitHub's top sites for the 14 days up to 2026-10-27.
+GitHub's top sites for the 14 days up to 2026-10-28.
 
 | Site | Views | Visitors |
 | --- | ---: | ---: |
 | m.facebook.com | 6 | 5 |
 | Google | 5 | 2 |
-| github.com | 3 | 2 |
+| github.com | 4 | 3 |
 | linkedin.com | 3 | 2 |
 | l.threads.com | 2 | 2 |
 | artemkagoldman.github.io | 1 | 1 |
@@ -110,17 +111,17 @@ GitHub's top sites for the 14 days up to 2026-10-27.
 
 ### What they looked at
 
-GitHub's top pages for the 14 days up to 2026-10-27.
+GitHub's top pages for the 14 days up to 2026-10-28.
 
 | Page | Views | Visitors |
 | --- | ---: | ---: |
-| / | 25 | 16 |
+| / | 26 | 17 |
 | /pulls | 7 | 3 |
-| /commits/main | 5 | 1 |
-| /releases/tag/v0.4.0 | 4 | 3 |
 | /actions | 3 | 2 |
-| /releases | 3 | 1 |
 | /security/code-scanning | 3 | 1 |
 | /releases/tag/v0.6.8 | 2 | 2 |
-| /branches | 2 | 1 |
+| /tree/main/src | 2 | 2 |
 | /pull/86 | 2 | 1 |
+| /pull/88 | 2 | 1 |
+| /actions/runs/38571797994 | 1 | 1 |
+| /actions/runs/38628217541/job/116072773574 | 1 | 1 |
