@@ -23,6 +23,7 @@ public sealed class WindowsLoginItem : ILoginItem
     private readonly string? executablePath;
     private readonly IProcessRunner processRunner;
 
+    /// <summary>Opening at sign-in for the app at <paramref name="executablePath"/>, as Windows keeps it.</summary>
     /// <param name="entries">What opens at sign-in, as Windows keeps it.</param>
     /// <param name="options">Where, and which builds aren't offered it.</param>
     /// <param name="executablePath">The path of the running executable; null when it can't be told.</param>
