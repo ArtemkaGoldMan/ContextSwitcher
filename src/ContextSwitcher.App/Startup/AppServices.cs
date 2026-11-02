@@ -187,6 +187,8 @@ public static class AppServices
         services.AddSingleton<IHousekeeping, HistoryPruner>();
         services.AddSingleton<IHousekeeping, AliveRecorder>();
         services.AddSingleton<IHousekeeping, WarmUpRunner>();
+        services.AddSingleton<IAppsMap, ConfigurationAppsMap>();
+        services.AddSingleton<IHousekeeping, AppsMapRecorder>();
         services.AddSingleton<IHousekeeping>(provider => provider.GetRequiredService<StateFileWatcher>());
         services.AddSingleton<IHousekeeping, AwayWatcher>();
         services.AddSingleton<IHousekeeping, ClosingAppsWatcher>();

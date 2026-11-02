@@ -1,9 +1,14 @@
+using ContextSwitcher.Core.Abstractions;
+using ConfiguredApp = ContextSwitcher.Core.Configuration.AppIdentity;
+
 namespace ContextSwitcher.Infrastructure.Windows.Applications;
 
 /// <summary>
 /// Finds out what an app a profile names is, once it runs. A profile names an app as the Start menu
-/// does; Windows names a process by its executable, or by its package for a Store app. The three ways
-/// the Start menu gives an app, and what each says:
+/// does; Windows names a process by its executable, or by its package for a Store app. The <c>apps</c>
+/// map of the settings is asked first - what was recorded when the app was picked, or what a person wrote
+/// there to say otherwise: its <c>windows_exe</c>, a full path or a file name, or its <c>windows_app_id</c>.
+/// Without an entry it is the Start menu's, which gives an app in three ways, and each says:
 /// <list type="bullet">
 /// <item>an AppUserModelID with a <c>!</c> is a Store app's, and what is before the <c>!</c> is its
 /// package family;</item>
@@ -17,14 +22,17 @@ public sealed class AppIdentities
 {
     private readonly StartApps startApps;
     private readonly IKnownFolders knownFolders;
+    private readonly IAppsMap appsMap;
 
-    public AppIdentities(StartApps startApps, IKnownFolders knownFolders)
+    public AppIdentities(StartApps startApps, IKnownFolders knownFolders, IAppsMap appsMap)
     {
         ArgumentNullException.ThrowIfNull(startApps);
         ArgumentNullException.ThrowIfNull(knownFolders);
+        ArgumentNullException.ThrowIfNull(appsMap);
 
         this.startApps = startApps;
         this.knownFolders = knownFolders;
+        this.appsMap = appsMap;
     }
 
     /// <summary>
@@ -45,6 +53,11 @@ public sealed class AppIdentities
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(app);
 
+        if (this.appsMap.Of(app.Trim()) is { } entry && this.FromEntry(entry) is { } configured)
+        {
+            return configured;
+        }
+
         StartApp? found = this.startApps.Known.FirstOrDefault(
             candidate => string.Equals(candidate.Name, app.Trim(), StringComparison.OrdinalIgnoreCase));
         return found is null ? null : this.IdentityOf(found);
@@ -63,6 +76,31 @@ public sealed class AppIdentities
 
         string? executable = StartAppsFilter.IsPath(app.AppId) ? this.WriteOut(app.AppId) : app.Target;
         return IsExecutable(executable) ? new AppIdentity(executable, PackageFamilyName: null) : null;
+    }
+
+    /// <summary>
+    /// What an entry of the map says: the executable if it names one - a full path, or a file name that
+    /// matches by name wherever the program is - else the app its AppUserModelID opens, found in the Start
+    /// menu, or a Store app's package. Null when it says nothing of use, and the Start menu is asked.
+    /// </summary>
+    private AppIdentity? FromEntry(ConfiguredApp entry)
+    {
+        string? executable = entry.WindowsExe?.Trim();
+        if (!string.IsNullOrEmpty(executable)
+            && string.Equals(Path.GetExtension(executable), ".exe", StringComparison.OrdinalIgnoreCase)
+            && (Path.IsPathRooted(executable) || Path.GetFileName(executable) == executable))
+        {
+            return new AppIdentity(executable, PackageFamilyName: null);
+        }
+
+        string? id = entry.WindowsAppId?.Trim();
+        if (string.IsNullOrEmpty(id))
+        {
+            return null;
+        }
+
+        StartApp? listed = this.startApps.Known.FirstOrDefault(candidate => string.Equals(candidate.AppId, id, StringComparison.OrdinalIgnoreCase));
+        return listed is not null ? this.IdentityOf(listed) : this.IdentityOf(new StartApp(id, id));
     }
 
     private static bool IsExecutable(string? path) =>

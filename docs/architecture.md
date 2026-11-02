@@ -104,6 +104,12 @@ Before a pull request:
   and for a picker that opens at once. `WarmUpRunner`
   (a housekeeping service) runs them in the background, each apart, and logs one that fails. The Mac
   registers none.
+- **`IAppsMap` and `IAppIdentityCatalog`** are the `apps` map of the settings, from the two sides. A platform reads it (`IAppsMap`,
+  from the settings as they are now) where it looks an app up by name, and says what it knows of an app to be
+  written into it (`IAppIdentityCatalog`). `AppsMapRecorder` (a housekeeping service) adds the entries that are
+  missing, as the app starts and when the settings change, through `ConfigurationStore`, and never replaces
+  one; a catalog with nothing to say - the Mac's - writes nothing. `AppsMap` is the pure part: which apps the
+  profiles name, and merging what was found.
 - **`IAppState`** holds the settings, their validation and the state, and raises
   `ConfigurationChanged` and `StateChanged`. Long-lived view models listen, so a change made in one
   window, or a switch from anywhere, shows in every window without a restart.

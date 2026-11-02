@@ -232,7 +232,7 @@ public sealed class StartAppsTests
         StartApps startApps = this.NewStartApps();
         FakeSystemProcesses pc = new();
         FakeSystemWindows windows = new();
-        WindowsAppProcesses processes = new(new AppIdentities(startApps, new FakeKnownFolders()), pc, windows, AppProcessesOptions.Default, this.logger);
-        return new(this.runner, startApps, new AppWindows(processes, windows, pc));
+        WindowsAppProcesses processes = new(new AppIdentities(startApps, new FakeKnownFolders(), new FakeAppsMap()), pc, windows, AppProcessesOptions.Default, this.logger);
+        return new(this.runner, startApps, new AppWindows(processes, windows, pc), new FakeAppsMap());
     }
 }

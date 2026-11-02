@@ -47,6 +47,7 @@ public static class PlatformServices
         services.AddSingleton<IImageConverter>(provider => new SipsImageConverter(provider.GetRequiredService<IProcessRunner>(), SipsImageConverter.DefaultTimeout));
         services.AddSingleton<IPermissionsChecker, MacPermissionsChecker>();
         services.AddSingleton<IInstalledAppsService, InstalledAppsService>();
+        services.AddSingleton<IAppIdentityCatalog, NoAppIdentities>();
         services.AddSingleton<ISystemCatalog, SystemCatalog>();
         services.AddSingleton<IFocusShortcutInstaller, FocusShortcutInstaller>();
         services.AddSingleton<ISystemNotifications, MacNotifications>();

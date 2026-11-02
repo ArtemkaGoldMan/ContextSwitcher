@@ -79,6 +79,14 @@ internal sealed class FakeKnownFolders : IKnownFolders
     public string? PathOf(Guid folder) => this.Folders.GetValueOrDefault(folder);
 }
 
+/// <summary>The <c>apps</c> map of the settings as a test writes it.</summary>
+internal sealed class FakeAppsMap : IAppsMap
+{
+    public Dictionary<string, ContextSwitcher.Core.Configuration.AppIdentity> Entries { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public ContextSwitcher.Core.Configuration.AppIdentity? Of(string appName) => this.Entries.GetValueOrDefault(appName);
+}
+
 /// <summary>A Start menu, listed through a fake PowerShell, and everything that is built on it.</summary>
 internal sealed class StartMenuRig
 {
@@ -89,13 +97,13 @@ internal sealed class StartMenuRig
         string listing = "[" + string.Join(",", apps.Select(app => $$"""{"n":"{{Encode(app.Name)}}","i":"{{Encode(app.AppId)}}","t":"{{Encode(app.Target ?? string.Empty)}}"}""")) + "]";
         this.Runner.Enqueue(new ProcessResult(0, listing, string.Empty, TimedOut: false));
         this.StartApps = new StartApps(this.Runner, this.Clock, this.Logger, Options);
-        this.Identities = new AppIdentities(this.StartApps, this.Folders);
+        this.Identities = new AppIdentities(this.StartApps, this.Folders, this.AppsMap);
         this.Processes = new WindowsAppProcesses(this.Identities, this.Pc, this.Windows, AppProcessesOptions.Default, this.Logger);
         this.Quitter = new WindowsAppQuitter(this.Identities, this.Processes, this.Windows, this.Pc);
         this.AppWindows = new AppWindows(this.Processes, this.Windows, this.Pc);
         this.Hider = new WindowsApplicationHider(this.AppWindows);
         this.Running = new WindowsRunningApplications(this.StartApps, this.Identities, this.Pc, this.Windows);
-        this.Launcher = new WindowsAppLauncher(this.Runner, this.StartApps, this.AppWindows);
+        this.Launcher = new WindowsAppLauncher(this.Runner, this.StartApps, this.AppWindows, this.AppsMap);
     }
 
     public FakeProcessRunner Runner { get; } = new();
@@ -105,6 +113,8 @@ internal sealed class StartMenuRig
     public TestLogger Logger { get; } = new();
 
     public FakeKnownFolders Folders { get; } = new();
+
+    public FakeAppsMap AppsMap { get; } = new();
 
     public FakeSystemProcesses Pc { get; } = new();
 
