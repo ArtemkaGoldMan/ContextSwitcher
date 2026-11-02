@@ -192,7 +192,7 @@ It comes in four pull requests, each leaving the Mac app as it was:
 | --- | --- | --- |
 | 1a | The shell: `WinExe`, the tray icon in its two drawings, the popover by the taskbar, one copy, the font, everything else hidden. What the later ones bring is a stand-in, in `Infrastructure.Windows/NotYet/`, and `ContextSwitcher.Tests.Windows` tests the Windows code | done |
 | 1b | Apps: the picker, launching, closing, "still closing", Force quit, minimising, the ask-on-switch list | done |
-| 1c | The rest: time with sleep and lock, open at sign-in, the Windows wording, and the wizard saying how to pin the icon | |
+| 1c | The rest: time with sleep and lock, open at sign-in, the Windows wording, and the wizard saying how to pin the icon | in progress: time and open at sign-in done |
 | 1d | CI and releases: the Windows job required, the installer, the release workflow | |
 
 The shell of the app:
@@ -258,10 +258,17 @@ Apps:
 
 The rest of this stage:
 
-- **Time**: `SessionSwitch` (a locked screen, another user) and `PowerModeChanged` (sleep and wake)
-  pause and resume it, as on macOS.
-- **Settings**: the language from `CultureInfo.CurrentUICulture`; the theme follows Windows; open at
-  login through the `Run` key (and `StartupApproved`); export and import; diagnostics with the
+- **Time**: `SessionSwitch` (a locked screen, another user - a console or remote disconnect, and the
+  connect that ends it) and `PowerModeChanged` (suspend and resume) pause and resume it, as on macOS,
+  through `SystemEvents` and posted to the UI thread (`WindowsAwayEvents`). The reasons overlap, as on
+  the Mac, and time counts again only when every one has cleared. A PC with Modern Standby may not report
+  a suspend; its lock is still heard.
+- **Open at sign-in**: a command in the current user's `Run` key (`WindowsLoginItem`), the quoted path of
+  the running executable, which Startup apps lists. What Startup apps keeps in `StartupApproved\Run` is
+  read: an entry whose first byte is odd was turned off there, and is shown as waiting for approval, as on
+  the Mac; turning it on in the app clears that. An entry naming another path is shown as off. A build run
+  from the code (`bin\Debug`, `bin\Release`, `dotnet.exe`) is never offered it.
+- **Settings**: the language from `CultureInfo.CurrentUICulture`; the theme follows Windows; export and import; diagnostics with the
   Windows version; Contact through a `mailto:` link; "show the log" with `explorer /select,`.
 - **Quick links** open in the default browser.
 - **Text**: every string this stage shows gets its Windows wording - the taskbar instead of the menu
