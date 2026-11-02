@@ -20,6 +20,7 @@ public sealed class WindowsInstalledApps : IInstalledAppsService, IWarmUp
     private readonly ConfigPaths configPaths;
     private readonly InstalledAppsOptions options;
     private readonly ILogger logger;
+    private readonly SemaphoreSlim drawing = new(1, 1);
 
     public WindowsInstalledApps(StartApps startApps, IAppIcons appIcons, ConfigPaths configPaths, InstalledAppsOptions options, ILogger logger)
     {
@@ -49,8 +50,18 @@ public sealed class WindowsInstalledApps : IInstalledAppsService, IWarmUp
             return [];
         }
 
-        // Drawing blocks on Windows, so it is done off the caller's thread, one icon after another.
-        return await Task.Run(() => this.WithIcons(apps, cancellationToken), cancellationToken).ConfigureAwait(false);
+        // Drawing blocks on Windows, so it is done off the caller's thread, one icon after another. One
+        // listing at a time: the app asks as it starts and the first window asks too, and two drawing the
+        // same icons would race to put the same files in place. The second waits, and finds them kept.
+        await this.drawing.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return await Task.Run(() => this.WithIcons(apps, cancellationToken), cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            this.drawing.Release();
+        }
     }
 
     /// <summary>The name of the file an app's icon is kept in: the app's name, without what a file name can't hold.</summary>
@@ -105,13 +116,21 @@ public sealed class WindowsInstalledApps : IInstalledAppsService, IWarmUp
         try
         {
             File.WriteAllBytes(partial, png);
-            File.Move(partial, cached, overwrite: true);
+            File.Move(partial, cached, overwrite: false);
             return cached;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            this.logger.Warn("App", "AppIconNotKept", $"The icon of {app.Name} couldn't be kept.", ex);
             TryDelete(partial);
+
+            // Windows won't put a file where one is, or is being read: if another has put this icon there,
+            // it is the icon, and there is nothing to say.
+            if (File.Exists(cached))
+            {
+                return cached;
+            }
+
+            this.logger.Warn("App", "AppIconNotKept", $"The icon of {app.Name} couldn't be kept.", ex);
             return null;
         }
     }
