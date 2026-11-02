@@ -139,8 +139,66 @@ public sealed class WindowsInstalledAppsTests : IDisposable
         Assert.Single(this.runner.Calls);
     }
 
+    /// <summary>
+    /// The app asks as it starts and the first window asks too. Two drawing the same icons at once raced to
+    /// put the same files in place, and Windows refused one of them: found by running the app.
+    /// </summary>
+    [Fact]
+    public async Task TwoAsksAtOnceDrawEachIconOnceAndBothGetIt()
+    {
+        this.icons.Pngs["a"] = SomePng;
+        this.icons.Pngs["b"] = SomePng;
+        this.icons.Slow = TimeSpan.FromMilliseconds(40);
+        WindowsInstalledApps picker = this.Picker(("Slack", "a"), ("Code", "b"));
+
+        Task<IReadOnlyList<InstalledApp>> first = picker.GetInstalledAppsAsync(CancellationToken.None);
+        Task<IReadOnlyList<InstalledApp>> second = picker.GetInstalledAppsAsync(CancellationToken.None);
+        IReadOnlyList<InstalledApp>[] both = await Task.WhenAll(first, second);
+
+        Assert.Equal(2, this.icons.Drawn.Count);
+        Assert.Equal(both[0].Select(app => app.IconPath), both[1].Select(app => app.IconPath));
+        Assert.All(both[0], app => Assert.True(File.Exists(app.IconPath)));
+        Assert.DoesNotContain(this.logger.Entries, entry => entry.EventId == "AppIconNotKept");
+    }
+
+    [Fact]
+    public async Task AnAskThatIsCancelledWhileWaitingStopsWaiting()
+    {
+        this.icons.Pngs["a"] = SomePng;
+        this.icons.Slow = TimeSpan.FromMilliseconds(200);
+        WindowsInstalledApps picker = this.Picker(("Slack", "a"));
+        Task<IReadOnlyList<InstalledApp>> running = picker.GetInstalledAppsAsync(CancellationToken.None);
+        using CancellationTokenSource cancel = new();
+
+        Task<IReadOnlyList<InstalledApp>> waiting = picker.GetInstalledAppsAsync(cancel.Token);
+        await cancel.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => waiting);
+        Assert.Single(await running.ConfigureAwait(true));
+    }
+
+    /// <summary>Another has put the icon there between our looking and our putting: that icon is the icon, and nothing is wrong.</summary>
+    [Fact]
+    public async Task AnIconAnotherPutThereFirstIsUsedAndNothingIsSaid()
+    {
+        this.icons.Pngs["a"] = SomePng;
+        this.icons.WhileDrawing = () =>
+        {
+            Directory.CreateDirectory(Path.Combine(this.root, "icon-cache"));
+            File.WriteAllBytes(Path.Combine(this.root, "icon-cache", "Slack.png"), [7, 7, 7]);
+        };
+        WindowsInstalledApps picker = this.Picker(("Slack", "a"));
+
+        InstalledApp app = Assert.Single(await picker.GetInstalledAppsAsync(CancellationToken.None));
+
+        Assert.Equal([7, 7, 7], await File.ReadAllBytesAsync(app.IconPath!));
+        Assert.DoesNotContain(this.logger.Entries, entry => entry.EventId == "AppIconNotKept");
+        Assert.Equal(["Slack.png"], Directory.GetFiles(Path.Combine(this.root, "icon-cache")).Select(Path.GetFileName));
+    }
+
     [Fact]
     public async Task NoAppsInTheStartMenuIsNoApps()
+
     {
         WindowsInstalledApps picker = this.Picker();
 
@@ -180,9 +238,25 @@ public sealed class WindowsInstalledAppsTests : IDisposable
 
         public List<(string AppId, int Size)> Drawn { get; } = [];
 
+        /// <summary>How long drawing takes, so that two asks at once overlap.</summary>
+        public TimeSpan Slow { get; set; }
+
+        /// <summary>Done while an icon is being drawn: what another writer would do.</summary>
+        public Action? WhileDrawing { get; set; }
+
         public byte[]? RenderPng(string appId, int size)
         {
-            this.Drawn.Add((appId, size));
+            lock (this.Drawn)
+            {
+                this.Drawn.Add((appId, size));
+            }
+
+            this.WhileDrawing?.Invoke();
+            if (this.Slow > TimeSpan.Zero)
+            {
+                Thread.Sleep(this.Slow);
+            }
+
             return this.Pngs.GetValueOrDefault(appId);
         }
     }
