@@ -32,8 +32,11 @@ internal static class Program
     /// </summary>
     internal const string RenderingVariable = "CONTEXTSWITCHER_RENDERING";
 
-    [STAThread]
-    public static void Main(string[] args)
+    /// <summary>
+    /// Starts the app. Called by the entry point of the build (<c>Entry</c>): the same for every system, but
+    /// for what a system's installer asks of a copy before anything else starts.
+    /// </summary>
+    internal static void Run(string[] args)
     {
         // With every display asleep Avalonia cannot start drawing, and the app used to abort here with a
         // crash report. A window needs a screen anyway, so wait for one - before AppHost.Initialize,
