@@ -4,6 +4,7 @@ using ContextSwitcher.Core.Applications;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Infrastructure.Files;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
@@ -50,7 +51,7 @@ public sealed class OnboardingViewModelTests
             },
             new ConfigurationValidationResult([]));
 
-        OnboardingViewModel viewModel = new(this.appState, store, installed, switchService, FakeLoginItem.Unavailable());
+        OnboardingViewModel viewModel = new(this.appState, store, installed, switchService, FakeLoginItem.Unavailable(), MacPlatform.Capabilities);
         viewModel.FinishCommand.Execute(null);
 
         AppConfiguration? saved = jsonStore.Get<AppConfiguration>(configPaths.SettingsPath);
@@ -82,7 +83,7 @@ public sealed class OnboardingViewModelTests
             },
             new ConfigurationValidationResult([]));
 
-        OnboardingViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new StubContextSwitchService(), FakeLoginItem.Unavailable());
+        OnboardingViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new StubContextSwitchService(), FakeLoginItem.Unavailable(), MacPlatform.Capabilities);
         viewModel.SkipCommand.Execute(null);
 
         AppConfiguration? saved = jsonStore.Get<AppConfiguration>(configPaths.SettingsPath);
@@ -125,7 +126,7 @@ public sealed class OnboardingViewModelTests
             new ConfigurationValidationResult([]));
 
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        return new OnboardingViewModel(this.appState, store, installed, new StubContextSwitchService(), FakeLoginItem.Unavailable());
+        return new OnboardingViewModel(this.appState, store, installed, new StubContextSwitchService(), FakeLoginItem.Unavailable(), MacPlatform.Capabilities);
     }
 
     /// <summary>
@@ -194,6 +195,6 @@ public sealed class OnboardingViewModelTests
             new AppConfiguration { ActiveContextId = "default", OnboardingCompleted = false, Contexts = [new ContextDefinition { Id = "default", DisplayName = "Default" }] },
             new ConfigurationValidationResult([]));
         ConfigurationStore store = new(new InMemoryJsonStore(), new ConfigPaths("/tmp/context-switcher-tests"), new ConfigurationValidator(), this.appState, new TestLogger());
-        return new OnboardingViewModel(this.appState, store, new FakeInstalledAppsService(), new StubContextSwitchService(), loginItem);
+        return new OnboardingViewModel(this.appState, store, new FakeInstalledAppsService(), new StubContextSwitchService(), loginItem, MacPlatform.Capabilities);
     }
 }

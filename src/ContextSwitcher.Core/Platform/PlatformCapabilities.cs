@@ -48,6 +48,13 @@ public sealed record PlatformCapabilities
     /// </summary>
     public required IReadOnlyList<BrowserKind> FocusFilterBrowsers { get; init; }
 
+    /// <summary>
+    /// Whose words the interface uses for the computer and its parts: the Mac's - menu bar, Finder, ⌘ - or
+    /// Windows' - tray, File Explorer, Ctrl. Words, not features: what the platform can do is above.
+    /// The Mac's unless a platform says otherwise.
+    /// </summary>
+    public SystemWording Wording { get; init; } = SystemWording.Mac;
+
     /// <summary>Whether <paramref name="player"/> can be played here; none at all always can.</summary>
     public bool Plays(MediaPlayerKind player) => player switch
     {

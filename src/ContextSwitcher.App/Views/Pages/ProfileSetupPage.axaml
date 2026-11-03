@@ -348,7 +348,7 @@
           <StackPanel Spacing="10">
             <TextBlock Text="{x:Static r:Strings.ProfileSetup_QuickLinks_Section}" Classes="sectionTitle" />
             <TextBlock
-              Text="{x:Static r:Strings.ProfileSetup_ShownInTheMenuBar}"
+              Text="{Binding Words.QuickLinksShown}"
               Classes="caption"
               TextWrapping="Wrap" />
             <ItemsControl ItemsSource="{Binding Links.QuickLinks}" ItemTemplate="{StaticResource QuickLinkRow}">
@@ -377,7 +377,7 @@
           <StackPanel Spacing="10">
             <TextBlock Text="{x:Static r:Strings.ProfileSetup_Notes_Section}" Classes="sectionTitle" />
             <TextBlock
-              Text="{x:Static r:Strings.ProfileSetup_RemindersShownInTheMenu}"
+              Text="{Binding Words.RemindersShown}"
               Classes="caption"
               TextWrapping="Wrap" />
             <TextBox Text="{Binding NotesText}" AcceptsReturn="True" TextWrapping="Wrap" Height="80" AutomationProperties.Name="{x:Static r:Strings.ProfileSetup_Notes}" />

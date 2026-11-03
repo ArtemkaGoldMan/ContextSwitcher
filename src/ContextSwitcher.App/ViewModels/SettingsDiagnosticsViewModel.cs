@@ -25,6 +25,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
     private readonly ConfigurationStore configurationStore;
     private readonly IShell shell;
     private readonly DiagnosticsSources sources;
+    private readonly SystemText words;
     private readonly Func<bool?> automation;
     private string? message;
     private string? contactMessage;
@@ -34,17 +35,20 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
         ConfigurationStore configurationStore,
         IShell shell,
         DiagnosticsSources sources,
+        SystemText words,
         Func<bool?>? automation = null)
     {
         ArgumentNullException.ThrowIfNull(appState);
         ArgumentNullException.ThrowIfNull(configurationStore);
         ArgumentNullException.ThrowIfNull(shell);
         ArgumentNullException.ThrowIfNull(sources);
+        ArgumentNullException.ThrowIfNull(words);
 
         this.appState = appState;
         this.configurationStore = configurationStore;
         this.shell = shell;
         this.sources = sources;
+        this.words = words;
         this.automation = automation ?? (() => null);
         this.CopyCommand = new AsyncRelayCommand(this.CopyAsync);
         this.ShowLogCommand = new RelayCommand(this.ShowLog);
@@ -170,7 +174,7 @@ public sealed class SettingsDiagnosticsViewModel : ViewModelBase
         bool opened = await this.shell.OpenLinkAsync(link, CancellationToken.None).ConfigureAwait(true);
         this.ContactMessage = !opened
             ? Localized.Format(Strings.Contact_NoMailApp, AppLinks.ContactEmail)
-            : copied ? Strings.Contact_EmailOpened : Strings.Contact_EmailOpenedNotCopied;
+            : copied ? this.words.EmailOpened : Strings.Contact_EmailOpenedNotCopied;
     }
 
     /// <summary>GitHub's issue form, whose Diagnostics field takes the report copied just before.</summary>

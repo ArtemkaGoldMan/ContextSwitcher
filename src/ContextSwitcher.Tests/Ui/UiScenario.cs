@@ -134,7 +134,7 @@ public sealed class UiScenario
         this.AppState, this.SwitchService, this.Analytics, this.Shell, this.Clock);
 
     public OnboardingViewModel Onboarding() =>
-        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.SwitchService, FakeLoginItem.Unavailable());
+        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.SwitchService, FakeLoginItem.Unavailable(), MacPlatform.Capabilities);
 
     public ProfileSetupViewModel ProfileSetup(ContextDefinition? existing = null) =>
         new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.Catalog, this.Shell, this.FocusShortcuts, MacPlatform.Capabilities, new FakeUnknownDefaultBrowser(), existing);

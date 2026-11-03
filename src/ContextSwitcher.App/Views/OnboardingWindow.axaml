@@ -68,7 +68,7 @@
         <Image Source="avares://ContextSwitcher/Assets/Icons/app-mark.png" Width="56" Height="56" HorizontalAlignment="Left" />
         <TextBlock Text="{x:Static r:Strings.Onboarding_WelcomeToContextSwitcher}" Classes="header" FontSize="26" TextWrapping="Wrap" />
         <TextBlock
-          Text="{x:Static r:Strings.Onboarding_OneClickFlipsYourMac}"
+          Text="{Binding Words.OneClickFlips}"
           Classes="body"
           TextWrapping="Wrap"
           Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -140,9 +140,10 @@
         <Border Classes="panel">
           <StackPanel Spacing="8">
             <TextBlock Text="{x:Static r:Strings.Onboarding_Next_Section}" Classes="sectionTitle" />
-            <TextBlock Text="{x:Static r:Strings.Onboarding_SwitchAnytimeFromTheMenu}" Classes="body" />
-            <TextBlock Text="{x:Static r:Strings.Onboarding_AddBrowserTabsFocusAnd}" Classes="body" />
+            <TextBlock Text="{Binding Words.SwitchAnytime}" Classes="body" />
+            <TextBlock Text="{Binding Words.AddInProfileSetup}" Classes="body" />
             <TextBlock Text="{x:Static r:Strings.Onboarding_ChangeAProfilesColorIcon}" Classes="body" />
+            <TextBlock Text="{Binding Words.PinTheIcon}" Classes="body" TextWrapping="Wrap" IsVisible="{Binding Words.HasPinTheIcon}" />
           </StackPanel>
         </Border>
         <StackPanel Spacing="4" IsVisible="{Binding CanOpenAtLogin}">

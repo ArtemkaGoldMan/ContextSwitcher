@@ -1,9 +1,11 @@
+using ContextSwitcher.App.Resources;
 using ContextSwitcher.App.Services;
 using ContextSwitcher.App.ViewModels;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Infrastructure.Logging;
+using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
 namespace ContextSwitcher.Tests.App.ViewModels;
@@ -195,6 +197,7 @@ public sealed class SettingsDiagnosticsViewModelTests : IDisposable
             () => DiagnosticsReport.ReadLog(this.paths.AppLogPath),
             () => [],
             new FakeClock { UtcNow = Now }),
+        new SystemText(MacPlatform.Capabilities),
         () => true);
 
     private static async Task WaitUntilAsync(Func<bool> condition)

@@ -7,8 +7,9 @@ it sits among everything else, in the [roadmap](roadmap.md).
 **Where it stands** (October 2026, at 0.6.8): stage 0, the groundwork on the Mac, is done - every
 piece of macOS is behind an interface, and the Mac and Windows each have a project of their own
 ([stage 0](#stage-0---groundwork-done)). Stage 1 is under way: the app starts on Windows with its tray
-icon and dashboard, and can list, open, hide, close and end apps; it doesn't yet count time with sleep and lock, open at
-sign-in or install itself ([stage 1](#stage-1---apps)).
+icon and dashboard, switches profiles by opening, closing and hiding apps, counts time apart from
+sleep and a locked screen, opens at sign-in, and speaks Windows' words in English and Ukrainian; it
+doesn't yet install or update itself ([stage 1](#stage-1---apps)).
 
 ## How it goes
 
@@ -192,7 +193,7 @@ It comes in four pull requests, each leaving the Mac app as it was:
 | --- | --- | --- |
 | 1a | The shell: `WinExe`, the tray icon in its two drawings, the popover by the taskbar, one copy, the font, everything else hidden. What the later ones bring is a stand-in, in `Infrastructure.Windows/NotYet/`, and `ContextSwitcher.Tests.Windows` tests the Windows code | done |
 | 1b | Apps: the picker, launching, closing, "still closing", Force quit, minimising, the ask-on-switch list | done |
-| 1c | The rest: time with sleep and lock, open at sign-in, the Windows wording, and the wizard saying how to pin the icon | in progress: time and open at sign-in done |
+| 1c | The rest: time with sleep and lock, open at sign-in, the Windows wording, and the wizard saying how to pin the icon | done |
 | 1d | CI and releases: the Windows job required, the installer, the release workflow | |
 
 The shell of the app:
@@ -271,8 +272,11 @@ The rest of this stage:
 - **Settings**: the language from `CultureInfo.CurrentUICulture`; the theme follows Windows; export and import; diagnostics with the
   Windows version; Contact through a `mailto:` link; "show the log" with `explorer /select,`.
 - **Quick links** open in the default browser.
-- **Text**: every string this stage shows gets its Windows wording - the taskbar instead of the menu
-  bar, Ctrl instead of ⌘, the PC instead of the Mac - in English and Ukrainian.
+- **Text**: every string this stage shows has its Windows wording - the tray instead of the menu bar,
+  File Explorer instead of Finder, Ctrl instead of ⌘, the PC instead of the Mac - in English and
+  Ukrainian. Each is the Mac's key and the same key with `_Windows`, chosen by `SystemText` from the
+  platform's `Wording` ([translating](translating.md#for-developers)). The welcome says how to keep
+  the icon in sight: Windows 11 hides a new tray icon behind the arrow beside the clock.
 - **CI and releases**: the Windows job required, the Windows package job, and the release workflow in
   three jobs ([above](#ci)); an installer that updates itself (Velopack -
   [decided](#decisions-made)), for `win-x64` and `win-arm64`, unsigned and marked preview, in the

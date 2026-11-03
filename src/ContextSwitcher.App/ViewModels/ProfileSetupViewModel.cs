@@ -44,6 +44,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.appState = appState;
         this.configurationStore = configurationStore;
         this.capabilities = capabilities;
+        this.Words = new SystemText(capabilities);
         this.IsNew = existing is null;
 
         ContextDefinition source = existing ?? CreateDefaultContext(this.appState.Configuration.Contexts);
@@ -90,6 +91,9 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
         _ = this.LoadInstalledAppsAsync();
     }
+
+    /// <summary>The words for the computer and its parts, which the page binds to where the Mac's and Windows' differ.</summary>
+    public SystemText Words { get; }
 
     /// <summary>Raised after a successful save, so <see cref="MainAppViewModel"/> returns to Profiles.</summary>
     public event EventHandler? Saved;
