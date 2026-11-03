@@ -4,7 +4,9 @@ using ContextSwitcher.Infrastructure.Browser;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Infrastructure.Windows;
 using ContextSwitcher.Infrastructure.Windows.Applications;
+using ContextSwitcher.Infrastructure.Windows.Away;
 using ContextSwitcher.Infrastructure.Windows.NotYet;
+using ContextSwitcher.Infrastructure.Windows.Startup;
 using Microsoft.Extensions.DependencyInjection;
 
 // The same namespace as the macOS project's PlatformServices, so the app calls whichever its build
@@ -77,9 +79,18 @@ public static class PlatformServices
         // shows, as the app starts.
         services.AddSingleton<IWarmUp>(provider => provider.GetRequiredService<WindowsInstalledApps>());
 
-        // Opening at sign-in, sleep and lock: later in stage 1.
-        services.AddSingleton<ILoginItem, NotYetLoginItem>();
-        services.AddSingleton<IAwayEvents, NotYetAwayEvents>();
+        // Opening at sign-in: the current user's Run key, which Startup apps lists.
+        services.AddSingleton(LoginItemOptions.Default);
+        services.AddSingleton<IStartupEntries, RegistryStartupEntries>();
+        services.AddSingleton<ILoginItem>(provider => new WindowsLoginItem(
+            provider.GetRequiredService<IStartupEntries>(),
+            provider.GetRequiredService<LoginItemOptions>(),
+            Environment.ProcessPath,
+            provider.GetRequiredService<IProcessRunner>()));
+
+        // No time counts while the PC sleeps, its screen is locked or another user is in front.
+        services.AddSingleton<ISystemEvents, SystemEventsSource>();
+        services.AddSingleton<IAwayEvents, WindowsAwayEvents>();
 
         // The browser and site icons: stage 2. Music, Docker's list and notifications: stage 3.
         services.AddSingleton<NotYetBrowserControl>();

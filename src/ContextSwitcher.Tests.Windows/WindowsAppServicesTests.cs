@@ -58,6 +58,8 @@ public sealed class WindowsAppServicesTests
         Assert.IsType<WindowsSingleInstance>(provider.GetRequiredService<ISingleInstance>());
         Assert.IsType<WindowsTrayIconLook>(provider.GetRequiredService<ITrayIconLook>());
         Assert.IsType<WindowsShell>(provider.GetRequiredService<IShell>());
+        Assert.IsType<ContextSwitcher.Infrastructure.Windows.Startup.WindowsLoginItem>(provider.GetRequiredService<ILoginItem>());
+        Assert.IsType<ContextSwitcher.Infrastructure.Windows.Away.WindowsAwayEvents>(provider.GetRequiredService<IAwayEvents>());
     }
 
     /// <summary>The quitter and the processes look at the same listing, and the app is given the same one the quitter uses.</summary>
