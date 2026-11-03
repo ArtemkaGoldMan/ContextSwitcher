@@ -5,13 +5,24 @@ name: CI
 #   Build and test (Windows)   the same on Windows, where the tests of macOS itself are skipped
 #   App bundle       the signed-or-not .app is built the way a release builds it, checked, and run through its
 #                    command line on a machine with no screen; the .app is kept for a week to try by hand
-#   Workflows and scripts   the workflows and the shell scripts are linted
-# They are the checks main's protection waits for (docs/release-process.md).
+#   Windows package  the installer is built the way a release builds it, installed, run and removed again;
+#                    the installer is kept for a week to try by hand
+#   Workflows and scripts   the workflows, the shell scripts and the PowerShell scripts are linted
+# Of these, main's protection waits for the ones in docs/release-process.md.
+#
+# The two jobs on a Mac wait for a runner that GitHub has the fewest of, and sometimes can't give: a job that
+# gets none in a quarter of an hour is cancelled. So they run only for a change that reaches the Mac (see
+# "What changed"), in full on every push to main and every night, and rerun-starved-jobs.yml starts again a
+# job that was cancelled for want of a runner. A job that is skipped counts as passed for main's protection.
 
 on:
   pull_request:
   push:
     branches: [main]
+  # Every night, in full, so that what only a Mac sees is looked at even when no pull request touches it.
+  schedule:
+    - cron: "37 3 * * *"
+  workflow_dispatch:
 
 # A new push to a pull request makes the run for the one before it pointless.
 concurrency:
@@ -22,8 +33,50 @@ permissions:
   contents: read
 
 jobs:
+  # Whether the change reaches the Mac. A pull request that touches only Windows' own code and its tests,
+  # the PowerShell scripts or the docs builds and runs nothing there that differs, so the two Mac jobs below
+  # are skipped for it. Anything else - shared code, the Mac's, the projects, the workflows - or anything
+  # that isn't a pull request runs them. If this job can't tell, they run.
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      mac: ${{ steps.files.outputs.mac }}
+    steps:
+      - name: Does the change reach the Mac?
+        id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PR:-}" ]; then
+            echo "mac=true" >> "$GITHUB_OUTPUT"
+            echo "Not a pull request: the Mac jobs run."
+            exit 0
+          fi
+          gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' > files.txt
+          # What a Mac neither builds nor runs.
+          windows_only='^(src/ContextSwitcher\.Infrastructure\.Windows/|src/ContextSwitcher\.Tests\.Windows/|src/ContextSwitcher\.App/Entry\.Windows\.cs$|scripts/windows/|docs/|[^/]+\.md$)'
+          if grep -Ev "$windows_only" files.txt > reaches_the_mac.txt; then
+            echo "mac=true" >> "$GITHUB_OUTPUT"
+            echo "The change reaches the Mac, so the Mac jobs run. For example:"
+            head -10 reaches_the_mac.txt
+          else
+            echo "mac=false" >> "$GITHUB_OUTPUT"
+            echo "Nothing here reaches the Mac: Windows' code and tests, scripts and docs. The Mac jobs are skipped."
+          fi
+
   build-and-test:
     name: Build and test
+    needs: changes
+    # Not skipped because the question couldn't be answered, and not run after a cancellation.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.mac == 'true') }}
     runs-on: macos-15
     timeout-minutes: 25
     steps:
@@ -107,6 +160,8 @@ jobs:
 
   app-bundle:
     name: App bundle
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.mac == 'true') }}
     runs-on: macos-15
     timeout-minutes: 25
     steps:
@@ -163,6 +218,42 @@ jobs:
           path: ContextSwitcher-build.zip
           retention-days: 7
 
+  # The Windows installer, built as a release builds it and then put through what a person does: install,
+  # start, start a second copy, remove. No unit test can see an installer. Not signed, so Windows would ask
+  # once before running the downloaded file; here it is run by the script, which Windows doesn't ask about.
+  windows-package:
+    name: Windows package
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'global.json', '.config/dotnet-tools.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Build the installer
+        shell: pwsh
+        run: ./scripts/windows/build-installer.ps1
+
+      - name: Install it, run it and remove it
+        shell: pwsh
+        run: ./scripts/windows/smoke-test-installer.ps1
+
+      # To try what a pull request does without building it: run it; Windows asks once, as it does for
+      # any download that isn't signed. Kept a week.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ContextSwitcher-win-${{ github.sha }}
+          path: dist/windows/ContextSwitcher-win-Setup.exe
+          retention-days: 7
+
   lint:
     name: Workflows and scripts
     runs-on: ubuntu-latest
@@ -180,3 +271,13 @@ jobs:
 
       - name: Compile the Python scripts
         run: python3 -m py_compile scripts/*.py
+
+      # Pinned, like actionlint above: a new rule in a new version shouldn't fail a pull request that
+      # touched nothing.
+      - name: Lint the PowerShell scripts
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser
+          $findings = Invoke-ScriptAnalyzer -Path scripts/windows -Recurse -Severity Warning, Error
+          $findings | Format-Table -AutoSize | Out-String | Write-Output
+          if ($findings) { exit 1 }

@@ -112,8 +112,9 @@ Stage 1 adds:
 
 - **Build and test (Windows) as a required check** (Settings → Branches), so a change that breaks
   Windows can't merge.
-- **Windows package**: builds the installer, installs it and starts the app.
-- **PowerShell scripts** in `scripts/windows/`, linted with PSScriptAnalyzer next to the shell
+- **Windows package** (done): builds the installer, installs it, starts the app and a second copy, and
+  removes it ([release process](release-process.md#the-windows-installer)). Not required yet.
+- **PowerShell scripts** in `scripts/windows/` (done), linted with PSScriptAnalyzer next to the shell
   scripts.
 
 Both build-and-test jobs always run: skipping the Windows one when only Mac files change is
@@ -194,7 +195,7 @@ It comes in four pull requests, each leaving the Mac app as it was:
 | 1a | The shell: `WinExe`, the tray icon in its two drawings, the popover by the taskbar, one copy, the font, everything else hidden. What the later ones bring is a stand-in, in `Infrastructure.Windows/NotYet/`, and `ContextSwitcher.Tests.Windows` tests the Windows code | done |
 | 1b | Apps: the picker, launching, closing, "still closing", Force quit, minimising, the ask-on-switch list | done |
 | 1c | The rest: time with sleep and lock, open at sign-in, the Windows wording, and the wizard saying how to pin the icon | done |
-| 1d | CI and releases: the Windows job required, the installer, the release workflow | |
+| 1d | CI and releases: the Windows job required, the installer, the release workflow | in progress: the installer, built and tried in CI |
 
 The shell of the app:
 

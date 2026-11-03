@@ -63,7 +63,25 @@ until [stage 1](windows-plan.md#stage-1---apps) of the Windows plan:
 | **Build and test** | The whole solution with warnings as errors, every test, and how much of the code they reach (shown in the run's summary). The test results are kept for two weeks. |
 | **Build and test (Windows)** | The same on Windows, so a change to shared code is tried on both systems. The tests of macOS itself - AppleScript, AppKit, the default browser - are skipped there. |
 | **App bundle** | Builds the `.app` the way a release does (signed ad hoc: pull requests have no secrets), checks its version, bundle identifier, `LSUIElement` and architecture, and runs it through its command line on a machine with no screen - [`scripts/smoke-test-app.sh`](../scripts/smoke-test-app.sh) switches profiles, refuses one that isn't there, and checks the log is silent after clean switches and tells the whole story after a failing one. The `.app` is kept for a week, so a pull request can be tried without building it. |
-| **Workflows and scripts** | Lints the workflows ([actionlint](https://github.com/rhysd/actionlint)) and the shell scripts ([ShellCheck](https://www.shellcheck.net)). |
+| **Windows package** | Builds the Windows installer the way a release does, then does what a person does: installs it, starts the app, starts a second copy (which must end, leaving one), and removes it - [`scripts/windows/smoke-test-installer.ps1`](../scripts/windows/smoke-test-installer.ps1) checks each step, and that the person's settings folder is left as it was. The installer is kept for a week, so a pull request can be tried without building it. Not required yet. |
+| **Workflows and scripts** | Lints the workflows ([actionlint](https://github.com/rhysd/actionlint)), the shell scripts ([ShellCheck](https://www.shellcheck.net)) and the PowerShell scripts in `scripts/windows/` ([PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer)). |
+
+**The Mac's runners.** **Build and test** and **App bundle** run on a Mac, which is the runner GitHub has
+the fewest of: a job that finds none in a quarter of an hour is cancelled ("The job was not acquired by
+Runner of type hosted…"), and free accounts may run only five Mac jobs at once. So:
+
+- A pull request that touches only Windows' own code and its tests, `Entry.Windows.cs`, the PowerShell
+  scripts or the docs - nothing a Mac builds or runs - skips the two Mac jobs; **What changed** decides, by the
+  pull request's files. Any other file, or a run it can't decide for, runs them. A skipped job counts as
+  passed for main's protection.
+- Everything runs, the Mac's jobs included, on every push to `main` and every night (03:37 UTC), or by hand
+  (Actions → CI → Run workflow). A Mac-only break that a pull request's files didn't suggest is found there.
+- [`rerun-starved-jobs.yml`](../.github/workflows/rerun-starved-jobs.yml) starts again a job that was
+  cancelled for want of a runner - told by GitHub's own annotation, not by its being cancelled - two minutes
+  later, up to three more times. A job that failed on its own, and a run in which one did, are left for a
+  person. It never runs a pull request's code. It acts once it is on `main`.
+- CodeQL runs on Ubuntu: the solution builds there, and the analysis reads the source whatever system it
+  ran on.
 
 [`codeql.yml`](../.github/workflows/codeql.yml) scans the C# for the mistakes that become
 vulnerabilities, on pull requests, on `main` and every Monday; its findings are under Security → Code
@@ -103,6 +121,28 @@ Three details in the bundle are load-bearing:
 
 The version comes from `<Version>` in `ContextSwitcher.App.csproj` — the scripts read it, so the
 bundle, the `Info.plist`, the `.dmg` filename and the version the updater compares can't drift apart.
+
+### The Windows installer
+
+On a Windows PC with the .NET SDK `global.json` pins:
+
+```powershell
+./scripts/windows/build-installer.ps1       # dist/windows/ContextSwitcher-win-Setup.exe   (~63 MB)
+./scripts/windows/smoke-test-installer.ps1  # installs it, runs it, and removes it
+```
+
+`build-installer.ps1` publishes the app self-contained for `win-x64`, so nothing needs installing
+first, and packs it with [Velopack](https://velopack.io)'s `vpk`, pinned in `.config/dotnet-tools.json`
+(`-Vpk <path>` uses one you have, for a PC whose SDK isn't the pinned one). It makes the installer, the
+full package the updater installs from, `releases.win.json`, which lists them, and a portable zip. There
+are no deltas: each release holds everything an update needs, so it never depends on the releases
+before it. The only shortcut is in the Start menu, the app living in the tray. The version is
+`<Version>` in `ContextSwitcher.App.csproj`. Nothing is signed, so Windows asks once before running a
+downloaded installer ([windows plan](windows-plan.md#decisions-made)).
+
+`smoke-test-installer.ps1` installs into a temporary folder with the app's settings in another, so
+nothing of yours is touched, and removes both however it ends. Removing the app leaves the settings
+folder and takes the app out of what opens at sign-in.
 
 ## Cutting a release
 
