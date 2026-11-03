@@ -72,6 +72,15 @@ before messages had keys is shown in the English it was written in.
 - No visible text goes straight into a view or a view model. Add it to `Strings.resx` and use it as
   `{x:Static r:Strings.Key}` in XAML (`xmlns:r="using:ContextSwitcher.App.Resources"`) or
   `Strings.Key` in C#. A test fails if a view has text written into it.
+- Where the Mac's words and Windows' differ - "your Mac" or "your PC", the menu bar or the tray,
+  Finder or File Explorer, ⌘V or Ctrl+V - the Windows version is the same key with `_Windows`
+  (`Settings_ShowLog`, `Settings_ShowLog_Windows`), in English and in every translation. The view or
+  view model doesn't pick between them: it asks `SystemText`, which does by the platform's `Wording`
+  (`SystemWording.Mac` or `SystemWording.Windows`), so a page binds to one name -
+  `{Binding Words.ShowLog}`. Add the key, its translations and a property on `SystemText`; tests fail
+  if a `_Windows` key has no Mac key to stand in for, no Ukrainian, takes other `{0}` placeholders, or
+  names a Mac thing. Windows words are Windows' own, as they appear on Windows in that language:
+  Ukrainian says Параметри, Провідник, ПК, область сповіщень, панель завдань.
 - Name keys `Area_What`: `Settings_Theme_Light`, `Dashboard_ActiveFor`. Add a `<comment>` saying
   where it shows and what each placeholder is — translators see only the file.
 - Patterns with placeholders go through `Localized.Format(Strings.Key, value)`, so numbers and dates

@@ -2,6 +2,7 @@ using ContextSwitcher.App.Services;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.App.Resources;
 using System.Globalization;
 
@@ -44,12 +45,14 @@ public sealed class OnboardingViewModel : ViewModelBase
         ConfigurationStore configurationStore,
         IInstalledAppsService installedAppsService,
         IContextSwitchService switchService,
-        ILoginItem loginItem)
+        ILoginItem loginItem,
+        PlatformCapabilities capabilities)
     {
         this.appState = appState;
         this.configurationStore = configurationStore;
         this.switchService = switchService;
         this.loginItem = loginItem;
+        this.Words = new SystemText(capabilities);
         this.CanOpenAtLogin = loginItem.Status != LoginItemStatus.Unavailable;
         this.OpenAtLogin = this.CanOpenAtLogin;
 
@@ -81,6 +84,9 @@ public sealed class OnboardingViewModel : ViewModelBase
     public bool OpenAtLogin { get; set; }
 
     /// <summary>Only an installed copy can open at login, so the box shows only there.</summary>
+    /// <summary>The words for the computer and its parts, which the welcome binds to where the Mac's and Windows' differ.</summary>
+    public SystemText Words { get; }
+
     public bool CanOpenAtLogin { get; }
 
     public OnboardingProfileViewModel Personal { get; }

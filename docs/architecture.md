@@ -88,7 +88,10 @@ Before a pull request:
   in both - which `AppServices` calls; the build decides which one exists. No `#if` in shared code.
 - **What the platform can do** is `PlatformCapabilities` (pages, music, Docker, Focus, the Dock, the
   Automation permission, which browsers…), registered by the platform. Profile Setup and Settings
-  hide what it lacks and `AutomationPlanBuilder` plans no step for it. The commands each platform may
+  hide what it lacks and `AutomationPlanBuilder` plans no step for it. Its `Wording` (`Mac` or
+  `Windows`) is words, not features: `SystemText` gives a page the Mac's or Windows' text for the
+  computer and its parts - the menu bar or the tray, Finder or File Explorer
+  ([translating](translating.md#for-developers)). The commands each platform may
   run are its `CommandAllowlist`. What a platform will have but doesn't yet is a stand-in that says
   so: Windows' are in `Infrastructure.Windows/NotYet/`, each gone with the stage that brings its part.
 - **`AppStartup`** runs before the first window, or before a command: tidies the log, loads the

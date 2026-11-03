@@ -61,9 +61,16 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         this.shell = shell;
         this.Updates = updates;
         this.capabilities = capabilities;
+        this.Words = new SystemText(capabilities);
+        this.AppearanceChoices =
+        [
+            new(AppearanceMode.System, this.Words.MatchSystem),
+            new(AppearanceMode.Light, Strings.Settings_Theme_Light),
+            new(AppearanceMode.Dark, Strings.Settings_Theme_Dark)
+        ];
         this.Transfer = new SettingsTransferViewModel(appState, configurationStore, capabilities);
         this.IgnoredApps = new IgnoredAppsViewModel(appState, configurationStore, installedApps);
-        this.Diagnostics = new SettingsDiagnosticsViewModel(appState, configurationStore, shell, diagnostics, () => this.AutomationGranted);
+        this.Diagnostics = new SettingsDiagnosticsViewModel(appState, configurationStore, shell, diagnostics, this.Words, () => this.AutomationGranted);
         this.askOnSwitch = this.appState.Configuration.AskOnSwitch;
 
         this.appState.ConfigurationChanged += this.OnConfigurationChanged;
@@ -76,7 +83,7 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         this.selectedAppearance = this.AppearanceChoices.First(c => c.Value == this.appState.Configuration.Appearance);
         this.LanguageChoices =
         [
-            new(AppLanguages.System, Strings.Settings_Language_MatchMacOS),
+            new(AppLanguages.System, this.Words.MatchSystem),
             .. AppLanguages.Supported.Select(language => new Choice<string>(language.Code, language.NativeName))
         ];
         this.selectedLanguage = this.LanguageChoices.FirstOrDefault(c => string.Equals(c.Value, this.appState.Configuration.Language, StringComparison.OrdinalIgnoreCase))
@@ -95,13 +102,11 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
         _ = this.RefreshPermissionsAsync();
     }
 
-    /// <summary>Match macOS, light or dark - applied the moment it is saved.</summary>
-    public IReadOnlyList<Choice<AppearanceMode>> AppearanceChoices { get; } =
-    [
-        new(AppearanceMode.System, Strings.Settings_Theme_MatchMacOS),
-        new(AppearanceMode.Light, Strings.Settings_Theme_Light),
-        new(AppearanceMode.Dark, Strings.Settings_Theme_Dark)
-    ];
+    /// <summary>The words for the computer and its parts, which the page binds to where the Mac's and Windows' differ.</summary>
+    public SystemText Words { get; }
+
+    /// <summary>Match the system, light or dark - applied the moment it is saved.</summary>
+    public IReadOnlyList<Choice<AppearanceMode>> AppearanceChoices { get; }
 
     public Choice<AppearanceMode> SelectedAppearance
     {
@@ -142,7 +147,7 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
 
     public string LanguagePendingText =>
         Localized.Format(
-            Strings.Settings_Language_RestartHint,
+            this.Words.LanguageRestartHint,
             AppLanguages.Supported.First(l => l.Code == AppLanguages.Resolve(this.SelectedLanguage.Value, this.preferredLanguages.Get())).NativeName);
 
     /// <summary>Whether a switch first asks about the apps and tabs neither profile has.</summary>
@@ -206,10 +211,10 @@ public sealed class SettingsViewModel : ViewModelBase, IDisposable
 
     /// <summary>Under the switch: why it didn't change, what macOS still wants, or why it can't be used.</summary>
     public string? OpenAtLoginHint => this.loginItemProblem is { } problem
-        ? Localized.Format(Strings.Settings_OpenAtLogin_Failed, problem)
+        ? Localized.Format(this.Words.OpenAtLoginFailed, problem)
         : this.loginItemStatus switch
         {
-            LoginItemStatus.NeedsApproval => Strings.Settings_OpenAtLogin_NeedsApproval,
+            LoginItemStatus.NeedsApproval => this.Words.OpenAtLoginNeedsApproval,
             LoginItemStatus.Unavailable => Strings.Settings_OpenAtLogin_Unavailable,
             _ => null
         };

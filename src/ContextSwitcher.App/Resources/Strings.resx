@@ -1786,4 +1786,59 @@ ContextSwitcher {0}, {1} {2}</value>
   <data name="Contact_IssueOpenedNotCopied" xml:space="preserve">
     <value>The form is open on GitHub. Copy diagnostics above and paste them into its Diagnostics field.</value>
   </data>
+  <!-- Windows' own words, where the Mac's name a Mac thing: the same key with _Windows, chosen by SystemText. -->
+  <data name="Onboarding_OneClickFlipsYourMac_Windows" xml:space="preserve">
+    <value>One click flips your PC between work and personal — opening the apps you need, closing the ones you don&apos;t, and keeping the two from bleeding into each other.</value>
+  </data>
+  <data name="Onboarding_SwitchAnytimeFromTheMenu_Windows" xml:space="preserve">
+    <value>• Switch anytime from the tray icon</value>
+  </data>
+  <data name="Onboarding_AddBrowserTabsFocusAnd_Windows" xml:space="preserve">
+    <value>• Add quick links and notes in Profile Setup</value>
+  </data>
+  <data name="Onboarding_PinTheIcon_Windows" xml:space="preserve">
+    <value>• Keep the icon in sight: drag it from the ^ arrow beside the clock onto the taskbar</value>
+  </data>
+  <data name="Settings_Theme_MatchMacOS_Windows" xml:space="preserve">
+    <value>Match Windows</value>
+  </data>
+  <data name="Settings_MatchMacOSFollowsTheSystems_Windows" xml:space="preserve">
+    <value>Match Windows follows the system&apos;s light or dark mode as it changes.</value>
+  </data>
+  <data name="Settings_OpenAtLogin_Description_Windows" xml:space="preserve">
+    <value>Starts Context Switcher when you sign in to Windows, so it&apos;s in the tray and counting time without you opening it.</value>
+  </data>
+  <data name="Settings_OpenAtLogin_NeedsApproval_Windows" xml:space="preserve">
+    <value>It is turned off in Windows. Turn it on in Settings → Apps → Startup.</value>
+  </data>
+  <data name="Settings_OpenAtLogin_Failed_Windows" xml:space="preserve">
+    <value>Windows didn&apos;t allow it: {0}</value>
+  </data>
+  <data name="Settings_Transfer_Description_Windows" xml:space="preserve">
+    <value>Save your profiles and settings to a file - to keep a copy, or to set up another PC the same way. Time tracking history isn&apos;t included.</value>
+  </data>
+  <data name="Settings_Language_RestartHint_Windows" xml:space="preserve">
+    <value>Quit Context Switcher from its tray icon and open it again to see it in {0}.</value>
+  </data>
+  <data name="Settings_Diagnostics_Description_Windows" xml:space="preserve">
+    <value>Copies the version, your Windows version, what is switched on and the recent log to paste into a message. It has no profile names, web addresses or emails.</value>
+  </data>
+  <data name="Settings_ShowLog_Windows" xml:space="preserve">
+    <value>Show the log in File Explorer</value>
+  </data>
+  <data name="Contact_EmailOpened_Windows" xml:space="preserve">
+    <value>A new message is open in your mail app, and the diagnostics are copied: paste them into it with Ctrl+V.</value>
+  </data>
+  <data name="Settings_RecordsHowLongYouSpend_Windows" xml:space="preserve">
+    <value>Records how long you spend in each profile, for the Stats page and the chart in the tray dashboard. It stays on this PC.</value>
+  </data>
+  <data name="ProfileSetup_ShownInTheMenuBar_Windows" xml:space="preserve">
+    <value>Shown in the tray dashboard while this profile is active, one click to open - your team&apos;s board, a dashboard, your inbox.</value>
+  </data>
+  <data name="ProfileSetup_RemindersShownInTheMenu_Windows" xml:space="preserve">
+    <value>Reminders shown in the tray dashboard while this profile is active - a standup time, today&apos;s focus. One per line.</value>
+  </data>
+  <data name="Settings_OpenAtLogin_OpenLoginItems_Windows" xml:space="preserve">
+    <value>Open Startup apps ↗</value>
+  </data>
 </root>

@@ -1381,4 +1381,59 @@ ContextSwitcher {0}, {1} {2}</value>
   <data name="Contact_IssueOpenedNotCopied" xml:space="preserve">
     <value>Форму відкрито на GitHub. Скопіюйте діагностику вище і вставте її в поле Diagnostics.</value>
   </data>
+  <!-- Windows' own words, where the Mac's name a Mac thing: the same key with _Windows, chosen by SystemText. -->
+  <data name="Onboarding_OneClickFlipsYourMac_Windows" xml:space="preserve">
+    <value>Один клік перемикає ваш ПК між роботою та особистим — відкриває потрібні програми, закриває зайві й не дає одному змішуватися з іншим.</value>
+  </data>
+  <data name="Onboarding_SwitchAnytimeFromTheMenu_Windows" xml:space="preserve">
+    <value>• Перемикайтеся будь-коли через значок в області сповіщень</value>
+  </data>
+  <data name="Onboarding_AddBrowserTabsFocusAnd_Windows" xml:space="preserve">
+    <value>• Додавайте швидкі посилання й нотатки в налаштуваннях профілю</value>
+  </data>
+  <data name="Onboarding_PinTheIcon_Windows" xml:space="preserve">
+    <value>• Щоб значок був завжди на видноті, перетягніть його зі стрілки ^ біля годинника на панель завдань</value>
+  </data>
+  <data name="Settings_Theme_MatchMacOS_Windows" xml:space="preserve">
+    <value>Як у Windows</value>
+  </data>
+  <data name="Settings_MatchMacOSFollowsTheSystems_Windows" xml:space="preserve">
+    <value>«Як у Windows» повторює світлий чи темний режим системи, коли він змінюється.</value>
+  </data>
+  <data name="Settings_OpenAtLogin_Description_Windows" xml:space="preserve">
+    <value>Запускає Context Switcher, коли ви входите у Windows, тож він в області сповіщень і рахує час, навіть якщо ви його не відкривали.</value>
+  </data>
+  <data name="Settings_OpenAtLogin_NeedsApproval_Windows" xml:space="preserve">
+    <value>У Windows це вимкнено. Увімкніть у Параметрах → Програми → Автозавантаження.</value>
+  </data>
+  <data name="Settings_OpenAtLogin_Failed_Windows" xml:space="preserve">
+    <value>Windows не дозволив: {0}</value>
+  </data>
+  <data name="Settings_Transfer_Description_Windows" xml:space="preserve">
+    <value>Збережіть профілі й параметри у файл — щоб мати копію або налаштувати інший ПК так само. Історія обліку часу у файл не потрапляє.</value>
+  </data>
+  <data name="Settings_Language_RestartHint_Windows" xml:space="preserve">
+    <value>Закрийте Context Switcher через значок в області сповіщень і відкрийте знову, щоб побачити його мовою: {0}.</value>
+  </data>
+  <data name="Settings_Diagnostics_Description_Windows" xml:space="preserve">
+    <value>Копіює версію, версію вашої Windows, що увімкнено і свіжий журнал, щоб вставити в повідомлення. У ньому немає назв профілів, веб-адрес чи пошти.</value>
+  </data>
+  <data name="Settings_ShowLog_Windows" xml:space="preserve">
+    <value>Показати журнал у Провіднику</value>
+  </data>
+  <data name="Contact_EmailOpened_Windows" xml:space="preserve">
+    <value>У вашій пошті відкрито новий лист, а діагностику скопійовано: вставте її в лист (Ctrl+V).</value>
+  </data>
+  <data name="Settings_RecordsHowLongYouSpend_Windows" xml:space="preserve">
+    <value>Записує, скільки часу ви проводите в кожному профілі, для сторінки «Статистика» й графіка на панелі. Дані лишаються на цьому ПК.</value>
+  </data>
+  <data name="ProfileSetup_ShownInTheMenuBar_Windows" xml:space="preserve">
+    <value>Показуються на панелі біля значка в області сповіщень, поки цей профіль активний, і відкриваються одним кліком — дошка команди, дашборд, пошта.</value>
+  </data>
+  <data name="ProfileSetup_RemindersShownInTheMenu_Windows" xml:space="preserve">
+    <value>Нагадування на панелі біля значка в області сповіщень, поки цей профіль активний: час стендапу, план на сьогодні. По одному в рядку.</value>
+  </data>
+  <data name="Settings_OpenAtLogin_OpenLoginItems_Windows" xml:space="preserve">
+    <value>Відкрити Автозавантаження ↗</value>
+  </data>
 </root>

@@ -16,6 +16,13 @@ public sealed class WindowsPlatformTests
         Assert.False(windows.PlaysMusic);
     }
 
+    /// <summary>The interface says PC, tray, File Explorer and Ctrl where it would say Mac, menu bar, Finder and ⌘.</summary>
+    [Fact]
+    public void WindowsUsesItsOwnWords()
+    {
+        Assert.Equal(SystemWording.Windows, WindowsPlatform.Capabilities.Wording);
+    }
+
     [Fact]
     public void FileExplorerAndPowerShellAreAllItRuns()
     {

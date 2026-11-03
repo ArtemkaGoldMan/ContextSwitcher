@@ -22,6 +22,7 @@ public static class WindowsPlatform
         Docker = false,
         DockIcon = false,
         AutomationPermission = false,
+        Wording = SystemWording.Windows,
         BrowserPages = false,
         Browsers = [],
         FocusFilterBrowsers = []
