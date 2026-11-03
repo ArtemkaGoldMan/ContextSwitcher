@@ -57,6 +57,11 @@ These look like breaks of the rules and are not:
 
 - **`App` and `Program` read `AppHost.Services`.** Avalonia creates `App`, and `Program` is the entry
   that builds the container.
+- **Each build has an `Entry` of its own**, in `Entry.cs` (the Mac) or `Entry.Windows.cs`, which the
+  project's targets choose between as they choose the platform project. `Main` is there and calls
+  `Program.Run`. Windows' calls `VelopackApp` first, to answer its installer before anything starts; the
+  packer reads `Main` itself to check that, and doesn't follow a call out of it, so it can't be moved
+  into a platform project the way the registrations are.
 - **Views give view models what belongs to their window**, such as the file picker and the clipboard,
   which need the window's `TopLevel`.
 - **Parent view models build their children** with explicit dependencies; rows hold no services.
