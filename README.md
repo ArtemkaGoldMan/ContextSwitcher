@@ -1,6 +1,6 @@
 # Usage statistics
 
-Written every day by [the stats workflow](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/.github/workflows/stats.yml); [what the numbers mean](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/docs/usage-statistics.md). Last run 2026-11-04 (UTC).
+Written every day by [the stats workflow](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/.github/workflows/stats.yml); [what the numbers mean](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/docs/usage-statistics.md). Last run 2026-11-05 (UTC).
 
 ## Downloads
 
@@ -30,8 +30,8 @@ Downloads a day (`.dmg` and `.zip`), from one run's totals to the next:
 ```mermaid
 xychart-beta
     title "Downloads a day"
-    x-axis ["10-16*", "10-17", "10-18", "10-19", "10-20", "10-21*", "10-22", "10-23", "10-24", "10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04"]
-    bar [3, 1, 0, 0, 0, 2, 3, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0]
+    x-axis ["10-16*", "10-17", "10-18", "10-19", "10-20", "10-21*", "10-22", "10-23", "10-24", "10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05"]
+    bar [3, 1, 0, 0, 0, 2, 3, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0]
 ```
 
 \* A release came out that day: 10-16 v0.6.7; 10-21 v0.6.8.
@@ -43,8 +43,8 @@ Stars, forks and people watching the repository - the slowest-moving and the mos
 ```mermaid
 xychart-beta
     title "Stars"
-    x-axis ["10-21", "10-22", "10-23", "10-24", "10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04"]
-    line [0, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 6, 6, 7, 7]
+    x-axis ["10-21", "10-22", "10-23", "10-24", "10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05"]
+    line [0, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 6, 6, 7, 7, 7]
 ```
 
 ## Visitors
@@ -54,16 +54,17 @@ Views of the repository's pages on GitHub and the people behind them, a day. Bar
 ```mermaid
 xychart-beta
     title "Visitors a day"
-    x-axis ["10-06", "10-07", "10-08", "10-09", "10-10*", "10-11*", "10-12*", "10-13*", "10-14*", "10-15*", "10-16*", "10-17", "10-18", "10-19", "10-20", "10-21*", "10-22", "10-23", "10-24", "10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04"]
-    bar [0, 0, 0, 0, 2, 21, 2, 21, 9, 4, 1, 6, 0, 3, 6, 3, 1, 7, 5, 10, 14, 14, 0, 0, 0, 2, 0, 11, 0, 0]
-    line [0, 0, 0, 0, 1, 4, 1, 4, 1, 2, 1, 1, 0, 2, 1, 3, 1, 1, 2, 8, 3, 2, 0, 0, 0, 2, 0, 1, 0, 0]
+    x-axis ["10-07", "10-08", "10-09", "10-10*", "10-11*", "10-12*", "10-13*", "10-14*", "10-15*", "10-16*", "10-17", "10-18", "10-19", "10-20", "10-21*", "10-22", "10-23", "10-24", "10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05"]
+    bar [0, 0, 0, 2, 21, 2, 21, 9, 4, 1, 6, 0, 3, 6, 3, 1, 7, 5, 10, 14, 14, 0, 0, 0, 2, 0, 11, 0, 0, 0]
+    line [0, 0, 0, 1, 4, 1, 4, 1, 2, 1, 1, 0, 2, 1, 3, 1, 1, 2, 8, 3, 2, 0, 0, 0, 2, 0, 1, 0, 0, 0]
 ```
 
 \* A release came out that day: 10-10 v0.1.0, v0.2.0; 10-11 v0.3.0; 10-12 v0.4.0; 10-13 v0.4.1, v0.5.0; 10-14 v0.6.0, v0.6.1, v0.6.2, v0.6.3; 10-15 v0.6.4, v0.6.5, v0.6.6; 10-16 v0.6.7; 10-21 v0.6.8.
 
 | Day | Views | Visitors | Clones |
 | --- | ---: | ---: | ---: |
-| 2026-11-04 | 0 | 0 | 0 |
+| 2026-11-05 | 0 | 0 | 0 |
+| 2026-11-04 | 0 | 0 | 31 |
 | 2026-11-03 | 0 | 0 | 58 |
 | 2026-11-02 | 11 | 1 | 46 |
 | 2026-11-01 | 0 | 0 | 10 |
@@ -92,31 +93,30 @@ xychart-beta
 | 2026-10-09 | 0 | 0 | 0 |
 | 2026-10-08 | 0 | 0 | 1 |
 | 2026-10-07 | 0 | 0 | 0 |
-| 2026-10-06 | 0 | 0 | 1 |
 
 Clones are almost all automated - CI and bots - and say little about people.
 
 ### Where they came from
 
-GitHub's top sites for the 14 days up to 2026-11-04.
+GitHub's top sites for the 14 days up to 2026-11-05.
 
 | Site | Views | Visitors |
 | --- | ---: | ---: |
 | m.facebook.com | 6 | 5 |
 | github.com | 5 | 4 |
-| Google | 5 | 2 |
-| linkedin.com | 3 | 2 |
-| l.threads.com | 2 | 2 |
+| Google | 4 | 2 |
+| linkedin.com | 2 | 1 |
 | facebook.com | 1 | 1 |
+| l.threads.com | 1 | 1 |
 | teams.public.onecdn.static.microsoft | 1 | 1 |
 
 ### What they looked at
 
-GitHub's top pages for the 14 days up to 2026-11-04.
+GitHub's top pages for the 14 days up to 2026-11-05.
 
 | Page | Views | Visitors |
 | --- | ---: | ---: |
-| / | 31 | 18 |
+| / | 29 | 16 |
 | /pulls | 5 | 3 |
 | /stargazers | 4 | 1 |
 | /issues | 2 | 2 |
@@ -125,4 +125,4 @@ GitHub's top pages for the 14 days up to 2026-11-04.
 | /pull/88 | 2 | 1 |
 | /tree/stats | 2 | 1 |
 | /actions | 1 | 1 |
-| /blob/main/docs/windows-plan.md | 1 | 1 |
+| /blob/main/install.sh | 1 | 1 |
