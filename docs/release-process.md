@@ -6,7 +6,7 @@ a day and offer it in Settings → Updates.
 
 ## What a release contains
 
-A GitHub Release for tag `vX.Y.Z` with three files, all an Apple silicon (`osx-arm64`) build:
+A GitHub Release for tag `vX.Y.Z` with the Mac's three files, all an Apple silicon (`osx-arm64`) build, and Windows' four ([cutting a release](#cutting-a-release)):
 
 | File | For |
 | --- | --- |
@@ -149,9 +149,18 @@ folder and takes the app out of what opens at sign-in.
 1. Bump `<Version>` in `src/ContextSwitcher.App/ContextSwitcher.App.csproj`. That is the only place.
 2. Merge to `main`.
 3. Tag it: `git tag vX.Y.Z && git push origin vX.Y.Z`.
-4. The workflow checks the tag matches `<Version>`, builds with warnings as errors, runs the tests,
-   builds and signs the app, packages it and publishes the release with install notes
-   (`.github/release-notes.md`) followed by the generated changelog.
+4. The workflow runs three jobs. **macOS** checks the tag matches `<Version>`, builds with warnings as
+   errors, runs the tests, builds and signs the app and packages it. **Windows** does the same checks,
+   builds the installer and installs, runs and removes it as the Windows package job does. **Publish**
+   then makes one release of what they built, with install notes (`.github/release-notes.md`)
+   followed by the generated changelog.
+
+The release has the Mac's three files and Windows' four: `ContextSwitcher-win-Setup.exe` (what people
+download), `ContextSwitcher-X.Y.Z-full.nupkg` and `releases.win.json` (what the updater reads) and
+`ContextSwitcher-win-Portable.zip`. The macOS job decides the release: if it fails nothing is
+published. The Windows job does not: if it fails the release has the Mac's files only, which a Windows
+copy passes over as not its own, and the Mac does not wait on Windows. The release is always marked the
+latest, since it always has the Mac's files. Windows is `win-x64` only; `win-arm64` is later.
 
 A release marked as a pre-release on GitHub is not offered as an update.
 
