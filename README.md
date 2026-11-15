@@ -179,13 +179,28 @@ the same as the command.
 You need **Windows 10 (version 2004 or later) or Windows 11**, on an Intel or AMD PC (x64). Arm PCs
 are not built yet.
 
+**Easiest — paste this into PowerShell.** It downloads the installer, installs it for you alone, without
+asking for administrator rights, and opens the app. Windows shows no warning for it: only a file a
+browser downloaded gets one. Open **PowerShell** (press the **Windows** key, type *PowerShell*, press
+Enter), paste with a right-click or **Ctrl+V**, and press Enter:
+
+```powershell
+irm https://raw.githubusercontent.com/ArtemkaGoldMan/ContextSwitcher/main/install.ps1 | iex
+```
+
+It is short enough to read first: [install.ps1](install.ps1). Run it again to update. If ContextSwitcher is
+running, it asks you to quit it first (right-click its tray icon → **Quit**).
+
+**Or download the installer yourself:**
+
 1. Download **ContextSwitcher-win-Setup.exe** from the [latest release](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/latest).
-2. Run it. **Windows shows "Windows protected your PC" once**, because the installer isn't signed
-   (a certificate costs money this free project doesn't have). Click **More info**, then **Run anyway**.
-3. It installs for you alone, without asking for administrator rights, adds ContextSwitcher to the Start
-   menu and opens it.
-4. Look for the icon in the **tray**, by the clock. Windows 11 hides a new one behind the **^** arrow:
-   drag it out onto the taskbar to keep it in sight.
+2. Run it. **Windows shows "Windows protected your PC" once**, because a browser marked the download
+   and the installer isn't signed (a certificate costs money this free project doesn't have). Click
+   **More info**, then **Run anyway**.
+
+Either way it adds ContextSwitcher to the Start menu and opens it. Look for the icon in the **tray**, by
+the clock. Windows 11 hides a new one behind the **^** arrow: drag it out onto the taskbar to keep it in
+sight.
 
 **What works on Windows today:** profiles that open, close and hide your apps, the dashboard with
 links and notes, time in each profile (paused while the PC sleeps or is locked), opening at sign-in,

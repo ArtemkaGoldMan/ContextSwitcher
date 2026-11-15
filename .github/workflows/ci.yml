@@ -278,6 +278,6 @@ jobs:
         shell: pwsh
         run: |
           Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser
-          $findings = Invoke-ScriptAnalyzer -Path scripts/windows -Recurse -Severity Warning, Error
+          $findings = Invoke-ScriptAnalyzer -Path scripts/windows, install.ps1 -Recurse -Severity Warning, Error
           $findings | Format-Table -AutoSize | Out-String | Write-Output
           if ($findings) { exit 1 }

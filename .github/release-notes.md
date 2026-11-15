@@ -38,7 +38,13 @@ Requires an Apple silicon Mac and macOS 13 or later.
 
 ## Install on Windows (preview)
 
-Download **`ContextSwitcher-win-Setup.exe`** below and run it. **Windows shows "Windows protected your
+**Easiest — paste this into PowerShell.** It downloads, installs and opens the app, with no SmartScreen warning:
+
+```powershell
+irm https://raw.githubusercontent.com/ArtemkaGoldMan/ContextSwitcher/main/install.ps1 | iex
+```
+
+**Or download `ContextSwitcher-win-Setup.exe`** below and run it. **Windows shows "Windows protected your
 PC" once**, because the installer isn't signed: click **More info**, then **Run anyway**. It installs
 for you alone, with no administrator rights, and opens the app in the tray (Windows 11 hides a new
 icon behind the **^** arrow by the clock).
