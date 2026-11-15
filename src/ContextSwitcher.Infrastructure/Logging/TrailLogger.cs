@@ -147,18 +147,20 @@ public sealed class TrailLogger : ILogger
     private List<LogEntry> Compose(LogEntry entry, bool writeNow)
     {
         List<LogEntry> lines = [];
-        if (!this.headerWritten)
-        {
-            this.headerWritten = true;
-            lines.Add(this.Header(entry.Timestamp));
-        }
-
         if (!writeNow)
         {
             lines.AddRange(this.TakeTrailFor(entry).Select(crumb => WithData(crumb, "trail", "true")));
         }
 
         lines.Add(entry);
+
+        // The header goes first, and is dated as the line after it, or the log would read as going back in time.
+        if (!this.headerWritten)
+        {
+            this.headerWritten = true;
+            lines.Insert(0, this.Header(lines.Min(line => line.Timestamp)));
+        }
+
         return lines;
     }
 
