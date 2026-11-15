@@ -22,32 +22,27 @@ way:
 
 ## Now
 
-**0.6.7**, October 2026, for macOS 13 and later on Apple silicon. Everything in the
-[README](../README.md#why) works: apps, browser pages and profiles, Focus, music, Docker, quick links
-and notes, time in each profile, asking about everything else on a switch, the command line, English
-and Ukrainian.
+**0.7.0**, November 2026, for macOS 13 and later on Apple silicon, and a preview for Windows 10 and
+11. On a Mac everything in the [README](../README.md#why) works: apps, browser pages and profiles,
+Focus, music, Docker, quick links and notes, time in each profile, asking about everything else on a
+switch, the command line, English and Ukrainian.
 
-Since 0.6.7 the code under the app has been rebuilt for a second platform, without changing what it
-does: every piece of macOS sits behind an interface, in a project of its own, and the solution builds
-and tests on Windows ([stage 0 of the Windows plan](windows-plan.md#stage-0---groundwork-done)).
-
-The Windows version is built up to its first preview: the tray and dashboard, profiles that open, close
-and hide apps, time, opening at sign-in, an installer and updating from inside the app, in English and
-Ukrainian ([stage 1 of the Windows plan](windows-plan.md#stage-1---apps)). Its first release is next.
+The code under the app has been rebuilt for a second platform without changing what the Mac app does:
+every piece of macOS sits behind an interface, in a project of its own, and the solution builds and
+tests on Windows ([stage 0 of the Windows plan](windows-plan.md#stage-0---groundwork-done)). On top
+of it the Windows preview has the tray and dashboard, profiles that open, close and hide apps, time,
+opening at sign-in, an installer and updating from inside the app, in English and Ukrainian
+([stage 1 of the Windows plan](windows-plan.md#stage-1---apps)).
 
 ## Next
 
-1. **A Mac release built from the rebuilt code.** Nothing since
-   [#76](https://github.com/ArtemkaGoldMan/ContextSwitcher/pull/76) has reached Mac users yet, and
-   CI can't try a switch on a real Mac. Before it ships, an installed build is tried on a Mac:
-   switching both ways, closing and launching apps, browser pages, Focus, music, the dashboard under
-   the menu bar, updating from 0.6.7, and [the checks by hand](release-process.md#by-hand-on-an-installed-build).
-2. **The Windows version**, a stage at a time - apps (built; its first release is next), then the browser, then the rest, then Windows
+1. **The Windows version**, a stage at a time - apps (released as a preview), then the browser, then
+   the rest, then Windows
    1.0 - as unsigned previews first: [the Windows plan](windows-plan.md). What Windows can and can't
    do is in [A Windows version](windows-port.md).
-3. **New features**, below, in four groups. They go alongside the Windows stages: each release
+2. **New features**, below, in four groups. They go alongside the Windows stages: each release
    carries what is ready, and both platforms share one version number.
-4. **Counting the people who use it**, if wanted. Downloads don't say how many people use the app; a
+3. **Counting the people who use it**, if wanted. Downloads don't say how many people use the app; a
    once-a-day count, asked for and anonymous, would. Not built; the design and what is left to decide
    are in [usage statistics](usage-statistics.md#the-plan-counting-the-people-who-use-it).
 

@@ -4,12 +4,12 @@ The order to build the Windows version in, one release at a time: first apps, th
 the rest. What Windows can and can't do, and why, is in [A Windows version](windows-port.md); where
 it sits among everything else, in the [roadmap](roadmap.md).
 
-**Where it stands** (November 2026): stage 0, the groundwork on the Mac, is done - every
+**Where it stands** (November 2026, at 0.7.0): stage 0, the groundwork on the Mac, is done - every
 piece of macOS is behind an interface, and the Mac and Windows each have a project of their own
 ([stage 0](#stage-0---groundwork-done)). Stage 1 is under way: the app starts on Windows with its tray
 icon and dashboard, switches profiles by opening, closing and hiding apps, counts time apart from
 sleep and a locked screen, opens at sign-in, and speaks Windows' words in English and Ukrainian; it
-has an installer, updates itself and has a release workflow, and what is left is its first release
+has an installer, updates itself and is released with the Mac app as a preview
 ([stage 1](#stage-1---apps)).
 
 ## How it goes
@@ -25,7 +25,7 @@ has an installer, updates itself and has a release workflow, and what is left is
 | Stage | Windows gets | Status |
 | --- | --- | --- |
 | [0. Groundwork](#stage-0---groundwork-done) | nothing yet: the seams, the projects, CI on Windows | done |
-| [1. Apps](#stage-1---apps) | the tray, profiles, launching, closing and hiding apps, time | built, with an installer and updates; its first release is next. `win-arm64` comes after |
+| [1. Apps](#stage-1---apps) | the tray, profiles, launching, closing and hiding apps, time | released as a preview (0.7.0), with an installer and updates. `win-arm64` comes after |
 | [2. Browser](#stage-2---browser) | pages, a window per profile, browser profiles, reading tabs | |
 | [3. The rest](#stage-3---the-rest) | Docker, Spotify, notifications, the command line, a hotkey | |
 | [4. Windows 1.0](#stage-4---windows-10) | signed, in the Store or with an installer, documented, translated | |
