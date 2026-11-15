@@ -14,6 +14,8 @@
     <!-- Windows' own notices - the taskbar turning light or dark - which .NET leaves to this package
          outside Windows Forms. -->
     <PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.13" />
+    <!-- The installer's library: finds, downloads and applies an update (Updates/). The app's own reference is for its start-up. -->
+    <PackageReference Include="Velopack" Version="1.2.161" />
   </ItemGroup>
 
   <PropertyGroup>
