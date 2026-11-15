@@ -134,6 +134,9 @@ def collect_traffic(repo, folder, today, token):
 
 def kind(asset):
     name = asset.lower()
+    # Windows' files - the installer, its package, the portable zip - are not the Mac's updates or disks.
+    if "-win-" in name or name.endswith(".nupkg") or name == "releases.win.json":
+        return None
     if name.endswith(".dmg"):
         return "dmg"
     if name.endswith(".zip"):

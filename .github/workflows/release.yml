@@ -4,10 +4,15 @@ name: Release
 #
 #   git tag v0.2.0 && git push origin v0.2.0
 #
-# The tag has to match <Version> in ContextSwitcher.App.csproj. Needs the repository secrets
-# CS_SIGNING_P12_BASE64 and CS_SIGNING_PASSWORD - see scripts/create-signing-identity.sh and
-# docs/release-process.md. Without them the build stops rather than publish an ad-hoc build, which
+# The tag has to match <Version> in ContextSwitcher.App.csproj. Three jobs: the Mac's, Windows', and one
+# that publishes what they built as a single release. Needs the repository secrets CS_SIGNING_P12_BASE64
+# and CS_SIGNING_PASSWORD (the Mac's) - see scripts/create-signing-identity.sh and
+# docs/release-process.md. Without them the Mac build stops rather than publish an ad-hoc build, which
 # could not update itself.
+#
+# The Mac's job decides the release: if it fails nothing is published. Windows' does not: if it fails
+# the release has the Mac's files only, which a Windows copy passes over as not its own, and the Mac
+# does not wait on Windows.
 
 on:
   push:
@@ -17,7 +22,8 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  mac:
+    name: macOS
     # Apple silicon, which is what the app is built for.
     runs-on: macos-15
     steps:
@@ -56,20 +62,91 @@ jobs:
           cd dist
           shasum -a 256 "ContextSwitcher-$VERSION.dmg" ContextSwitcher.zip > SHA256SUMS.txt
 
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-mac
+          path: |
+            dist/ContextSwitcher-*.dmg
+            dist/ContextSwitcher.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Check the tag matches the version
+        shell: bash
+        run: |
+          version="$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' src/ContextSwitcher.App/ContextSwitcher.App.csproj | head -1)"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::The tag $GITHUB_REF_NAME doesn't match <Version>$version</Version> in ContextSwitcher.App.csproj."
+            exit 1
+          fi
+
+      - name: Build
+        run: dotnet build --configuration Release -warnaserror
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build
+
+      - name: Build the installer
+        shell: pwsh
+        run: ./scripts/windows/build-installer.ps1
+
+      - name: Install it, run it and remove it
+        shell: pwsh
+        run: ./scripts/windows/smoke-test-installer.ps1
+
+      # What the updater reads is releases.win.json and the full package it lists, so those go with the
+      # installer; the portable zip is for people who want no installation.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-windows
+          path: |
+            dist/windows/ContextSwitcher-win-Setup.exe
+            dist/windows/ContextSwitcher-win-Portable.zip
+            dist/windows/ContextSwitcher-*-full.nupkg
+            dist/windows/releases.win.json
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    needs: [mac, windows]
+    # Whatever Windows came to; not when the Mac's job failed or the run was cancelled.
+    if: ${{ !cancelled() && needs.mac.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-mac
+          path: files
+
+      - uses: actions/download-artifact@v8
+        if: ${{ needs.windows.result == 'success' }}
+        with:
+          name: release-windows
+          path: files
+
       # Marked the latest outright: install.sh and the Homebrew cask download
       # releases/latest/download/ContextSwitcher.zip, so the latest release must always be one with the
-      # Mac's files. This one always has them. A release without them - Windows files only, once there is
-      # a Windows build - is published with --latest=false (docs/windows-plan.md, keeping the Mac's
-      # latest release).
+      # Mac's files. This one always has them, since the job above only runs once the Mac's job did.
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            "dist/ContextSwitcher-$VERSION.dmg" \
-            dist/ContextSwitcher.zip \
-            dist/SHA256SUMS.txt \
-            --title "ContextSwitcher $VERSION" \
+          gh release create "$GITHUB_REF_NAME" files/* \
+            --title "ContextSwitcher ${GITHUB_REF_NAME#v}" \
             --notes-file .github/release-notes.md \
             --generate-notes \
             --latest
