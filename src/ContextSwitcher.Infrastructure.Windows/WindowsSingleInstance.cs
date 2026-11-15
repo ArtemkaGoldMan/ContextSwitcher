@@ -125,7 +125,7 @@ public sealed class WindowsSingleInstance : ISingleInstance, IDisposable
     }
 
     private NamedPipeServerStream CreatePipe() => new(
-        this.name, PipeDirection.In, maxNumberOfServerInstances: 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+        this.name, PipeDirection.In, maxNumberOfServerInstances: 2, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
 
     /// <param name="first">The pipe already made for the first copy to find; each one after is made here.</param>
     private async Task ListenAsync(NamedPipeServerStream first, CancellationToken cancellationToken)
@@ -151,6 +151,9 @@ public sealed class WindowsSingleInstance : ISingleInstance, IDisposable
                         continue;
                     }
 
+                    // The next pipe is made before this one is read, so there is never a moment with none for
+                    // a copy to find, however long the thread pool takes to come back to this loop.
+                    waiting = this.CreatePipe();
                     using StreamReader reader = new(pipe, Encoding.UTF8);
                     List<string> arguments = [];
                     while (await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false) is { } line)

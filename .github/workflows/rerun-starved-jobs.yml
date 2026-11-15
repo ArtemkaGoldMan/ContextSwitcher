@@ -1,0 +1,82 @@
+name: Rerun starved jobs
+
+# A job that waits a quarter of an hour for a runner and gets none is cancelled by GitHub - "The job was not
+# acquired by Runner of type hosted even after multiple attempts" - and the Mac's runners are the ones that
+# come up short. It is nothing the change did, and the cure is to start it again, which this does: when a CI
+# or CodeQL run ends, every job of it that was cancelled for want of a runner is run again, after a pause, up
+# to three more times. A job that failed for any reason of its own is left alone, and so is a run in which
+# one did: that is for a person to look at. GitHub can't be told to wait longer for a runner; this is the
+# waiting longer.
+#
+# It never checks out or runs the code of a pull request, only asks GitHub which jobs were starved.
+
+on:
+  workflow_run:
+    workflows: [CI, CodeQL]
+    types: [completed]
+
+permissions:
+  actions: write
+  checks: read
+  contents: read
+
+jobs:
+  rerun:
+    name: Rerun the jobs no runner was found for
+    # A run that passed, or that a newer push cancelled whole, has nothing to start again.
+    if: ${{ github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'cancelled' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Find the starved jobs and start them again
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          RUN_NAME: ${{ github.event.workflow_run.name }}
+        run: |
+          set -euo pipefail
+
+          # The first run and three more.
+          if [ "$ATTEMPT" -ge 4 ]; then
+            echo "$RUN_NAME run $RUN_ID has been run $ATTEMPT times: leaving it for a person."
+            exit 0
+          fi
+
+          # The jobs of the latest attempt; those with no runner are the ones that never started.
+          gh api "repos/$REPO/actions/runs/$RUN_ID/jobs?filter=latest" --paginate \
+            --jq '.jobs[] | [.id, .name, .conclusion, (.runner_name // "")] | @tsv' > jobs.tsv
+
+          starved=0
+          other_failures=0
+          while IFS=$'\t' read -r id name conclusion runner; do
+            if [ "$conclusion" = "failure" ]; then
+              echo "'$name' failed on its own: not starved."
+              other_failures=$((other_failures + 1))
+            elif [ "$conclusion" = "cancelled" ] && [ -z "$runner" ]; then
+              # What GitHub says of a job it found no runner for - not just any cancelled one, which a
+              # newer push, or a person, may have cancelled.
+              # Read whole, not piped into grep -q: grep ends early and pipefail would call that a failure.
+              messages="$(gh api "repos/$REPO/check-runs/$id/annotations" --jq '.[].message')"
+              if grep -q 'not acquired by Runner' <<< "$messages"; then
+                echo "'$name' was starved of a runner."
+                starved=$((starved + 1))
+              else
+                echo "'$name' was cancelled, but not for want of a runner."
+              fi
+            fi
+          done < jobs.tsv
+
+          if [ "$starved" -eq 0 ]; then
+            echo "Nothing was starved: nothing to run again."
+            exit 0
+          fi
+          if [ "$other_failures" -gt 0 ]; then
+            echo "$other_failures job(s) failed on their own too: leaving the run for a person."
+            exit 0
+          fi
+
+          echo "Running $starved starved job(s) of $RUN_NAME run $RUN_ID again (it has been run $ATTEMPT time(s)) in two minutes."
+          sleep 120
+          gh run rerun "$RUN_ID" --failed --repo "$REPO"

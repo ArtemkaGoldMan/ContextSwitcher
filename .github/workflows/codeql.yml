@@ -19,7 +19,9 @@ permissions:
 jobs:
   analyze:
     name: Analyze C#
-    runs-on: macos-15
+    # Ubuntu: the solution builds there too (Windows' projects through EnableWindowsTargeting), the
+    # analysis reads the source whatever system it ran on, and a Mac runner is the one that is scarce.
+    runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
