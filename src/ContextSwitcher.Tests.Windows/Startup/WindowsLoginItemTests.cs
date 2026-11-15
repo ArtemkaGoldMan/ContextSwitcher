@@ -234,7 +234,7 @@ public sealed class WindowsLoginItemTests
         }
         finally
         {
-            Registry.CurrentUser.DeleteSubKeyTree(@"Software\ContextSwitcherTests", throwOnMissingSubKey: false);
+            Registry.CurrentUser.DeleteSubKeyTree(root, throwOnMissingSubKey: false);
         }
     }
 
@@ -252,7 +252,7 @@ public sealed class WindowsLoginItemTests
         }
         finally
         {
-            Registry.CurrentUser.DeleteSubKeyTree(@"Software\ContextSwitcherTests", throwOnMissingSubKey: false);
+            Registry.CurrentUser.DeleteSubKeyTree(root, throwOnMissingSubKey: false);
         }
     }
 

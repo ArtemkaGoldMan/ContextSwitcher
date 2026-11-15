@@ -91,7 +91,7 @@ public sealed class SignInEntryCleanupTests
         }
         finally
         {
-            Registry.CurrentUser.DeleteSubKeyTree(@"Software\ContextSwitcherTests", throwOnMissingSubKey: false);
+            Registry.CurrentUser.DeleteSubKeyTree(root, throwOnMissingSubKey: false);
         }
     }
 

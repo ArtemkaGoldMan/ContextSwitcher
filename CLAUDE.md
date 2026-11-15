@@ -1,9 +1,9 @@
 # ContextSwitcher
 
-A menu bar app that switches a Mac between profiles - work, personal, study - in one click: it opens
+A menu bar (Mac) and tray (Windows) app that switches a Mac or PC between profiles - work, personal, study - in one click: it opens
 and quits apps, opens and closes browser pages, turns on Focus, plays music, starts and stops Docker
 containers, and counts the time spent in each. Free, MIT, and everything stays on the computer.
-.NET 10 and Avalonia 12, for macOS 13 and later on Apple silicon. A Windows version is being built a
+.NET 10 and Avalonia 12, for macOS 13 and later on Apple silicon, and a Windows 10 and 11 preview (x64) that is being built a
 stage at a time.
 
 ## Where things are

@@ -1,8 +1,9 @@
-## What's new in 0.6.8
+## What's new in 0.7.0
 
-- **Nothing changes on screen.** This release is the app's insides being tidied so it can later run on Windows too: the macOS code now lives in a project of its own, and the app's settings, switching and update checks were reorganised. Your profiles, settings and the way the app looks and works stay as they were.
+- **ContextSwitcher now runs on Windows, as a preview.** Windows 10 (version 2004 or later) and Windows 11, on Intel and AMD PCs: profiles that open, close and hide your apps, the dashboard with links and notes, time in each profile (paused while the PC sleeps or is locked), opening at sign-in, English and Ukrainian, an installer and updating from inside the app. Browser pages, Docker, Spotify and the command line come next; there is no Focus on Windows. The installer isn't signed, so Windows asks once before it runs. How to install it is below.
+- **On a Mac nothing changes on screen.** The shared code under both versions grew to carry Windows, and the Mac's release process now builds both from one tag.
 
-Coming from an older version? Everything new in [0.6.7](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.7), [0.6.6](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.6), [0.6.5](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.5), [0.6.4](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.4), [0.6.3](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.3), [0.6.2](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.2), [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
+Coming from an older version? Everything new in [0.6.8](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.8), [0.6.7](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.7), [0.6.6](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.6), [0.6.5](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.5), [0.6.4](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.4), [0.6.3](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.3), [0.6.2](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.2), [0.6.1](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.1) and [0.6.0](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/tag/v0.6.0) is in this one too.
 
 ## Install
 
@@ -34,6 +35,18 @@ from this one app and changes nothing else. **System Settings → Privacy & Secu
 does the same. You do it once: the two options above and the app's own updates don't need it.
 
 Requires an Apple silicon Mac and macOS 13 or later.
+
+## Install on Windows (preview)
+
+Download **`ContextSwitcher-win-Setup.exe`** below and run it. **Windows shows "Windows protected your
+PC" once**, because the installer isn't signed: click **More info**, then **Run anyway**. It installs
+for you alone, with no administrator rights, and opens the app in the tray (Windows 11 hides a new
+icon behind the **^** arrow by the clock).
+
+On Windows it starts with apps, the dashboard and time; browser pages, Docker, Spotify and the command
+line come next, and there is no Focus. Requires Windows 10 (version 2004 or later) or Windows 11 on an
+Intel or AMD PC; Arm PCs are not built yet. There is also `ContextSwitcher-win-Portable.zip`, which
+needs no installing.
 
 ## Update
 
