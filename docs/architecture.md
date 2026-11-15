@@ -464,7 +464,11 @@ an update when there is one, and Quit. The Dock icon is optional (`showDockIcon`
   a switch, and the update check: GitHub's list of releases, about 30 s after launch and daily, off in
   Settings. `GitHubReleaseSource` takes the newest release that carries this platform's files, not
   GitHub's "latest". Updates install only on a click, and only when the download is signed by the same
-  certificate as the running copy.
+  certificate as the running copy. On Windows the update is Velopack's: `WindowsAppUpdater` reads the
+  chosen release's own `releases.win.json` and package from its download folder, the library checks the
+  package against the checksum the release lists, and `Update.exe` swaps it in once the app has quit.
+  The library starts that program itself, not through `IProcessRunner`. A copy that is not an installed
+  one - run from source - says it can't update itself.
 - No browsing history, window titles, keystrokes, clipboard, screenshots or file contents are read.
   Time history is the profile and its times, nothing else.
 - Only the commands in the platform's `CommandAllowlist` run. Nothing from the settings is run as a

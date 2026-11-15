@@ -7,6 +7,7 @@ using ContextSwitcher.Infrastructure.Windows.Applications;
 using ContextSwitcher.Infrastructure.Windows.Away;
 using ContextSwitcher.Infrastructure.Windows.NotYet;
 using ContextSwitcher.Infrastructure.Windows.Startup;
+using ContextSwitcher.Infrastructure.Windows.Updates;
 using Microsoft.Extensions.DependencyInjection;
 
 // The same namespace as the macOS project's PlatformServices, so the app calls whichever its build
@@ -102,9 +103,10 @@ public static class PlatformServices
         services.AddSingleton<IMediaPlayer, NotYetMediaPlayer>();
         services.AddSingleton<ISystemNotifications, NotYetNotifications>();
 
-        // The updater comes with the installer, at the end of stage 1; the release files are Windows'
-        // already, so a release with only the Mac's is never offered here.
-        services.AddSingleton<IAppUpdater, NotYetUpdater>();
+        // The release files are Windows', so a release with only the Mac's is never offered here; the
+        // updater installs from the release's own folder, not from GitHub's "latest".
+        services.AddSingleton<IPackageUpdates, VelopackPackageUpdates>();
+        services.AddSingleton<IAppUpdater, WindowsAppUpdater>();
         services.AddSingleton(WindowsPlatform.Assets);
     }
 }

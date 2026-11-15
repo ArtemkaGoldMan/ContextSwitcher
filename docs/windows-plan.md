@@ -9,7 +9,8 @@ piece of macOS is behind an interface, and the Mac and Windows each have a proje
 ([stage 0](#stage-0---groundwork-done)). Stage 1 is under way: the app starts on Windows with its tray
 icon and dashboard, switches profiles by opening, closing and hiding apps, counts time apart from
 sleep and a locked screen, opens at sign-in, and speaks Windows' words in English and Ukrainian; it
-doesn't yet install or update itself ([stage 1](#stage-1---apps)).
+has an installer and updates itself, and what is left is the release workflow
+([stage 1](#stage-1---apps)).
 
 ## How it goes
 
