@@ -65,6 +65,18 @@ public sealed class TrailLoggerTests : IDisposable
     }
 
     [Fact]
+    public async Task TheHeaderIsNotDatedAfterTheLinesItIntroduces()
+    {
+        TrailLogger logger = this.NewLogger();
+
+        await logger.LogAsync(Entry("SwitchStarted", LogLevel.Information, 0, "a"));
+        await logger.LogAsync(Entry("StepCompleted", LogLevel.Warning, 5, "a"));
+
+        List<DateTimeOffset> times = this.ReadTimes();
+        Assert.Equal(times.Order(), times);
+    }
+
+    [Fact]
     public async Task TheHeaderIsWrittenOncePerRun()
     {
         TrailLogger logger = this.NewLogger();
@@ -286,6 +298,14 @@ public sealed class TrailLoggerTests : IDisposable
                 root.GetProperty("message").GetString()!,
                 data.ValueKind == JsonValueKind.Object && data.TryGetProperty("trail", out JsonElement trail) ? trail.GetString() : null,
                 data.ValueKind == JsonValueKind.Object && data.TryGetProperty("repeated", out JsonElement repeated) ? repeated.GetString() : null);
+        })
+        .ToList();
+
+    private List<DateTimeOffset> ReadTimes() => File.ReadAllLines(this.logPath)
+        .Select(line =>
+        {
+            using JsonDocument json = JsonDocument.Parse(line);
+            return json.RootElement.GetProperty("timestamp").GetDateTimeOffset();
         })
         .ToList();
 
