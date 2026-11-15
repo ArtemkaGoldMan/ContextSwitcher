@@ -6,7 +6,7 @@ a day and offer it in Settings → Updates.
 
 ## What a release contains
 
-A GitHub Release for tag `vX.Y.Z` with the Mac's three files, all an Apple silicon (`osx-arm64`) build, and Windows' four ([cutting a release](#cutting-a-release)):
+A GitHub Release for tag `vX.Y.Z` with the Mac's three files, all an Apple silicon (`osx-arm64`) build, and Windows' five ([cutting a release](#cutting-a-release)):
 
 | File | For |
 | --- | --- |
@@ -155,9 +155,9 @@ folder and takes the app out of what opens at sign-in.
    then makes one release of what they built, with install notes (`.github/release-notes.md`)
    followed by the generated changelog.
 
-The release has the Mac's three files and Windows' four: `ContextSwitcher-win-Setup.exe` (what people
+The release has the Mac's three files and Windows' five: `ContextSwitcher-win-Setup.exe` (what people
 download), `ContextSwitcher-X.Y.Z-full.nupkg` and `releases.win.json` (what the updater reads) and
-`ContextSwitcher-win-Portable.zip`. The macOS job decides the release: if it fails nothing is
+`ContextSwitcher-win-Portable.zip`, with `SHA256SUMS-windows.txt` for the two people download (`install.ps1` checks the installer against it). The macOS job decides the release: if it fails nothing is
 published. The Windows job does not: if it fails the release has the Mac's files only, which a Windows
 copy passes over as not its own, and the Mac does not wait on Windows. The release is always marked the
 latest, since it always has the Mac's files. Windows is `win-x64` only; `win-arm64` is later.
@@ -223,6 +223,7 @@ release note, not just a new field.
 - [ ] App launches and survives; the menu bar icon appears
 - [ ] A switch completes and `state.json` updates
 - [ ] After publishing: `install.sh` installs it on a Mac that has never run it
+- [ ] After publishing: `install.ps1` installs it on a PC that has never run it
 - [ ] After publishing: an installed older version offers the update and installs it
 
 ### By hand, on an installed build

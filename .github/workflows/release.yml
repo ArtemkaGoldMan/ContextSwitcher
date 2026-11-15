@@ -105,6 +105,15 @@ jobs:
         shell: pwsh
         run: ./scripts/windows/smoke-test-installer.ps1
 
+      # install.ps1 checks the installer against this, as install.sh does against the Mac's SHA256SUMS.txt.
+      - name: Checksums
+        shell: pwsh
+        run: |
+          Set-Location dist/windows
+          $files = 'ContextSwitcher-win-Setup.exe', 'ContextSwitcher-win-Portable.zip'
+          $files | ForEach-Object { '{0}  {1}' -f (Get-FileHash -Algorithm SHA256 $_).Hash.ToLowerInvariant(), $_ } |
+            Set-Content -Encoding ascii SHA256SUMS-windows.txt
+
       # What the updater reads is releases.win.json and the full package it lists, so those go with the
       # installer; the portable zip is for people who want no installation.
       - uses: actions/upload-artifact@v7
@@ -115,6 +124,7 @@ jobs:
             dist/windows/ContextSwitcher-win-Portable.zip
             dist/windows/ContextSwitcher-*-full.nupkg
             dist/windows/releases.win.json
+            dist/windows/SHA256SUMS-windows.txt
           if-no-files-found: error
 
   publish:
