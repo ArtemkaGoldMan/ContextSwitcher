@@ -4,15 +4,18 @@
 
 # ContextSwitcher
 
-**Switch your Mac between work and personal in one click.**
+**Switch your Mac or PC between work and personal in one click.**
 
-It opens the apps you need, quits the ones you don't, opens your tabs, turns on Focus and starts
-your music — all from the menu bar.
+It opens the apps you need and quits the ones you don't. On a Mac it also opens your tabs, turns on
+Focus and starts your music — all from the menu bar. On Windows it is a preview that starts with
+apps and time, from the tray.
 
 <a href="https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/latest"><img src="docs/images/download.svg" height="44" alt="Download for macOS"></a>
+<a href="https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/latest"><img src="docs/images/download-windows.svg" height="44" alt="Download for Windows"></a>
 
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-000000?logo=apple&logoColor=white)
 ![Apple silicon](https://img.shields.io/badge/Apple%20silicon-M1%20and%20later-555555)
+![Windows 10 and 11 preview](https://img.shields.io/badge/Windows-10%20and%2011%20%C2%B7%20preview-0078D4?logo=windows&logoColor=white)
 ![Free and open source](https://img.shields.io/badge/free-MIT-20A67A)
 ![English · Українська](https://img.shields.io/badge/languages-English%20%C2%B7%20%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-555555)
 [![Support the developer](https://img.shields.io/badge/support-the%20developer-8B5CF6?logo=data:image%2Fsvg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTkgMTRjMS40OS0xLjQ2IDMtMy4yMSAzLTUuNUE1LjUgNS41IDAgMCAwIDE2LjUgM2MtMS43NiAwLTMgLjUtNC41IDItMS41LTEuNS0yLjc0LTItNC41LTJBNS41IDUuNSAwIDAgMCAyIDguNWMwIDIuMyAxLjUgNC4wNSAzIDUuNWw3IDdaIi8%2BPC9zdmc%2B)](https://artemkagoldman.github.io/support/)
@@ -34,7 +37,9 @@ You finish work. Slack is still pinging, your editor is still open, a dozen work
 loaded and Do Not Disturb is still on from the morning. Switching by hand takes five minutes, so
 you never do all of it — and work follows you into the evening.
 
-ContextSwitcher keeps a **profile** for each part of your day. Click one, and your Mac turns into it:
+ContextSwitcher keeps a **profile** for each part of your day. Click one, and your Mac turns into it.
+What a profile can do on a Mac is below; **on Windows, apps, the dashboard and time work today**, and
+the rest is coming a step at a time ([what Windows can do](#windows-preview)):
 
 | | What a profile can do |
 | --- | --- |
@@ -50,6 +55,10 @@ ContextSwitcher keeps a **profile** for each part of your day. Click one, and yo
 Every part is optional. A profile that only opens two apps is a perfectly good profile.
 
 ## Install
+
+**On Windows?** Jump to [Windows (preview)](#windows-preview).
+
+### On a Mac
 
 You need a Mac with **Apple silicon** (M1 or later) and **macOS 13 Ventura or later**.
 
@@ -165,12 +174,35 @@ Privacy & Security**, scroll down to *"ContextSwitcher was blocked"* and click *
 the same as the command.
 </details>
 
+### Windows (preview)
+
+You need **Windows 10 (version 2004 or later) or Windows 11**, on an Intel or AMD PC (x64). Arm PCs
+are not built yet.
+
+1. Download **ContextSwitcher-win-Setup.exe** from the [latest release](https://github.com/ArtemkaGoldMan/ContextSwitcher/releases/latest).
+2. Run it. **Windows shows "Windows protected your PC" once**, because the installer isn't signed
+   (a certificate costs money this free project doesn't have). Click **More info**, then **Run anyway**.
+3. It installs for you alone, without asking for administrator rights, adds ContextSwitcher to the Start
+   menu and opens it.
+4. Look for the icon in the **tray**, by the clock. Windows 11 hides a new one behind the **^** arrow:
+   drag it out onto the taskbar to keep it in sight.
+
+**What works on Windows today:** profiles that open, close and hide your apps, the dashboard with
+links and notes, time in each profile (paused while the PC sleeps or is locked), opening at sign-in,
+the apps no profile has asked about on each switch, English and Ukrainian. **What comes later:**
+browser pages and profiles, Docker, Spotify and the command line. There is no Focus on Windows, and
+no Apple Music or Safari. The [Windows plan](docs/windows-plan.md) has the order.
+
+Updates install from inside the app (**Settings → Updates**). Your profiles and settings live in
+`%APPDATA%\ContextSwitcher` and are kept across updates. To remove it: **Settings → Apps → Installed
+apps → ContextSwitcher → Uninstall**; delete that folder as well to remove your profiles and history.
+
 ## How it works
 
 1. **A short setup.** The first time it opens, a three-step wizard makes a **Work** and a
    **Personal** profile from apps you actually have, and switches you into Work.
-2. **Switch from the menu bar.** Click the icon of two overlapping squares and pick a profile; the
-   one that's on has a tick. The Dock icon opens the main window.
+2. **Switch from the menu bar** (on Windows, the tray). Click the icon of two overlapping squares and
+   pick a profile; the one that's on has a tick. On a Mac the Dock icon opens the main window.
 3. **Make the profiles yours.** On the **Profiles** page, **Edit** a profile — mostly picking from
    lists: your apps, your open tabs, a Focus, a playlist, Docker containers.
 4. **If a step goes wrong**, the rest of the switch still happens, and a card says what happened and
@@ -194,14 +226,15 @@ permissions, settings, time stats, updates and uninstalling.
 ## Privacy
 
 - **No account, no tracking, no analytics sent anywhere.** Recorded time stays in
-  `~/.config/ContextSwitcher` on your Mac.
+  `~/.config/ContextSwitcher` on your Mac, or `%APPDATA%\ContextSwitcher` on your PC.
 - **One network request a day**, to GitHub, to see whether there is a new version. Turn it off in
   **Settings → Updates**.
 - It never reads your browsing history. It only looks at open tabs to avoid opening a page twice,
   to close the pages you asked it to close, or when you pick one in the profile editor.
-- It only uses a short, fixed set of macOS's own tools to do its job — AppleScript, `open`,
-  Shortcuts, Docker if you use it, and `ditto`, `codesign` and `sips` for updates and icons.
-- **Diagnostics stay on your Mac.** **Copy diagnostics** and **Write an email** only put the report
+- It only uses a short, fixed set of the system's own tools to do its job. On a Mac: AppleScript,
+  `open`, Shortcuts, Docker if you use it, and `ditto`, `codesign` and `sips` for updates and icons.
+  On Windows: PowerShell, to list the apps in your Start menu, and File Explorer.
+- **Diagnostics stay on your computer.** **Copy diagnostics** and **Write an email** only put the report
   on your clipboard and open your own mail app; nothing is sent until you send it yourself.
 
 ## FAQ
@@ -290,7 +323,8 @@ If you made Focus shortcuts, delete the ones named *ContextSwitcher - Focus …*
 
 <br>
 
-No — releases are built for Apple silicon (M1 and later) only.
+No — the Mac app is built for Apple silicon (M1 and later) only. (A Windows PC is fine: see
+[Windows](#windows-preview).)
 </details>
 
 <details>
@@ -298,7 +332,9 @@ No — releases are built for Apple silicon (M1 and later) only.
 
 <br>
 
-Not yet. One is being built a step at a time — apps first, then the browser, then the rest. The
+Yes, as a **preview**: [install it here](#windows-preview). It does apps, the dashboard and time for
+now; the browser, Docker, Spotify and the command line come next, a step at a time. It is not signed,
+so Windows asks once before running it, and it is built for Intel and AMD PCs only. The
 [Windows plan](docs/windows-plan.md) says where it stands, and the [roadmap](docs/roadmap.md) what
 else is coming.
 </details>
@@ -323,7 +359,8 @@ See [Focus and Siri](docs/shortcuts-integration.md) for the commands and how to 
 
 <br>
 
-In `~/.config/ContextSwitcher/settings.json`. Yes — see [Configuration](docs/configuration.md).
+In `~/.config/ContextSwitcher/settings.json` on a Mac, `%APPDATA%\ContextSwitcher\settings.json` on
+Windows. Yes — see [Configuration](docs/configuration.md).
 The app checks the file and keeps backups, so a typo can't lose your profiles.
 </details>
 
@@ -346,7 +383,7 @@ or **Settings → Contact → Open an issue on GitHub**.
 - **What you did just before** — which profile you switched from and to, and whether it happens
   every time.
 - **The diagnostics** — **Settings → Diagnostics → Copy diagnostics**, then paste them into the
-  message with ⌘V. They have the app and macOS versions, what is switched on and the recent log; no
+  message with ⌘V (Ctrl+V on Windows). They have the app and system versions, what is switched on and the recent log; no
   profile names, web addresses or emails, but glance over them before sending.
 - **A screenshot**, if something looks wrong or a warning card says what happened.
 
@@ -358,6 +395,7 @@ An idea is just as welcome: what you'd like it to do, and what for.
 | --- | --- |
 | [User guide](docs/user-guide.md) | Every step with screenshots: setup, profiles, Focus, settings, stats, updates |
 | [Permissions](docs/automation-permissions.md) | What macOS asks for, and what to do when a step is blocked |
+| [The Windows plan](docs/windows-plan.md) | What the Windows preview does now, and what comes next |
 | [Focus and Siri](docs/shortcuts-integration.md) | Focus shortcuts, Siri, and the command line |
 | [Configuration](docs/configuration.md) | Every field in `settings.json`, with examples |
 

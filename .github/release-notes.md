@@ -35,6 +35,18 @@ does the same. You do it once: the two options above and the app's own updates d
 
 Requires an Apple silicon Mac and macOS 13 or later.
 
+## Install on Windows (preview)
+
+Download **`ContextSwitcher-win-Setup.exe`** below and run it. **Windows shows "Windows protected your
+PC" once**, because the installer isn't signed: click **More info**, then **Run anyway**. It installs
+for you alone, with no administrator rights, and opens the app in the tray (Windows 11 hides a new
+icon behind the **^** arrow by the clock).
+
+On Windows it starts with apps, the dashboard and time; browser pages, Docker, Spotify and the command
+line come next, and there is no Focus. Requires Windows 10 (version 2004 or later) or Windows 11 on an
+Intel or AMD PC; Arm PCs are not built yet. There is also `ContextSwitcher-win-Portable.zip`, which
+needs no installing.
+
 ## Update
 
 Already installed? **Settings → Updates → Install and restart**, or click **Update to …** in the menu

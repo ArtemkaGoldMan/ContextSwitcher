@@ -31,6 +31,10 @@ Since 0.6.7 the code under the app has been rebuilt for a second platform, witho
 does: every piece of macOS sits behind an interface, in a project of its own, and the solution builds
 and tests on Windows ([stage 0 of the Windows plan](windows-plan.md#stage-0---groundwork-done)).
 
+The Windows version is built up to its first preview: the tray and dashboard, profiles that open, close
+and hide apps, time, opening at sign-in, an installer and updating from inside the app, in English and
+Ukrainian ([stage 1 of the Windows plan](windows-plan.md#stage-1---apps)). Its first release is next.
+
 ## Next
 
 1. **A Mac release built from the rebuilt code.** Nothing since
@@ -38,7 +42,7 @@ and tests on Windows ([stage 0 of the Windows plan](windows-plan.md#stage-0---gr
    CI can't try a switch on a real Mac. Before it ships, an installed build is tried on a Mac:
    switching both ways, closing and launching apps, browser pages, Focus, music, the dashboard under
    the menu bar, updating from 0.6.7, and [the checks by hand](release-process.md#by-hand-on-an-installed-build).
-2. **The Windows version**, a stage at a time - apps, then the browser, then the rest, then Windows
+2. **The Windows version**, a stage at a time - apps (built; its first release is next), then the browser, then the rest, then Windows
    1.0 - as unsigned previews first: [the Windows plan](windows-plan.md). What Windows can and can't
    do is in [A Windows version](windows-port.md).
 3. **New features**, below, in four groups. They go alongside the Windows stages: each release

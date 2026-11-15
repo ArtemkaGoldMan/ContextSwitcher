@@ -6,6 +6,10 @@ Everything ContextSwitcher does is driven by one file:
 ~/.config/ContextSwitcher/settings.json
 ```
 
+On Windows the folder is `%APPDATA%\ContextSwitcher` (`%APPDATA%\ContextSwitcher-dev` for a build run
+from the code); the file and everything in it are the same. Paths below that start with `~/.config/`
+are the Mac's.
+
 Everything else the app keeps — state, time tracking, logs, backups — sits beside it in that folder.
 
 **Running from the code keeps a separate folder,** `~/.config/ContextSwitcher-dev`: a Debug build

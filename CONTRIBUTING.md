@@ -13,10 +13,10 @@ cd ContextSwitcher
 dotnet run --project src/ContextSwitcher.App/ContextSwitcher.App.csproj --framework net10.0
 ```
 
-The app builds for Windows as well, which is not ready to run yet; `net10.0` is the Mac app.
+The Mac app is `net10.0`; on Windows run it with `--framework net10.0-windows10.0.19041.0`. The Windows version is a preview ([the plan](docs/windows-plan.md)).
 
 Run this way, it's a **development build**: it keeps its settings in `~/.config/ContextSwitcher-dev`,
-apart from an installed copy's `~/.config/ContextSwitcher`, and says *DEV* in its name — so you can
+apart from an installed copy's `~/.config/ContextSwitcher` (on Windows `%APPDATA%\ContextSwitcher-dev` and `%APPDATA%\ContextSwitcher`), and says *DEV* in its name — so you can
 work on it and use the installed app at the same time without either touching the other's profiles
 or time. `CONTEXTSWITCHER_CONFIG_DIR` points either at another folder.
 

@@ -4,12 +4,12 @@ The order to build the Windows version in, one release at a time: first apps, th
 the rest. What Windows can and can't do, and why, is in [A Windows version](windows-port.md); where
 it sits among everything else, in the [roadmap](roadmap.md).
 
-**Where it stands** (October 2026, at 0.6.8): stage 0, the groundwork on the Mac, is done - every
+**Where it stands** (November 2026): stage 0, the groundwork on the Mac, is done - every
 piece of macOS is behind an interface, and the Mac and Windows each have a project of their own
 ([stage 0](#stage-0---groundwork-done)). Stage 1 is under way: the app starts on Windows with its tray
 icon and dashboard, switches profiles by opening, closing and hiding apps, counts time apart from
 sleep and a locked screen, opens at sign-in, and speaks Windows' words in English and Ukrainian; it
-has an installer and updates itself, and what is left is the release workflow
+has an installer, updates itself and has a release workflow, and what is left is its first release
 ([stage 1](#stage-1---apps)).
 
 ## How it goes
@@ -25,7 +25,7 @@ has an installer and updates itself, and what is left is the release workflow
 | Stage | Windows gets | Status |
 | --- | --- | --- |
 | [0. Groundwork](#stage-0---groundwork-done) | nothing yet: the seams, the projects, CI on Windows | done |
-| [1. Apps](#stage-1---apps) | the tray, profiles, launching, closing and hiding apps, time | in progress: the shell and the apps done |
+| [1. Apps](#stage-1---apps) | the tray, profiles, launching, closing and hiding apps, time | built, with an installer and updates; its first release is next. `win-arm64` comes after |
 | [2. Browser](#stage-2---browser) | pages, a window per profile, browser profiles, reading tabs | |
 | [3. The rest](#stage-3---the-rest) | Docker, Spotify, notifications, the command line, a hotkey | |
 | [4. Windows 1.0](#stage-4---windows-10) | signed, in the Store or with an installer, documented, translated | |
@@ -138,14 +138,18 @@ How others do it, and why not that:
 | One number, and a platform's build only when something changed for it | Chrome: one version, and a stable update can give Windows and Mac different last numbers | the one chosen: each platform updates only when there's a reason |
 | Separate products, separate numbers | Microsoft Office for Mac and for Windows | fits apps with separate code; with shared code, "Windows 0.3 or Mac 1.2?" only confuses |
 
-With the Windows job, in stage 1, the release workflow becomes three jobs:
+With the Windows job, in stage 1, the release workflow is three jobs:
 
 ```text
-Release (started by hand: the version, and a tick for each platform)
-  ├─ macOS     macos-15         build, test, sign, .dmg and .zip          if ticked
-  ├─ Windows   windows-latest   build, test, installer and update feed    if ticked
-  └─ Publish   ubuntu-latest    the tag, one release with what was built; "latest" only with Mac files
+Release (started by a version tag)
+  ├─ macOS     macos-15         build, test, sign, .dmg and .zip
+  ├─ Windows   windows-latest   build, test, installer and update feed
+  └─ Publish   ubuntu-latest    one release with what was built; always "latest", it always has Mac files
 ```
+
+The Mac's job decides whether there is a release; Windows' failing leaves a Mac-only release, which a
+Windows copy passes over. Building a platform only when something changed for it, and starting by hand
+with a tick for each, is later.
 
 ### Keeping the Mac's latest release
 
@@ -281,9 +285,9 @@ The rest of this stage:
   the icon in sight: Windows 11 hides a new tray icon behind the arrow beside the clock.
 - **CI and releases**: the Windows job required, the Windows package job, and the release workflow in
   three jobs ([above](#ci)); an installer that updates itself (Velopack -
-  [decided](#decisions-made)), for `win-x64` and `win-arm64`, unsigned and marked preview, in the
-  same GitHub releases as the Mac app whenever something changed for Windows. Windows warns once
-  before the first run, and the README says so.
+  [decided](#decisions-made)), unsigned and called a preview, in the same GitHub releases as the Mac
+  app. The first is `win-x64` only; `win-arm64` is added after it. Windows warns once before the first
+  run, and the README says so.
 
 What the app says, because Windows works that way: an app that goes to the tray when its window
 closes - Slack, Teams, Discord, Telegram, Spotify - keeps running, and the card offers Force quit;

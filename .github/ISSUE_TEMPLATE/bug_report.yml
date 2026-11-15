@@ -17,7 +17,7 @@ body:
     id: diagnostics
     attributes:
       label: Diagnostics
-      description: In the app, Settings → Diagnostics → **Copy diagnostics**, then paste here. It has the version, your macOS, what is switched on and the recent log - no profile names, web addresses or emails.
+      description: In the app, Settings → Diagnostics → **Copy diagnostics**, then paste here. It has the version, your macOS or Windows version, what is switched on and the recent log - no profile names, web addresses or emails.
       render: text
     validations:
       required: true

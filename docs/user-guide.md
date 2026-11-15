@@ -4,6 +4,9 @@ Everything ContextSwitcher does, one step at a time. Not installed yet? See
 [Install](../README.md#install). Stuck? Try the [FAQ](../README.md#faq) or
 [write to me](../README.md#contact).
 
+**On Windows?** This guide is written for the Mac; [On Windows](#on-windows-preview) says what is
+different, and what is not there yet.
+
 1. [A short setup](#1-a-short-setup)
 2. [Switch from the menu bar](#2-switch-from-the-menu-bar)
 3. [Set up your profiles](#3-set-up-your-profiles)
@@ -13,7 +16,7 @@ Everything ContextSwitcher does, one step at a time. Not installed yet? See
 
 Then: [When something doesn't go to plan](#when-something-doesnt-go-to-plan) ·
 [See where your time goes](#see-where-your-time-goes) · [Updates](#updates) ·
-[Uninstall](#uninstall) · [Going further](#going-further)
+[Uninstall](#uninstall) · [On Windows](#on-windows-preview) · [Going further](#going-further)
 
 ## 1. A short setup
 
@@ -183,6 +186,34 @@ installed with Homebrew.
    ```
 
 4. If you created Focus shortcuts, delete the ones named *ContextSwitcher - Focus …* in Shortcuts.
+
+## On Windows (preview)
+
+The Windows version is a preview, built a step at a time ([the plan](windows-plan.md)). Install it
+from the [README](../README.md#windows-preview).
+
+**What is the same:** the setup wizard, profiles and their apps, the dashboard with links and notes,
+time in each profile and the stats, asking on a switch about the apps no profile has, the apps it never
+touches, English and Ukrainian, and the way a switch reports what went wrong.
+
+**What is different:**
+
+- **The tray, not the menu bar.** The icon is by the clock; Windows 11 hides a new one behind the **^**
+  arrow, so drag it out to keep it in sight. File Explorer takes Finder's place and **Ctrl** takes ⌘.
+- **Apps are found in the Start menu.** A profile names the apps from it; closing one is polite, like
+  closing its window, and an app that keeps running in the tray (Slack, Teams, Discord, Telegram…)
+  says it is *still closing*, with **Force quit** once it has no window left.
+- **Time pauses** while the PC sleeps or is locked, and **Open at sign-in** is in Settings.
+- **Updates** are in **Settings → Updates**: **Install and restart** downloads the newest Windows
+  version and restarts into it. There is no notification yet.
+- **Windows asks once** before the first run, because the installer isn't signed: **More info → Run
+  anyway**.
+- **Uninstall** from **Settings → Apps → Installed apps**; delete `%APPDATA%\ContextSwitcher` to remove
+  your profiles and history too.
+
+**Not on Windows yet:** browser pages and profiles, Docker, Spotify, the command line and a hotkey
+(coming in the [plan](windows-plan.md)); Focus and Apple Music, which Windows has no equivalent of.
+Steps that need them are hidden, not shown doing nothing.
 
 ## Going further
 
