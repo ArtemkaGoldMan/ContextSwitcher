@@ -23,6 +23,7 @@ public static class WindowsPlatform
         DockIcon = false,
         AutomationPermission = false,
         Wording = SystemWording.Windows,
+        SoftwareRendering = true,
         BrowserPages = false,
         Browsers = [],
         FocusFilterBrowsers = []

@@ -6,6 +6,7 @@ using ContextSwitcher.App.Services;
 using ContextSwitcher.App.Startup;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Logging;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Infrastructure.Cli;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,13 +25,6 @@ internal static class Program
     /// 28 MB of it behind for good, and 2 MB leaves 13 MB less with nothing to redraw any slower.
     /// </summary>
     private const long GpuCacheBytes = 2 * 1024 * 1024;
-
-    /// <summary>
-    /// Set to <c>software</c> to draw on the CPU rather than the GPU. That leaves no GPU memory behind
-    /// at all - the dashboard then costs about 27 MB less than with Metal - and is off by default only
-    /// because how it looks has not been judged on a real screen yet.
-    /// </summary>
-    internal const string RenderingVariable = "CONTEXTSWITCHER_RENDERING";
 
     /// <summary>
     /// Starts the app. Called by the entry point of the build (<c>Entry</c>): the same for every system, but
@@ -80,7 +74,9 @@ internal static class Program
 
         try
         {
-            BuildAvaloniaApp(appState.Configuration.ShowDockIcon)
+            BuildAvaloniaApp(
+                    appState.Configuration.ShowDockIcon,
+                    AppHost.Services.GetRequiredService<PlatformCapabilities>().SoftwareRendering)
                 .StartWithClassicDesktopLifetime(args);
         }
         catch (InvalidOperationException ex) when (displays.IsRenderTimerFailure(ex) && StartAttempt() < MaxStartAttempts)
@@ -155,9 +151,9 @@ internal static class Program
     }
 
     /// <summary>The app as Avalonia's previewer builds it: with the Dock icon, as the setting starts out.</summary>
-    public static AppBuilder BuildAvaloniaApp() => BuildAvaloniaApp(showDockIcon: true);
+    public static AppBuilder BuildAvaloniaApp() => BuildAvaloniaApp(showDockIcon: true, softwareRendering: false);
 
-    private static AppBuilder BuildAvaloniaApp(bool showDockIcon)
+    private static AppBuilder BuildAvaloniaApp(bool showDockIcon, bool softwareRendering)
     {
         AppBuilder builder = AppBuilder.Configure<App>()
             .UsePlatformDetect()
@@ -171,7 +167,7 @@ internal static class Program
             .With(new SkiaOptions { MaxGpuResourceSizeBytes = GpuCacheBytes });
 
         // Each system's options are read only on that system, so both are given.
-        if (string.Equals(Environment.GetEnvironmentVariable(RenderingVariable), "software", StringComparison.OrdinalIgnoreCase))
+        if (RenderingChoice.UseSoftware(Environment.GetEnvironmentVariable(RenderingChoice.Variable), softwareRendering))
         {
             builder = builder
                 .With(new AvaloniaNativePlatformOptions { RenderingMode = [AvaloniaNativeRenderingMode.Software] })
