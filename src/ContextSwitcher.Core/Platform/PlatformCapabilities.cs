@@ -55,6 +55,13 @@ public sealed record PlatformCapabilities
     /// </summary>
     public SystemWording Wording { get; init; } = SystemWording.Mac;
 
+    /// <summary>
+    /// Whether the interface is drawn on the CPU rather than the GPU unless the person asks otherwise.
+    /// That leaves no GPU memory behind: about 80 MB less on Windows, which draws the same. The Mac's
+    /// look on a real screen has not been judged, so it keeps the GPU.
+    /// </summary>
+    public bool SoftwareRendering { get; init; }
+
     /// <summary>Whether <paramref name="player"/> can be played here; none at all always can.</summary>
     public bool Plays(MediaPlayerKind player) => player switch
     {

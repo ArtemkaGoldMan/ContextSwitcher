@@ -71,3 +71,30 @@ Each of these was measured on the same build:
   lower, because the precompiled images are mapped as private memory on macOS.
 - **Removing the update check's cost** (about 5 MB, the first HTTPS request loading the TLS stack)
   would mean checking through `curl`; not done.
+
+## On Windows
+
+Measured on Windows 11 (16 logical cores, 31 GB of RAM) with the installed 0.7.0 build, one copy with a
+fresh settings folder, sampled over 60 seconds. The number is *private memory* - what only this process
+owns - the nearest thing to the Mac's footprint; the working set also counts shared system libraries.
+It is not the same measure, so the two systems' numbers are not compared with each other.
+
+| State | Private memory | Working set | Threads |
+| --- | --- | --- | --- |
+| GPU drawing, tray only | about 130 MB | about 190 MB | about 100 |
+| GPU drawing, the window opened once | about 164 MB | about 223 MB | about 98 |
+| Software drawing, tray only | about 81 MB | about 180 MB | about 29 |
+| Software drawing, the window opened once | about 82 MB | about 179 MB | about 28 |
+
+At rest it uses no measurable CPU (0.00% of the whole PC over 15 seconds). Drawing on the CPU is the
+default on Windows (`PlatformCapabilities.SoftwareRendering`): it leaves no GPU memory behind, so opening
+the window costs nothing that stays, and the setup welcome and the Profiles page looked the same in
+screenshots of both. `CONTEXTSWITCHER_RENDERING=gpu` draws on the GPU again, and `=software` on the CPU
+on any system.
+
+Each of these was measured on the same build and changed nothing, within a few MB, as on the Mac: a
+non-concurrent garbage collector (`DOTNET_gcConcurrent=0`), `DOTNET_GCConserveMemory=7`, and
+`DOTNET_TieredPGO=0`. The rest of the memory is the runtime and Avalonia's native side.
+
+Not measured: a switch under way (PowerShell lists the Start menu's apps), a day's run, and the other
+pages with software drawing - the shadows of a dashboard with links and notes in particular.

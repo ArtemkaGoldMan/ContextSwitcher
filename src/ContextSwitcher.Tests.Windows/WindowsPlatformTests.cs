@@ -23,6 +23,13 @@ public sealed class WindowsPlatformTests
         Assert.Equal(SystemWording.Windows, WindowsPlatform.Capabilities.Wording);
     }
 
+    /// <summary>Drawn on the CPU: it costs about 80 MB less than the GPU and looks the same.</summary>
+    [Fact]
+    public void WindowsDrawsOnTheCpuUnlessToldOtherwise()
+    {
+        Assert.True(WindowsPlatform.Capabilities.SoftwareRendering);
+    }
+
     [Fact]
     public void FileExplorerAndPowerShellAreAllItRuns()
     {
