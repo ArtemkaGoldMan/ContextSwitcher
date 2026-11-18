@@ -5,8 +5,8 @@ namespace ContextSwitcher.App.ViewModels;
 /// <summary>
 /// One row in a Profile Setup's app list. Presents the on-disk <c>launchApps</c>/<c>closeApps</c>/
 /// <c>hideApps</c> flat lists (docs/architecture.md, "settings.json") as a single row per app: Launch
-/// on entering, and on leaving either Close or Hide - ticking one unticks the other, as an app is quit
-/// or hidden, not both.
+/// on entering, and on leaving one of Close, Hide or Force quit - ticking one unticks the others, as an
+/// app is quit, hidden or ended by force, not more than one.
 /// </summary>
 public sealed class AppRowViewModel : ViewModelBase
 {
@@ -14,6 +14,8 @@ public sealed class AppRowViewModel : ViewModelBase
     private bool launchOnEnter;
     private bool closeOnLeave;
     private bool hideOnLeave;
+    private bool forceQuitOnLeave;
+    private bool offersForceQuit;
     private Bitmap? icon;
 
     /// <param name="isEditable">
@@ -21,13 +23,14 @@ public sealed class AppRowViewModel : ViewModelBase
     /// config is shown by name, not as a text box - its name is exactly what <c>open -a</c> needs,
     /// and the only edit to make to it is a typo.
     /// </param>
-    public AppRowViewModel(string name, bool launchOnEnter, bool closeOnLeave, Action<AppRowViewModel> remove, bool isEditable = false, bool hideOnLeave = false)
+    public AppRowViewModel(string name, bool launchOnEnter, bool closeOnLeave, Action<AppRowViewModel> remove, bool isEditable = false, bool hideOnLeave = false, bool forceQuitOnLeave = false)
     {
         this.name = name;
         this.IsEditable = isEditable;
         this.launchOnEnter = launchOnEnter;
         this.closeOnLeave = closeOnLeave;
-        this.hideOnLeave = hideOnLeave && !closeOnLeave;
+        this.forceQuitOnLeave = forceQuitOnLeave && !closeOnLeave && !hideOnLeave;
+        this.hideOnLeave = hideOnLeave && !closeOnLeave && !this.forceQuitOnLeave;
         this.RemoveCommand = new RelayCommand(() => remove(this));
     }
 
@@ -38,6 +41,16 @@ public sealed class AppRowViewModel : ViewModelBase
     }
 
     public bool IsEditable { get; }
+
+    /// <summary>
+    /// Whether the row has Force quit to choose, as the platform has apps that stay in the tray. A row
+    /// that is already set to it keeps it shown, whatever the platform, so it can be unset.
+    /// </summary>
+    public bool OffersForceQuit
+    {
+        get => this.offersForceQuit || this.forceQuitOnLeave;
+        init => this.offersForceQuit = value;
+    }
 
     public bool LaunchOnEnter
     {
@@ -53,6 +66,7 @@ public sealed class AppRowViewModel : ViewModelBase
             if (this.SetProperty(ref this.closeOnLeave, value) && value)
             {
                 this.HideOnLeave = false;
+                this.ForceQuitOnLeave = false;
             }
         }
     }
@@ -66,6 +80,21 @@ public sealed class AppRowViewModel : ViewModelBase
             if (this.SetProperty(ref this.hideOnLeave, value) && value)
             {
                 this.CloseOnLeave = false;
+                this.ForceQuitOnLeave = false;
+            }
+        }
+    }
+
+    /// <summary>Ended at once on leaving, without asking: for an app that stays in the tray when asked to quit.</summary>
+    public bool ForceQuitOnLeave
+    {
+        get => this.forceQuitOnLeave;
+        set
+        {
+            if (this.SetProperty(ref this.forceQuitOnLeave, value) && value)
+            {
+                this.CloseOnLeave = false;
+                this.HideOnLeave = false;
             }
         }
     }

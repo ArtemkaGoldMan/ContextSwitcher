@@ -16,6 +16,9 @@ public sealed record StepBudgets
 
     public TimeSpan HideApps { get; init; } = TimeSpan.FromSeconds(5);
 
+    /// <summary>For each app ended by force: Windows ends a process at once, so this is for seeing it go.</summary>
+    public TimeSpan ForceQuitPerApp { get; init; } = TimeSpan.FromSeconds(5);
+
     /// <summary>Opening a profile's pages or browser profiles.</summary>
     public TimeSpan BrowserContext { get; init; } = TimeSpan.FromSeconds(20);
 

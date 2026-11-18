@@ -151,8 +151,15 @@ This is the one part worth reading carefully, because the two lists point in **o
 - `launchApps` — opened when you **enter** this profile
 - `closeApps` — quit when you **leave** this profile
 - `hideApps` — hidden when you **leave** this profile, as ⌘H does: they keep running with their
-  windows, and come back the moment a profile opens them. An app is in `closeApps` or `hideApps`, not
-  both; Profile Setup shows a third tick, **Hide**, that unticks **Close**.
+  windows, and come back the moment a profile opens them. On Windows they are minimised.
+- `forceQuitApps` — **Windows only.** Ended at once, without asking, when you **leave** this profile,
+  as Task Manager's *End task* does. For apps that stay in the tray when their window is closed -
+  Slack, Teams, Discord, Claude - and have no work to lose: anything unsaved in them is lost. The
+  processes Windows can't run without are never ended. A Mac ignores the list.
+
+An app is in one of `closeApps`, `hideApps` and `forceQuitApps`, not more than one; Profile Setup shows
+**Close**, **Hide** and, on Windows, **Force quit** as ticks that untick one another. The field is
+optional, so a file without it reads as it did.
 
 So both lists belong to the profile that *owns* those apps. A Work profile that launches Slack and
 quits Slack means: arriving at work opens Slack, leaving work closes it. That's why the Profile Setup

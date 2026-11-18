@@ -20,5 +20,8 @@ public enum AutomationStepType
     CloseBrowserTabs,
 
     /// <summary>Hides the apps the context being left lists to hide.</summary>
-    HideApplications
+    HideApplications,
+
+    /// <summary>Ends, without asking, the apps the context being left lists to force quit.</summary>
+    ForceQuitApplications
 }

@@ -29,6 +29,11 @@ public static class ConfigurationMessages
         "Config_AppClosedAndHidden",
         "{0} is set both to close and to hide when leaving the profile; choose one.");
 
+    /// <summary>{0} is the app's name.</summary>
+    public static readonly MessageTemplate AppForceQuitAndClosedOrHidden = new(
+        "Config_AppForceQuitAndClosedOrHidden",
+        "{0} is set to force quit and also to close or hide when leaving the profile; choose one.");
+
     public static readonly MessageTemplate UrlModeNeedsUrl = new("Config_UrlModeNeedsUrl", "URL mode requires at least one URL.");
 
     public static readonly MessageTemplate BrowserModeInvalid = new("Config_BrowserModeInvalid", "Browser management mode is invalid.");
