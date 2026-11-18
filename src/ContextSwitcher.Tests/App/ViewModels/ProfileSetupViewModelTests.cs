@@ -463,6 +463,24 @@ public sealed class ProfileSetupViewModelTests
     }
 
     /// <summary>
+    /// On Windows, where only the default browser opens pages so far, the section says what happens
+    /// instead of asking for a browser it doesn't offer: pages open as new tabs and stay open.
+    /// </summary>
+    [Fact]
+    public void WindowsSaysClosingTabsIsNotThereYet()
+    {
+        PlatformCapabilities windows = MacPlatform.Capabilities with { Wording = SystemWording.Windows, Browsers = [], FocusFilterBrowsers = [] };
+        ProfileSetupViewModel viewModel = new(
+            this.appState, CreateStore(out _, out _), new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), windows,
+            new FakeUnknownDefaultBrowser(), existing: null);
+
+        Assert.True(viewModel.ShowsBrowser);
+        Assert.False(viewModel.Browser.CanCloseTabs);
+        Assert.Contains("isn't available on Windows yet", viewModel.Browser.CloseTabsHint, StringComparison.Ordinal);
+        Assert.Contains("Windows", viewModel.Browser.AvoidDuplicateTabsHint, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// Opening one of a browser's profiles is offered only for Chrome and Brave - the default
     /// browser included, when it is one of them. Safari gets pages, and the Focus filter tip.
     /// </summary>

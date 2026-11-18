@@ -204,8 +204,9 @@ sight.
 
 **What works on Windows today:** profiles that open, close and hide your apps, the dashboard with
 links and notes, time in each profile (paused while the PC sleeps or is locked), opening at sign-in,
-the apps no profile has asked about on each switch, English and Ukrainian. **What comes later:**
-browser pages and profiles, Docker, Spotify and the command line. There is no Focus on Windows, and
+the apps no profile has asked about on each switch, web pages that open in your default browser as
+new tabs, English and Ukrainian. **What comes later:** closing those pages when you leave a profile,
+browser profiles, Docker, Spotify and the command line. There is no Focus on Windows, and
 no Apple Music or Safari. The [Windows plan](docs/windows-plan.md) has the order.
 
 Updates install from inside the app (**Settings → Updates**). Your profiles and settings live in

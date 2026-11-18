@@ -30,6 +30,7 @@ public sealed class BrowserSettingsViewModel : ViewModelBase
 
     private readonly ISystemCatalog catalog;
     private readonly PlatformCapabilities capabilities;
+    private readonly SystemText words;
 
     /// <summary>The browser the system opens links in, which "Default browser" stands for.</summary>
     private readonly DefaultBrowser? systemDefault;
@@ -47,6 +48,7 @@ public sealed class BrowserSettingsViewModel : ViewModelBase
     {
         this.catalog = catalog;
         this.capabilities = capabilities;
+        this.words = new SystemText(capabilities);
         this.systemDefault = systemDefault;
 
         this.browserMode = source.Mode;
@@ -227,12 +229,12 @@ public sealed class BrowserSettingsViewModel : ViewModelBase
         ? Strings.Browser_AvoidDuplicates_On
         : this.UnscriptableDefault is { } name
             ? Localized.Format(Strings.Browser_AvoidDuplicates_Unsupported, name)
-            : Strings.Browser_AvoidDuplicates_NeedsBrowser;
+            : this.words.AvoidDuplicatesNeedsBrowser;
 
     /// <summary>Why Close is off, under the list of pages.</summary>
     public string CloseTabsHint => this.UnscriptableDefault is { } name
         ? Localized.Format(Strings.ProfileSetup_CloseTabsUnsupported, name)
-        : Strings.ProfileSetup_CloseTabsNeedsBrowser;
+        : this.words.CloseTabsNeedsBrowser;
 
     /// <summary>
     /// Whether pages can be closed on leaving: as with duplicates, it takes asking a named browser

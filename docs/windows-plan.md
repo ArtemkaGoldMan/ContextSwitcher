@@ -26,7 +26,7 @@ has an installer, updates itself and is released with the Mac app as a preview
 | --- | --- | --- |
 | [0. Groundwork](#stage-0---groundwork-done) | nothing yet: the seams, the projects, CI on Windows | done |
 | [1. Apps](#stage-1---apps) | the tray, profiles, launching, closing and hiding apps, time | released as a preview (0.7.0), with an installer and updates. `win-arm64` comes after |
-| [2. Browser](#stage-2---browser) | pages, a window per profile, browser profiles, reading tabs | |
+| [2. Browser](#stage-2---browser) | pages, a window per profile, browser profiles, reading tabs | pages open in the default browser; closing them needs the extension of [Later](#later-if-wanted) |
 | [3. The rest](#stage-3---the-rest) | Docker, Spotify, notifications, the command line, a hotkey | |
 | [4. Windows 1.0](#stage-4---windows-10) | signed, in the Store or with an installer, documented, translated | |
 | [Later](#later-if-wanted) | a browser extension, a browser profile of the app's own | |

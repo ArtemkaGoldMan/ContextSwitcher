@@ -34,6 +34,8 @@
   <ItemGroup>
     <Compile Include="..\ContextSwitcher.Tests\TestDoubles\FakeClock.cs" Link="TestDoubles\FakeClock.cs" />
     <Compile Include="..\ContextSwitcher.Tests\TestDoubles\FakeProcessRunner.cs" Link="TestDoubles\FakeProcessRunner.cs" />
+    <Compile Include="..\ContextSwitcher.Tests\TestDoubles\FakeShell.cs" Link="TestDoubles\FakeShell.cs" />
+    <Compile Include="..\ContextSwitcher.Tests\TestDoubles\FakeOpenedTabsStore.cs" Link="TestDoubles\FakeOpenedTabsStore.cs" />
     <Compile Include="..\ContextSwitcher.Tests\TestDoubles\TestLogger.cs" Link="TestDoubles\TestLogger.cs" />
   </ItemGroup>
 

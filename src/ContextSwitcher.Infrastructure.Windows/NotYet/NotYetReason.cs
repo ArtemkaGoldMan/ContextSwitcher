@@ -12,6 +12,4 @@ internal static class NotYetReason
     public const string LoginItem = "Opening at sign-in isn't available on Windows yet.";
 
     public const string Music = "Music can't be played on Windows yet.";
-
-    public const string Browser = "Browsers can't be used on Windows yet.";
 }

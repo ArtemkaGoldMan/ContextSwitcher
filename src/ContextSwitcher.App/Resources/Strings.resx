@@ -324,6 +324,10 @@
     <value>Closing tabs needs a specific browser - the default browser can't be checked for open tabs.</value>
     <comment>ProfileSetupPage.axaml: under the list of pages while the browser is Default.</comment>
   </data>
+  <data name="ProfileSetup_CloseTabsNeedsBrowser_Windows" xml:space="preserve">
+    <value>Pages open in your default browser as new tabs. Closing them when you leave isn't available on Windows yet - they stay open.</value>
+    <comment>ProfileSetupPage.axaml: under the list of pages, on Windows.</comment>
+  </data>
   <data name="ProfileSetup_CloseTabsUnsupported" xml:space="preserve">
     <value>Closing tabs needs Chrome, Brave or Safari - {0} can't be checked for open tabs.</value>
     <comment>Under the list of pages when the default browser can't be scripted. {0} = its name, e.g. Firefox.</comment>
@@ -1219,6 +1223,10 @@
   <data name="Browser_AvoidDuplicates_On" xml:space="preserve">
     <value>Focuses a matching tab instead of opening a second one.</value>
     <comment>Profile Setup → Avoid duplicate tabs, when it can work.</comment>
+  </data>
+  <data name="Browser_AvoidDuplicates_NeedsBrowser_Windows" xml:space="preserve">
+    <value>Not available on Windows yet - a page that is already open is opened again.</value>
+    <comment>Profile Setup → Avoid duplicate tabs, on Windows.</comment>
   </data>
   <data name="Browser_AvoidDuplicates_NeedsBrowser" xml:space="preserve">
     <value>Needs a specific browser - the default browser can't be checked for open tabs.</value>

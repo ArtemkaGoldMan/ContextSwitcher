@@ -67,6 +67,12 @@ public sealed class SystemText(PlatformCapabilities capabilities)
     /// <summary>What a profile's quick links are, in the dashboard.</summary>
     public string QuickLinksShown => this.Windows ? Strings.ProfileSetup_ShownInTheMenuBar_Windows : Strings.ProfileSetup_ShownInTheMenuBar;
 
+    /// <summary>Why a page can't be closed on leaving while the browser is the default one and unknown.</summary>
+    public string CloseTabsNeedsBrowser => this.Windows ? Strings.ProfileSetup_CloseTabsNeedsBrowser_Windows : Strings.ProfileSetup_CloseTabsNeedsBrowser;
+
+    /// <summary>Why an open page can't be found and focused while the browser is the default one and unknown.</summary>
+    public string AvoidDuplicatesNeedsBrowser => this.Windows ? Strings.Browser_AvoidDuplicates_NeedsBrowser_Windows : Strings.Browser_AvoidDuplicates_NeedsBrowser;
+
     /// <summary>What a profile's reminders are, in the dashboard.</summary>
     public string RemindersShown => this.Windows ? Strings.ProfileSetup_RemindersShownInTheMenu_Windows : Strings.ProfileSetup_RemindersShownInTheMenu;
 }

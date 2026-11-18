@@ -244,6 +244,9 @@
   <data name="ProfileSetup_CloseTabsNeedsBrowser" xml:space="preserve">
     <value>Щоб закривати вкладки, потрібен конкретний браузер — у браузері за замовчуванням не можна перевірити відкриті вкладки.</value>
   </data>
+  <data name="ProfileSetup_CloseTabsNeedsBrowser_Windows" xml:space="preserve">
+    <value>Сторінки відкриваються в браузері за замовчуванням новими вкладками. Закривати їх при виході з профілю у Windows поки не можна — вони лишаються відкритими.</value>
+  </data>
   <data name="ProfileSetup_CloseTabsUnsupported" xml:space="preserve">
     <value>Щоб закривати вкладки, потрібен Chrome, Brave або Safari — у {0} не можна перевірити відкриті вкладки.</value>
   </data>
@@ -903,6 +906,9 @@
   </data>
   <data name="Browser_AvoidDuplicates_On" xml:space="preserve">
     <value>Переходить на вже відкриту вкладку замість того, щоб відкривати ще одну.</value>
+  </data>
+  <data name="Browser_AvoidDuplicates_NeedsBrowser_Windows" xml:space="preserve">
+    <value>У Windows поки недоступно — сторінка, яка вже відкрита, відкривається ще раз.</value>
   </data>
   <data name="Browser_AvoidDuplicates_NeedsBrowser" xml:space="preserve">
     <value>Потрібен конкретний браузер — у браузері за замовчуванням не можна перевірити відкриті вкладки.</value>
