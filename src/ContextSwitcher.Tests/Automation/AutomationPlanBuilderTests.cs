@@ -1,6 +1,7 @@
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Infrastructure.MacOS;
 using ContextSwitcher.Tests.TestDoubles;
 
@@ -570,5 +571,41 @@ public sealed class AutomationPlanBuilderTests
             [AutomationStepType.CloseApplications, AutomationStepType.HideApplications, AutomationStepType.LaunchApplications],
             plan.Steps.Select(step => step.Type));
         Assert.Equal(["Visual Studio Code"], AppsArguments.From(plan.Steps[1].Arguments).Apps);
+    }
+
+    /// <summary>
+    /// Where apps live in the tray, leaving ends the apps listed to force quit, after quitting and
+    /// hiding the others - except one the next profile launches, which would only be opened again.
+    /// </summary>
+    [Fact]
+    public void LeavingEndsTheAppsListedToForceQuit()
+    {
+        ContextDefinition previous = new()
+        {
+            Id = "work",
+            DisplayName = "Work",
+            CloseApps = ["Notes"],
+            ForceQuitApps = ["Slack", "Claude"]
+        };
+        ContextDefinition target = new() { Id = "personal", DisplayName = "Personal", LaunchApps = ["Claude"] };
+        PlatformCapabilities inTheTray = MacPlatform.Capabilities with { AppsLiveInTray = true };
+
+        AutomationPlan plan = new AutomationPlanBuilder(inTheTray, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(previous, target);
+
+        Assert.Equal(
+            [AutomationStepType.CloseApplications, AutomationStepType.ForceQuitApplications, AutomationStepType.LaunchApplications],
+            plan.Steps.Select(step => step.Type));
+        Assert.Equal(["Slack"], AppsArguments.From(plan.Steps[1].Arguments).Apps);
+    }
+
+    /// <summary>A Mac has no apps that stay in the tray: a profile that came from a PC with a force quit list ends nothing here.</summary>
+    [Fact]
+    public void WithoutTrayAppsNothingIsEndedByForce()
+    {
+        ContextDefinition previous = new() { Id = "work", DisplayName = "Work", ForceQuitApps = ["Slack"] };
+
+        AutomationPlan plan = new AutomationPlanBuilder(MacPlatform.Capabilities, StepBudgets.Default, new FakeUnknownDefaultBrowser()).Build(previous, target: null);
+
+        Assert.DoesNotContain(plan.Steps, step => step.Type == AutomationStepType.ForceQuitApplications);
     }
 }

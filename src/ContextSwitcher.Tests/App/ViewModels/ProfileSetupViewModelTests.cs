@@ -618,6 +618,53 @@ public sealed class ProfileSetupViewModelTests
         Assert.Equal((true, false), (row.CloseOnLeave, row.HideOnLeave));
     }
 
+    /// <summary>An app is quit, hidden or ended by force on leaving, never two of them.</summary>
+    [Fact]
+    public void CloseHideAndForceQuitTakeTurns()
+    {
+        AppRowViewModel row = new("Slack", launchOnEnter: true, closeOnLeave: true, _ => { });
+
+        row.ForceQuitOnLeave = true;
+        Assert.Equal((false, false, true), (row.CloseOnLeave, row.HideOnLeave, row.ForceQuitOnLeave));
+
+        row.HideOnLeave = true;
+        Assert.Equal((false, true, false), (row.CloseOnLeave, row.HideOnLeave, row.ForceQuitOnLeave));
+
+        row.ForceQuitOnLeave = true;
+        row.CloseOnLeave = true;
+        Assert.Equal((true, false, false), (row.CloseOnLeave, row.HideOnLeave, row.ForceQuitOnLeave));
+    }
+
+    /// <summary>Force quit is offered where apps stay in the tray; a row already set to it keeps it, so it can be unset.</summary>
+    [Fact]
+    public void ForceQuitIsOfferedOnlyWhereAppsLiveInTheTrayOrAlreadyChosen()
+    {
+        Assert.False(new AppRowViewModel("Slack", true, true, _ => { }).OffersForceQuit);
+        Assert.True(new AppRowViewModel("Slack", true, true, _ => { }) { OffersForceQuit = true }.OffersForceQuit);
+        Assert.True(new AppRowViewModel("Slack", true, false, _ => { }, forceQuitOnLeave: true).OffersForceQuit);
+    }
+
+    [Fact]
+    public void ForceQuitAppsAreReadAndSavedWithTheirRows()
+    {
+        ContextDefinition context = new() { Id = "work", DisplayName = "Work", LaunchApps = ["Slack"], ForceQuitApps = ["Slack", "Claude"] };
+        this.appState.UpdateConfiguration(new AppConfiguration { ActiveContextId = "work", Contexts = [context] }, new ConfigurationValidationResult([]));
+        ConfigurationStore store = CreateStore(out InMemoryJsonStore jsonStore, out ConfigPaths configPaths);
+        PlatformCapabilities inTheTray = MacPlatform.Capabilities with { AppsLiveInTray = true };
+        ProfileSetupViewModel viewModel = new(this.appState, store, new FakeInstalledAppsService(), new FakeSystemCatalog(), new FakeShell(), new FakeFocusShortcutInstaller(), inTheTray, new FakeUnknownDefaultBrowser(), context);
+
+        Assert.Equal(
+            [("Slack", true, true), ("Claude", false, true)],
+            viewModel.Apps.Select(row => (row.Name, row.LaunchOnEnter, row.ForceQuitOnLeave)));
+        Assert.True(viewModel.ShowsForceQuit);
+        Assert.All(viewModel.Apps, row => Assert.True(row.OffersForceQuit));
+
+        viewModel.SaveCommand.Execute(null);
+
+        ContextDefinition saved = Assert.Single(jsonStore.Get<AppConfiguration>(configPaths.SettingsPath)!.Contexts);
+        Assert.Equal(["Slack", "Claude"], saved.ForceQuitApps);
+    }
+
     [Fact]
     public void HiddenAppsAreReadAndSavedWithTheirRows()
     {

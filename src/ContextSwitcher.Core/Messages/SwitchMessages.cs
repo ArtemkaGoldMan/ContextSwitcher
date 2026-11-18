@@ -80,6 +80,8 @@ public static class SwitchMessages
 
     public static readonly MessageTemplate TimedOutHidingApps = new("Switch_TimedOutHidingApps", "Hiding apps didn't finish in {0} seconds.");
 
+    public static readonly MessageTemplate TimedOutForceQuitting = new("Switch_TimedOutForceQuitting", "Ending apps by force didn't finish in {0} seconds.");
+
     public static readonly MessageTemplate TimedOutBrowserPages = new("Switch_TimedOutBrowserPages", "Opening the browser's pages didn't finish in {0} seconds.");
 
     public static readonly MessageTemplate TimedOutClosingTabs = new("Switch_TimedOutClosingTabs", "Closing the browser's tabs didn't finish in {0} seconds.");
@@ -101,6 +103,7 @@ public static class SwitchMessages
         AutomationStepType.CloseApplications => TimedOutClosingApps.With(seconds),
         AutomationStepType.LaunchApplications => TimedOutOpeningApps.With(seconds),
         AutomationStepType.HideApplications => TimedOutHidingApps.With(seconds),
+        AutomationStepType.ForceQuitApplications => TimedOutForceQuitting.With(seconds),
         AutomationStepType.ManageBrowserContext => TimedOutBrowserPages.With(seconds),
         AutomationStepType.CloseBrowserTabs => TimedOutClosingTabs.With(seconds),
         AutomationStepType.SetFocusMode => TimedOutFocus.With(seconds),

@@ -54,14 +54,18 @@ public sealed class ProfileSetupViewModel : ViewModelBase
         this.Look = new ProfileLookViewModel(source.AccentColor, source.Icon);
 
         this.Apps = new ObservableCollection<AppRowViewModel>(
-            source.LaunchApps.Concat(source.CloseApps).Concat(source.HideApps)
+            source.LaunchApps.Concat(source.CloseApps).Concat(source.HideApps).Concat(source.ForceQuitApps)
                 .Distinct(StringComparer.Ordinal)
                 .Select(name => new AppRowViewModel(
                     name,
                     source.LaunchApps.Contains(name),
                     source.CloseApps.Contains(name),
                     this.RemoveApp,
-                    hideOnLeave: source.HideApps.Contains(name))));
+                    hideOnLeave: source.HideApps.Contains(name),
+                    forceQuitOnLeave: source.ForceQuitApps.Contains(name))
+                {
+                    OffersForceQuit = capabilities.AppsLiveInTray
+                }));
 
         // Constructed after Apps, since its "already added" callback reads that collection.
         this.AppPicker = new AppPickerViewModel(
@@ -85,7 +89,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
                 source.SwitchPolicy.CriticalSteps.Contains(step.Type.ToString())))
             .ToList();
 
-        this.AddAppCommand = new RelayCommand(() => this.Apps.Add(new AppRowViewModel(string.Empty, true, true, this.RemoveApp, isEditable: true)));
+        this.AddAppCommand = new RelayCommand(() => this.Apps.Add(new AppRowViewModel(string.Empty, true, true, this.RemoveApp, isEditable: true) { OffersForceQuit = this.ShowsForceQuit }));
         this.SaveCommand = new AsyncRelayCommand(this.SaveAsync, () => !this.isSaving);
         this.CancelCommand = new RelayCommand(() => this.CancelRequested?.Invoke(this, EventArgs.Empty));
 
@@ -144,6 +148,9 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
     /// <summary>Whether this computer has Focus modes for the profile to turn on.</summary>
     public bool ShowsFocus => this.capabilities.Focus;
+
+    /// <summary>Whether an app can be ended by force: where apps stay in the tray when asked to quit.</summary>
+    public bool ShowsForceQuit => this.capabilities.AppsLiveInTray;
 
     /// <summary>Whether this computer plays music for the profile to start.</summary>
     public bool ShowsMusic => this.capabilities.PlaysMusic;
@@ -222,7 +229,8 @@ public sealed class ProfileSetupViewModel : ViewModelBase
 
         this.Apps.Add(new AppRowViewModel(appName, launchOnEnter: true, closeOnLeave: true, this.RemoveApp)
         {
-            Icon = this.AppPicker.ResolveIcon(appName)
+            Icon = this.AppPicker.ResolveIcon(appName),
+            OffersForceQuit = this.ShowsForceQuit
         });
 
         this.AppPicker.SearchText = string.Empty;
@@ -295,6 +303,7 @@ public sealed class ProfileSetupViewModel : ViewModelBase
             LaunchApps = this.Apps.Where(a => a.LaunchOnEnter && !string.IsNullOrWhiteSpace(a.Name)).Select(a => a.Name.Trim()).ToList(),
             CloseApps = this.Apps.Where(a => a.CloseOnLeave && !string.IsNullOrWhiteSpace(a.Name)).Select(a => a.Name.Trim()).ToList(),
             HideApps = this.Apps.Where(a => a.HideOnLeave && !string.IsNullOrWhiteSpace(a.Name)).Select(a => a.Name.Trim()).ToList(),
+            ForceQuitApps = this.Apps.Where(a => a.ForceQuitOnLeave && !string.IsNullOrWhiteSpace(a.Name)).Select(a => a.Name.Trim()).ToList(),
             BrowserManagement = this.Browser.ToConfig(),
             Focus = this.Focus.ToConfig(),
             Media = this.Media.ToConfig(),

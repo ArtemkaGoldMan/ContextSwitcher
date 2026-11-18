@@ -2,7 +2,9 @@ using System.Diagnostics;
 using System.Text;
 using ContextSwitcher.Core.Abstractions;
 using ContextSwitcher.Core.Automation;
+using ContextSwitcher.Core.Logging;
 using ContextSwitcher.Core.Messages;
+using ContextSwitcher.Core.Platform;
 
 namespace ContextSwitcher.Infrastructure.Automation;
 
@@ -13,20 +15,34 @@ public sealed class CloseApplicationsHandler : IStepHandler
     private readonly IAppProcesses processes;
     private readonly IClock clock;
     private readonly QuitTimings timings;
+    private readonly PlatformCapabilities capabilities;
+    private readonly ILogger logger;
 
     /// <summary>A handler that asks apps to quit through <paramref name="quitter"/> and looks for them through <paramref name="processes"/>.</summary>
     /// <param name="timings">How an app's share of the step is spent, and how often it is looked for.</param>
-    public CloseApplicationsHandler(IAppQuitter quitter, IAppProcesses processes, IClock clock, QuitTimings timings)
+    /// <param name="capabilities">Whether an app that has closed its windows and runs on is a failure to quit, or the tray.</param>
+    /// <param name="logger">Records an app left running in the tray.</param>
+    public CloseApplicationsHandler(
+        IAppQuitter quitter,
+        IAppProcesses processes,
+        IClock clock,
+        QuitTimings timings,
+        PlatformCapabilities capabilities,
+        ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(quitter);
         ArgumentNullException.ThrowIfNull(processes);
         ArgumentNullException.ThrowIfNull(clock);
         ArgumentNullException.ThrowIfNull(timings);
+        ArgumentNullException.ThrowIfNull(capabilities);
+        ArgumentNullException.ThrowIfNull(logger);
 
         this.quitter = quitter;
         this.processes = processes;
         this.clock = clock;
         this.timings = timings;
+        this.capabilities = capabilities;
+        this.logger = logger;
     }
 
     /// <inheritdoc />
@@ -83,9 +99,19 @@ public sealed class CloseApplicationsHandler : IStepHandler
             // nothing either way; the window does.
             if (isStillRunning)
             {
-                problems.Add(this.processes.HasWindowOnScreen(app) == false
-                    ? SwitchMessages.StillClosing.With(app)
-                    : SwitchMessages.CouldNotClose.With(app));
+                bool noWindow = this.processes.HasWindowOnScreen(app) == false;
+
+                // Where closing a window is not quitting, an app with none left that runs on is in
+                // the tray, as it was made to be: nothing for the person to do, and a warning on
+                // every switch for it would only teach them to ignore warnings. A profile can have
+                // such an app ended by force instead.
+                if (noWindow && this.capabilities.AppsLiveInTray)
+                {
+                    this.logger.Record("ContextSwitch", "AppInTray", $"{app} closed its windows and is still running, as an app in the tray does.");
+                    continue;
+                }
+
+                problems.Add(noWindow ? SwitchMessages.StillClosing.With(app) : SwitchMessages.CouldNotClose.With(app));
             }
         }
 

@@ -47,7 +47,7 @@ public static class UnclaimedItems
     }
 
     private static IEnumerable<string> AppsOf(ContextDefinition? context) =>
-        context is null ? [] : context.LaunchApps.Concat(context.CloseApps).Concat(context.HideApps);
+        context is null ? [] : context.LaunchApps.Concat(context.CloseApps).Concat(context.HideApps).Concat(context.ForceQuitApps);
 
     private static IEnumerable<string> PagesOf(ContextDefinition? context) =>
         context is null

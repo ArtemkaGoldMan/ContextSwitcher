@@ -77,6 +77,10 @@ public sealed class AutomationPlanBuilder
         if (previous is not null)
         {
             this.AddHideApplications(steps, previous, target, ignored, criticalTypes);
+            if (this.capabilities.AppsLiveInTray)
+            {
+                this.AddForceQuitApplications(steps, previous, target, ignored, criticalTypes);
+            }
         }
 
         if (this.capabilities.Focus)
@@ -215,6 +219,35 @@ public sealed class AutomationPlanBuilder
             previous.Id,
             "Hide applications",
             this.budgets.HideApps,
+            criticalTypes,
+            new AppsArguments(apps)));
+    }
+
+    /// <summary>
+    /// The apps the profile being left ends by force. One the profile being entered launches is left
+    /// alone, as for hiding: ending it only to open it again lost its work.
+    /// </summary>
+    private void AddForceQuitApplications(
+        List<AutomationStep> steps,
+        ContextDefinition previous,
+        ContextDefinition? target,
+        IReadOnlyCollection<string> ignored,
+        HashSet<string> criticalTypes)
+    {
+        List<string> apps = previous.ForceQuitApps
+            .Except(target?.LaunchApps ?? [], StringComparer.OrdinalIgnoreCase)
+            .Except(ignored, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (apps.Count == 0)
+        {
+            return;
+        }
+
+        steps.Add(CreateStep(
+            AutomationStepType.ForceQuitApplications,
+            previous.Id,
+            "Force quit applications",
+            this.budgets.ForceQuitPerApp * apps.Count,
             criticalTypes,
             new AppsArguments(apps)));
     }

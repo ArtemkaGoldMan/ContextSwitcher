@@ -23,6 +23,9 @@ public static class WindowsPlatform
         DockIcon = false,
         AutomationPermission = false,
         Wording = SystemWording.Windows,
+
+        // Slack, Teams and Discord answer a closed window by going to the tray.
+        AppsLiveInTray = true,
         BrowserPages = false,
         Browsers = [],
         FocusFilterBrowsers = []

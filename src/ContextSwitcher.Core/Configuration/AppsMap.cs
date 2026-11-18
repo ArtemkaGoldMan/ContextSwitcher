@@ -15,7 +15,7 @@ public static class AppsMap
         ArgumentNullException.ThrowIfNull(configuration);
 
         return configuration.Contexts
-            .SelectMany(context => context.LaunchApps.Concat(context.CloseApps).Concat(context.HideApps))
+            .SelectMany(context => context.LaunchApps.Concat(context.CloseApps).Concat(context.HideApps).Concat(context.ForceQuitApps))
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Select(name => name.Trim())
             .Where(name => !configuration.IgnoredApps.Contains(name, StringComparer.OrdinalIgnoreCase))

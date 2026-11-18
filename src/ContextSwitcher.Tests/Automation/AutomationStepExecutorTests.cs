@@ -1,6 +1,7 @@
 using ContextSwitcher.Core.Automation;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Messages;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Core.ProcessExecution;
 using ContextSwitcher.Infrastructure.Automation;
 using ContextSwitcher.Infrastructure.Browser;
@@ -537,7 +538,7 @@ public sealed class AutomationStepExecutorTests
     /// Every handler, with the Mac's ways of asking the system over fake runners, so what each step
     /// would run on a Mac is what is checked.
     /// </summary>
-    private static AutomationStepExecutor CreateExecutor(FakeProcessRunner processRunner, FakeScriptRunner scriptRunner, FakeClock clock, FakeApplicationHider? hider = null, FakeAppProcesses? processes = null)
+    private static AutomationStepExecutor CreateExecutor(FakeProcessRunner processRunner, FakeScriptRunner scriptRunner, FakeClock clock, FakeApplicationHider? hider = null, FakeAppProcesses? processes = null, PlatformCapabilities? capabilities = null)
     {
         // No wait between "is it still running?" checks, so a test of an app that never quits does
         // not sit through the real interval. Never the real hider: it would hide this Mac's apps -
@@ -545,7 +546,8 @@ public sealed class AutomationStepExecutorTests
         BrowserLauncher browser = new(new MacBrowserControl(processRunner, scriptRunner), new FakeOpenedTabsStore(), new FakeBrowserRuns(), new TestLogger(), TabTimings.Immediate);
         return new AutomationStepExecutor(
             [
-                new CloseApplicationsHandler(new MacAppQuitter(scriptRunner), processes ?? new FakeAppProcesses(), clock, QuitTimings.Immediate),
+                new CloseApplicationsHandler(new MacAppQuitter(scriptRunner), processes ?? new FakeAppProcesses(), clock, QuitTimings.Immediate, capabilities ?? MacPlatform.Capabilities, new TestLogger()),
+                new ForceQuitApplicationsHandler(processes ?? new FakeAppProcesses(), clock, QuitTimings.Immediate),
                 new LaunchApplicationsHandler(new MacAppLauncher(processRunner), clock),
                 new HideApplicationsHandler(hider ?? new FakeApplicationHider(), clock),
                 new ManageBrowserContextHandler(browser, clock),
@@ -643,6 +645,67 @@ public sealed class AutomationStepExecutorTests
         Assert.Equal(["Slack", "Notion"], hider.Hidden);
         Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
     }
+
+    /// <summary>
+    /// Where apps stay in the tray - Windows - one with no window left that runs on is as it was made
+    /// to be: no warning on every switch. One with a window open may be asking to save, and is told.
+    /// </summary>
+    [Fact]
+    public async Task AnAppInTheTrayWithNoWindowIsNotAWarningWhereAppsLiveInTheTray()
+    {
+        FakeScriptRunner scriptRunner = new() { DefaultResult = new ProcessResult(0, "true", string.Empty, false) };
+        FakeAppProcesses processes = new FakeAppProcesses().Running("Slack", hasWindow: false).Running("TextEdit", hasWindow: true);
+        PlatformCapabilities inTheTray = MacPlatform.Capabilities with { AppsLiveInTray = true };
+
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock(), processes: processes, capabilities: inTheTray);
+        AutomationResult result = await executor.ExecuteAsync(CloseApplicationsStep(["Slack", "TextEdit"], isCritical: false), CancellationToken.None);
+
+        UserMessage problem = Assert.Single(result.Problems);
+        Assert.Equal((SwitchMessages.CouldNotClose.Key, "TextEdit"), (problem.Key, problem.Arguments[0]));
+    }
+
+    [Fact]
+    public async Task AnAppInTheTraySucceedsTheStepWhenItIsTheOnlyOneLeft()
+    {
+        FakeScriptRunner scriptRunner = new() { DefaultResult = new ProcessResult(0, "true", string.Empty, false) };
+        FakeAppProcesses processes = new FakeAppProcesses().Running("Slack", hasWindow: false);
+        PlatformCapabilities inTheTray = MacPlatform.Capabilities with { AppsLiveInTray = true };
+
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), scriptRunner, new FakeClock(), processes: processes, capabilities: inTheTray);
+        AutomationResult result = await executor.ExecuteAsync(CloseApplicationsStep(["Slack"], isCritical: false), CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
+        Assert.Empty(result.Problems);
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncForceQuitEndsEachAppAndSucceeds()
+    {
+        FakeAppProcesses processes = new FakeAppProcesses().Running("Slack").Running("Claude");
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), new FakeScriptRunner(), new FakeClock(), processes: processes);
+
+        AutomationResult result = await executor.ExecuteAsync(ForceQuitStep(["Slack", "Claude"]), CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Succeeded, result.Status);
+        Assert.Equal(["Claude", "Slack"], processes.ForceQuitAsked.Order());
+        Assert.False(processes.IsRunning("Slack"));
+    }
+
+    [Fact]
+    public async Task ExecuteAsyncForceQuitWarnsForAnAppThatIsStillThere()
+    {
+        FakeAppProcesses processes = new FakeAppProcesses().Running("Slack", ignoresForceQuit: true).Running("Claude");
+        AutomationStepExecutor executor = CreateExecutor(new FakeProcessRunner(), new FakeScriptRunner(), new FakeClock(), processes: processes);
+
+        AutomationResult result = await executor.ExecuteAsync(ForceQuitStep(["Slack", "Claude"]), CancellationToken.None);
+
+        Assert.Equal(AutomationResultStatus.Warning, result.Status);
+        UserMessage problem = Assert.Single(result.Problems);
+        Assert.Equal((SwitchMessages.CouldNotForceQuit.Key, "Slack"), (problem.Key, problem.Arguments[0]));
+    }
+
+    private static AutomationStep ForceQuitStep(IReadOnlyList<string> apps) =>
+        new("ForceQuitApplications.work", AutomationStepType.ForceQuitApplications, "Force quit applications", false, TimeSpan.FromSeconds(5), new AppsArguments(apps).ToDictionary());
 
     private static AutomationStep CloseApplicationsStep(IReadOnlyList<string> apps, bool isCritical)
     {
