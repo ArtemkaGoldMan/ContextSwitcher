@@ -17,6 +17,7 @@ public sealed class ForceQuitApplicationsHandler : IStepHandler
     private readonly IClock clock;
     private readonly QuitTimings timings;
 
+    /// <summary>A handler that ends apps through <paramref name="processes"/> and watches them go.</summary>
     /// <param name="timings">How often an app is looked for while it goes, and how many looks it gets.</param>
     public ForceQuitApplicationsHandler(IAppProcesses processes, IClock clock, QuitTimings timings)
     {
