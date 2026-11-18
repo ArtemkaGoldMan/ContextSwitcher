@@ -1,3 +1,4 @@
+using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Infrastructure.Windows;
 
@@ -6,14 +7,30 @@ namespace ContextSwitcher.Tests.Windows;
 /// <summary>What Windows can do in stage 1, what it may run, and which release files are its own.</summary>
 public sealed class WindowsPlatformTests
 {
-    /// <summary>Apps and time: the browser, music and Docker come in later stages, and Windows has no Focus, Apple Music, Dock or Automation permission.</summary>
+    /// <summary>Apps, time and pages in the default browser: music and Docker come in later stages, and Windows has no Focus, Apple Music, Dock or Automation permission.</summary>
     [Fact]
-    public void Stage1HasAppsAlone()
+    public void SoFarItHasAppsAndPages()
     {
         PlatformCapabilities windows = WindowsPlatform.Capabilities;
 
-        Assert.False(windows.Focus || windows.AppleMusic || windows.Spotify || windows.Docker || windows.DockIcon || windows.AutomationPermission || windows.BrowserPages);
+        Assert.False(windows.Focus || windows.AppleMusic || windows.Spotify || windows.Docker || windows.DockIcon || windows.AutomationPermission);
         Assert.False(windows.PlaysMusic);
+        Assert.True(windows.BrowserPages);
+    }
+
+    /// <summary>
+    /// Only the default browser, so a profile can't ask for a tab to be closed by id or for a browser profile:
+    /// both need a browser extension.
+    /// </summary>
+    [Fact]
+    public void NoNamedBrowserIsOfferedYet()
+    {
+        PlatformCapabilities windows = WindowsPlatform.Capabilities;
+
+        Assert.Empty(windows.Browsers);
+        Assert.True(windows.HasBrowser(BrowserKind.Default));
+        Assert.False(windows.HasBrowser(BrowserKind.Chrome));
+        Assert.False(windows.ClosesTabsById(BrowserKind.Chrome));
     }
 
     /// <summary>The interface says PC, tray, File Explorer and Ctrl where it would say Mac, menu bar, Finder and ⌘.</summary>

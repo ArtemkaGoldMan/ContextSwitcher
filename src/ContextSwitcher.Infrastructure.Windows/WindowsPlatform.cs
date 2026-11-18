@@ -11,8 +11,9 @@ namespace ContextSwitcher.Infrastructure.Windows;
 public static class WindowsPlatform
 {
     /// <summary>
-    /// Stage 1: apps and time. No browser, music or Docker yet; no Focus, Apple Music, Dock or
-    /// Automation permission at all - Windows has none of them.
+    /// Stages 1 and 2 so far: apps, time, and a profile's pages opened in the default browser. No named
+    /// browser, so no closing of tabs or browser profiles yet; no music or Docker yet; no Focus, Apple
+    /// Music, Dock or Automation permission at all - Windows has none of them.
     /// </summary>
     public static PlatformCapabilities Capabilities { get; } = new()
     {
@@ -23,7 +24,7 @@ public static class WindowsPlatform
         DockIcon = false,
         AutomationPermission = false,
         Wording = SystemWording.Windows,
-        BrowserPages = false,
+        BrowserPages = true,
         Browsers = [],
         FocusFilterBrowsers = []
     };

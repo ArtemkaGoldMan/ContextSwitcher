@@ -5,6 +5,7 @@ using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Infrastructure.Windows;
 using ContextSwitcher.Infrastructure.Windows.Applications;
 using ContextSwitcher.Infrastructure.Windows.Away;
+using ContextSwitcher.Infrastructure.Windows.Browser;
 using ContextSwitcher.Infrastructure.Windows.NotYet;
 using ContextSwitcher.Infrastructure.Windows.Startup;
 using ContextSwitcher.Infrastructure.Windows.Updates;
@@ -93,11 +94,14 @@ public static class PlatformServices
         services.AddSingleton<ISystemEvents, SystemEventsSource>();
         services.AddSingleton<IAwayEvents, WindowsAwayEvents>();
 
-        // The browser and site icons: stage 2. Music, Docker's list and notifications: stage 3.
-        services.AddSingleton<NotYetBrowserControl>();
-        services.AddSingleton<IBrowserControl>(provider => provider.GetRequiredService<NotYetBrowserControl>());
-        services.AddSingleton<IBrowserRuns>(provider => provider.GetRequiredService<NotYetBrowserControl>());
+        // Opening a profile's pages in the default browser. Reading and closing tabs, named browsers and the
+        // default browser's name: the rest of stage 2.
+        services.AddSingleton<WindowsBrowserControl>();
+        services.AddSingleton<IBrowserControl>(provider => provider.GetRequiredService<WindowsBrowserControl>());
+        services.AddSingleton<IBrowserRuns>(provider => provider.GetRequiredService<WindowsBrowserControl>());
         services.AddSingleton<IDefaultBrowser, NotYetDefaultBrowser>();
+
+        // Site icons: stage 2. Music, Docker's list and notifications: stage 3.
         services.AddSingleton<IImageConverter, NotYetImageConverter>();
         services.AddSingleton<ISystemCatalog, NotYetSystemCatalog>();
         services.AddSingleton<IMediaPlayer, NotYetMediaPlayer>();

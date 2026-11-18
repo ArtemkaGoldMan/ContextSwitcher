@@ -211,9 +211,14 @@ touches, English and Ukrainian, and the way a switch reports what went wrong.
 - **Uninstall** from **Settings → Apps → Installed apps**; delete `%APPDATA%\ContextSwitcher` to remove
   your profiles and history too.
 
-**Not on Windows yet:** browser pages and profiles, Docker, Spotify, the command line and a hotkey
-(coming in the [plan](windows-plan.md)); Focus and Apple Music, which Windows has no equivalent of.
-Steps that need them are hidden, not shown doing nothing.
+**Web pages** open in your default browser, as new tabs of the window you already have open. They stay
+open when you leave the profile: closing them needs a browser extension, and Profile Setup says so
+under the list of pages. Only the default browser is used, and a page that is already open is opened
+again.
+
+**Not on Windows yet:** closing a profile's pages, browser profiles, Docker, Spotify, the command line
+and a hotkey (coming in the [plan](windows-plan.md)); Focus and Apple Music, which Windows has no
+equivalent of. Steps that need them are hidden, not shown doing nothing.
 
 ## Going further
 
