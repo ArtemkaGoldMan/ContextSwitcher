@@ -4,6 +4,7 @@ using ContextSwitcher.Core.Analytics;
 using ContextSwitcher.Core.Configuration;
 using ContextSwitcher.Core.Configuration.Validation;
 using ContextSwitcher.Core.Contexts;
+using ContextSwitcher.Core.Platform;
 using ContextSwitcher.Infrastructure.Files;
 using ContextSwitcher.Infrastructure.Logging;
 using ContextSwitcher.Infrastructure.MacOS;
@@ -135,6 +136,10 @@ public sealed class UiScenario
 
     public OnboardingViewModel Onboarding() =>
         new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.SwitchService, FakeLoginItem.Unavailable(), MacPlatform.Capabilities);
+
+    /// <summary>Profile Setup as a platform with <paramref name="capabilities"/> shows it.</summary>
+    public ProfileSetupViewModel ProfileSetupOn(PlatformCapabilities capabilities, ContextDefinition existing) =>
+        new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.Catalog, this.Shell, this.FocusShortcuts, capabilities, new FakeUnknownDefaultBrowser(), existing);
 
     public ProfileSetupViewModel ProfileSetup(ContextDefinition? existing = null) =>
         new(this.AppState, this.ConfigurationStore, this.InstalledApps, this.Catalog, this.Shell, this.FocusShortcuts, MacPlatform.Capabilities, new FakeUnknownDefaultBrowser(), existing);

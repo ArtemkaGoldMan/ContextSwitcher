@@ -55,6 +55,13 @@ public sealed record PlatformCapabilities
     /// </summary>
     public SystemWording Wording { get; init; } = SystemWording.Mac;
 
+    /// <summary>
+    /// Whether an app asked to quit may stay on in the tray with no window - as Slack, Teams and
+    /// Discord do on Windows, where closing a window is not quitting. A switch doesn't warn about one
+    /// that did, and a profile can have an app ended by force instead. False unless a platform says so.
+    /// </summary>
+    public bool AppsLiveInTray { get; init; }
+
     /// <summary>Whether <paramref name="player"/> can be played here; none at all always can.</summary>
     public bool Plays(MediaPlayerKind player) => player switch
     {

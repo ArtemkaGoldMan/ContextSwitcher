@@ -178,6 +178,21 @@ public sealed class ConfigurationValidatorTests
         Assert.Equal("contexts[0].hideApps", error.Path);
     }
 
+    [Fact]
+    public void ValidateRejectsAnAppForceQuitAndAlsoClosedOrHidden()
+    {
+        AppConfiguration configuration = CreateConfiguration(new BrowserManagementConfig()) with { };
+        configuration = configuration with
+        {
+            Contexts = [configuration.Contexts[0] with { CloseApps = ["Slack"], HideApps = ["Notion"], ForceQuitApps = ["slack", "notion", "Claude"] }]
+        };
+
+        ConfigurationValidationResult result = this.validator.Validate(configuration);
+
+        Assert.Equal(2, result.Errors.Count);
+        Assert.All(result.Errors, error => Assert.Equal("contexts[0].forceQuitApps", error.Path));
+    }
+
     /// <summary>
     /// What a hand-edited file most often gets wrong, each named by where it is so the dashboard's
     /// warning points at the line to fix.

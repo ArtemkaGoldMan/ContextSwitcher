@@ -45,6 +45,14 @@ public sealed record ContextDefinition
     public IReadOnlyList<string> HideApps { get; init; } = [];
 
     /// <summary>
+    /// Applications ended at once, without asking, when leaving this context: for an app that stays
+    /// on in the tray when asked to quit, and has no work to lose. Offered where apps do that
+    /// (<see cref="Platform.PlatformCapabilities.AppsLiveInTray"/>). An app is in this list, in
+    /// <see cref="CloseApps"/> or in <see cref="HideApps"/>, not in more than one.
+    /// </summary>
+    public IReadOnlyList<string> ForceQuitApps { get; init; } = [];
+
+    /// <summary>
     /// Gets or sets the applications that should be launched when entering this context.
     /// </summary>
     public IReadOnlyList<string> LaunchApps { get; init; } = [];

@@ -40,6 +40,13 @@ public sealed class WindowsPlatformTests
         Assert.Equal(SystemWording.Windows, WindowsPlatform.Capabilities.Wording);
     }
 
+    /// <summary>Slack, Teams and Discord go to the tray when closed, so a switch doesn't warn about them and a profile can end them by force.</summary>
+    [Fact]
+    public void AppsStayInTheTray()
+    {
+        Assert.True(WindowsPlatform.Capabilities.AppsLiveInTray);
+    }
+
     [Fact]
     public void FileExplorerAndPowerShellAreAllItRuns()
     {

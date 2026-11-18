@@ -170,8 +170,9 @@ Every field is in [Configuration](configuration.md). What the code relies on:
 - `schemaVersion` must be one the app reads. A change to the schema is a breaking change: people edit
   this file by hand, so it needs a migration and a release note.
 - `contexts[].id` is unique, lowercase, URL-safe and never changes; `activeContextId` names one.
-- `launchApps` are opened when the profile is **entered**; `closeApps` quit and `hideApps` hidden when
-  it is **left**. All three belong to the profile that owns the apps - Profile Setup shows them as one
+- `launchApps` are opened when the profile is **entered**; `closeApps` quit, `hideApps` hidden and
+  `forceQuitApps` ended at once (where `PlatformCapabilities.AppsLiveInTray` is set: Windows) when it
+  is **left**. An app is in one of the last three at most. All four belong to the profile that owns the apps - Profile Setup shows them as one
   row per app with its toggles. The optional `apps` map ties a name to how the system knows the app
   (on Windows, its AppUserModelID and executable); old files without it read unchanged.
 - `switchPolicy.criticalSteps[]` are `AutomationStepType` names, exactly; criticality is per kind of
@@ -248,7 +249,7 @@ directly.
 6. Build the plan (`AutomationPlanBuilder`) from the profile being left and the one entered.
 7. Free what the old profile held: stop its Docker containers (not ones the new one starts), close
    its pages' tabs, close the tabs and apps chosen when asked, quit its `closeApps`, hide its
-   `hideApps`. On the first switch there is nothing to leave.
+   `hideApps`, end its `forceQuitApps` (Windows). On the first switch there is nothing to leave.
 8. Focus: turn on the new profile's, or off the old one's.
 9. Bring in the new profile: launch its apps, open its pages or browser profiles, start its
    containers, play its music.
@@ -264,12 +265,15 @@ Turning a profile off is the first half alone. Apps in `ignoredApps` are left ou
 - Failing to write `state.json` makes it `Failed`, and a switch never claims the new profile is on
   unless that write worked. Failing to write the time history is a warning, shown like any other.
 - Each step has a time budget (`StepBudgets`): 10 s for each app quit, 15 s for each app launched, 5 s
-  to hide, 20 s for the browser, 10 s to close tabs, 10 s for Focus, 8 s for music, 45 s for Docker.
+  to hide, 5 s for each app ended by force, 20 s for the browser, 10 s to close tabs, 10 s for Focus, 8 s for music, 45 s for Docker.
 - Cancelling stops the steps not yet started; a running `osascript` is not cut off before its
   budget. `state.json` is left as it was unless the switch had already committed.
 - Nothing is retried in a loop. The person can run the switch again.
 - An app still closing when the switch ends is watched for a couple of minutes, and its warning
   follows what it does (`ClosingAppsWatcher`).
+- Where apps live in the tray (`PlatformCapabilities.AppsLiveInTray`), one that has closed its
+  windows and runs on is not a failure to quit: `CloseApplicationsHandler` logs `AppInTray` and says
+  nothing on screen. An app with a window left still warns, as it may be asking to save.
 
 ### Asking about everything else
 

@@ -93,6 +93,12 @@ public sealed class ConfigurationValidator
                 errors.Add(ConfigurationValidationError.Of($"{path}.hideApps", ConfigurationMessages.AppClosedAndHidden.With(app)));
             }
 
+            foreach (string app in context.ForceQuitApps
+                .Where(app => context.CloseApps.Concat(context.HideApps).Contains(app, StringComparer.OrdinalIgnoreCase)))
+            {
+                errors.Add(ConfigurationValidationError.Of($"{path}.forceQuitApps", ConfigurationMessages.AppForceQuitAndClosedOrHidden.With(app)));
+            }
+
             ValidateBrowserManagement(context.BrowserManagement, $"{path}.browser_management", errors);
             ValidateQuickLinks(context.QuickLinks, $"{path}.quickLinks", errors);
 

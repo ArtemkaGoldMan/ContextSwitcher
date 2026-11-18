@@ -17,7 +17,7 @@ public static class IgnoredApps
         List<string> takenOutOf = [];
         List<ContextDefinition> contexts = configuration.Contexts.Select(context =>
         {
-            bool listed = context.LaunchApps.Concat(context.CloseApps).Concat(context.HideApps)
+            bool listed = context.LaunchApps.Concat(context.CloseApps).Concat(context.HideApps).Concat(context.ForceQuitApps)
                 .Contains(name, StringComparer.OrdinalIgnoreCase);
             if (!listed)
             {
@@ -29,7 +29,8 @@ public static class IgnoredApps
             {
                 LaunchApps = Without(context.LaunchApps, name),
                 CloseApps = Without(context.CloseApps, name),
-                HideApps = Without(context.HideApps, name)
+                HideApps = Without(context.HideApps, name),
+                ForceQuitApps = Without(context.ForceQuitApps, name)
             };
         }).ToList();
 

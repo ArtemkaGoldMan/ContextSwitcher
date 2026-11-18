@@ -72,7 +72,8 @@ The order can only be changed here.
 Editing a profile is mostly picking from lists: apps from the apps you have installed, web pages
 from the tabs you have open, playlists from your library, containers from Docker. Apps and pages
 each have two ticks — open when you enter the profile, close when you leave it — and an app can be
-**hidden** instead of quit, so it comes back at once with its windows.
+**hidden** instead of quit, so it comes back at once with its windows. On Windows an app can also be
+set to **Force quit**: see [On Windows](#on-windows-preview).
 
 <div align="center">
 <picture>
@@ -201,8 +202,11 @@ touches, English and Ukrainian, and the way a switch reports what went wrong.
 - **The tray, not the menu bar.** The icon is by the clock; Windows 11 hides a new one behind the **^**
   arrow, so drag it out to keep it in sight. File Explorer takes Finder's place and **Ctrl** takes ⌘.
 - **Apps are found in the Start menu.** A profile names the apps from it; closing one is polite, like
-  closing its window, and an app that keeps running in the tray (Slack, Teams, Discord, Telegram…)
-  says it is *still closing*, with **Force quit** once it has no window left.
+  closing its window. An app that goes to the tray when its window closes (Slack, Teams, Discord,
+  Claude…) is left running there, and a switch doesn't warn about it. To have such an app end when you
+  leave a profile, tick **Force quit** on its row: it is ended at once, and anything unsaved in it is
+  lost. An app that still has a window open after being asked to close may be asking to save, and a
+  switch says so.
 - **Time pauses** while the PC sleeps or is locked, and **Open at sign-in** is in Settings.
 - **Updates** are in **Settings → Updates**: **Install and restart** downloads the newest Windows
   version and restarts into it. There is no notification yet.

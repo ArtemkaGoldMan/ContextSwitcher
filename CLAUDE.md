@@ -78,7 +78,8 @@ The full rules, and what only looks like a break of them, are in
   a profile opens, site icons, and the daily update check. Adding any other is the owner's decision
   ([usage statistics](docs/usage-statistics.md)).
 - Every feature is free. Support the developer is a link, never a gate.
-- Nothing is forced to quit unless the person clicks Force quit, and no tab is closed that a profile
+- Nothing is forced to quit unless the person clicks Force quit, or chose Force quit for that app in a
+  profile (Windows), and no tab is closed that a profile
   doesn't list.
 - Work on Windows doesn't change what the Mac app does. Windows features land in the order of
   [the Windows plan](docs/windows-plan.md).

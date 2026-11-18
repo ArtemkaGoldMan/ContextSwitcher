@@ -246,6 +246,9 @@ Apps:
 - **Closing**: `WM_CLOSE` to each of the app's main windows - shown, unowned, not a palette - and of
   the processes it started. A dialog stays for the app to answer. The window is checked to be one
   first: a null handle or `HWND_BROADCAST` would otherwise post to this app, or to every window.
+- **Apps in the tray, Force quit**: an app with no window left that runs on is the tray, not "still
+  closing": `PlatformCapabilities.AppsLiveInTray` stops the warning, and a profile's `forceQuitApps`
+  are ended at once by the `ForceQuitApplications` step, which the person chose per app.
 - **"Still closing", a window on screen, Force quit**: `EnumWindows` over the app and its child
   processes, leaving out cloaked windows, palettes and anything under 100 pixels; a minimised window
   counts, as it is on the taskbar. `TerminateProcess` ends the app and what it started when the person

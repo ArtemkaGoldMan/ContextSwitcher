@@ -97,6 +97,12 @@
           Classes="caption"
           TextWrapping="Wrap" />
 
+        <TextBlock
+          Text="{x:Static r:Strings.ProfileSetup_ForceQuitTrayHint}"
+          Classes="caption"
+          TextWrapping="Wrap"
+          IsVisible="{Binding ShowsForceQuit}" />
+
         <ItemsControl ItemsSource="{Binding Apps}" ItemTemplate="{StaticResource AppRow}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>

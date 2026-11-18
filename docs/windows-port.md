@@ -72,7 +72,7 @@ opens and draws correctly, in Segoe UI with Windows' own title bar. What changes
 | Launching apps | `open -a` | the Start menu shortcut, or the app's AppUserModelID through `shell:AppsFolder` for Store apps | write again |
 | The app picker and its icons | bundles in `/Applications`, icons through `sips` | `shell:AppsFolder`, which lists desktop and Store apps alike; icons from the Shell (`IShellItemImageFactory`) | write again |
 | Closing apps | AppleScript `quit`, then checking it went | `WM_CLOSE` to each of the process's top-level windows, then the same checking | write again; weaker (below) |
-| Still closing, a window on screen, Force quit | `CGWindowListCopyWindowInfo` over the app and its child processes; `forceTerminate` | `EnumWindows`, visible and not cloaked; child processes from a Toolhelp snapshot; `TerminateProcess` | write again; better - `IVirtualDesktopManager` tells a window on another desktop from a hidden one, which macOS can't |
+| Still closing, a window on screen, Force quit, an app in the tray | `CGWindowListCopyWindowInfo` over the app and its child processes; `forceTerminate` | `EnumWindows`, visible and not cloaked; child processes from a Toolhelp snapshot; `TerminateProcess` | write again; better - `IVirtualDesktopManager` tells a window on another desktop from a hidden one, which macOS can't |
 | Hiding apps | `NSRunningApplication.hide` | minimising the process's windows; entering a profile restores them rather than launching again | write again; small |
 | Running apps (asking on a switch) | `NSWorkspace.runningApplications` | visible, unowned, uncloaked top-level windows and their processes | write again |
 | Opening pages | `open`, `open -na … --args --profile-directory=` | the shell for the default browser; `chrome.exe --profile-directory=…`, found through `App Paths` | nearly as is |
@@ -98,7 +98,8 @@ Two limits of Windows to know before promising anything:
 
 - **Closing an app means closing its windows.** Slack, Teams, Discord, Telegram and Spotify go to the
   tray when their window closes and keep running. Ending the process instead loses unsaved work, so
-  it is never the default.
+  it is never the default: a profile asks for it, app by app, with **Force quit** (`forceQuitApps`). An
+  app with no window left that runs on is the tray, not a failure, and a switch doesn't warn about it.
 - **An app running as administrator cannot be closed** by one that isn't. Windows blocks the message.
 
 ## Browser tabs

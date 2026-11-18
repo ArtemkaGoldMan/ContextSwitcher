@@ -18,6 +18,20 @@ public sealed class IgnoredAppsTests
     };
 
     [Fact]
+    public void IgnoringAnAppTakesItOutOfTheForceQuitListToo()
+    {
+        AppConfiguration configuration = Configuration with
+        {
+            Contexts = [Configuration.Contexts[0] with { ForceQuitApps = ["Claude"] }, Configuration.Contexts[1], Configuration.Contexts[2]]
+        };
+
+        (AppConfiguration updated, IReadOnlyList<string> takenOutOf) = IgnoredApps.Ignore(configuration, "claude");
+
+        Assert.Equal(["Work"], takenOutOf);
+        Assert.Empty(updated.Contexts[0].ForceQuitApps);
+    }
+
+    [Fact]
     public void IgnoringAnAppTakesItOutOfEveryProfile()
     {
         (AppConfiguration updated, IReadOnlyList<string> takenOutOf) = IgnoredApps.Ignore(Configuration, "Telegram");

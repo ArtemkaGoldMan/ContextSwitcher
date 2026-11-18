@@ -28,6 +28,12 @@
   <data name="Common_HideTip" xml:space="preserve">
     <value>Сховати замість закрити: програма лишається відкритою й повертається з усіма вікнами.</value>
   </data>
+  <data name="Common_ForceQuit" xml:space="preserve">
+    <value>Завершувати</value>
+  </data>
+  <data name="Common_ForceQuitTip" xml:space="preserve">
+    <value>Завершити одразу, без запитань, як «Зняти завдання» в Диспетчері завдань. Для програм, що лишаються в треї, коли їх просять вийти. Усе незбережене в ній буде втрачено.</value>
+  </data>
   <data name="Common_Close" xml:space="preserve">
     <value>Закривати</value>
   </data>
@@ -204,6 +210,9 @@
   </data>
   <data name="ProfileSetup_LaunchOpensTheAppWhen" xml:space="preserve">
     <value>«Відкривати» відкриває програму, коли ви переходите в цей профіль. «Закривати» закриває її, коли ви з нього виходите; «Ховати» лише ховає, тож вона повертається одразу з усіма вікнами.</value>
+  </data>
+  <data name="ProfileSetup_ForceQuitTrayHint" xml:space="preserve">
+    <value>Деякі програми - Slack, Teams, Discord, Claude - не виходять, коли закрити вікно: вони йдуть у трей і далі працюють. Для таких оберіть «Завершувати»: це завершує їх одразу. Усе незбережене в них буде втрачено.</value>
   </data>
   <data name="ProfileSetup_NoAppsYetAddThe" xml:space="preserve">
     <value>Програм ще немає — додайте ті, які цей профіль має відкривати чи закривати.</value>
@@ -997,6 +1006,9 @@
   <data name="Msg_Config_AppClosedAndHidden" xml:space="preserve">
     <value>{0} налаштовано і закривати, і ховати під час виходу з профілю; оберіть щось одне.</value>
   </data>
+  <data name="Msg_Config_AppForceQuitAndClosedOrHidden" xml:space="preserve">
+    <value>{0} налаштовано завершувати примусово і водночас закривати чи ховати під час виходу з профілю; оберіть щось одне.</value>
+  </data>
   <data name="Msg_Config_UrlModeNeedsUrl" xml:space="preserve">
     <value>Для відкриття сторінок потрібна принаймні одна URL-адреса.</value>
   </data>
@@ -1125,6 +1137,9 @@
   </data>
   <data name="Msg_Switch_TimedOutHidingApps" xml:space="preserve">
     <value>Ховання застосунків не завершилось за {0} с.</value>
+  </data>
+  <data name="Msg_Switch_TimedOutForceQuitting" xml:space="preserve">
+    <value>Примусове завершення програм не завершилось за {0} с.</value>
   </data>
   <data name="Msg_Switch_TimedOutBrowserPages" xml:space="preserve">
     <value>Відкриття сторінок у браузері не завершилось за {0} с.</value>

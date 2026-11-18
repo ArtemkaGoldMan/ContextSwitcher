@@ -91,6 +91,7 @@ public static class AppServices
         services.AddSingleton<IStepHandler, CloseApplicationsHandler>();
         services.AddSingleton<IStepHandler, LaunchApplicationsHandler>();
         services.AddSingleton<IStepHandler, HideApplicationsHandler>();
+        services.AddSingleton<IStepHandler, ForceQuitApplicationsHandler>();
         services.AddSingleton<IStepHandler, ManageBrowserContextHandler>();
         services.AddSingleton<IStepHandler, CloseBrowserTabsHandler>();
         services.AddSingleton<IStepHandler>(provider => new DockerContainersHandler(

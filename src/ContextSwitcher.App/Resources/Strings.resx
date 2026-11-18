@@ -32,6 +32,14 @@
     <value>Hide it instead of quitting: it stays open and comes back with its windows.</value>
     <comment>Tooltip on that checkbox.</comment>
   </data>
+  <data name="Common_ForceQuit" xml:space="preserve">
+    <value>Force quit</value>
+    <comment>Templates.axaml: an app row's checkbox - end the app at once when leaving the profile.</comment>
+  </data>
+  <data name="Common_ForceQuitTip" xml:space="preserve">
+    <value>End it at once, without asking, as Task Manager's End task does. For an app that stays in the tray when asked to quit. Anything unsaved in it is lost.</value>
+    <comment>Tooltip on that checkbox.</comment>
+  </data>
   <data name="Common_Close" xml:space="preserve">
     <value>Close</value>
     <comment>Templates.axaml: Content</comment>
@@ -271,6 +279,10 @@
   <data name="ProfileSetup_LaunchOpensTheAppWhen" xml:space="preserve">
     <value>Launch opens the app when you enter this profile. Close quits it when you leave; Hide only hides it, so it comes back at once with its windows.</value>
     <comment>ProfileSetupPage.axaml: Text</comment>
+  </data>
+  <data name="ProfileSetup_ForceQuitTrayHint" xml:space="preserve">
+    <value>Some apps - Slack, Teams, Discord, Claude - don't quit when their window is closed: they go to the tray and keep running. For those, choose Force quit, which ends them at once. Unsaved work in them is lost.</value>
+    <comment>ProfileSetupPage.axaml: under the apps list, on Windows only.</comment>
   </data>
   <data name="ProfileSetup_NoAppsYetAddThe" xml:space="preserve">
     <value>No apps yet — add the ones this profile should open or close.</value>
@@ -1312,6 +1324,10 @@
     <value>{0} is set both to close and to hide when leaving the profile; choose one.</value>
     <comment>A setting that isn't valid. {0} = app name.</comment>
   </data>
+  <data name="Msg_Config_AppForceQuitAndClosedOrHidden" xml:space="preserve">
+    <value>{0} is set to force quit and also to close or hide when leaving the profile; choose one.</value>
+    <comment>A setting that isn't valid. {0} = app name.</comment>
+  </data>
   <data name="Msg_Config_UrlModeNeedsUrl" xml:space="preserve">
     <value>URL mode requires at least one URL.</value>
     <comment>A setting that isn't valid: the dashboard's configuration warnings, or an error when saving.</comment>
@@ -1482,6 +1498,10 @@
   </data>
   <data name="Msg_Switch_TimedOutHidingApps" xml:space="preserve">
     <value>Hiding apps didn't finish in {0} seconds.</value>
+    <comment>A step ran out of time. {0} = seconds.</comment>
+  </data>
+  <data name="Msg_Switch_TimedOutForceQuitting" xml:space="preserve">
+    <value>Ending apps by force didn't finish in {0} seconds.</value>
     <comment>A step ran out of time. {0} = seconds.</comment>
   </data>
   <data name="Msg_Switch_TimedOutBrowserPages" xml:space="preserve">
