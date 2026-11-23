@@ -1,6 +1,6 @@
 # Usage statistics
 
-Written every day by [the stats workflow](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/.github/workflows/stats.yml); [what the numbers mean](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/docs/usage-statistics.md). Last run 2026-11-22 (UTC).
+Written every day by [the stats workflow](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/.github/workflows/stats.yml); [what the numbers mean](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/docs/usage-statistics.md). Last run 2026-11-23 (UTC).
 
 ## Downloads
 
@@ -8,7 +8,7 @@ Every download counts, not every person: one person downloading twice is two. Th
 
 | Release | Published | .dmg | .zip |
 | --- | --- | ---: | ---: |
-| v0.7.0 | 2026-11-15 | 3 | 2 |
+| v0.7.0 | 2026-11-15 | 4 | 2 |
 | v0.6.8 | 2026-10-21 | 3 | 7 |
 | v0.6.7 | 2026-10-16 | 1 | 3 |
 | v0.6.6 | 2026-10-15 | 1 | 2 |
@@ -24,15 +24,15 @@ Every download counts, not every person: one person downloading twice is two. Th
 | v0.3.0 | 2026-10-11 | 1 | 3 |
 | v0.2.0 | 2026-10-10 | 1 | 2 |
 | v0.1.0 | 2026-10-10 | 1 | 2 |
-| **All** | | **21** | **48** |
+| **All** | | **22** | **48** |
 
 Downloads a day (`.dmg` and `.zip`), from one run's totals to the next:
 
 ```mermaid
 xychart-beta
     title "Downloads a day"
-    x-axis ["10-24", "10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15*", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22"]
-    bar [0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 32, 1, 0, 1, 0, 1, 0]
+    x-axis ["10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15*", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22", "11-23"]
+    bar [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 32, 1, 0, 1, 0, 1, 0, 1]
 ```
 
 \* A release came out that day: 11-15 v0.7.0.
@@ -44,8 +44,8 @@ Stars, forks and people watching the repository - the slowest-moving and the mos
 ```mermaid
 xychart-beta
     title "Stars"
-    x-axis ["10-24", "10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22"]
-    line [4, 4, 4, 4, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
+    x-axis ["10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22", "11-23"]
+    line [4, 4, 4, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
 ```
 
 ## Visitors
@@ -55,16 +55,17 @@ Views of the repository's pages on GitHub and the people behind them, a day. Bar
 ```mermaid
 xychart-beta
     title "Visitors a day"
-    x-axis ["10-24", "10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15*", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22"]
-    bar [5, 10, 14, 14, 0, 0, 0, 2, 0, 11, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 20, 4, 3, 5, 0, 1, 0, 0]
-    line [2, 8, 3, 2, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0]
+    x-axis ["10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15*", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22", "11-23"]
+    bar [10, 14, 14, 0, 0, 0, 2, 0, 11, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 20, 4, 3, 5, 0, 1, 0, 7, 0]
+    line [8, 3, 2, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 7, 0]
 ```
 
 \* A release came out that day: 11-15 v0.7.0.
 
 | Day | Views | Visitors | Clones |
 | --- | ---: | ---: | ---: |
-| 2026-11-22 | 0 | 0 | 0 |
+| 2026-11-23 | 0 | 0 | 0 |
+| 2026-11-22 | 7 | 7 | 15 |
 | 2026-11-21 | 0 | 0 | 25 |
 | 2026-11-20 | 1 | 1 | 38 |
 | 2026-11-19 | 0 | 0 | 21 |
@@ -93,13 +94,12 @@ xychart-beta
 | 2026-10-27 | 14 | 2 | 144 |
 | 2026-10-26 | 14 | 3 | 86 |
 | 2026-10-25 | 10 | 8 | 2 |
-| 2026-10-24 | 5 | 2 | 5 |
 
 Clones are almost all automated - CI and bots - and say little about people.
 
 ### Where they came from
 
-GitHub's top sites for the 14 days up to 2026-11-22.
+GitHub's top sites for the 14 days up to 2026-11-23.
 
 | Site | Views | Visitors |
 | --- | ---: | ---: |
@@ -107,17 +107,17 @@ GitHub's top sites for the 14 days up to 2026-11-22.
 
 ### What they looked at
 
-GitHub's top pages for the 14 days up to 2026-11-22.
+GitHub's top pages for the 14 days up to 2026-11-23.
 
 | Page | Views | Visitors |
 | --- | ---: | ---: |
-| / | 14 | 1 |
+| / | 15 | 2 |
 | /releases/tag/v0.7.0 | 5 | 1 |
 | /tree/main | 2 | 2 |
 | /agents | 1 | 1 |
-| /community | 1 | 1 |
-| /graphs/code-frequency | 1 | 1 |
-| /graphs/commit-activity | 1 | 1 |
-| /graphs/community | 1 | 1 |
-| /graphs/contributors | 1 | 1 |
-| /graphs/traffic | 1 | 1 |
+| /blob/main/CLAUDE.md | 1 | 1 |
+| /blob/main/docs/configuration.md | 1 | 1 |
+| /blob/main/docs/roadmap.md | 1 | 1 |
+| /blob/main/docs/shortcuts-integration.md | 1 | 1 |
+| /blob/main/docs/user-guide.md | 1 | 1 |
+| /blob/main/docs/windows-plan.md | 1 | 1 |
