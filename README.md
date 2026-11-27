@@ -1,6 +1,6 @@
 # Usage statistics
 
-Written every day by [the stats workflow](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/.github/workflows/stats.yml); [what the numbers mean](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/docs/usage-statistics.md). Last run 2026-11-26 (UTC).
+Written every day by [the stats workflow](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/.github/workflows/stats.yml); [what the numbers mean](https://github.com/ArtemkaGoldMan/ContextSwitcher/blob/main/docs/usage-statistics.md). Last run 2026-11-27 (UTC).
 
 ## Downloads
 
@@ -31,8 +31,8 @@ Downloads a day (`.dmg` and `.zip`), from one run's totals to the next:
 ```mermaid
 xychart-beta
     title "Downloads a day"
-    x-axis ["10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15*", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22", "11-23", "11-24", "11-25", "11-26"]
-    bar [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 32, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0]
+    x-axis ["10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15*", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22", "11-23", "11-24", "11-25", "11-26", "11-27"]
+    bar [0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 32, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0]
 ```
 
 \* A release came out that day: 11-15 v0.7.0.
@@ -44,8 +44,8 @@ Stars, forks and people watching the repository - the slowest-moving and the mos
 ```mermaid
 xychart-beta
     title "Stars"
-    x-axis ["10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22", "11-23", "11-24", "11-25", "11-26"]
-    line [4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
+    x-axis ["10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22", "11-23", "11-24", "11-25", "11-26", "11-27"]
+    line [4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
 ```
 
 ## Visitors
@@ -55,16 +55,17 @@ Views of the repository's pages on GitHub and the people behind them, a day. Bar
 ```mermaid
 xychart-beta
     title "Visitors a day"
-    x-axis ["10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15*", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22", "11-23", "11-24", "11-25", "11-26"]
-    bar [0, 0, 0, 2, 0, 11, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 20, 4, 3, 5, 0, 1, 0, 7, 0, 0, 0, 0]
-    line [0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 7, 0, 0, 0, 0]
+    x-axis ["10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15*", "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22", "11-23", "11-24", "11-25", "11-26", "11-27"]
+    bar [0, 0, 2, 0, 11, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 20, 4, 3, 5, 0, 1, 0, 7, 0, 0, 0, 4, 0]
+    line [0, 0, 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 7, 0, 0, 0, 4, 0]
 ```
 
 \* A release came out that day: 11-15 v0.7.0.
 
 | Day | Views | Visitors | Clones |
 | --- | ---: | ---: | ---: |
-| 2026-11-26 | 0 | 0 | 0 |
+| 2026-11-27 | 0 | 0 | 0 |
+| 2026-11-26 | 4 | 4 | 13 |
 | 2026-11-25 | 0 | 0 | 17 |
 | 2026-11-24 | 0 | 0 | 16 |
 | 2026-11-23 | 0 | 0 | 12 |
@@ -93,13 +94,12 @@ xychart-beta
 | 2026-10-31 | 2 | 2 | 15 |
 | 2026-10-30 | 0 | 0 | 10 |
 | 2026-10-29 | 0 | 0 | 5 |
-| 2026-10-28 | 0 | 0 | 26 |
 
 Clones are almost all automated - CI and bots - and say little about people.
 
 ### Where they came from
 
-GitHub's top sites for the 14 days up to 2026-11-26.
+GitHub's top sites for the 14 days up to 2026-11-27.
 
 | Site | Views | Visitors |
 | --- | ---: | ---: |
@@ -107,7 +107,7 @@ GitHub's top sites for the 14 days up to 2026-11-26.
 
 ### What they looked at
 
-GitHub's top pages for the 14 days up to 2026-11-26.
+GitHub's top pages for the 14 days up to 2026-11-27.
 
 | Page | Views | Visitors |
 | --- | ---: | ---: |
@@ -117,7 +117,7 @@ GitHub's top pages for the 14 days up to 2026-11-26.
 | /agents | 1 | 1 |
 | /blob/main/CLAUDE.md | 1 | 1 |
 | /blob/main/docs/configuration.md | 1 | 1 |
+| /blob/main/docs/performance.md | 1 | 1 |
+| /blob/main/docs/release-process.md | 1 | 1 |
 | /blob/main/docs/roadmap.md | 1 | 1 |
 | /blob/main/docs/shortcuts-integration.md | 1 | 1 |
-| /blob/main/docs/user-guide.md | 1 | 1 |
-| /blob/main/docs/windows-plan.md | 1 | 1 |
